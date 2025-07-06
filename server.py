@@ -8,15 +8,15 @@ from pathlib import Path
 import json
 from typing import Optional
 import re
+import requests
 
 # Imports pour l'extraction (basés sur votre code existant)
-from ollama import Client
+# from ollama import Client  # Remove ollama import
 import pytesseract
 from PIL import Image
 from pdf2image import convert_from_path
 from PyPDF2 import PdfReader
 import numpy as np
-import easyocr
 
 app = FastAPI(title="Invoice Data Extractor API")
 
@@ -31,7 +31,7 @@ app.add_middleware(
 
 class InvoiceExtractor:
     def __init__(self):
-        self.client = Client()
+        # self.client = Client()  # Remove ollama client
         self.setup_paths()
         # Prompt spécialisé pour vos données spécifiques
         self.llm_prompt = """Analysez cette facture française et extrayez EXACTEMENT les informations suivantes au format JSON.
@@ -79,7 +79,7 @@ Texte de la facture :
         ext = Path(file_path).suffix.lower()
         
         if ext == '.pdf':
-            # Essayer PyPDF2 d'abord
+            # Try PyPDF2 first
             try:
                 reader = PdfReader(file_path)
                 text = "\n".join(page.extract_text() or "" for page in reader.pages)
@@ -89,11 +89,16 @@ Texte de la facture :
             except Exception as e:
                 print(f"PyPDF2 failed: {e}")
 
-            # Fallback vers OCR
+            # Fallback: convert each page to image, OCR each image
             try:
-                print("Using OCR fallback for PDF")
+                print("Using OCR fallback for PDF (page by page as images)")
                 images = convert_from_path(file_path, poppler_path=self.poppler_path)
-                return [self.ocr_image(img) for img in images]
+                texts = []
+                for i, img in enumerate(images):
+                    print(f"Processing page {i+1} as image")
+                    text = self.ocr_image(img)  # img is a PIL Image
+                    texts.append(text)
+                return texts
             except Exception as e:
                 raise HTTPException(status_code=500, detail=f"PDF processing failed: {str(e)}")
                 
@@ -107,30 +112,68 @@ Texte de la facture :
         else:
             raise HTTPException(status_code=400, detail="Format de fichier non supporté")
 
+    def save_image_under_limit(self, img, max_bytes=1024*1024, min_size=300):
+        """
+        Save the image to a temp file, scaling down if necessary to fit under max_bytes.
+        Returns the temp file path.
+        """
+        img = img.convert("RGB")
+        width, height = img.size
+        scale = 1.0
+
+        while True:
+            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
+                # Resize if needed
+                if scale < 1.0:
+                    new_size = (max(int(width * scale), min_size), max(int(height * scale), min_size))
+                    img_resized = img.resize(new_size, Image.LANCZOS)
+                else:
+                    img_resized = img
+                img_resized.save(tmp, format="PNG", optimize=True)
+                img_path = tmp.name
+
+            file_size = os.path.getsize(img_path)
+            print(f"Temp image size: {file_size} bytes (scale={scale:.2f})")
+
+            if file_size <= max_bytes or scale <= 0.2:
+                return img_path
+
+            # Remove the too-large file and try again with smaller scale
+            os.unlink(img_path)
+            scale *= 0.8  # Reduce by 20% each time
+
     def ocr_image(self, img) -> str:
-        """Extrait le texte d'une image avec EasyOCR"""
-        # Redimensionner si nécessaire
-        max_width = 1200
-        if hasattr(img, 'width') and img.width > max_width:
-            ratio = max_width / img.width
-            try:
-                img = img.resize((max_width, int(img.height * ratio)), Image.Resampling.LANCZOS)
-            except AttributeError:
-                img = img.resize((max_width, int(img.height * ratio)), 1)
+        """Extrait le texte d'une image avec ocr.space API, always under 1MB."""
+        api_key = "K89380502088957"
+        url = "https://api.ocr.space/parse/image"
 
-        # Convertir en array numpy
-        if hasattr(img, 'convert'):
-            img = np.array(img)
+        img_path = self.save_image_under_limit(img)
 
+        with open(img_path, "rb") as f:
+            response = requests.post(
+                url,
+                files={"file": f},
+                data={"language": "fre", "isOverlayRequired": False},
+                headers={"apikey": api_key}
+            )
+        os.unlink(img_path)
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=500, detail=f"OCR API error: {response.status_code}")
+
+        result = response.json()
+        if result.get("IsErroredOnProcessing"):
+            error_message = result.get("ErrorMessage", ["Unknown error"])
+            raise HTTPException(status_code=500, detail=f"OCR API error: {error_message}")
         try:
-            print("Initializing EasyOCR...")
-            reader = easyocr.Reader(['fr'], gpu=False)
-            result = reader.readtext(img, detail=0, paragraph=True)
-            extracted_text = '\n'.join(result)
-            print(f"OCR extraction successful, text length: {len(extracted_text)}")
-            return extracted_text
+            parsed_results = result.get("ParsedResults")
+            if not parsed_results or not parsed_results[0].get("ParsedText"):
+                raise Exception("No text found in OCR response")
+            parsed_text = parsed_results[0]["ParsedText"]
+            print(f"OCR.space extraction successful, text length: {len(parsed_text)}")
+            return parsed_text
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"OCR failed: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"OCR API parsing error: {str(e)}")
 
     def is_good_enough(self, text: str) -> bool:
         """Vérifie si le texte extrait semble être une facture"""
@@ -140,35 +183,43 @@ Texte de la facture :
         )
 
     def query_llm(self, text: str) -> Optional[dict]:
-        """Interroge le LLM pour extraire les données structurées"""
+        """Interroge Gemini API pour extraire les données structurées"""
         try:
-            print(f"Sending text to LLM (length: {len(text)})")
-            
+            print(f"Sending text to Gemini (length: {len(text)})")
             # Limiter la taille du texte
             if len(text) > 4000:
                 text = text[:4000] + "\n[...text truncated...]"
-
             full_prompt = self.llm_prompt.format(text=text)
-            print("Prompt sent to LLM:")
+            print("Prompt sent to Gemini:")
             print("-" * 50)
             print(full_prompt[:500] + "..." if len(full_prompt) > 500 else full_prompt)
             print("-" * 50)
-            
-            response = self.client.generate(
-                model='mistral',
-                prompt=full_prompt,
-                options={
-                    'temperature': 0.1,
-                    'num_predict': 400
-                }
-            )
-            
-            raw_response = response.response.strip()
-            print(f"Raw LLM response: {raw_response}")
-            
+
+            api_key = "AIzaSyAtH6KD1_K3UZQwoXGi0CGq8hfdvFAXXQ0"
+            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+            headers = {
+                "Content-Type": "application/json",
+                "X-goog-api-key": api_key
+            }
+            data = {
+                "contents": [
+                    {"parts": [{"text": full_prompt}]}
+                ]
+            }
+            response = requests.post(url, headers=headers, data=json.dumps(data))
+            if response.status_code != 200:
+                print(f"Gemini API error: {response.status_code} {response.text}")
+                return self.parse_fallback(text)
+            result = response.json()
+            # Gemini's response structure
+            try:
+                raw_response = result["candidates"][0]["content"]["parts"][0]["text"]
+            except Exception as e:
+                print(f"Gemini response parsing error: {e}")
+                return self.parse_fallback(text)
+            print(f"Raw Gemini response: {raw_response}")
             # Essayer de parser le JSON
             try:
-                # Nettoyer la réponse pour extraire le JSON
                 json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
                 if json_match:
                     json_str = json_match.group()
@@ -181,9 +232,8 @@ Texte de la facture :
             except json.JSONDecodeError as e:
                 print(f"JSON decode error: {e}, using fallback parser")
                 return self.parse_fallback(text)
-                
         except Exception as e:
-            print(f"LLM query failed: {str(e)}")
+            print(f"Gemini query failed: {str(e)}")
             return self.parse_fallback(text)
 
     def clean_extracted_data(self, data: dict) -> dict:
@@ -296,8 +346,9 @@ Texte de la facture :
         # Combiner le texte de toutes les pages
         combined_text = "\n\n".join(page_texts)
         print(f"Combined text length: {len(combined_text)}")
-        print("Combined text preview:")
-        print(combined_text[:500] + "..." if len(combined_text) > 500 else combined_text)
+        print("=== START OCRed text to be sent to LLM ===")
+        print(combined_text)
+        print("=== END OCRed text to be sent to LLM ===")
         
         # Extraire les données avec le LLM
         extracted_data = self.query_llm(combined_text)
