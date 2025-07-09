@@ -1,0 +1,55 @@
+{
+  "capi": {
+    "field_map": {
+      "numeroFacture": {
+        "text": "IN2411-0001",
+        "left": 1360,
+        "top": 88,
+        "width": 200,
+        "height": 27
+      },
+      "emetteur": {
+        "text": "capi",
+        "left": 87,
+        "top": 84,
+        "width": 69,
+        "height": 41
+      },
+      "client": {
+        "text": "",
+        "left": 0,
+        "top": 0,
+        "width": 0,
+        "height": 0
+      },
+      "tauxTVA": {
+        "text": "20%",
+        "left": 1071,
+        "top": 1778,
+        "width": 48,
+        "height": 19
+      },
+      "montantHT": {
+        "text": "275,00",
+        "left": 1491,
+        "top": 1746,
+        "width": 75,
+        "height": 21
+      },
+      "montantTVA": {
+        "text": "55,00",
+        "left": 1505,
+        "top": 1778,
+        "width": 61,
+        "height": 21
+      },
+      "montantTTC": {
+        "text": "330,00",
+        "left": 1491,
+        "top": 1809,
+        "width": 75,
+        "height": 21
+      }
+    }
+  }
+}

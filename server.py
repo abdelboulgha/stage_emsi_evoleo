@@ -1,29 +1,26 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+import cv2
+import numpy as np
+import pytesseract
+from pdf2image import convert_from_path
+from PIL import Image
+from PyPDF2 import PdfReader
 import tempfile
 import os
 import sys
 from pathlib import Path
-import json
-from typing import Optional
 import re
-import requests
-
-# Imports pour l'extraction (basés sur votre code existant)
-# from ollama import Client  # Remove ollama import
-import pytesseract
-from PIL import Image
-from pdf2image import convert_from_path
-from PyPDF2 import PdfReader
-import numpy as np
+from fastapi import FastAPI, UploadFile, File, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from typing import Optional
+import json
 
 app = FastAPI(title="Invoice Data Extractor API")
 
-# Configuration CORS pour permettre les requêtes depuis le frontend
+# CORS config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:5173"],  # Ports React/Vite communs
+    allow_origins=["http://localhost:3000", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -31,36 +28,7 @@ app.add_middleware(
 
 class InvoiceExtractor:
     def __init__(self):
-        # self.client = Client()  # Remove ollama client
         self.setup_paths()
-        # Prompt spécialisé pour vos données spécifiques
-        self.llm_prompt = """Analysez cette facture française et extrayez EXACTEMENT les informations suivantes au format JSON.
-
-Recherchez ces champs précis:
-- numeroFacture: le numéro de la facture (ex: IN2411-0001, FAC-2024-001, etc.)
-- emetteur: le nom de l'entreprise qui émet la facture
-- client: le nom du client/destinataire de la facture
-- tauxTVA: le taux de TVA en pourcentage (généralement 20%)
-- montantHT: le montant hors taxe (Total HT)
-- montantTVA: le montant de la TVA
-- montantTTC: le montant toutes taxes comprises (Total TTC)
-
-Format de réponse souhaité (UNIQUEMENT ce JSON, rien d'autre):
-{{
-  "numeroFacture": "numéro trouvé ou null",
-  "emetteur": "nom émetteur ou null",
-  "client": "nom client ou null", 
-  "tauxTVA": nombre_decimal_ou_null,
-  "montantHT": nombre_decimal_ou_null,
-  "montantTVA": nombre_decimal_ou_null,
-  "montantTTC": nombre_decimal_ou_null
-}}
-
-Si une information n'est pas trouvée, utilisez null.
-Les montants doivent être des nombres décimaux (ex: 275.00, pas "275,00").
-
-Texte de la facture :
-{text}"""
 
     def setup_paths(self):
         try:
@@ -74,330 +42,300 @@ Texte de la facture :
         except Exception as e:
             print(f"Path setup failed: {str(e)}")
 
-    def extract_text(self, file_path: str) -> list:
-        """Extrait le texte d'un fichier PDF ou image"""
-        ext = Path(file_path).suffix.lower()
-        
-        if ext == '.pdf':
-            # Try PyPDF2 first
-            try:
-                reader = PdfReader(file_path)
-                text = "\n".join(page.extract_text() or "" for page in reader.pages)
-                if self.is_good_enough(text):
-                    print(f"PyPDF2 extraction successful, text length: {len(text)}")
-                    return [text]
-            except Exception as e:
-                print(f"PyPDF2 failed: {e}")
+    def preprocess_image(self, img: Image.Image) -> Image.Image:
+        # Convert to grayscale, binarize, denoise
+        img_cv = np.array(img)
+        if len(img_cv.shape) == 3:
+            img_cv = cv2.cvtColor(img_cv, cv2.COLOR_RGB2GRAY)
+        _, img_cv = cv2.threshold(img_cv, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        img_cv = cv2.medianBlur(img_cv, 3)
+        return Image.fromarray(img_cv)
 
-            # Fallback: convert each page to image, OCR each image
-            try:
-                print("Using OCR fallback for PDF (page by page as images)")
-                images = convert_from_path(file_path, poppler_path=self.poppler_path)
-                texts = []
-                for i, img in enumerate(images):
-                    print(f"Processing page {i+1} as image")
-                    text = self.ocr_image(img)  # img is a PIL Image
-                    texts.append(text)
-                return texts
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"PDF processing failed: {str(e)}")
-                
+    def extract_text(self, file_path: str) -> str:
+        ext = Path(file_path).suffix.lower()
+        if ext == '.pdf':
+            # Convert PDF to images, OCR each page
+            images = convert_from_path(file_path, poppler_path=self.poppler_path)
+            texts = []
+            for img in images:
+                pre_img = self.preprocess_image(img)
+                text = pytesseract.image_to_string(pre_img, lang='fra')
+                texts.append(text)
+            return "\n\n".join(texts)
         elif ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff']:
-            try:
-                print("Processing image file")
-                img = Image.open(file_path)
-                return [self.ocr_image(img)]
-            except Exception as e:
-                raise HTTPException(status_code=500, detail=f"Image processing failed: {str(e)}")
+            img = Image.open(file_path)
+            pre_img = self.preprocess_image(img)
+            return pytesseract.image_to_string(pre_img, lang='fra')
         else:
             raise HTTPException(status_code=400, detail="Format de fichier non supporté")
 
-    def save_image_under_limit(self, img, max_bytes=1024*1024, min_size=300):
-        """
-        Save the image to a temp file, scaling down if necessary to fit under max_bytes.
-        Returns the temp file path.
-        """
-        img = img.convert("RGB")
-        width, height = img.size
-        scale = 1.0
-
-        while True:
-            with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as tmp:
-                # Resize if needed
-                if scale < 1.0:
-                    new_size = (max(int(width * scale), min_size), max(int(height * scale), min_size))
-                    img_resized = img.resize(new_size, Image.LANCZOS)
-                else:
-                    img_resized = img
-                img_resized.save(tmp, format="PNG", optimize=True)
-                img_path = tmp.name
-
-            file_size = os.path.getsize(img_path)
-            print(f"Temp image size: {file_size} bytes (scale={scale:.2f})")
-
-            if file_size <= max_bytes or scale <= 0.2:
-                return img_path
-
-            # Remove the too-large file and try again with smaller scale
-            os.unlink(img_path)
-            scale *= 0.8  # Reduce by 20% each time
-
-    def ocr_image(self, img) -> str:
-        """Extrait le texte d'une image avec ocr.space API, always under 1MB."""
-        api_key = "K89380502088957"
-        url = "https://api.ocr.space/parse/image"
-
-        img_path = self.save_image_under_limit(img)
-
-        with open(img_path, "rb") as f:
-            response = requests.post(
-                url,
-                files={"file": f},
-                data={"language": "fre", "isOverlayRequired": False},
-                headers={"apikey": api_key}
-            )
-        os.unlink(img_path)
-
-        if response.status_code != 200:
-            raise HTTPException(status_code=500, detail=f"OCR API error: {response.status_code}")
-
-        result = response.json()
-        if result.get("IsErroredOnProcessing"):
-            error_message = result.get("ErrorMessage", ["Unknown error"])
-            raise HTTPException(status_code=500, detail=f"OCR API error: {error_message}")
-        try:
-            parsed_results = result.get("ParsedResults")
-            if not parsed_results or not parsed_results[0].get("ParsedText"):
-                raise Exception("No text found in OCR response")
-            parsed_text = parsed_results[0]["ParsedText"]
-            print(f"OCR.space extraction successful, text length: {len(parsed_text)}")
-            return parsed_text
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"OCR API parsing error: {str(e)}")
-
-    def is_good_enough(self, text: str) -> bool:
-        """Vérifie si le texte extrait semble être une facture"""
-        return (
-            text and len(text) > 50 and
-            any(word in text.lower() for word in ["facture", "tva", "total", "ht", "ttc", "émetteur"])
-        )
-
-    def query_llm(self, text: str) -> Optional[dict]:
-        """Interroge Gemini API pour extraire les données structurées"""
-        try:
-            print(f"Sending text to Gemini (length: {len(text)})")
-            # Limiter la taille du texte
-            if len(text) > 4000:
-                text = text[:4000] + "\n[...text truncated...]"
-            full_prompt = self.llm_prompt.format(text=text)
-            print("Prompt sent to Gemini:")
-            print("-" * 50)
-            print(full_prompt[:500] + "..." if len(full_prompt) > 500 else full_prompt)
-            print("-" * 50)
-
-            api_key = "AIzaSyAtH6KD1_K3UZQwoXGi0CGq8hfdvFAXXQ0"
-            url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
-            headers = {
-                "Content-Type": "application/json",
-                "X-goog-api-key": api_key
-            }
-            data = {
-                "contents": [
-                    {"parts": [{"text": full_prompt}]}
-                ]
-            }
-            response = requests.post(url, headers=headers, data=json.dumps(data))
-            if response.status_code != 200:
-                print(f"Gemini API error: {response.status_code} {response.text}")
-                return self.parse_fallback(text)
-            result = response.json()
-            # Gemini's response structure
-            try:
-                raw_response = result["candidates"][0]["content"]["parts"][0]["text"]
-            except Exception as e:
-                print(f"Gemini response parsing error: {e}")
-                return self.parse_fallback(text)
-            print(f"Raw Gemini response: {raw_response}")
-            # Essayer de parser le JSON
-            try:
-                json_match = re.search(r'\{.*\}', raw_response, re.DOTALL)
-                if json_match:
-                    json_str = json_match.group()
-                    parsed_data = json.loads(json_str)
-                    print(f"Successfully parsed JSON: {parsed_data}")
-                    return self.clean_extracted_data(parsed_data)
-                else:
-                    print("No JSON found, using fallback parser")
-                    return self.parse_fallback(text)
-            except json.JSONDecodeError as e:
-                print(f"JSON decode error: {e}, using fallback parser")
-                return self.parse_fallback(text)
-        except Exception as e:
-            print(f"Gemini query failed: {str(e)}")
-            return self.parse_fallback(text)
-
-    def clean_extracted_data(self, data: dict) -> dict:
-        """Nettoie et valide les données extraites"""
-        cleaned = {
-            "numeroFacture": None,
-            "emetteur": None,
-            "client": None,
-            "tauxTVA": None,
-            "montantHT": None,
-            "montantTVA": None,
-            "montantTTC": None
+    def extract_fields(self, text: str) -> dict:
+        # Regex-based extraction for French invoices
+        fields = {
+            "fournisseur": None,
+            "montant_ht": None,
+            "tva": None,
+            "montant_ttc": None,
+            "numero_facture": None,
+            "date_facture": None
         }
         
-        for key, value in data.items():
-            if key in cleaned and value is not None:
-                if key in ['tauxTVA', 'montantHT', 'montantTVA', 'montantTTC']:
-                    # Convertir en float
-                    if isinstance(value, str):
-                        # Remplacer virgule par point et enlever espaces
-                        value = value.replace(',', '.').replace(' ', '').replace('€', '').replace('DH', '')
-                        try:
-                            cleaned[key] = float(value)
-                        except ValueError:
-                            print(f"Could not convert {key}: {value} to float")
-                            cleaned[key] = None
-                    elif isinstance(value, (int, float)):
-                        cleaned[key] = float(value)
-                else:
-                    # Chaînes de caractères
-                    cleaned[key] = str(value).strip() if value else None
+        print("=== EXTRACTING FIELDS ===")
         
-        return cleaned
-
-    def parse_fallback(self, text: str) -> dict:
-        """Parser de secours si le JSON n'est pas valide"""
-        print("Using fallback regex parser")
-        result = {
-            "numeroFacture": None,
-            "emetteur": None,
-            "client": None,
-            "tauxTVA": None,
-            "montantHT": None,
-            "montantTVA": None,
-            "montantTTC": None
-        }
+        # Numéro de facture - look for IN2411-0001 pattern
+        numero_facture = re.search(r'IN\d{4}-\d{4}', text)
+        if numero_facture:
+            fields["numero_facture"] = numero_facture.group(0).strip()
+            print(f"Found numero_facture: {fields['numero_facture']}")
         
-        # Patterns regex pour extraction
-        patterns = {
-            "numeroFacture": [
-                r"(?:facture|invoice|n°|numéro)[\s:]*([A-Z0-9-]+)",
-                r"IN\d{4}-\d{4}",
-                r"FAC-\d{4}-\d{3,4}"
-            ],
-            "emetteur": [
-                r"(?:émetteur|emetteur)[\s:]*([^\n\r]+)",
-                r"^([A-Za-z]+)(?:\s+facture|\s+Facture)",
-            ],
-            "client": [
-                r"(?:adressé à|client|destinataire)[\s:]*([^\n\r]+)",
-                r"(?:tier|Tier)[\s:]*(\d+)",
-            ],
-            "tauxTVA": [
-                r"(\d+(?:[.,]\d+)?)%",
-                r"TVA[\s:]*(\d+(?:[.,]\d+)?)%"
-            ],
-            "montantHT": [
-                r"(?:total ht|montant ht|ht)[\s:]*(\d+(?:[.,]\d{2})?)",
-                r"Total HT[\s:]*(\d+(?:[.,]\d{2})?)"
-            ],
-            "montantTVA": [
-                r"(?:total tva|montant tva|tva)[\s:]*(\d+(?:[.,]\d{2})?)",
-                r"Total TVA[\s:]*\d+%[\s:]*(\d+(?:[.,]\d{2})?)"
-            ],
-            "montantTTC": [
-                r"(?:total ttc|montant ttc|ttc)[\s:]*(\d+(?:[.,]\d{2})?)",
-                r"Total TTC[\s:]*(\d+(?:[.,]\d{2})?)"
-            ]
-        }
+        # Fournisseur - look for 'capi' or similar
+        fournisseur = re.search(r'\b(capi|adress)\b', text, re.I)
+        if fournisseur:
+            fields["fournisseur"] = fournisseur.group(1).strip()
+            print(f"Found fournisseur: {fields['fournisseur']}")
         
-        for key, pattern_list in patterns.items():
-            for pattern in pattern_list:
-                match = re.search(pattern, text, re.IGNORECASE | re.MULTILINE)
-                if match:
-                    value = match.group(1).strip()
-                    if key in ['tauxTVA', 'montantHT', 'montantTVA', 'montantTTC']:
-                        try:
-                            # Convertir en float
-                            value = value.replace(',', '.')
-                            result[key] = float(value)
-                            print(f"Extracted {key}: {result[key]}")
-                            break
-                        except ValueError:
-                            continue
-                    else:
-                        result[key] = value
-                        print(f"Extracted {key}: {result[key]}")
-                        break
+        # Montant HT - look for "275,00" pattern
+        montant_ht = re.search(r'\b(\d{1,3}(?:,\d{2})?)\s*DH?\b', text)
+        if montant_ht:
+            # Find the one that's likely the HT amount (look for Total HT context)
+            ht_matches = re.findall(r'Total\s+HT[^\d]*(\d{1,3}(?:,\d{2})?)', text, re.I)
+            if ht_matches:
+                fields["montant_ht"] = ht_matches[0]
+                print(f"Found montant_ht: {fields['montant_ht']}")
         
-        return result
+        # TVA - look for "20%" pattern
+        tva = re.search(r'\b(\d{1,2}%)\b', text)
+        if tva:
+            fields["tva"] = tva.group(1).strip()
+            print(f"Found tva: {fields['tva']}")
+        
+        # Montant TTC - look for "330,00" pattern in TTC context
+        ttc_matches = re.findall(r'Total\s+TTC[^\d]*(\d{1,3}(?:,\d{2})?)', text, re.I)
+        if ttc_matches:
+            fields["montant_ttc"] = ttc_matches[0]
+            print(f"Found montant_ttc: {fields['montant_ttc']}")
+        
+        # Date de facture - look for date pattern
+        date_facture = re.search(r'\b(\d{2}/\d{2}/\d{4})\b', text)
+        if date_facture:
+            fields["date_facture"] = date_facture.group(1).strip()
+            print(f"Found date_facture: {fields['date_facture']}")
+        
+        print(f"Final extracted fields: {fields}")
+        return fields
 
     def extract_invoice_data(self, file_path: str) -> dict:
-        """Méthode principale pour extraire les données d'une facture"""
-        print(f"Processing file: {file_path}")
-        page_texts = self.extract_text(file_path)
-        
-        if not page_texts or not any(t.strip() for t in page_texts):
-            raise HTTPException(status_code=400, detail="Aucun texte trouvé dans le fichier")
+        try:
+            print(f"Processing file: {file_path}")
+            text = self.extract_text(file_path)
+            if not text or len(text.strip()) < 10:
+                raise HTTPException(status_code=400, detail="Aucun texte trouvé dans le fichier")
+            print(f"Extracted text length: {len(text)}")
+            print("=== START OCRed text ===")
+            print(text[:1000])
+            print("=== END OCRed text ===")
+            extracted_data = self.extract_fields(text)
+            print(f"Final extracted data: {extracted_data}")
+            return extracted_data
+        except Exception as e:
+            print(f"Error in extract_invoice_data: {e}")
+            import traceback
+            traceback.print_exc()
+            raise
 
-        # Combiner le texte de toutes les pages
-        combined_text = "\n\n".join(page_texts)
-        print(f"Combined text length: {len(combined_text)}")
-        print("=== START OCRed text to be sent to LLM ===")
-        print(combined_text)
-        print("=== END OCRed text to be sent to LLM ===")
-        
-        # Extraire les données avec le LLM
-        extracted_data = self.query_llm(combined_text)
-        
-        if extracted_data is None:
-            raise HTTPException(status_code=500, detail="Échec de l'extraction des données")
-        
-        print(f"Final extracted data: {extracted_data}")
-        return extracted_data
-
-# Instance globale de l'extracteur
 extractor = InvoiceExtractor()
 
-@app.post("/extract-invoice")
-async def extract_invoice(file: UploadFile = File(...)):
-    """Endpoint pour extraire les données d'une facture"""
+MAPPING_FILE = "fournisseur_mappings.json"
+def load_mappings():
+    if not os.path.exists(MAPPING_FILE):
+        return {}
+    with open(MAPPING_FILE, 'r', encoding='utf-8') as f:
+        return json.load(f)
+def save_mappings(mappings):
+    with open(MAPPING_FILE, 'w', encoding='utf-8') as f:
+        json.dump(mappings, f, ensure_ascii=False, indent=2)
+
+def sanitize_field(field, value):
+    if not isinstance(value, str):
+        return value
+    value = value.strip()
+    if field in ["montantHT", "montantTVA", "montantTTC"]:
+        value = value.replace(" ", "").replace(",", ".")
+        value = ''.join(c for c in value if c.isdigit() or c == '.')
+    elif field == "tauxTVA":
+        value = value.replace("%", "").replace(" ", "")
+        value = ''.join(c for c in value if c.isdigit() or c == '.')
+    return value
+
+def ocr_with_boxes(file_path):
+    ext = Path(file_path).suffix.lower()
+    if ext == '.pdf':
+        # Convert PDF to images first
+        images = convert_from_path(file_path, poppler_path=extractor.poppler_path)
+        if images:
+            img = images[0]  # Use first page
+        else:
+            return []
+    else:
+        img = Image.open(file_path)
     
-    print(f"Received file: {file.filename}, type: {file.content_type}")
-    
-    # Vérifier le type de fichier
-    if not file.content_type.startswith(('image/', 'application/pdf')):
-        raise HTTPException(
-            status_code=400, 
-            detail="Type de fichier non supporté. Utilisez PDF ou images."
-        )
-    
-    # Créer un fichier temporaire
+    data = pytesseract.image_to_data(img, lang='fra', output_type=pytesseract.Output.DICT)
+    results = []
+    for i, word in enumerate(data['text']):
+        if word.strip():
+            results.append({
+                'text': word,
+                'left': data['left'][i],
+                'top': data['top'][i],
+                'width': data['width'][i],
+                'height': data['height'][i]
+            })
+    return results
+
+@app.post("/ocr-with-boxes")
+async def ocr_boxes(file: UploadFile = File(...)):
     with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp_file:
         content = await file.read()
         tmp_file.write(content)
         tmp_file_path = tmp_file.name
-    
     try:
-        # Extraire les données
-        extracted_data = extractor.extract_invoice_data(tmp_file_path)
-        
-        return JSONResponse(content={
-            "success": True,
-            "data": extracted_data,
-            "filename": file.filename
-        })
-        
+        boxes = ocr_with_boxes(tmp_file_path)
+        return {"boxes": boxes}
+    finally:
+        try:
+            os.unlink(tmp_file_path)
+        except:
+            pass
+
+@app.post("/save-mapping")
+async def save_mapping(fournisseur: str, request: Request):
+    field_map = await request.json()
+    mappings = load_mappings()
+    mappings[fournisseur] = {"field_map": field_map}
+    save_mappings(mappings)
+    return {"success": True}
+
+def extract_from_mapping(file_path, mapping):
+    try:
+        ext = Path(file_path).suffix.lower()
+        if ext == '.pdf':
+            images = convert_from_path(file_path, poppler_path=extractor.poppler_path)
+            if images:
+                img = images[0]
+            else:
+                return {}
+        else:
+            img = Image.open(file_path)
+        result = dict()  # Ensure this is a standard Python dict
+        for field, box in mapping.items():
+            try:
+                print(f"Processing field: {field}, box: {box}")
+                left = int(box.get('left', 0) or 0)
+                top = int(box.get('top', 0) or 0)
+                width = int(box.get('width', 0) or 0)
+                height = int(box.get('height', 0) or 0)
+                print(f"Cropping region: left={left}, top={top}, right={left+width}, bottom={top+height}")
+                # Add margin to the crop box
+                margin = 10
+                crop_left = max(0, left - margin)
+                crop_top = max(0, top - margin)
+                crop_right = min(img.width, left + width + margin)
+                crop_bottom = min(img.height, top + height + margin)
+                region = img.crop((crop_left, crop_top, crop_right, crop_bottom))
+                print(f"Cropped region size for {field}: {region.size}")
+                # Save cropped region for debug
+                debug_path = f"debug_{field}.png"
+                try:
+                    region.save(debug_path)
+                    print(f"Saved cropped region for {field} to {debug_path}")
+                except Exception as e:
+                    print(f"Failed to save cropped region for {field}: {e}")
+                text = pytesseract.image_to_string(region, lang='fra').strip()
+                print(f"OCR result for {field}: '{text}'")
+                sanitized = sanitize_field(field, text)
+                if sanitized is None:
+                    sanitized = ''
+                result[str(field)] = str(sanitized)
+            except KeyError as e:
+                print(f"Missing key in box for field {field}: {e}")
+                continue
+            except Exception as e:
+                print(f"Error processing field {field}: {e}")
+                continue
+        return result
+    except Exception as e:
+        print(f"Error in extract_from_mapping: {e}")
+        return {}
+
+@app.post("/extract-invoice")
+async def extract_invoice(file: UploadFile = File(...)):
+    print(f"Received file: {file.filename}, type: {file.content_type}")
+    if not file.content_type or not file.content_type.startswith(('image/', 'application/pdf')):
+        raise HTTPException(
+            status_code=400,
+            detail="Type de fichier non supporté. Utilisez PDF ou images."
+        )
+    with tempfile.NamedTemporaryFile(delete=False, suffix=Path(file.filename).suffix) as tmp_file:
+        content = await file.read()
+        tmp_file.write(content)
+        tmp_file_path = tmp_file.name
+    try:
+        mappings = load_mappings()
+        fournisseur_name = None
+        # Try to extract fournisseur name using OCR
+        ocr_text = extractor.extract_text(tmp_file_path)
+        for fournisseur in mappings:
+            if fournisseur.lower() in ocr_text.lower():
+                fournisseur_name = fournisseur
+                break
+        if fournisseur_name:
+            try:
+                field_map = mappings[fournisseur_name]["field_map"]
+                print(f"Using mapping for {fournisseur_name}: {field_map}")
+                mapped_data = extract_from_mapping(tmp_file_path, field_map)
+                # Fill all expected fields, leave blank if not mapped
+                mapped_data = {
+                    "numeroFacture": mapped_data.get("numeroFacture", ""),
+                    "emetteur": fournisseur_name,
+                    "client": "",
+                    "tauxTVA": mapped_data.get("tauxTVA", ""),
+                    "montantHT": mapped_data.get("montantHT", ""),
+                    "montantTVA": mapped_data.get("montantTVA", ""),
+                    "montantTTC": mapped_data.get("montantTTC", "")
+                }
+                return JSONResponse(content={
+                    "success": True,
+                    "data": mapped_data,
+                    "filename": file.filename,
+                    "used_mapping": True
+                })
+            except Exception as e:
+                print(f"Error using mapping for {fournisseur_name}: {e}")
+                # Fall back to regular extraction
+                pass
+        else:
+            extracted_data = extractor.extract_invoice_data(tmp_file_path)
+            mapped_data = {
+                "numeroFacture": extracted_data.get("numero_facture", ""),
+                "emetteur": extracted_data.get("fournisseur", ""),
+                "client": "",
+                "tauxTVA": extracted_data.get("tva", ""),
+                "montantHT": extracted_data.get("montant_ht", ""),
+                "montantTVA": "",
+                "montantTTC": extracted_data.get("montant_ttc", "")
+            }
+            return JSONResponse(content={
+                "success": True,
+                "data": mapped_data,
+                "filename": file.filename,
+                "used_mapping": False
+            })
     except HTTPException:
         raise
     except Exception as e:
         print(f"Unexpected error: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'extraction: {str(e)}")
     finally:
-        # Nettoyer le fichier temporaire
         try:
             os.unlink(tmp_file_path)
         except:
@@ -405,7 +343,6 @@ async def extract_invoice(file: UploadFile = File(...)):
 
 @app.get("/health")
 async def health_check():
-    """Endpoint de vérification de l'état du service"""
     return {"status": "healthy", "message": "Invoice extraction service is running"}
 
 @app.get("/")
