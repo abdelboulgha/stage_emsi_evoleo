@@ -134,5 +134,39 @@
         "height": 61.03515624999977
       }
     }
+  },
+  "evoleo sarl": {
+    "field_map": {
+      "numeroFacture": {
+        "left": 3520.0,
+        "top": 199.0,
+        "width": 1199.0,
+        "height": 105.0
+      },
+      "tauxTVA": {
+        "left": 3216.0,
+        "top": 5031.0,
+        "width": 174.0,
+        "height": 106.0
+      },
+      "montantHT": {
+        "left": 4402.0,
+        "top": 4919.0,
+        "width": 342.0,
+        "height": 100.0
+      },
+      "montantTVA": {
+        "left": 4402.0,
+        "top": 5015.0,
+        "width": 354.0,
+        "height": 93.0
+      },
+      "montantTTC": {
+        "left": 4402.0,
+        "top": 5093.0,
+        "width": 360.0,
+        "height": 149.0
+      }
+    }
   }
 }

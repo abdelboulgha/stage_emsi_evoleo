@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Upload, FileText, Eye, Download, Copy, Trash2, ZoomIn, ZoomOut, RotateCcw, Settings, CheckCircle, AlertCircle, Loader2, Search } from 'lucide-react';
+import { Upload, FileText, Eye, Download, Copy, Trash2, ZoomIn, ZoomOut, RotateCcw, Settings, CheckCircle, AlertCircle, Loader2, Search, Target } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:8000';
 
@@ -17,7 +17,7 @@ const Extractor = () => {
     uploadedFile: null,
     filePreview: null,
     previewDimensions: { width: 0, height: 0 },
-    previewZoom: 1, // Ajout du zoom pour l'aperçu
+    previewZoom: 1,
     extractedData: {
       numeroFacture: '',
       tauxTVA: '',
@@ -25,7 +25,11 @@ const Extractor = () => {
       montantTVA: '',
       montantTTC: ''
     },
-    isProcessing: false
+    isProcessing: false,
+    // États pour la sélection manuelle
+    isManualSelecting: false,
+    selectedFieldForManual: null,
+    manualSelectionMode: false
   });
 
   // États pour DataPrep
@@ -41,10 +45,19 @@ const Extractor = () => {
     ocrPreview: ''
   });
 
-  // Refs pour les canvas et images
+  // Refs
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
   const previewImageRef = useRef(null);
+  const extractionCanvasRef = useRef(null);
+  const extractionImageRef = useRef(null);
+
+  // États pour la sélection manuelle dans l'extraction
+  const [extractionDrawingState, setExtractionDrawingState] = useState({
+    isDrawing: false,
+    startPos: { x: 0, y: 0 },
+    currentRect: null
+  });
 
   // Constantes
   const EXTRACTION_FIELDS = [
@@ -55,7 +68,7 @@ const Extractor = () => {
     { key: 'montantTTC', label: 'Montant TTC', icon: '💳' }
   ];
 
-  // Système de notifications amélioré
+  // Système de notifications
   const showNotification = useCallback((message, type = 'success', duration = 5000) => {
     const id = Date.now();
     const notification = { id, message, type, duration };
@@ -113,7 +126,7 @@ const Extractor = () => {
           ...prev,
           filePreview: result.image,
           previewDimensions: { width: result.width, height: result.height },
-          previewZoom: 1, // Reset du zoom lors du chargement
+          previewZoom: 1,
           isProcessing: false
         }));
         
@@ -139,7 +152,262 @@ const Extractor = () => {
     });
   };
 
-  // Extraction des données
+  // Activer le mode sélection manuelle
+  const startManualSelection = (fieldKey) => {
+    setExtractionState(prev => ({
+      ...prev,
+      isManualSelecting: true,
+      selectedFieldForManual: fieldKey,
+      manualSelectionMode: true
+    }));
+    showNotification(`Mode sélection activé pour ${EXTRACTION_FIELDS.find(f => f.key === fieldKey)?.label}`, 'info');
+  };
+
+  // Gestionnaires d'événements pour le canvas d'extraction - VERSION CORRIGÉE POUR LE SCROLL
+  const handleExtractionCanvasMouseDown = (event) => {
+    if (!extractionState.isManualSelecting || !extractionCanvasRef.current) return;
+
+    const rect = extractionCanvasRef.current.getBoundingClientRect();
+    const scrollContainer = extractionCanvasRef.current.parentElement;
+    
+    // Prendre en compte le scroll de la zone d'aperçu
+    const scrollLeft = scrollContainer.scrollLeft || 0;
+    const scrollTop = scrollContainer.scrollTop || 0;
+    
+    const x = Math.round((event.clientX - rect.left + scrollLeft) / extractionState.previewZoom);
+    const y = Math.round((event.clientY - rect.top + scrollTop) / extractionState.previewZoom);
+
+    // Vérifier que les coordonnées sont dans les limites de l'image
+    const maxX = extractionState.previewDimensions.width;
+    const maxY = extractionState.previewDimensions.height;
+    
+    if (x < 0 || x >= maxX || y < 0 || y >= maxY) return;
+
+    setExtractionDrawingState({
+      isDrawing: true,
+      startPos: { x, y },
+      currentRect: null
+    });
+  };
+
+  const handleExtractionCanvasMouseMove = (event) => {
+    if (!extractionDrawingState.isDrawing || !extractionState.isManualSelecting || !extractionCanvasRef.current) return;
+
+    const rect = extractionCanvasRef.current.getBoundingClientRect();
+    const scrollContainer = extractionCanvasRef.current.parentElement;
+    
+    // Prendre en compte le scroll
+    const scrollLeft = scrollContainer.scrollLeft || 0;
+    const scrollTop = scrollContainer.scrollTop || 0;
+    
+    const x = Math.round((event.clientX - rect.left + scrollLeft) / extractionState.previewZoom);
+    const y = Math.round((event.clientY - rect.top + scrollTop) / extractionState.previewZoom);
+
+    // Contraindre les coordonnées dans les limites de l'image
+    const maxX = extractionState.previewDimensions.width;
+    const maxY = extractionState.previewDimensions.height;
+    const constrainedX = Math.max(0, Math.min(maxX - 1, x));
+    const constrainedY = Math.max(0, Math.min(maxY - 1, y));
+
+    const currentRect = {
+      left: Math.min(extractionDrawingState.startPos.x, constrainedX),
+      top: Math.min(extractionDrawingState.startPos.y, constrainedY),
+      width: Math.abs(constrainedX - extractionDrawingState.startPos.x),
+      height: Math.abs(constrainedY - extractionDrawingState.startPos.y)
+    };
+
+    setExtractionDrawingState(prev => ({ ...prev, currentRect }));
+    redrawExtractionCanvas(currentRect);
+  };
+
+  const handleExtractionCanvasMouseUp = async () => {
+    if (!extractionDrawingState.isDrawing || !extractionState.selectedFieldForManual) return;
+
+    const { currentRect } = extractionDrawingState;
+    
+    // Validation de la taille minimum
+    if (!currentRect || currentRect.width < 5 || currentRect.height < 5) {
+      showNotification('Sélection trop petite (minimum 5×5 pixels)', 'error');
+      resetExtractionDrawingState();
+      return;
+    }
+
+    // Vérifier que la sélection est dans les limites
+    const maxX = extractionState.previewDimensions.width;
+    const maxY = extractionState.previewDimensions.height;
+    
+    if (currentRect.left + currentRect.width > maxX || currentRect.top + currentRect.height > maxY) {
+      showNotification('Sélection en dehors des limites du document', 'error');
+      resetExtractionDrawingState();
+      return;
+    }
+
+    // Extraire le texte
+    await extractTextFromSelection(currentRect, extractionState.selectedFieldForManual);
+    
+    // Désactiver le mode sélection
+    setExtractionState(prev => ({
+      ...prev,
+      isManualSelecting: false,
+      selectedFieldForManual: null,
+      manualSelectionMode: false
+    }));
+    
+    resetExtractionDrawingState();
+  };
+
+  const resetExtractionDrawingState = () => {
+    setExtractionDrawingState({
+      isDrawing: false,
+      startPos: { x: 0, y: 0 },
+      currentRect: null
+    });
+  };
+
+  // Extraire le texte de la zone sélectionnée
+  const extractTextFromSelection = async (coords, fieldKey) => {
+    if (!extractionState.filePreview) return;
+
+    try {
+      setIsLoading(true);
+      
+      const formData = new FormData();
+      formData.append('left', Math.round(coords.left).toString());
+      formData.append('top', Math.round(coords.top).toString());
+      formData.append('width', Math.round(coords.width).toString());
+      formData.append('height', Math.round(coords.height).toString());
+      formData.append('image_data', extractionState.filePreview.split(',')[1]);
+
+      const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
+        method: 'POST',
+        body: formData
+      });
+
+      const result = await response.json();
+      
+      if (result.success && result.text) {
+        const cleanedText = result.text.trim();
+        
+        if (cleanedText.length === 0) {
+          showNotification('Aucun texte détecté dans la zone sélectionnée', 'warning');
+          return;
+        }
+        
+        // Mettre à jour le champ
+        setExtractionState(prev => ({
+          ...prev,
+          extractedData: {
+            ...prev.extractedData,
+            [fieldKey]: cleanedText
+          }
+        }));
+        
+        const fieldLabel = EXTRACTION_FIELDS.find(f => f.key === fieldKey)?.label;
+        showNotification(`✅ Texte extrait pour "${fieldLabel}": "${cleanedText}"`, 'success');
+      } else {
+        showNotification('Aucun texte lisible détecté', 'warning');
+      }
+    } catch (error) {
+      console.error('Erreur OCR:', error);
+      showNotification('Erreur lors de l\'extraction du texte', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Redessiner le canvas d'extraction - VERSION AMÉLIORÉE IDENTIQUE À CONFIGURATION
+  const redrawExtractionCanvas = useCallback((tempRect = null) => {
+    const canvas = extractionCanvasRef.current;
+    if (!canvas || !extractionState.filePreview) return;
+
+    const ctx = canvas.getContext('2d');
+    
+    // Dimensionner le canvas selon les vraies dimensions
+    const scaledWidth = extractionState.previewDimensions.width * extractionState.previewZoom;
+    const scaledHeight = extractionState.previewDimensions.height * extractionState.previewZoom;
+    
+    // Utiliser les dimensions réelles pour éviter la troncature
+    canvas.width = scaledWidth;
+    canvas.height = scaledHeight;
+    canvas.style.width = `${scaledWidth}px`;
+    canvas.style.height = `${scaledHeight}px`;
+    
+    ctx.clearRect(0, 0, scaledWidth, scaledHeight);
+
+    // Dessiner l'image
+    if (extractionImageRef.current?.complete) {
+      ctx.drawImage(extractionImageRef.current, 0, 0, scaledWidth, scaledHeight);
+
+      // Dessiner le rectangle de sélection
+      if (tempRect && extractionState.isManualSelecting) {
+        const x = tempRect.left * extractionState.previewZoom;
+        const y = tempRect.top * extractionState.previewZoom;
+        const width = tempRect.width * extractionState.previewZoom;
+        const height = tempRect.height * extractionState.previewZoom;
+
+        // Sauvegarder le contexte
+        ctx.save();
+
+        // Rectangle principal avec bordure pointillée
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([8, 4]);
+        ctx.strokeRect(x, y, width, height);
+
+        // Fond semi-transparent
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.15)';
+        ctx.fillRect(x, y, width, height);
+
+        // Bordure intérieure pour plus de netteté
+        ctx.strokeStyle = '#1d4ed8';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([]);
+        ctx.strokeRect(x + 1, y + 1, width - 2, height - 2);
+
+        // Label avec fond
+        const fontSize = Math.max(11, 13 * extractionState.previewZoom);
+        ctx.font = `bold ${fontSize}px Arial`;
+        const labelText = extractionState.selectedFieldForManual;
+        const textMetrics = ctx.measureText(labelText);
+        
+        // Fond du label
+        ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+        const labelPadding = 4;
+        const labelX = x;
+        const labelY = Math.max(y - fontSize - labelPadding, 0);
+        ctx.fillRect(labelX, labelY, textMetrics.width + labelPadding * 2, fontSize + labelPadding);
+        
+        // Texte du label
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(labelText, labelX + labelPadding, labelY + fontSize);
+
+        // Coordonnées en bas à droite de la sélection
+        const coordText = `${Math.round(tempRect.width)}×${Math.round(tempRect.height)}`;
+        ctx.font = `${Math.max(9, 11 * extractionState.previewZoom)}px monospace`;
+        const coordMetrics = ctx.measureText(coordText);
+        
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        const coordX = x + width - coordMetrics.width - 6;
+        const coordY = y + height - 4;
+        ctx.fillRect(coordX - 2, coordY - 12, coordMetrics.width + 4, 14);
+        
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(coordText, coordX, coordY);
+
+        ctx.restore();
+      }
+    }
+  }, [extractionState]);
+
+  // Effet pour charger l'image et redessiner
+  useEffect(() => {
+    if (extractionState.filePreview && extractionImageRef.current) {
+      extractionImageRef.current.onload = () => redrawExtractionCanvas();
+      extractionImageRef.current.src = extractionState.filePreview;
+    }
+  }, [extractionState.filePreview, extractionState.previewZoom, redrawExtractionCanvas]);
+
+  // Extraction automatique des données
   const performDataExtraction = async () => {
     const { selectedIssuer, customIssuer, uploadedFile } = extractionState;
     const issuer = customIssuer || selectedIssuer;
@@ -241,7 +509,7 @@ const Extractor = () => {
     }));
   };
 
-  // Gestionnaires d'événements pour le canvas
+  // Gestionnaires d'événements pour le canvas DataPrep - VERSION CORRIGÉE
   const [drawingState, setDrawingState] = useState({
     isDrawing: false,
     startPos: { x: 0, y: 0 },
@@ -252,8 +520,20 @@ const Extractor = () => {
     if (!dataPrepState.isSelecting || !canvasRef.current) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / dataPrepState.currentZoom;
-    const y = (event.clientY - rect.top) / dataPrepState.currentZoom;
+    const scrollContainer = canvasRef.current.parentElement;
+    
+    // Prendre en compte le scroll de la zone de configuration
+    const scrollLeft = scrollContainer.scrollLeft || 0;
+    const scrollTop = scrollContainer.scrollTop || 0;
+    
+    const x = Math.round((event.clientX - rect.left + scrollLeft) / dataPrepState.currentZoom);
+    const y = Math.round((event.clientY - rect.top + scrollTop) / dataPrepState.currentZoom);
+
+    // Vérifier que les coordonnées sont dans les limites de l'image
+    const maxX = dataPrepState.imageDimensions.width;
+    const maxY = dataPrepState.imageDimensions.height;
+    
+    if (x < 0 || x >= maxX || y < 0 || y >= maxY) return;
 
     setDrawingState({
       isDrawing: true,
@@ -266,14 +546,26 @@ const Extractor = () => {
     if (!drawingState.isDrawing || !dataPrepState.isSelecting || !canvasRef.current) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = (event.clientX - rect.left) / dataPrepState.currentZoom;
-    const y = (event.clientY - rect.top) / dataPrepState.currentZoom;
+    const scrollContainer = canvasRef.current.parentElement;
+    
+    // Prendre en compte le scroll
+    const scrollLeft = scrollContainer.scrollLeft || 0;
+    const scrollTop = scrollContainer.scrollTop || 0;
+    
+    const x = Math.round((event.clientX - rect.left + scrollLeft) / dataPrepState.currentZoom);
+    const y = Math.round((event.clientY - rect.top + scrollTop) / dataPrepState.currentZoom);
+
+    // Contraindre les coordonnées dans les limites de l'image
+    const maxX = dataPrepState.imageDimensions.width;
+    const maxY = dataPrepState.imageDimensions.height;
+    const constrainedX = Math.max(0, Math.min(maxX - 1, x));
+    const constrainedY = Math.max(0, Math.min(maxY - 1, y));
 
     const currentRect = {
-      left: Math.min(drawingState.startPos.x, x),
-      top: Math.min(drawingState.startPos.y, y),
-      width: Math.abs(x - drawingState.startPos.x),
-      height: Math.abs(y - drawingState.startPos.y)
+      left: Math.min(drawingState.startPos.x, constrainedX),
+      top: Math.min(drawingState.startPos.y, constrainedY),
+      width: Math.abs(constrainedX - drawingState.startPos.x),
+      height: Math.abs(constrainedY - drawingState.startPos.y)
     };
 
     setDrawingState(prev => ({ ...prev, currentRect }));
@@ -285,8 +577,19 @@ const Extractor = () => {
 
     const { currentRect } = drawingState;
     
+    // Validation de la taille minimum
     if (!currentRect || currentRect.width < 5 || currentRect.height < 5) {
-      showNotification('Rectangle trop petit, veuillez réessayer', 'error');
+      showNotification('Sélection trop petite (minimum 5×5 pixels)', 'error');
+      resetDrawingState();
+      return;
+    }
+
+    // Vérifier que la sélection est dans les limites
+    const maxX = dataPrepState.imageDimensions.width;
+    const maxY = dataPrepState.imageDimensions.height;
+    
+    if (currentRect.left + currentRect.width > maxX || currentRect.top + currentRect.height > maxY) {
+      showNotification('Sélection en dehors des limites du document', 'error');
       resetDrawingState();
       return;
     }
@@ -362,59 +665,103 @@ const Extractor = () => {
     }
   };
 
-  // Redessiner le canvas
+  // Redessiner le canvas DataPrep - VERSION AMÉLIORÉE
   const redrawCanvas = useCallback((tempRect = null) => {
     const canvas = canvasRef.current;
     if (!canvas || !dataPrepState.uploadedImage) return;
 
     const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Dimensionner le canvas selon les vraies dimensions
+    const scaledWidth = dataPrepState.imageDimensions.width * dataPrepState.currentZoom;
+    const scaledHeight = dataPrepState.imageDimensions.height * dataPrepState.currentZoom;
+    
+    // Utiliser les dimensions réelles pour éviter la troncature
+    canvas.width = scaledWidth;
+    canvas.height = scaledHeight;
+    canvas.style.width = `${scaledWidth}px`;
+    canvas.style.height = `${scaledHeight}px`;
+    
+    ctx.clearRect(0, 0, scaledWidth, scaledHeight);
 
     // Dessiner l'image
     if (imageRef.current && imageRef.current.complete) {
-      const scaledWidth = dataPrepState.imageDimensions.width * dataPrepState.currentZoom;
-      const scaledHeight = dataPrepState.imageDimensions.height * dataPrepState.currentZoom;
-      
-      canvas.width = scaledWidth;
-      canvas.height = scaledHeight;
-      
       ctx.drawImage(imageRef.current, 0, 0, scaledWidth, scaledHeight);
 
-      // Dessiner les rectangles existants
+      // Dessiner les rectangles existants (mappings sauvegardés)
       Object.entries(dataPrepState.fieldMappings).forEach(([field, coords]) => {
         drawRectangle(ctx, coords, field, '#e53e3e', false);
       });
 
-      // Dessiner le rectangle temporaire
+      // Dessiner le rectangle temporaire (en cours de sélection)
       if (tempRect && dataPrepState.isSelecting) {
         drawRectangle(ctx, tempRect, dataPrepState.selectedField, '#3182ce', true);
       }
     }
   }, [dataPrepState]);
 
-  // Dessiner un rectangle sur le canvas
+  // Dessiner un rectangle sur le canvas - VERSION AMÉLIORÉE
   const drawRectangle = (ctx, coords, field, color, isTemporary) => {
     const x = coords.left * dataPrepState.currentZoom;
     const y = coords.top * dataPrepState.currentZoom;
     const width = coords.width * dataPrepState.currentZoom;
     const height = coords.height * dataPrepState.currentZoom;
 
-    // Rectangle
+    // Sauvegarder le contexte
+    ctx.save();
+
+    // Rectangle principal
     ctx.strokeStyle = color;
     ctx.lineWidth = isTemporary ? 3 : 2;
-    ctx.setLineDash(isTemporary ? [5, 5] : []);
+    ctx.setLineDash(isTemporary ? [8, 4] : []);
     ctx.strokeRect(x, y, width, height);
 
     // Fond semi-transparent
-    ctx.fillStyle = isTemporary ? 'rgba(49, 130, 206, 0.1)' : 'rgba(229, 62, 62, 0.1)';
+    ctx.fillStyle = isTemporary ? 'rgba(49, 130, 206, 0.15)' : 'rgba(229, 62, 62, 0.1)';
     ctx.fillRect(x, y, width, height);
 
-    // Label
-    ctx.fillStyle = color;
-    ctx.font = `${Math.max(12, 14 * dataPrepState.currentZoom)}px Inter`;
-    ctx.fillText(field, x, Math.max(y - 5, 15));
+    // Bordure intérieure pour plus de netteté
+    if (isTemporary) {
+      ctx.strokeStyle = '#1e40af';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([]);
+      ctx.strokeRect(x + 1, y + 1, width - 2, height - 2);
+    }
 
-    ctx.setLineDash([]);
+    // Label avec fond
+    const fontSize = Math.max(11, 13 * dataPrepState.currentZoom);
+    ctx.font = `bold ${fontSize}px Arial`;
+    const labelText = field;
+    const textMetrics = ctx.measureText(labelText);
+    
+    // Fond du label
+    const labelColor = isTemporary ? 'rgba(49, 130, 206, 0.9)' : 'rgba(229, 62, 62, 0.9)';
+    ctx.fillStyle = labelColor;
+    const labelPadding = 4;
+    const labelX = x;
+    const labelY = Math.max(y - fontSize - labelPadding, 0);
+    ctx.fillRect(labelX, labelY, textMetrics.width + labelPadding * 2, fontSize + labelPadding);
+    
+    // Texte du label
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText(labelText, labelX + labelPadding, labelY + fontSize);
+
+    // Coordonnées pour les sélections temporaires
+    if (isTemporary) {
+      const coordText = `${Math.round(coords.width)}×${Math.round(coords.height)}`;
+      ctx.font = `${Math.max(9, 11 * dataPrepState.currentZoom)}px monospace`;
+      const coordMetrics = ctx.measureText(coordText);
+      
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+      const coordX = x + width - coordMetrics.width - 6;
+      const coordY = y + height - 4;
+      ctx.fillRect(coordX - 2, coordY - 12, coordMetrics.width + 4, 14);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText(coordText, coordX, coordY);
+    }
+
+    ctx.restore();
   };
 
   // Effet pour redessiner le canvas
@@ -503,6 +850,8 @@ const Extractor = () => {
     });
   };
 
+  
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
       {/* Header */}
@@ -570,6 +919,37 @@ const Extractor = () => {
             <h2 className="text-3xl font-bold text-white mb-8 text-center">
               Extraction de Données
             </h2>
+            
+            {/* Mode sélection manuelle actif */}
+            {extractionState.manualSelectionMode && (
+              <div className="mb-6 p-4 bg-blue-500/20 border border-blue-400/30 rounded-xl">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Target className="w-6 h-6 text-blue-200" />
+                    <div>
+                      <h3 className="text-blue-100 font-semibold">
+                        Mode Sélection Manuelle Activé
+                      </h3>
+                      <p className="text-blue-200 text-sm">
+                        Sélectionnez une zone sur l'image pour extraire le texte du champ : 
+                        <strong> {EXTRACTION_FIELDS.find(f => f.key === extractionState.selectedFieldForManual)?.label}</strong>
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setExtractionState(prev => ({
+                      ...prev,
+                      isManualSelecting: false,
+                      selectedFieldForManual: null,
+                      manualSelectionMode: false
+                    }))}
+                    className="px-4 py-2 bg-red-500/20 border border-red-400/30 text-red-100 rounded-lg hover:bg-red-500/30 transition-colors"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              </div>
+            )}
             
             <div className="grid lg:grid-cols-2 gap-8">
               {/* Section de configuration */}
@@ -676,11 +1056,18 @@ const Extractor = () => {
                   </button>
                 </div>
 
-                {/* Données extraites */}
+                {/* Données extraites avec sélection manuelle */}
                 <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                  <h3 className="text-xl font-semibold text-white mb-4">
-                    Données Extraites
-                  </h3>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xl font-semibold text-white">
+                      Données Extraites
+                    </h3>
+                    {extractionState.filePreview && (
+                      <div className="text-xs text-blue-200">
+                        💡 Cliquez sur l'icône cible pour sélectionner manuellement
+                      </div>
+                    )}
+                  </div>
                   
                   <div className="space-y-4">
                     {EXTRACTION_FIELDS.map((field) => (
@@ -688,19 +1075,35 @@ const Extractor = () => {
                         <label className="block text-sm font-medium text-blue-100 mb-2">
                           {field.icon} {field.label}
                         </label>
-                        <input
-                          type="text"
-                          value={extractionState.extractedData[field.key]}
-                          onChange={(e) => setExtractionState(prev => ({
-                            ...prev,
-                            extractedData: {
-                              ...prev.extractedData,
-                              [field.key]: e.target.value
-                            }
-                          }))}
-                          className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                          placeholder={`${field.label} sera extrait automatiquement`}
-                        />
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={extractionState.extractedData[field.key]}
+                            onChange={(e) => setExtractionState(prev => ({
+                              ...prev,
+                              extractedData: {
+                                ...prev.extractedData,
+                                [field.key]: e.target.value
+                              }
+                            }))}
+                            className="flex-1 px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                            placeholder={`${field.label} sera extrait automatiquement`}
+                          />
+                          {extractionState.filePreview && (
+                            <button
+                              onClick={() => startManualSelection(field.key)}
+                              disabled={extractionState.isManualSelecting}
+                              className={`px-3 py-3 rounded-xl transition-colors flex items-center justify-center ${
+                                extractionState.selectedFieldForManual === field.key
+                                  ? 'bg-blue-500/30 border border-blue-400/50 text-blue-100'
+                                  : 'bg-white/20 border border-white/30 text-blue-200 hover:bg-white/30'
+                              } disabled:opacity-50 disabled:cursor-not-allowed`}
+                              title="Sélection manuelle"
+                            >
+                              <Target className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -739,12 +1142,15 @@ const Extractor = () => {
                 </div>
               </div>
 
-              {/* Section de prévisualisation avec zoom */}
+              {/* Section de prévisualisation avec sélection interactive */}
               <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-xl font-semibold text-white flex items-center gap-2">
                     <Eye className="w-5 h-5" />
                     Aperçu du Document
+                    {extractionState.manualSelectionMode && (
+                      <span className="text-blue-200 text-sm">- Mode Sélection</span>
+                    )}
                   </h3>
                   
                   {/* Contrôles de zoom pour l'aperçu */}
@@ -779,48 +1185,87 @@ const Extractor = () => {
                   <div className="space-y-4">
                     <div className="flex justify-between items-center text-sm text-blue-100">
                       <span>📐 {extractionState.previewDimensions.width} × {extractionState.previewDimensions.height} px</span>
-                      {mappings[extractionState.selectedIssuer || extractionState.customIssuer] && (
-                        <span className="bg-green-500/20 border border-green-400/30 text-green-100 px-2 py-1 rounded">
-                          ✅ Mapping disponible
-                        </span>
-                      )}
+                      <div className="flex items-center gap-4">
+                        {mappings[extractionState.selectedIssuer || extractionState.customIssuer] && (
+                          <span className="bg-green-500/20 border border-green-400/30 text-green-100 px-2 py-1 rounded">
+                            ✅ Mapping disponible
+                          </span>
+                        )}
+                        {extractionState.manualSelectionMode && (
+                          <span className="bg-blue-500/20 border border-blue-400/30 text-blue-100 px-2 py-1 rounded flex items-center gap-1">
+                            <Target className="w-3 h-3" />
+                            Sélection active
+                          </span>
+                        )}
+                      </div>
                     </div>
                     
-                    {/* Zone d'aperçu avec scroll - même taille que la zone de sélection */}
-                    <div className="bg-white/10 rounded-xl overflow-auto max-h-96 border border-white/20">
-                      <div className="relative">
-                        <img
-                          ref={previewImageRef}
-                          src={extractionState.filePreview}
-                          alt="Aperçu du document"
-                          className="max-w-full"
-                          style={{
-                            width: extractionState.previewDimensions.width * extractionState.previewZoom,
-                            height: extractionState.previewDimensions.height * extractionState.previewZoom
-                          }}
-                        />
-                        
-                        {/* Overlay des zones mappées */}
-                        {/* {mappings[extractionState.selectedIssuer || extractionState.customIssuer] && (
-                          <div className="absolute inset-0 pointer-events-none">
-                            {Object.entries(mappings[extractionState.selectedIssuer || extractionState.customIssuer].field_map || {}).map(([field, coords]) => (
-                              <div
-                                key={field}
-                                className="absolute border-2 border-red-400 bg-red-400/20 rounded animate-pulse"
-                                style={{
-                                  left: `${(coords.left * extractionState.previewZoom)}px`,
-                                  top: `${(coords.top * extractionState.previewZoom)}px`,
-                                  width: `${(coords.width * extractionState.previewZoom)}px`,
-                                  height: `${(coords.height * extractionState.previewZoom)}px`,
-                                }}
-                              >
-                                <span className="absolute -top-6 left-0 bg-red-500 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
-                                  {field}
-                                </span>
+                    {/* Zone d'aperçu avec canvas interactif - VERSION AMÉLIORÉE IDENTIQUE À CONFIGURATION */}
+                    <div className="bg-white/10 rounded-xl border border-white/20 relative" style={{ maxHeight: '500px', overflow: 'auto' }}>
+                      <div className="relative" style={{ minWidth: 'max-content' }}>
+                        {/* Mode sélection manuelle - Canvas interactif */}
+                        {extractionState.manualSelectionMode ? (
+                          <div className="relative">
+                            <canvas
+                              ref={extractionCanvasRef}
+                              onMouseDown={handleExtractionCanvasMouseDown}
+                              onMouseMove={handleExtractionCanvasMouseMove}
+                              onMouseUp={handleExtractionCanvasMouseUp}
+                              className="cursor-crosshair block"
+                              style={{
+                                width: extractionState.previewDimensions.width * extractionState.previewZoom,
+                                height: extractionState.previewDimensions.height * extractionState.previewZoom,
+                                border: '2px solid #3b82f6',
+                                borderRadius: '4px'
+                              }}
+                            />
+                            
+                            {/* Instructions de sélection */}
+                            <div className="absolute bottom-4 left-4 bg-black/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-10">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                                Cliquez et glissez pour sélectionner
                               </div>
-                            ))}
+                              <div className="text-gray-300 mt-1">
+                                Min: 5×5px • Zoom: {Math.round(extractionState.previewZoom * 100)}% • Scrollez si nécessaire
+                              </div>
+                            </div>
+                            
+                            {/* Coordonnées en temps réel */}
+                            {/* {extractionDrawingState.currentRect && (
+                              <div className="absolute top-4 right-4 bg-black/90 text-white text-xs px-3 py-2 rounded-lg font-mono shadow-lg z-10">
+                                Sélection: {Math.round(extractionDrawingState.currentRect.width)}×{Math.round(extractionDrawingState.currentRect.height)}px
+                                <br />
+                                Position: ({Math.round(extractionDrawingState.currentRect.left)}, {Math.round(extractionDrawingState.currentRect.top)})
+                              </div>
+                            )} */}
+                            
+                            {/* Indicateur de champ actif */}
+                            <div className="absolute top-4 left-4 bg-blue-500/80 text-white text-xs px-2 py-1 rounded shadow-lg z-10">
+                              🎯 Extraction: {extractionState.selectedFieldForManual}
+                            </div>
                           </div>
-                        )} */}
+                        ) : (
+                          // Mode aperçu normal
+                          <img
+                            ref={previewImageRef}
+                            src={extractionState.filePreview}
+                            alt="Aperçu du document"
+                            className="block"
+                            style={{
+                              width: extractionState.previewDimensions.width * extractionState.previewZoom,
+                              height: extractionState.previewDimensions.height * extractionState.previewZoom
+                            }}
+                          />
+                        )}
+                        
+                        {/* Image cachée pour le canvas */}
+                        <img
+                          ref={extractionImageRef}
+                          src={extractionState.filePreview}
+                          alt="Document de référence"
+                          className="hidden"
+                        />
                       </div>
                     </div>
                   </div>
@@ -920,7 +1365,7 @@ const Extractor = () => {
             </div>
 
             <div className="grid lg:grid-cols-4 gap-8">
-              {/* Canvas de sélection - identique à l'original */}
+              {/* Canvas de sélection */}
               <div className="lg:col-span-3">
                 <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
                   <h3 className="text-xl font-semibold text-white mb-4">
@@ -928,24 +1373,52 @@ const Extractor = () => {
                   </h3>
                   
                   {dataPrepState.uploadedImage ? (
-                    <div className="bg-white/10 rounded-xl overflow-auto max-h-97 border border-white/20">
-                      <canvas
-                        ref={canvasRef}
-                        onMouseDown={handleCanvasMouseDown}
-                        onMouseMove={handleCanvasMouseMove}
-                        onMouseUp={handleCanvasMouseUp}
-                        className={`cursor-${dataPrepState.isSelecting ? 'crosshair' : 'default'} max-w-full`}
-                        style={{
-                          width: dataPrepState.imageDimensions.width * dataPrepState.currentZoom,
-                          height: dataPrepState.imageDimensions.height * dataPrepState.currentZoom
-                        }}
-                      />
-                      <img
-                        ref={imageRef}
-                        src={dataPrepState.uploadedImage}
-                        alt="Document de référence"
-                        className="hidden"
-                      />
+                    <div className="bg-white/10 rounded-xl border border-white/20 relative" style={{ maxHeight: '500px', overflow: 'auto' }}>
+                      <div className="relative" style={{ minWidth: 'max-content' }}>
+                        <canvas
+                          ref={canvasRef}
+                          onMouseDown={handleCanvasMouseDown}
+                          onMouseMove={handleCanvasMouseMove}
+                          onMouseUp={handleCanvasMouseUp}
+                          className={`cursor-${dataPrepState.isSelecting ? 'crosshair' : 'default'} block`}
+                          style={{
+                            width: dataPrepState.imageDimensions.width * dataPrepState.currentZoom,
+                            height: dataPrepState.imageDimensions.height * dataPrepState.currentZoom,
+                            border: dataPrepState.isSelecting ? '2px solid #3b82f6' : 'none',
+                            borderRadius: '4px'
+                          }}
+                        />
+                        <img
+                          ref={imageRef}
+                          src={dataPrepState.uploadedImage}
+                          alt="Document de référence"
+                          className="hidden"
+                        />
+                        
+                        {/* Instructions pour la sélection */}
+                        {dataPrepState.isSelecting && (
+                          <>
+                            <div className="absolute bottom-4 left-4 bg-black/90 text-white text-xs px-3 py-2 rounded-lg shadow-lg z-10">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse"></div>
+                                Cliquez et glissez pour mapper: {dataPrepState.selectedField}
+                              </div>
+                              <div className="text-gray-300 mt-1">
+                                Min: 5×5px • Zoom: {Math.round(dataPrepState.currentZoom * 100)}% • Scrollez si nécessaire
+                              </div>
+                            </div>
+                            
+                            {/* Coordonnées en temps réel */}
+                            {/* {drawingState.currentRect && (
+                              <div className="absolute top-4 right-4 bg-black/90 text-white text-xs px-3 py-2 rounded-lg font-mono shadow-lg z-10">
+                                Sélection: {Math.round(drawingState.currentRect.width)}×{Math.round(drawingState.currentRect.height)}px
+                                <br />
+                                Position: ({Math.round(drawingState.currentRect.left)}, {Math.round(drawingState.currentRect.top)})
+                              </div>
+                            )} */}
+                          </>
+                        )}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/30 rounded-xl">
