@@ -1,0 +1,558 @@
+2025-07-13 21:56:18,189 ERROR Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-07-13 22:08:21,217 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:21,217 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:08:21,217 DEBUG Calling on_header_value with data[63:117]
+2025-07-13 22:08:21,218 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:21,218 DEBUG Calling on_header_field with data[119:131]
+2025-07-13 22:08:21,218 DEBUG Calling on_header_value with data[133:148]
+2025-07-13 22:08:21,218 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:21,218 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:21,218 DEBUG Calling on_part_data with data[152:163840]
+2025-07-13 22:08:21,219 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:21,220 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:21,220 DEBUG Calling on_part_data with data[0:124631]
+2025-07-13 22:08:21,220 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:21,221 DEBUG Calling on_end with no data
+2025-07-13 22:08:39,831 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:39,831 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:08:39,831 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:08:39,831 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_part_data with data[89:107]
+2025-07-13 22:08:39,832 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_header_field with data[151:170]
+2025-07-13 22:08:39,832 DEBUG Calling on_header_value with data[172:193]
+2025-07-13 22:08:39,832 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_part_data with data[197:215]
+2025-07-13 22:08:39,832 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:39,832 DEBUG Calling on_header_field with data[259:278]
+2025-07-13 22:08:39,833 DEBUG Calling on_header_value with data[280:303]
+2025-07-13 22:08:39,833 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:39,833 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:39,833 DEBUG Calling on_part_data with data[307:324]
+2025-07-13 22:08:39,833 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:39,833 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:39,833 DEBUG Calling on_header_field with data[368:387]
+2025-07-13 22:08:39,833 DEBUG Calling on_header_value with data[389:413]
+2025-07-13 22:08:39,833 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:39,833 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:39,833 DEBUG Calling on_part_data with data[417:434]
+2025-07-13 22:08:39,833 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:39,833 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:39,834 DEBUG Calling on_header_field with data[478:497]
+2025-07-13 22:08:39,834 DEBUG Calling on_header_value with data[499:527]
+2025-07-13 22:08:39,834 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:39,834 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:39,834 DEBUG Calling on_part_data with data[531:49152]
+2025-07-13 22:08:39,835 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:39,835 DEBUG Calling on_part_data with data[0:242511]
+2025-07-13 22:08:39,836 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:39,836 DEBUG Calling on_end with no data
+2025-07-13 22:08:39,838 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:08:39,838 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:08:39,950 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_twilmzdz_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_twilmzdz', 'txt']
+2025-07-13 22:08:51,921 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:51,922 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:08:51,922 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:08:51,922 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:51,922 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:51,923 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:08:51,923 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:51,923 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:51,923 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:08:51,923 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:08:51,923 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:51,923 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:51,924 DEBUG Calling on_part_data with data[196:214]
+2025-07-13 22:08:51,924 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:51,924 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:51,924 DEBUG Calling on_header_field with data[258:277]
+2025-07-13 22:08:51,924 DEBUG Calling on_header_value with data[279:302]
+2025-07-13 22:08:51,924 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:51,924 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:51,925 DEBUG Calling on_part_data with data[306:323]
+2025-07-13 22:08:51,925 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:51,925 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:51,925 DEBUG Calling on_header_field with data[367:386]
+2025-07-13 22:08:51,925 DEBUG Calling on_header_value with data[388:412]
+2025-07-13 22:08:51,925 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:51,925 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:51,926 DEBUG Calling on_part_data with data[416:434]
+2025-07-13 22:08:51,926 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:51,926 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:51,926 DEBUG Calling on_header_field with data[478:497]
+2025-07-13 22:08:51,926 DEBUG Calling on_header_value with data[499:527]
+2025-07-13 22:08:51,926 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:51,926 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:51,926 DEBUG Calling on_part_data with data[531:245760]
+2025-07-13 22:08:51,927 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:51,928 DEBUG Calling on_part_data with data[0:45903]
+2025-07-13 22:08:51,928 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:51,929 DEBUG Calling on_end with no data
+2025-07-13 22:08:51,931 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:08:51,932 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:08:52,025 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nkow643x_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nkow643x', 'txt']
+2025-07-13 22:08:55,220 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:55,220 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:08:55,220 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:08:55,220 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:55,220 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:55,221 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:08:55,221 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:55,221 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:55,221 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:08:55,221 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:08:55,221 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:55,221 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:55,222 DEBUG Calling on_part_data with data[196:214]
+2025-07-13 22:08:55,222 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:55,222 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:55,222 DEBUG Calling on_header_field with data[258:277]
+2025-07-13 22:08:55,222 DEBUG Calling on_header_value with data[279:302]
+2025-07-13 22:08:55,222 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:55,223 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:55,223 DEBUG Calling on_part_data with data[306:323]
+2025-07-13 22:08:55,223 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:55,223 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:55,223 DEBUG Calling on_header_field with data[367:386]
+2025-07-13 22:08:55,223 DEBUG Calling on_header_value with data[388:412]
+2025-07-13 22:08:55,223 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:55,224 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:55,224 DEBUG Calling on_part_data with data[416:434]
+2025-07-13 22:08:55,224 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:55,224 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:55,224 DEBUG Calling on_header_field with data[478:497]
+2025-07-13 22:08:55,224 DEBUG Calling on_header_value with data[499:527]
+2025-07-13 22:08:55,224 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:55,225 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:55,225 DEBUG Calling on_part_data with data[531:16384]
+2025-07-13 22:08:55,226 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:55,227 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:55,228 DEBUG Calling on_part_data with data[0:13135]
+2025-07-13 22:08:55,228 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:55,228 DEBUG Calling on_end with no data
+2025-07-13 22:08:55,232 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:08:55,232 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:08:55,369 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_rtqs2cc5_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_rtqs2cc5', 'txt']
+2025-07-13 22:08:58,671 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:58,671 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:08:58,671 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:08:58,671 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:58,671 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:58,672 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:08:58,672 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:58,672 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:58,672 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:08:58,672 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:08:58,672 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:58,672 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:58,672 DEBUG Calling on_part_data with data[196:214]
+2025-07-13 22:08:58,672 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:58,672 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:58,672 DEBUG Calling on_header_field with data[258:277]
+2025-07-13 22:08:58,673 DEBUG Calling on_header_value with data[279:302]
+2025-07-13 22:08:58,673 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:58,673 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:58,673 DEBUG Calling on_part_data with data[306:323]
+2025-07-13 22:08:58,673 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:58,673 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:58,673 DEBUG Calling on_header_field with data[367:386]
+2025-07-13 22:08:58,673 DEBUG Calling on_header_value with data[388:412]
+2025-07-13 22:08:58,673 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:58,673 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:58,673 DEBUG Calling on_part_data with data[416:434]
+2025-07-13 22:08:58,673 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:58,673 DEBUG Calling on_part_begin with no data
+2025-07-13 22:08:58,674 DEBUG Calling on_header_field with data[478:497]
+2025-07-13 22:08:58,674 DEBUG Calling on_header_value with data[499:527]
+2025-07-13 22:08:58,674 DEBUG Calling on_header_end with no data
+2025-07-13 22:08:58,674 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:08:58,674 DEBUG Calling on_part_data with data[531:16384]
+2025-07-13 22:08:58,674 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:58,675 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:08:58,675 DEBUG Calling on_part_data with data[0:13135]
+2025-07-13 22:08:58,675 DEBUG Calling on_part_end with no data
+2025-07-13 22:08:58,676 DEBUG Calling on_end with no data
+2025-07-13 22:08:58,678 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:08:58,678 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:08:58,772 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8ffu5yvd_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8ffu5yvd', 'txt']
+2025-07-13 22:09:01,250 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:01,250 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:01,250 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:01,250 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:01,250 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:01,250 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:09:01,250 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:01,251 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:01,251 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:09:01,251 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:09:01,251 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:01,251 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:01,251 DEBUG Calling on_part_data with data[196:213]
+2025-07-13 22:09:01,251 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:01,251 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:01,251 DEBUG Calling on_header_field with data[257:276]
+2025-07-13 22:09:01,251 DEBUG Calling on_header_value with data[278:301]
+2025-07-13 22:09:01,251 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_part_data with data[305:323]
+2025-07-13 22:09:01,252 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_header_field with data[367:386]
+2025-07-13 22:09:01,252 DEBUG Calling on_header_value with data[388:412]
+2025-07-13 22:09:01,252 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_part_data with data[416:433]
+2025-07-13 22:09:01,252 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:01,252 DEBUG Calling on_header_field with data[477:496]
+2025-07-13 22:09:01,253 DEBUG Calling on_header_value with data[498:526]
+2025-07-13 22:09:01,253 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:01,253 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:01,253 DEBUG Calling on_part_data with data[530:32768]
+2025-07-13 22:09:01,253 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:01,254 DEBUG Calling on_part_data with data[0:258894]
+2025-07-13 22:09:01,254 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:01,254 DEBUG Calling on_end with no data
+2025-07-13 22:09:01,256 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:01,257 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:01,346 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7344t2gd_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7344t2gd', 'txt']
+2025-07-13 22:09:04,058 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:04,058 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:04,059 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:04,059 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:04,059 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:04,059 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:09:04,059 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:04,059 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:04,060 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:09:04,060 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:09:04,060 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:04,060 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:04,060 DEBUG Calling on_part_data with data[196:212]
+2025-07-13 22:09:04,060 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:04,060 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:04,060 DEBUG Calling on_header_field with data[256:275]
+2025-07-13 22:09:04,060 DEBUG Calling on_header_value with data[277:300]
+2025-07-13 22:09:04,060 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_part_data with data[304:321]
+2025-07-13 22:09:04,061 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_header_field with data[365:384]
+2025-07-13 22:09:04,061 DEBUG Calling on_header_value with data[386:410]
+2025-07-13 22:09:04,061 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_part_data with data[414:432]
+2025-07-13 22:09:04,061 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:04,061 DEBUG Calling on_header_field with data[476:495]
+2025-07-13 22:09:04,062 DEBUG Calling on_header_value with data[497:525]
+2025-07-13 22:09:04,062 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:04,062 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:04,062 DEBUG Calling on_part_data with data[529:49152]
+2025-07-13 22:09:04,062 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:04,063 DEBUG Calling on_part_data with data[0:242509]
+2025-07-13 22:09:04,063 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:04,063 DEBUG Calling on_end with no data
+2025-07-13 22:09:04,065 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:04,065 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:04,151 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ny8fz0sj_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ny8fz0sj', 'txt']
+2025-07-13 22:09:10,675 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:10,675 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:10,675 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:10,675 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:10,675 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:10,676 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:09:10,676 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:10,676 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:10,676 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:09:10,676 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:09:10,676 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:10,676 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:10,676 DEBUG Calling on_part_data with data[196:213]
+2025-07-13 22:09:10,676 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:10,676 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:10,676 DEBUG Calling on_header_field with data[257:276]
+2025-07-13 22:09:10,676 DEBUG Calling on_header_value with data[278:301]
+2025-07-13 22:09:10,676 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:10,677 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:10,677 DEBUG Calling on_part_data with data[305:322]
+2025-07-13 22:09:10,677 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:10,677 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:10,677 DEBUG Calling on_header_field with data[366:385]
+2025-07-13 22:09:10,677 DEBUG Calling on_header_value with data[387:411]
+2025-07-13 22:09:10,677 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:10,677 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:10,677 DEBUG Calling on_part_data with data[415:433]
+2025-07-13 22:09:10,677 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:10,677 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:10,678 DEBUG Calling on_header_field with data[477:496]
+2025-07-13 22:09:10,678 DEBUG Calling on_header_value with data[498:526]
+2025-07-13 22:09:10,678 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:10,678 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:10,678 DEBUG Calling on_part_data with data[530:16384]
+2025-07-13 22:09:10,679 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:10,679 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:10,679 DEBUG Calling on_part_data with data[0:13134]
+2025-07-13 22:09:10,680 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:10,680 DEBUG Calling on_end with no data
+2025-07-13 22:09:10,682 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:10,682 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:10,771 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ztepr7vh_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ztepr7vh', 'txt']
+2025-07-13 22:09:14,424 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:14,424 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:14,424 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:14,424 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:14,424 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:14,425 DEBUG Calling on_part_data with data[89:105]
+2025-07-13 22:09:14,425 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:14,425 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:14,425 DEBUG Calling on_header_field with data[149:168]
+2025-07-13 22:09:14,425 DEBUG Calling on_header_value with data[170:191]
+2025-07-13 22:09:14,425 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:14,425 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:14,426 DEBUG Calling on_part_data with data[195:213]
+2025-07-13 22:09:14,426 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:14,426 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:14,426 DEBUG Calling on_header_field with data[257:276]
+2025-07-13 22:09:14,426 DEBUG Calling on_header_value with data[278:301]
+2025-07-13 22:09:14,426 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:14,426 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:14,427 DEBUG Calling on_part_data with data[305:322]
+2025-07-13 22:09:14,427 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:14,427 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:14,427 DEBUG Calling on_header_field with data[366:385]
+2025-07-13 22:09:14,427 DEBUG Calling on_header_value with data[387:411]
+2025-07-13 22:09:14,427 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:14,427 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:14,428 DEBUG Calling on_part_data with data[415:432]
+2025-07-13 22:09:14,428 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:14,428 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:14,428 DEBUG Calling on_header_field with data[476:495]
+2025-07-13 22:09:14,428 DEBUG Calling on_header_value with data[497:525]
+2025-07-13 22:09:14,428 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:14,428 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:14,428 DEBUG Calling on_part_data with data[529:16384]
+2025-07-13 22:09:14,429 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:14,430 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:14,430 DEBUG Calling on_part_data with data[0:13133]
+2025-07-13 22:09:14,430 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:14,431 DEBUG Calling on_end with no data
+2025-07-13 22:09:14,433 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:14,434 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:14,514 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ebwlmp26_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ebwlmp26', 'txt']
+2025-07-13 22:09:18,590 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:18,590 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:18,590 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:18,590 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:18,590 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:18,590 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:09:18,590 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:18,591 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:18,591 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:09:18,591 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:09:18,591 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:18,591 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:18,591 DEBUG Calling on_part_data with data[196:214]
+2025-07-13 22:09:18,591 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:18,591 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:18,591 DEBUG Calling on_header_field with data[258:277]
+2025-07-13 22:09:18,592 DEBUG Calling on_header_value with data[279:302]
+2025-07-13 22:09:18,592 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:18,592 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:18,592 DEBUG Calling on_part_data with data[306:324]
+2025-07-13 22:09:18,592 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:18,592 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:18,592 DEBUG Calling on_header_field with data[368:387]
+2025-07-13 22:09:18,592 DEBUG Calling on_header_value with data[389:413]
+2025-07-13 22:09:18,593 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:18,593 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:18,593 DEBUG Calling on_part_data with data[417:434]
+2025-07-13 22:09:18,593 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:18,593 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:18,593 DEBUG Calling on_header_field with data[478:497]
+2025-07-13 22:09:18,593 DEBUG Calling on_header_value with data[499:527]
+2025-07-13 22:09:18,593 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:18,593 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:18,594 DEBUG Calling on_part_data with data[531:32768]
+2025-07-13 22:09:18,594 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:18,595 DEBUG Calling on_part_data with data[0:258895]
+2025-07-13 22:09:18,595 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:18,595 DEBUG Calling on_end with no data
+2025-07-13 22:09:18,597 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:18,597 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:18,674 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_0aza782i_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_0aza782i', 'txt']
+2025-07-13 22:09:22,580 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:22,580 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:22,580 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:22,580 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:22,580 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:22,580 DEBUG Calling on_part_data with data[89:106]
+2025-07-13 22:09:22,580 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:22,580 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:22,580 DEBUG Calling on_header_field with data[150:169]
+2025-07-13 22:09:22,580 DEBUG Calling on_header_value with data[171:192]
+2025-07-13 22:09:22,580 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_part_data with data[196:212]
+2025-07-13 22:09:22,581 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_header_field with data[256:275]
+2025-07-13 22:09:22,581 DEBUG Calling on_header_value with data[277:300]
+2025-07-13 22:09:22,581 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_part_data with data[304:321]
+2025-07-13 22:09:22,581 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:22,581 DEBUG Calling on_header_field with data[365:384]
+2025-07-13 22:09:22,582 DEBUG Calling on_header_value with data[386:410]
+2025-07-13 22:09:22,582 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:22,582 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:22,582 DEBUG Calling on_part_data with data[414:431]
+2025-07-13 22:09:22,582 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:22,582 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:22,582 DEBUG Calling on_header_field with data[475:494]
+2025-07-13 22:09:22,582 DEBUG Calling on_header_value with data[496:524]
+2025-07-13 22:09:22,582 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:22,582 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:22,582 DEBUG Calling on_part_data with data[528:16384]
+2025-07-13 22:09:22,583 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:22,584 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:22,584 DEBUG Calling on_part_data with data[0:13132]
+2025-07-13 22:09:22,584 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:22,584 DEBUG Calling on_end with no data
+2025-07-13 22:09:22,586 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:22,586 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:22,659 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_cuxuvg0q_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_cuxuvg0q', 'txt']
+2025-07-13 22:09:26,245 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:26,245 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:26,245 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:26,245 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:26,246 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:26,246 DEBUG Calling on_part_data with data[89:107]
+2025-07-13 22:09:26,246 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:26,246 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:26,246 DEBUG Calling on_header_field with data[151:170]
+2025-07-13 22:09:26,246 DEBUG Calling on_header_value with data[172:193]
+2025-07-13 22:09:26,246 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:26,246 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:26,246 DEBUG Calling on_part_data with data[197:214]
+2025-07-13 22:09:26,246 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:26,246 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:26,247 DEBUG Calling on_header_field with data[258:277]
+2025-07-13 22:09:26,247 DEBUG Calling on_header_value with data[279:302]
+2025-07-13 22:09:26,247 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:26,247 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:26,247 DEBUG Calling on_part_data with data[306:323]
+2025-07-13 22:09:26,247 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:26,247 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:26,247 DEBUG Calling on_header_field with data[367:386]
+2025-07-13 22:09:26,247 DEBUG Calling on_header_value with data[388:412]
+2025-07-13 22:09:26,247 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:26,247 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:26,247 DEBUG Calling on_part_data with data[416:434]
+2025-07-13 22:09:26,247 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:26,248 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:26,248 DEBUG Calling on_header_field with data[478:497]
+2025-07-13 22:09:26,248 DEBUG Calling on_header_value with data[499:527]
+2025-07-13 22:09:26,248 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:26,248 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:26,248 DEBUG Calling on_part_data with data[531:16384]
+2025-07-13 22:09:26,249 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:26,249 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:26,249 DEBUG Calling on_part_data with data[0:13135]
+2025-07-13 22:09:26,249 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:26,250 DEBUG Calling on_end with no data
+2025-07-13 22:09:26,252 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:26,252 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:26,332 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7t7rlm18_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7t7rlm18', 'txt']
+2025-07-13 22:09:32,988 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:32,989 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:32,989 DEBUG Calling on_header_value with data[63:85]
+2025-07-13 22:09:32,989 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:32,989 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:32,989 DEBUG Calling on_part_data with data[89:107]
+2025-07-13 22:09:32,989 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:32,990 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:32,990 DEBUG Calling on_header_field with data[151:170]
+2025-07-13 22:09:32,990 DEBUG Calling on_header_value with data[172:193]
+2025-07-13 22:09:32,990 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:32,990 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:32,990 DEBUG Calling on_part_data with data[197:214]
+2025-07-13 22:09:32,990 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:32,991 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:32,991 DEBUG Calling on_header_field with data[258:277]
+2025-07-13 22:09:32,991 DEBUG Calling on_header_value with data[279:302]
+2025-07-13 22:09:32,991 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:32,991 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:32,991 DEBUG Calling on_part_data with data[306:322]
+2025-07-13 22:09:32,991 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:32,991 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:32,991 DEBUG Calling on_header_field with data[366:385]
+2025-07-13 22:09:32,992 DEBUG Calling on_header_value with data[387:411]
+2025-07-13 22:09:32,992 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:32,992 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:32,992 DEBUG Calling on_part_data with data[415:433]
+2025-07-13 22:09:32,992 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:32,992 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:32,992 DEBUG Calling on_header_field with data[477:496]
+2025-07-13 22:09:32,993 DEBUG Calling on_header_value with data[498:526]
+2025-07-13 22:09:32,993 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:32,993 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:32,993 DEBUG Calling on_part_data with data[530:229376]
+2025-07-13 22:09:32,994 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:32,995 DEBUG Calling on_part_data with data[0:62286]
+2025-07-13 22:09:32,995 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:32,995 DEBUG Calling on_end with no data
+2025-07-13 22:09:32,998 DEBUG STREAM b'IHDR' 16 13
+2025-07-13 22:09:32,998 DEBUG STREAM b'IDAT' 41 65536
+2025-07-13 22:09:33,089 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_er3zh8ru_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_er3zh8ru', 'txt']
+2025-07-13 22:09:52,162 DEBUG Calling on_part_begin with no data
+2025-07-13 22:09:52,162 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:09:52,162 DEBUG Calling on_header_value with data[63:117]
+2025-07-13 22:09:52,162 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:52,162 DEBUG Calling on_header_field with data[119:131]
+2025-07-13 22:09:52,163 DEBUG Calling on_header_value with data[133:148]
+2025-07-13 22:09:52,163 DEBUG Calling on_header_end with no data
+2025-07-13 22:09:52,163 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:09:52,163 DEBUG Calling on_part_data with data[152:163840]
+2025-07-13 22:09:52,164 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:52,165 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:09:52,167 DEBUG Calling on_part_data with data[0:124631]
+2025-07-13 22:09:52,167 DEBUG Calling on_part_end with no data
+2025-07-13 22:09:52,167 DEBUG Calling on_end with no data
+2025-07-13 22:10:00,520 DEBUG Calling on_part_begin with no data
+2025-07-13 22:10:00,520 DEBUG Calling on_header_field with data[42:61]
+2025-07-13 22:10:00,520 DEBUG Calling on_header_value with data[63:89]
+2025-07-13 22:10:00,520 DEBUG Calling on_header_end with no data
+2025-07-13 22:10:00,520 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:10:00,520 DEBUG Calling on_part_data with data[93:100]
+2025-07-13 22:10:00,521 DEBUG Calling on_part_end with no data
+2025-07-13 22:10:00,521 DEBUG Calling on_part_begin with no data
+2025-07-13 22:10:00,521 DEBUG Calling on_header_field with data[144:163]
+2025-07-13 22:10:00,521 DEBUG Calling on_header_value with data[165:219]
+2025-07-13 22:10:00,521 DEBUG Calling on_header_end with no data
+2025-07-13 22:10:00,521 DEBUG Calling on_header_field with data[221:233]
+2025-07-13 22:10:00,521 DEBUG Calling on_header_value with data[235:250]
+2025-07-13 22:10:00,521 DEBUG Calling on_header_end with no data
+2025-07-13 22:10:00,522 DEBUG Calling on_headers_finished with no data
+2025-07-13 22:10:00,522 DEBUG Calling on_part_data with data[254:245760]
+2025-07-13 22:10:00,523 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:10:00,524 DEBUG Calling on_part_data with data[0:262144]
+2025-07-13 22:10:00,524 DEBUG Calling on_part_data with data[0:42813]
+2025-07-13 22:10:00,524 DEBUG Calling on_part_end with no data
+2025-07-13 22:10:00,525 DEBUG Calling on_end with no data
+2025-07-13 22:10:02,517 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_opvhfob5_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_opvhfob5', 'txt']
+2025-07-13 22:10:02,895 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_iy5w_pel_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_iy5w_pel', 'txt']
+2025-07-13 22:10:03,192 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nvju93b1_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nvju93b1', 'txt']
+2025-07-13 22:10:03,446 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8o3myw85_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8o3myw85', 'txt']
+2025-07-13 22:10:03,690 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_obtqqkwm_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_obtqqkwm', 'txt']
+2025-07-13 22:10:03,991 INFO Données extraites pour radeema: {'numeroFacture': 'N°2025206481682', 'tauxTVA': '18,0', 'montantHT': '', 'montantTVA': '238,18', 'montantTTC': '280,93', 'emetteur': 'radeema'}

@@ -8,18 +8,16 @@ import os
 import pymupdf as fitz
 from PIL import Image, ImageEnhance, ImageOps
 import logging
-import pytesseract
+from paddleocr import PaddleOCR
 import numpy as np
-import cv2
-from pdf2image import convert_from_bytes
+# import cv2  # No longer needed for preprocessing
 import base64
 from io import BytesIO
 import tempfile
 import shutil
-import fitz
+from math import hypot
 
 # Configuration
-DPI = 300
 MAPPING_FILE = 'fournisseur_mappings.json'
 UPLOAD_DIR = 'uploads'
 DEBUG_DIR = 'debug_images'
@@ -33,6 +31,19 @@ logging.basicConfig(
     filename='invoice_debug.log',
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(message)s'
+)
+
+# Initialiser PaddleOCR avec les paramètres spécifiés
+ocr = PaddleOCR(
+    det=True,
+    rec=True,
+    use_angle_cls=False,
+    det_algorithm='DB',
+    det_db_box_thresh=0.45,
+    lang='en',
+    gpu_mem=3000,
+    det_db_unclip_ratio=1.3,
+    use_gpu=True
 )
 
 app = FastAPI(title="Invoice Extractor API", version="1.0.0")
@@ -102,30 +113,9 @@ def safe_crop_bounds(left: float, top: float, width: float, height: float, img_w
         
     return left, top, right, bottom
 
-def detect_pdf_type_and_dpi(file_bytes: bytes) -> tuple:
-    """Détecter si le PDF est numérique ou scanné"""
-    try:
-        doc = fitz.open(stream=file_bytes, filetype="pdf")
-        page = doc[0]
-        text = page.get_text('text').strip()
-        doc.close()
-        if text:
-            return True, 300  # PDF numérique
-        else:
-            return False, 400  # PDF scanné
-    except Exception:
-        return False, 400
-
 def preprocess_image_cv(img: Image.Image) -> Image.Image:
-    """Préprocesseur d'image avec OpenCV pour améliorer l'OCR"""
-    img_cv = np.array(img.convert('L'))
-    h, w = img_cv.shape
-    scale = 2
-    img_cv = cv2.resize(img_cv, (w * scale, h * scale), interpolation=cv2.INTER_LINEAR)
-    img_cv = cv2.bilateralFilter(img_cv, 11, 17, 17)
-    img_cv = cv2.adaptiveThreshold(img_cv, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
-                                   cv2.THRESH_BINARY, 15, 10)
-    return Image.fromarray(img_cv)
+    """Retourner l'image originale pour PaddleOCR (pas de préprocessing nécessaire)"""
+    return img
 
 def image_to_base64(img: Image.Image) -> str:
     """Convertir une image PIL en base64"""
@@ -133,6 +123,49 @@ def image_to_base64(img: Image.Image) -> str:
     img.save(buffer, format='PNG')
     img_str = base64.b64encode(buffer.getvalue()).decode()
     return f"data:image/png;base64,{img_str}"
+
+def extract_text_with_paddleocr(img: Image.Image) -> str:
+    """Extraire le texte d'une image avec PaddleOCR"""
+    try:
+        # Convertir PIL Image en numpy array
+        img_array = np.array(img)
+        
+        # Utiliser PaddleOCR pour extraire le texte
+        result = ocr.ocr(img_array, cls=False)
+        
+        # Extraire le texte de tous les résultats
+        texts = []
+        if result and result[0]:
+            for line in result[0]:
+                if line and len(line) >= 2:
+                    text = line[1][0]  # Le texte est dans le deuxième élément
+                    confidence = line[1][1]  # La confiance est dans le troisième élément
+                    texts.append(text)
+        
+        return ' '.join(texts).strip()
+    except Exception as e:
+        logging.error(f"Erreur lors de l'extraction OCR: {e}")
+        return ""
+
+def process_pdf_to_image(file_content: bytes) -> Image.Image:
+    """Convertir un PDF en image en utilisant PyMuPDF"""
+    try:
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        page = doc[0]
+        
+        # Récupérer la matrice de transformation standard pour PaddleOCR
+        mat = fitz.Matrix(1.0, 1.0)  # Résolution standard pour PaddleOCR
+        pix = page.get_pixmap(matrix=mat)
+        
+        # Convertir en PIL Image
+        img_data = pix.tobytes("png")
+        img = Image.open(BytesIO(img_data))
+        
+        doc.close()
+        return img
+    except Exception as e:
+        logging.error(f"Erreur lors de la conversion PDF: {e}")
+        raise e
 
 # Routes API
 @app.get("/")
@@ -187,16 +220,12 @@ async def upload_for_dataprep(file: UploadFile = File(...)):
         
         # Traiter selon le type de fichier
         if file.filename.lower().endswith('.pdf'):
-            is_digital, dpi = detect_pdf_type_and_dpi(file_content)
-            pages = convert_from_bytes(file_content, dpi=dpi)
-            img = pages[0]
+            img = process_pdf_to_image(file_content)
             processed_img = preprocess_image_cv(img)
             
             return {
                 "success": True,
                 "image": image_to_base64(processed_img),
-                "is_digital": is_digital,
-                "dpi": dpi,
                 "width": processed_img.width,
                 "height": processed_img.height
             }
@@ -208,8 +237,6 @@ async def upload_for_dataprep(file: UploadFile = File(...)):
             return {
                 "success": True,
                 "image": image_to_base64(processed_img),
-                "is_digital": False,
-                "dpi": 400,
                 "width": processed_img.width,
                 "height": processed_img.height
             }
@@ -221,12 +248,109 @@ async def upload_for_dataprep(file: UploadFile = File(...)):
         logging.error(f"Erreur lors de l'upload: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du traitement: {str(e)}")
 
+@app.post("/detect-ocr-boxes")
+async def detect_ocr_boxes(file: UploadFile = File(...)):
+    """Détecter automatiquement les boîtes OCR dans une image"""
+    try:
+        # Lire le contenu du fichier
+        file_content = await file.read()
+        
+        # Traiter selon le type de fichier
+        if file.filename.lower().endswith('.pdf'):
+            img = process_pdf_to_image(file_content)
+        elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            img = Image.open(BytesIO(file_content)).convert('RGB')
+        else:
+            raise HTTPException(status_code=400, detail="Type de fichier non supporté")
+        
+        # Détecter les boîtes OCR
+        ocr_boxes = detect_ocr_boxes_from_image(img)
+        
+        return {
+            "success": True,
+            "boxes": ocr_boxes,
+            "width": img.width,
+            "height": img.height
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la détection OCR: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la détection OCR: {str(e)}")
+
+def detect_ocr_boxes_from_image(img: Image.Image) -> List[Dict]:
+    """Détecter les boîtes OCR dans une image"""
+    try:
+        # Convertir PIL Image en numpy array
+        img_array = np.array(img)
+        
+        # Utiliser PaddleOCR pour détecter les boîtes
+        result = ocr.ocr(img_array, cls=False)
+        
+        boxes = []
+        if result and result[0]:
+            for i, line in enumerate(result[0]):
+                if line and len(line) >= 2:
+                    coords = line[0]  # Coordonnées de la boîte
+                    text_info = line[1]
+                    
+                    if isinstance(text_info, tuple) and len(text_info) >= 2:
+                        text = text_info[0]
+                        confidence = text_info[1]
+                        
+                        # Filtrer pour les caractères latins et confiance élevée
+                        if confidence >= 0.5 and text.strip():
+                            # Convertir les coordonnées en format standard
+                            left = min(coord[0] for coord in coords)
+                            top = min(coord[1] for coord in coords)
+                            right = max(coord[0] for coord in coords)
+                            bottom = max(coord[1] for coord in coords)
+                            width = right - left
+                            height = bottom - top
+                            
+                            boxes.append({
+                                'id': i,
+                                'coords': {
+                                    'left': left,
+                                    'top': top,
+                                    'width': width,
+                                    'height': height
+                                },
+                                'text': text.strip(),
+                                'confidence': confidence
+                            })
+        
+        return boxes
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la détection des boîtes OCR: {e}")
+        return []
+
+# Helper: Find closest OCR box to a target rectangle
+
+def find_closest_ocr_box(target_rect, ocr_boxes):
+    # target_rect: dict with left, top, width, height
+    # ocr_boxes: list of (box, text, confidence)
+    tx = target_rect['left'] + target_rect['width'] / 2
+    ty = target_rect['top'] + target_rect['height'] / 2
+    best_box = None
+    best_dist = float('inf')
+    for box in ocr_boxes:
+        coords = box[0]  # 4 points
+        # Compute center of OCR box
+        bx = (coords[0][0] + coords[2][0]) / 2
+        by = (coords[0][1] + coords[2][1]) / 2
+        dist = hypot(tx - bx, ty - by)
+        if dist < best_dist:
+            best_dist = dist
+            best_box = box
+    return best_box
+
 @app.post("/extract-data")
 async def extract_data(
     emetteur: str = Form(...),
     file: UploadFile = File(...)
 ):
-    """Extraire les données d'un PDF selon les mappings de l'émetteur"""
+    """Extraire les données d'un PDF selon les mappings de l'émetteur (smart bounding box matching)"""
     try:
         # Vérifier si l'émetteur existe
         mappings = load_mapping()
@@ -239,64 +363,38 @@ async def extract_data(
         file_content = await file.read()
         
         if file.filename.lower().endswith('.pdf'):
-            is_digital, dpi = detect_pdf_type_and_dpi(file_content)
-            pages = convert_from_bytes(file_content, dpi=dpi)
-            img = pages[0]
-            processed_img = preprocess_image_cv(img)
+            img = process_pdf_to_image(file_content)
         elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             img = Image.open(BytesIO(file_content)).convert('RGB')
-            processed_img = preprocess_image_cv(img)
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
         
-        # Extraire les données
+        # Run OCR on the whole image
+        img_array = np.array(img)
+        ocr_result = ocr.ocr(img_array, cls=False)
+        ocr_boxes = ocr_result[0] if ocr_result and len(ocr_result) > 0 else []
+        
+        # For each field, find the closest OCR box
         extracted_data = {}
         debug_images = []
-        img_w, img_h = processed_img.size
-        
         for field, coords in field_map.items():
             if coords is None:
                 extracted_data[field] = ""
                 continue
-                
-            left = coords['left']
-            top = coords['top']
-            width = coords['width']
-            height = coords['height']
-            
-            try:
-                left_safe, top_safe, right_safe, bottom_safe = safe_crop_bounds(
-                    left, top, width, height, img_w, img_h
-                )
-                crop_box = (left_safe, top_safe, right_safe, bottom_safe)
-                crop_img = processed_img.crop(crop_box)
-                
-                # OCR sur la zone cropped
-                text = pytesseract.image_to_string(crop_img).strip()
+            best_box = find_closest_ocr_box(coords, ocr_boxes)
+            if best_box and len(best_box) >= 2:
+                text = best_box[1][0]
                 extracted_data[field] = text
-                
-                # Sauvegarder l'image de debug
-                debug_path = os.path.join(DEBUG_DIR, f"{field}_debug.png")
-                crop_img.save(debug_path)
-                debug_images.append(f"{field}_debug.png")
-                
-            except Exception as e:
-                logging.error(f"Erreur lors de l'extraction du champ '{field}': {e}")
-                extracted_data[field] = f"[Erreur: {str(e)}]"
-        
-        # Ajouter l'émetteur aux données extraites
+            else:
+                extracted_data[field] = ""
         extracted_data['emetteur'] = emetteur
-        
-        # Logger les résultats
         logging.info(f'Données extraites pour {emetteur}: {extracted_data}')
-        
         return ExtractionResult(
             success=True,
             data=extracted_data,
-            message="Extraction réussie",
-            debug_images=debug_images
+            message="Extraction réussie (smart bounding box)",
+            debug_images=[]
         )
-        
     except Exception as e:
         logging.error(f"Erreur lors de l'extraction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'extraction: {str(e)}")
@@ -326,9 +424,9 @@ async def ocr_preview(
         crop_box = (left_safe, top_safe, right_safe, bottom_safe)
         crop_img = img.crop(crop_box)
         
-        # Préprocesser et faire l'OCR
+        # Préprocesser et faire l'OCR avec PaddleOCR
         processed_crop = preprocess_image_cv(crop_img)
-        text = pytesseract.image_to_string(processed_crop).strip()
+        text = extract_text_with_paddleocr(processed_crop)
         
         return {
             "success": True,

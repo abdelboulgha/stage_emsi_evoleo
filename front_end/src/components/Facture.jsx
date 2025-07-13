@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Upload, FileText, Image, X, Loader2, CheckCircle, AlertCircle, Building, User, Receipt } from 'lucide-react';
+import { Upload, FileText, Image, X, Loader2, CheckCircle, AlertCircle, Building, User, Receipt, ZoomIn, ZoomOut, RotateCcw } from 'lucide-react';
 
 export default function Facture() {
   const [invoiceData, setInvoiceData] = useState({
@@ -18,6 +18,7 @@ export default function Facture() {
   const [isExtracting, setIsExtracting] = useState(false);
   const [extractionStatus, setExtractionStatus] = useState(null); // 'success', 'error', null
   const [extractionMessage, setExtractionMessage] = useState('');
+  const [previewZoom, setPreviewZoom] = useState(1);
 
   const API_BASE_URL = 'http://localhost:8000'; // URL de votre API backend
 
@@ -32,13 +33,14 @@ export default function Facture() {
   const extractDataFromFile = async (file) => {
     setIsExtracting(true);
     setExtractionStatus(null);
-    setExtractionMessage('Extraction des données en cours...');
+    setExtractionMessage('Extraction des données en cours avec PaddleOCR...');
 
     try {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('emetteur', 'default'); // Utiliser un émetteur par défaut
 
-      const response = await fetch(`${API_BASE_URL}/extract-invoice`, {
+      const response = await fetch(`${API_BASE_URL}/extract-data`, {
         method: 'POST',
         body: formData,
       });
@@ -68,7 +70,7 @@ export default function Facture() {
         
         // Compter les champs extraits
         const extractedFields = Object.values(result.data).filter(value => value !== null && value !== '').length;
-        setExtractionMessage(`Extraction réussie ! ${extractedFields} champs extraits.`);
+        setExtractionMessage(`Extraction PaddleOCR réussie ! ${extractedFields} champs extraits.`);
       } else {
         throw new Error('Données non extraites correctement');
       }
@@ -132,6 +134,7 @@ export default function Facture() {
     setFilePreview(null);
     setExtractionStatus(null);
     setExtractionMessage('');
+    setPreviewZoom(1);
   };
 
   const calculateFromHT = () => {
@@ -188,6 +191,22 @@ export default function Facture() {
     // Ici vous pouvez ajouter la logique pour sauvegarder en base de données
     console.log('Sauvegarde de la facture:', invoiceData);
     alert('Facture sauvegardée avec succès !');
+  };
+
+  // Helper to filter extracted values
+  const filterValue = (val) => {
+    if (!val) return '';
+    // Only keep numbers and symbols (no letters)
+    const matches = val.match(/[0-9.,;:/\\-]+/g);
+    return matches ? matches.join('') : '';
+  };
+
+  // Handle zoom for preview
+  const handlePreviewZoomChange = (factor) => {
+    setPreviewZoom(z => {
+      const newZoom = Math.max(0.2, Math.min(5, z * factor));
+      return newZoom;
+    });
   };
 
   const styles = {
@@ -389,7 +408,36 @@ export default function Facture() {
     previewIframe: {
       width: '100%',
       height: '400px',
-      border: 'none'
+    },
+    zoomButton: {
+      padding: '4px',
+      color: '#6b7280',
+      backgroundColor: 'transparent',
+      border: '1px solid #d1d5db',
+      borderRadius: '4px',
+      cursor: 'pointer',
+      transition: 'all 0.2s',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center'
+    },
+    zoomPercentage: {
+      fontSize: '12px',
+      fontWeight: '500',
+      color: '#6b7280',
+      minWidth: '40px',
+      textAlign: 'center'
+    },
+    zoomControls: {
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '8px',
+      marginBottom: '12px',
+      padding: '8px',
+      backgroundColor: '#f9fafb',
+      borderRadius: '8px',
+      border: '1px solid #e5e7eb'
     },
     statusBanner: {
       padding: '12px',
@@ -455,7 +503,7 @@ export default function Facture() {
                 <input
                   type="text"
                   name="numeroFacture"
-                  value={invoiceData.numeroFacture}
+                  value={filterValue(invoiceData.numeroFacture)}
                   onChange={handleInputChange}
                   style={{
                     ...styles.input,
@@ -475,7 +523,7 @@ export default function Facture() {
                   <input
                     type="text"
                     name="emetteur"
-                    value={invoiceData.emetteur}
+                    value={filterValue(invoiceData.emetteur)}
                     onChange={handleInputChange}
                     style={{
                       ...styles.input,
@@ -500,7 +548,7 @@ export default function Facture() {
                 <input
                   type="number"
                   name="tauxTVA"
-                  value={invoiceData.tauxTVA}
+                  value={filterValue(invoiceData.tauxTVA)}
                   onChange={handleInputChange}
                   step="0.01"
                   style={{
@@ -519,7 +567,7 @@ export default function Facture() {
                   <input
                     type="number"
                     name="montantHT"
-                    value={invoiceData.montantHT}
+                    value={filterValue(invoiceData.montantHT)}
                     onChange={handleInputChange}
                     step="0.01"
                     style={{
@@ -540,7 +588,7 @@ export default function Facture() {
                 <input
                   type="number"
                   name="montantTVA"
-                  value={invoiceData.montantTVA}
+                  value={filterValue(invoiceData.montantTVA)}
                   onChange={handleInputChange}
                   step="0.01"
                   style={{
@@ -559,7 +607,7 @@ export default function Facture() {
                   <input
                     type="number"
                     name="montantTTC"
-                    value={invoiceData.montantTTC}
+                    value={filterValue(invoiceData.montantTTC)}
                     onChange={handleInputChange}
                     step="0.01"
                     style={{
@@ -673,17 +721,56 @@ export default function Facture() {
                     <X size={16} />
                   </button>
                 </div>
+                
+                {/* Zoom controls - outside file info */}
+                <div style={styles.zoomControls}>
+                  <button
+                    onClick={() => handlePreviewZoomChange(0.8)}
+                    style={styles.zoomButton}
+                    title="Zoom out"
+                  >
+                    <ZoomOut size={16} />
+                  </button>
+                  <span style={styles.zoomPercentage}>
+                    {Math.round(previewZoom * 100)}%
+                  </span>
+                  <button
+                    onClick={() => handlePreviewZoomChange(1.2)}
+                    style={styles.zoomButton}
+                    title="Zoom in"
+                  >
+                    <ZoomIn size={16} />
+                  </button>
+                  <button
+                    onClick={() => setPreviewZoom(1)}
+                    style={styles.zoomButton}
+                    title="Reset zoom"
+                  >
+                    <RotateCcw size={16} />
+                  </button>
+                </div>
+                
                 <div style={styles.previewContainer}>
                   {uploadedFile.type.startsWith('image/') ? (
                     <img
                       src={filePreview}
                       alt="Preview"
-                      style={styles.previewImage}
+                      style={{
+                        ...styles.previewImage,
+                        width: `${previewZoom * 100}%`,
+                        height: 'auto',
+                        transition: 'width 0.2s'
+                      }}
                     />
                   ) : (
                     <iframe
                       src={filePreview}
-                      style={styles.previewIframe}
+                      style={{
+                        ...styles.previewIframe,
+                        width: `${previewZoom * 100}%`,
+                        height: 'auto',
+                        transition: 'width 0.2s'
+                      }}
                       title="PDF Preview"
                     />
                   )}
@@ -698,8 +785,8 @@ export default function Facture() {
           <h3 style={{...styles.cardTitle, marginBottom: '16px'}}>
             💡 Aide
           </h3>
-          <div style={{fontSize: '14px', color: '#6b7280', lineHeight: '1.6'}}>
-            <p><strong>Champs extraits automatiquement:</strong></p>
+                      <div style={{fontSize: '14px', color: '#6b7280', lineHeight: '1.6'}}>
+            <p><strong>Champs extraits automatiquement avec PaddleOCR:</strong></p>
             <ul style={{marginLeft: '20px', marginTop: '8px'}}>
               <li>Numéro de facture (ex: IN2411-0001)</li>
               <li>Émetteur (nom de l'entreprise)</li>
@@ -709,7 +796,7 @@ export default function Facture() {
             </ul>
             <p style={{marginTop: '12px'}}>
               <strong>Astuce:</strong> Les champs extraits automatiquement apparaissent avec un fond bleu clair. 
-              Vous pouvez les modifier si nécessaire.
+              Vous pouvez les modifier si nécessaire. L'extraction utilise PaddleOCR pour une reconnaissance de texte optimisée.
             </p>
           </div>
         </div>
