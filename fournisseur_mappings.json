@@ -1,6 +1,12 @@
 {
-  "radeema": {
+  "96a0a4c4": {
     "field_map": {
+      "fournisseur": {
+        "left": 340.0,
+        "top": 84.0,
+        "width": 186.0,
+        "height": 12.0
+      },
       "numeroFacture": {
         "left": 75.0,
         "top": 55.0,
@@ -19,16 +25,96 @@
         "width": 32.0,
         "height": 11.0
       },
+      "montantTVA": {
+        "left": 522.0,
+        "top": 416.0,
+        "width": 28.0,
+        "height": 11.0
+      },
       "montantTTC": {
         "left": 517.0,
         "top": 436.0,
         "width": 34.0,
         "height": 11.0
+      }
+    }
+  },
+  "5113f41a": {
+    "field_map": {
+      "fournisseur": {
+        "left": 353.0,
+        "top": 80.0,
+        "width": 188.0,
+        "height": 12.0
+      },
+      "numeroFacture": {
+        "left": 263.0,
+        "top": 54.0,
+        "width": 98.0,
+        "height": 11.0
+      },
+      "tauxTVA": {
+        "left": 504.0,
+        "top": 354.0,
+        "width": 18.0,
+        "height": 12.0
+      },
+      "montantHT": {
+        "left": 540.0,
+        "top": 408.0,
+        "width": 28.0,
+        "height": 11.0
       },
       "montantTVA": {
-        "left": 522.0,
-        "top": 416.0,
+        "left": 547.0,
+        "top": 419.0,
+        "width": 20.0,
+        "height": 9.0
+      },
+      "montantTTC": {
+        "left": 540.0,
+        "top": 439.0,
         "width": 28.0,
+        "height": 12.0
+      }
+    }
+  },
+  "82c90dae": {
+    "field_map": {
+      "fournisseur": {
+        "left": 35.0,
+        "top": 129.0,
+        "width": 23.0,
+        "height": 12.0
+      },
+      "numeroFacture": {
+        "left": 437.0,
+        "top": 28.0,
+        "width": 127.0,
+        "height": 16.0
+      },
+      "tauxTVA": {
+        "left": 340.0,
+        "top": 636.0,
+        "width": 64.0,
+        "height": 14.0
+      },
+      "montantHT": {
+        "left": 535.0,
+        "top": 625.0,
+        "width": 30.0,
+        "height": 13.0
+      },
+      "montantTVA": {
+        "left": 538.0,
+        "top": 638.0,
+        "width": 28.0,
+        "height": 12.0
+      },
+      "montantTTC": {
+        "left": 534.0,
+        "top": 650.0,
+        "width": 32.0,
         "height": 11.0
       }
     }

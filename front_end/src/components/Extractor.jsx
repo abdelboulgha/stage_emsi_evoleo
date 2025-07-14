@@ -10,23 +10,102 @@ const Extractor = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
 
-  // États pour l'extraction
+  // 1. State changes for multi-PDF import
+  // Update extractionState to support multiple pages
   const [extractionState, setExtractionState] = useState({
-    selectedIssuer: '',
-    customIssuer: '',
-    uploadedFile: null,
-    filePreview: null,
-    previewDimensions: { width: 0, height: 0 },
-    previewZoom: 1, // Ajout du zoom pour l'aperçu
-    extractedData: {
-      numeroFacture: '',
-      tauxTVA: '',
-      montantHT: '',
-      montantTVA: '',
-      montantTTC: ''
-    },
+    uploadedFiles: [],
+    filePreviews: [], // array of images/pages
+    previewDimensions: [], // array of {width, height}
+    currentPdfIndex: 0,
+    extractedDataList: [], // array of extracted data per page
     isProcessing: false
   });
+
+  // 2. Handle multi-file upload
+  const handleMultiFileUpload = async (event) => {
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
+    setExtractionState(prev => ({ ...prev, isProcessing: true }));
+    try {
+      // For each file, get preview and dimensions
+      const previews = [];
+      const dimensions = [];
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.success) {
+          previews.push(result.image);
+          dimensions.push({ width: result.width, height: result.height });
+        } else {
+          previews.push(null);
+          dimensions.push({ width: 0, height: 0 });
+        }
+      }
+      setExtractionState(prev => ({
+        ...prev,
+        uploadedFiles: files,
+        filePreviews: previews,
+        previewDimensions: dimensions,
+        previewZoom: 1,
+        extractedDataList: Array(files.length).fill({}),
+        isProcessing: false,
+        currentPdfIndex: 0,
+      }));
+      showNotification(`${files.length} fichiers chargés`, 'success');
+    } catch (error) {
+      showNotification('Erreur lors du chargement des fichiers', 'error');
+      setExtractionState(prev => ({ ...prev, isProcessing: false }));
+    }
+  };
+
+  // 3. Slider controls
+  const goToPrevPdf = () => {
+    setExtractionState(prev => ({
+      ...prev,
+      currentPdfIndex: Math.max(0, prev.currentPdfIndex - 1)
+    }));
+  };
+  const goToNextPdf = () => {
+    setExtractionState(prev => ({
+      ...prev,
+      currentPdfIndex: Math.min(prev.filePreviews.length - 1, prev.currentPdfIndex + 1)
+    }));
+  };
+
+  // 4. Batch extraction logic
+  const extractAllPdfs = async () => {
+    setExtractionState(prev => ({ ...prev, isProcessing: true }));
+    const results = [];
+    for (let i = 0; i < extractionState.filePreviews.length; i++) {
+      const base64 = extractionState.filePreviews[i];
+      // Convert base64 to Blob
+      const res = await fetch(base64);
+      const blob = await res.blob();
+      const formData = new FormData();
+      formData.append('file', blob, `page_${i}.png`);
+      try {
+        const response = await fetch(`${API_BASE_URL}/extract-data`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        results.push(result);
+      } catch (error) {
+        results.push({ success: false, message: 'Erreur lors de l\'extraction', error });
+      }
+    }
+    setExtractionState(prev => ({
+      ...prev,
+      extractedDataList: results,
+      isProcessing: false
+    }));
+    showNotification('Extraction terminée pour tous les fichiers', 'success');
+  };
 
   // États pour DataPrep
   const [dataPrepState, setDataPrepState] = useState({
@@ -50,6 +129,7 @@ const Extractor = () => {
 
   // Constantes
   const EXTRACTION_FIELDS = [
+    { key: 'fournisseur', label: 'Fournisseur', icon: '🏢' },
     { key: 'numeroFacture', label: 'Numéro de Facture', icon: '📄' },
     { key: 'tauxTVA', label: 'Taux TVA', icon: '📊' },
     { key: 'montantHT', label: 'Montant HT', icon: '💰' },
@@ -93,44 +173,48 @@ const Extractor = () => {
   };
 
   // Gestionnaire de fichiers pour l'extraction
+  // Update handleExtractionFileUpload to support multi-page PDFs
   const handleExtractionFileUpload = async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const files = Array.from(event.target.files);
+    if (!files.length) return;
 
-    setExtractionState(prev => ({ ...prev, uploadedFile: file, isProcessing: true }));
+    setExtractionState(prev => ({ ...prev, isProcessing: true }));
 
-    try {
+    let allImages = [];
+    let allDimensions = [];
+
+    for (const file of files) {
       const formData = new FormData();
       formData.append('file', file);
-
-      const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
-        method: 'POST',
-        body: formData
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        setExtractionState(prev => ({
-          ...prev,
-          filePreview: result.image,
-          previewDimensions: { width: result.width, height: result.height },
-          previewZoom: 1, // Reset du zoom lors du chargement
-          isProcessing: false
-        }));
-        
-        showNotification(
-          `Fichier chargé avec succès (${result.width} × ${result.height} px)`,
-          'success'
-        );
-      } else {
-        throw new Error(result.message || 'Erreur lors du chargement');
+      try {
+        const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
+          method: 'POST',
+          body: formData
+        });
+        const result = await response.json();
+        if (result.images) {
+          allImages = allImages.concat(result.images);
+          allDimensions = allDimensions.concat(result.widths.map((w, i) => ({ width: w, height: result.heights[i] })));
+        } else if (result.image) {
+          allImages.push(result.image);
+          allDimensions.push({ width: result.width, height: result.height });
+        }
+      } catch (error) {
+        console.error('Erreur lors du chargement du fichier:', error);
       }
-    } catch (error) {
-      console.error('Erreur:', error);
-      showNotification('Erreur lors du chargement du fichier', 'error');
-      setExtractionState(prev => ({ ...prev, isProcessing: false }));
     }
+
+    setExtractionState(prev => ({
+      ...prev,
+      filePreviews: allImages,
+      previewDimensions: allDimensions,
+      currentPdfIndex: 0,
+      isProcessing: false
+    }));
+    showNotification(
+      `Fichiers chargés avec succès (${allImages.length} page(s) au total)`,
+      'success'
+    );
   };
 
   // Gestion du zoom pour l'aperçu d'extraction
@@ -143,11 +227,10 @@ const Extractor = () => {
 
   // Extraction des données
   const performDataExtraction = async () => {
-    const { selectedIssuer, customIssuer, uploadedFile } = extractionState;
-    const issuer = customIssuer || selectedIssuer;
+    const { uploadedFile } = extractionState;
 
-    if (!issuer || !uploadedFile) {
-      showNotification('Veuillez sélectionner un émetteur et un fichier', 'error');
+    if (!uploadedFile) {
+      showNotification('Veuillez sélectionner un fichier', 'error');
       return;
     }
 
@@ -155,7 +238,6 @@ const Extractor = () => {
 
     try {
       const formData = new FormData();
-      formData.append('emetteur', issuer);
       formData.append('file', uploadedFile);
 
       const response = await fetch(`${API_BASE_URL}/extract-data`, {
@@ -166,12 +248,33 @@ const Extractor = () => {
       const result = await response.json();
 
       if (result.success) {
+        // Store the matched boxes for each field (if backend returns them in the future)
+        // For now, we will re-run OCR and match boxes on the frontend for highlighting
+        const ocrBoxes = await getOcrBoxesForCurrentFile();
+        const matchedBoxes = {};
+        EXTRACTION_FIELDS.forEach(field => {
+          const value = result.data[field.key];
+          if (value && value.trim()) {
+            // Find the OCR box whose text matches the extracted value (best effort)
+            const box = ocrBoxes.find(b => b.text && b.text.trim() === value.trim());
+            if (box) matchedBoxes[field.key] = box;
+          }
+        });
         setExtractionState(prev => ({
           ...prev,
           extractedData: { ...prev.extractedData, ...result.data },
-          isProcessing: false
+          isProcessing: false,
+          mappingKey: result.data.mapping_key || null,
+          matchedBoxes
         }));
         showNotification('Extraction réussie !', 'success');
+        // Remove bounding boxes overlay after extraction
+        setTimeout(() => {
+          setExtractionState(prev => ({
+            ...prev,
+            matchedBoxes: undefined
+          }));
+        }, 500); // Remove after 0.5s (adjust as needed)
       } else {
         throw new Error(result.message || 'Erreur lors de l\'extraction');
       }
@@ -180,6 +283,22 @@ const Extractor = () => {
       showNotification('Erreur lors de l\'extraction', 'error');
       setExtractionState(prev => ({ ...prev, isProcessing: false }));
     }
+  };
+
+  // Helper to get OCR boxes for the current file preview (image)
+  const getOcrBoxesForCurrentFile = async () => {
+    if (!extractionState.uploadedFile) return [];
+    const formData = new FormData();
+    formData.append('file', extractionState.uploadedFile);
+    const response = await fetch(`${API_BASE_URL}/detect-ocr-boxes`, {
+      method: 'POST',
+      body: formData
+    });
+    const result = await response.json();
+    if (result.success && Array.isArray(result.boxes)) {
+      return result.boxes;
+    }
+    return [];
   };
 
   // Gestionnaire de fichiers pour DataPrep
@@ -423,8 +542,8 @@ const Extractor = () => {
 
   // Sauvegarder les mappings
   const saveMappings = async () => {
-    if (!dataPrepState.issuerName || Object.keys(dataPrepState.selectedBoxes).length === 0) {
-      showNotification('Veuillez entrer un émetteur et sélectionner au moins un champ', 'error');
+    if (Object.keys(dataPrepState.selectedBoxes).length === 0) {
+      showNotification('Veuillez sélectionner au moins un champ', 'error');
       return;
     }
 
@@ -432,7 +551,6 @@ const Extractor = () => {
 
     try {
       const mappingData = {
-        emetteur: dataPrepState.issuerName,
         field_map: dataPrepState.fieldMappings
       };
 
@@ -443,7 +561,7 @@ const Extractor = () => {
       });
 
       if (response.ok) {
-        showNotification(`Mappings sauvegardés pour ${dataPrepState.issuerName}`, 'success');
+        showNotification(`Mappings sauvegardés`, 'success');
         await loadExistingMappings();
       } else {
         throw new Error('Erreur lors de la sauvegarde');
@@ -459,17 +577,17 @@ const Extractor = () => {
   // Exportation des données
   const exportData = (format) => {
     const dataToExport = {
-      emetteur: extractionState.customIssuer || extractionState.selectedIssuer,
       ...extractionState.extractedData,
       dateExtraction: new Date().toISOString()
     };
+    const mappingKey = extractionState.mappingKey || 'default';
 
     if (format === 'json') {
       const blob = new Blob([JSON.stringify(dataToExport, null, 2)], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `extraction_${dataToExport.emetteur}_${Date.now()}.json`;
+      a.download = `extraction_${mappingKey}_${Date.now()}.json`;
       a.click();
       URL.revokeObjectURL(url);
     } else if (format === 'csv') {
@@ -481,7 +599,7 @@ const Extractor = () => {
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `extraction_${dataToExport.emetteur}_${Date.now()}.csv`;
+      a.download = `extraction_${mappingKey}_${Date.now()}.csv`;
       a.click();
       URL.revokeObjectURL(url);
     }
@@ -491,7 +609,7 @@ const Extractor = () => {
 
   const copyToClipboard = () => {
     const text = EXTRACTION_FIELDS
-      .map(field => `${field.label}: ${extractionState.extractedData[field.key] || 'N/A'}`)
+      .map(field => `${field.label}: ${filterValue(extractionState.extractedData[field.key], field.key) || 'N/A'}`)
       .join('\n');
     
     navigator.clipboard.writeText(text).then(() => {
@@ -500,29 +618,96 @@ const Extractor = () => {
   };
 
   // Helper to filter extracted values
-  const filterValue = (val) => {
+  const filterValue = (val, fieldKey) => {
     if (!val) return '';
-    // Only keep numbers and symbols (no letters)
+    
+    // Don't filter fournisseur field - keep all characters
+    if (fieldKey === 'fournisseur') {
+      return val;
+    }
+    
+    // Only keep numbers and symbols (no letters) for other fields
     const matches = val.match(/[0-9.,;:/\\-]+/g);
     return matches ? matches.join('') : '';
   };
 
-  const [pdfZoom, setPdfZoom] = useState(1);
-  const [isPdfFullscreen, setIsPdfFullscreen] = useState(false);
-
-  // Reset zoom when a new PDF is loaded
+  // Draw highlights for matched boxes on the PDF preview (relative to displayed image size)
   useEffect(() => {
-    setPdfZoom(1);
-  }, [extractionState.filePreview]);
+    if (!extractionState.filePreviews || !extractionState.matchedBoxes) return;
+    const img = previewImageRef.current;
+    if (!img) return;
+    const container = document.getElementById('pdf-preview-container');
+    if (!container) return;
 
-  useEffect(() => {
-    if (!isPdfFullscreen) return;
-    const onKey = (e) => { if (e.key === 'Escape') setIsPdfFullscreen(false); };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [isPdfFullscreen]);
+    const drawCanvas = () => {
+      let canvas = document.getElementById('pdf-preview-canvas');
+      if (!canvas) {
+        canvas = document.createElement('canvas');
+        canvas.id = 'pdf-preview-canvas';
+        canvas.style.position = 'absolute';
+        canvas.style.pointerEvents = 'none';
+        canvas.style.zIndex = '10';
+        container.appendChild(canvas);
+      }
 
+      const containerWidth = container.clientWidth;
+      const containerHeight = container.clientHeight;
+      const imageWidth = img.clientWidth;
+      const imageHeight = img.clientHeight;
+      const offsetX = (containerWidth - imageWidth) / 2;
+      const offsetY = (containerHeight - imageHeight) / 2;
+      const originalWidth = extractionState.previewDimensions.width;
+      const originalHeight = extractionState.previewDimensions.height;
+      const scaleX = imageWidth / originalWidth;
+      const scaleY = imageHeight / originalHeight;
 
+      canvas.width = imageWidth;
+      canvas.height = imageHeight;
+      canvas.style.width = `${imageWidth}px`;
+      canvas.style.height = `${imageHeight}px`;
+      canvas.style.left = `${offsetX}px`;
+      canvas.style.top = `${offsetY}px`;
+
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      Object.values(extractionState.matchedBoxes || {}).forEach(box => {
+        if (!box.coords) return;
+        ctx.save();
+        ctx.strokeStyle = '#22d3ee';
+        ctx.lineWidth = 3;
+        ctx.globalAlpha = 0.9;
+        ctx.setLineDash([6, 4]);
+        ctx.strokeRect(
+          box.coords.left * scaleX,
+          box.coords.top * scaleY,
+          box.coords.width * scaleX,
+          box.coords.height * scaleY
+        );
+        ctx.globalAlpha = 0.2;
+        ctx.fillStyle = '#22d3ee';
+        ctx.fillRect(
+          box.coords.left * scaleX,
+          box.coords.top * scaleY,
+          box.coords.width * scaleX,
+          box.coords.height * scaleY
+        );
+        ctx.restore();
+      });
+    };
+
+    if (img.complete) {
+      drawCanvas();
+    } else {
+      img.onload = drawCanvas;
+    }
+
+    return () => {
+      const canvas = document.getElementById('pdf-preview-canvas');
+      if (canvas && canvas.parentNode) {
+        canvas.parentNode.removeChild(canvas);
+      }
+    };
+  }, [extractionState.filePreviews, extractionState.matchedBoxes, extractionState.previewDimensions]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
@@ -591,29 +776,7 @@ const Extractor = () => {
                     <FileText className="w-5 h-5" />
                     Configuration
                   </h3>
-                  {/* Emetteur selection only (no new emetteur) */}
                   <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-blue-100 mb-2">
-                        Émetteur existant
-                      </label>
-                      <select
-                        value={extractionState.selectedIssuer}
-                        onChange={(e) => setExtractionState(prev => ({ 
-                          ...prev, 
-                          selectedIssuer: e.target.value,
-                          customIssuer: '' 
-                        }))}
-                        className="w-full px-4 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                      >
-                        <option value="">Sélectionnez un émetteur</option>
-                        {Object.keys(mappings).map(issuer => (
-                          <option key={issuer} value={issuer} className="text-gray-900">
-                            {issuer}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
                   </div>
                   {/* Upload button smaller */}
                   <div className="mt-4">
@@ -624,6 +787,7 @@ const Extractor = () => {
                       <input
                         type="file"
                         accept=".pdf,.png,.jpg,.jpeg"
+                        multiple
                         onChange={handleExtractionFileUpload}
                         className="hidden"
                         id="extraction-file-input"
@@ -634,15 +798,15 @@ const Extractor = () => {
                       >
                         <Upload className="w-8 h-8 text-blue-200 mx-auto mr-2" />
                         <span className="text-blue-100 font-medium">
-                          {extractionState.uploadedFile ? extractionState.uploadedFile.name : 'Sélectionner un fichier'}
+                          {extractionState.uploadedFiles.length > 0 ? 'Fichiers sélectionnés' : 'Sélectionner un fichier'}
                         </span>
                       </label>
                     </div>
                   </div>
                   {/* Extraction button */}
                   <button
-                    onClick={performDataExtraction}
-                    disabled={extractionState.isProcessing || !extractionState.uploadedFile || !extractionState.selectedIssuer}
+                    onClick={extractAllPdfs}
+                    disabled={extractionState.isProcessing || extractionState.filePreviews.length === 0}
                     className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     {extractionState.isProcessing ? (
@@ -653,16 +817,19 @@ const Extractor = () => {
                     ) : (
                       <>
                         <Search className="w-5 h-5" />
-                        Extraire les données
+                        Extraire les données (tous les fichiers)
                       </>
                     )}
                   </button>
                 </div>
-                {/* Données extraites (unchanged) */}
+                {/* Données extraites (show for current PDF) */}
                 <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30">
                   <h3 className="text-lg font-semibold text-white mb-2">
                     Données Extraites
                   </h3>
+                  {extractionState.extractedDataList.length > 0 && (
+                    <div className="mb-2 text-xs text-blue-200">Fichier actuel: <span className="font-mono">{extractionState.uploadedFiles[extractionState.currentPdfIndex]?.name || 'Aucun fichier chargé'}</span></div>
+                  )}
                   <div className="space-y-3">
                     {EXTRACTION_FIELDS.map((field) => (
                       <div key={field.key}>
@@ -671,13 +838,12 @@ const Extractor = () => {
                         </label>
                         <input
                           type="text"
-                          value={filterValue(extractionState.extractedData[field.key])}
+                          value={filterValue(extractionState.extractedDataList[extractionState.currentPdfIndex]?.[field.key], field.key)}
                           onChange={(e) => setExtractionState(prev => ({
                             ...prev,
-                            extractedData: {
-                              ...prev.extractedData,
-                              [field.key]: e.target.value
-                            }
+                            extractedDataList: prev.extractedDataList.map((data, index) =>
+                              index === prev.currentPdfIndex ? { ...data, [field.key]: e.target.value } : data
+                            )
                           }))}
                           className="w-full px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                           placeholder={`${field.label} sera extrait automatiquement`}
@@ -686,7 +852,7 @@ const Extractor = () => {
                     ))}
                   </div>
                   {/* Export/copy buttons unchanged */}
-                  {Object.values(extractionState.extractedData).some(val => val) && (
+                  {Object.values(extractionState.extractedDataList[extractionState.currentPdfIndex] || {}).some(val => val) && (
                     <div className="mt-4 pt-4 border-t border-white/20">
                       <h4 className="text-base font-semibold text-white mb-2">
                         Exporter les données
@@ -718,7 +884,7 @@ const Extractor = () => {
                   )}
                 </div>
               </div>
-              {/* PDF display section (70%) */}
+              {/* PDF display section */}
               <div className="flex-[2] min-w-0">
                 <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 h-full flex flex-col">
                                   <div className="flex items-center justify-between mb-2">
@@ -726,57 +892,37 @@ const Extractor = () => {
                     <Eye className="w-5 h-5" />
                     Aperçu du Document
                   </h3>
-                  {extractionState.filePreview && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => setPdfZoom(z => Math.max(0.2, z * 0.8))}
-                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                      >
-                        <ZoomOut className="w-4 h-4 text-white" />
-                      </button>
-                      <span className="text-white font-medium px-2 py-1 bg-white/20 rounded-lg min-w-12 text-center">
-                        {Math.round(pdfZoom * 100)}%
-                      </span>
-                      <button
-                        onClick={() => setPdfZoom(z => Math.min(5, z * 1.2))}
-                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                      >
-                        <ZoomIn className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => setPdfZoom(1)}
-                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                      >
-                        <RotateCcw className="w-4 h-4 text-white" />
-                      </button>
-                      <button
-                        onClick={() => setIsPdfFullscreen(true)}
-                        className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
-                        title="Plein écran"
-                      >
-                        <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M8 3H5a2 2 0 0 0-2 2v3m0 8v3a2 2 0 0 0 2 2h3m8-18h3a2 2 0 0 1 2 2v3m0 8v3a2 2 0 0 1-2 2h-3"/></svg>
-                      </button>
-                    </div>
-                  )}
+                  
                 </div>
-                  {extractionState.filePreview ? (
+                  {extractionState.filePreviews.length > 0 ? (
                     <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
-                      <div id="pdf-preview-container" className="relative flex-1 flex items-center justify-center w-full h-full overflow-auto">
+                      <div id="pdf-preview-container" className="relative flex-1 flex items-center justify-center w-full h-full overflow-auto" style={{ minHeight: '70vh', height: '70vh' }}>
                         <img
                           ref={previewImageRef}
-                          src={extractionState.filePreview}
+                          src={extractionState.filePreviews[extractionState.currentPdfIndex]}
                           alt="Aperçu du document"
                           className="object-contain rounded-xl border border-white/10 shadow"
                           style={{
-                            maxHeight: '70vh',
-                            maxWidth: '100%',
-                            width: `${pdfZoom * 100}%`,
-                            height: 'auto',
-                            transition: 'width 0.2s',
+                            width: '100%',
+                            height: '100%',
+                            objectFit: 'contain',
+                            display: 'block',
                           }}
                         />
+                        {/* Canvas overlay for highlights will be injected here by useEffect */}
                       </div>
-
+                      {/* Slider controls */}
+                      <div className="flex items-center justify-center mt-4 gap-4">
+                        <button onClick={() => setExtractionState(prev => ({
+                          ...prev,
+                          currentPdfIndex: Math.max(prev.currentPdfIndex - 1, 0)
+                        }))} disabled={extractionState.currentPdfIndex === 0} className="px-3 py-1 rounded bg-white/20 text-white">←</button>
+                        <span className="text-white">{extractionState.currentPdfIndex + 1} / {extractionState.filePreviews.length}</span>
+                        <button onClick={() => setExtractionState(prev => ({
+                          ...prev,
+                          currentPdfIndex: Math.min(prev.currentPdfIndex + 1, extractionState.filePreviews.length - 1)
+                        }))} disabled={extractionState.currentPdfIndex === extractionState.filePreviews.length - 1} className="px-3 py-1 rounded bg-white/20 text-white">→</button>
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/30 rounded-xl">
@@ -829,18 +975,7 @@ const Extractor = () => {
                 </div>
               </div>
 
-              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                <label className="block text-sm font-medium text-blue-100 mb-2">
-                  Nom de l'émetteur
-                </label>
-                <input
-                  type="text"
-                  value={dataPrepState.issuerName}
-                  onChange={(e) => setDataPrepState(prev => ({ ...prev, issuerName: e.target.value }))}
-                  placeholder="Ex: Entreprise ABC"
-                  className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                />
-              </div>
+        
 
               {dataPrepState.uploadedImage && (
                 <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
@@ -982,7 +1117,7 @@ const Extractor = () => {
                         
                         {dataPrepState.selectedBoxes[field.key] && (
                           <div className="text-xs text-green-200 font-mono">
-                            <div>"{filterValue(dataPrepState.selectedBoxes[field.key].text)}"</div>
+                            <div>"{filterValue(dataPrepState.selectedBoxes[field.key].text, field.key)}"</div>
                           </div>
                         )}
                       </div>
@@ -991,7 +1126,7 @@ const Extractor = () => {
 
                   <button
                     onClick={saveMappings}
-                    disabled={isLoading || !dataPrepState.issuerName || Object.keys(dataPrepState.selectedBoxes).length === 0}
+                    disabled={isLoading || Object.keys(dataPrepState.selectedBoxes).length === 0}
                     className="w-full mt-6 px-6 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
                   >
                     {isLoading ? (
@@ -1032,42 +1167,8 @@ const Extractor = () => {
         )}
       </main>
 
-      {/* Footer */}
-      {/* <footer className="text-center py-8 text-blue-200">
-        <p className="text-sm">
-          🚀 Propulsé par l'Intelligence Artificielle • 
-          Traitement automatique de documents • 
-          Extraction de données précise
-        </p>
-      </footer> */}
+ 
 
-      {/* Fullscreen PDF modal */}
-      {isPdfFullscreen && (
-        <div id="pdf-fullscreen-modal" className="fixed inset-0 z-50 bg-black bg-opacity-95 flex flex-col items-center justify-center">
-          <button
-            onClick={() => setIsPdfFullscreen(false)}
-            className="absolute top-4 right-4 p-3 bg-white/20 rounded-full hover:bg-white/40 text-white"
-            title="Fermer"
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
-          </button>
-          <div className="flex-1 flex items-center justify-center w-full h-full">
-            <img
-              src={extractionState.filePreview}
-              alt="Aperçu du document plein écran"
-              className="object-contain rounded-xl border border-white/10 shadow-2xl"
-              style={{
-                maxHeight: '85vh',
-                maxWidth: '95vw',
-                width: `${pdfZoom * 100}%`,
-                height: 'auto',
-                transition: 'width 0.2s',
-              }}
-            />
-          </div>
-
-        </div>
-      )}
     </div>
   );
 };

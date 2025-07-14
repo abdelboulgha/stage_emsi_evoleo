@@ -4,7 +4,7 @@ import { Upload, FileText, Image, X, Loader2, CheckCircle, AlertCircle, Building
 export default function Facture() {
   const [invoiceData, setInvoiceData] = useState({
     numeroFacture: '',
-    emetteur: '',
+    fournisseur: '',
     client: '',
     tauxTVA: '',
     montantHT: '',
@@ -38,7 +38,7 @@ export default function Facture() {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('emetteur', 'default'); // Utiliser un émetteur par défaut
+      // No need to append 'emetteur', backend will detect fournisseur automatically
 
       const response = await fetch(`${API_BASE_URL}/extract-data`, {
         method: 'POST',
@@ -58,7 +58,7 @@ export default function Facture() {
         setInvoiceData(prev => ({
           ...prev,
           numeroFacture: result.data.numeroFacture || prev.numeroFacture,
-          emetteur: result.data.emetteur || prev.emetteur,
+          fournisseur: result.data.fournisseur || prev.fournisseur,
           client: result.data.client || prev.client,
           tauxTVA: result.data.tauxTVA ? result.data.tauxTVA.toString() : prev.tauxTVA,
           montantHT: result.data.montantHT ? result.data.montantHT.toString() : prev.montantHT,
@@ -172,7 +172,7 @@ export default function Facture() {
   const resetForm = () => {
     setInvoiceData({
       numeroFacture: '',
-      emetteur: '',
+      fournisseur: '',
       client: '',
       tauxTVA: '',
       montantHT: '',
@@ -194,9 +194,12 @@ export default function Facture() {
   };
 
   // Helper to filter extracted values
-  const filterValue = (val) => {
+  const filterValue = (val, fieldKey) => {
     if (!val) return '';
-    // Only keep numbers and symbols (no letters)
+    if (fieldKey === 'fournisseur') {
+      return val;
+    }
+    // Only keep numbers and symbols (no letters) for other fields
     const matches = val.match(/[0-9.,;:/\\-]+/g);
     return matches ? matches.join('') : '';
   };
@@ -503,7 +506,7 @@ export default function Facture() {
                 <input
                   type="text"
                   name="numeroFacture"
-                  value={filterValue(invoiceData.numeroFacture)}
+                  value={filterValue(invoiceData.numeroFacture, 'numeroFacture')}
                   onChange={handleInputChange}
                   style={{
                     ...styles.input,
@@ -518,18 +521,18 @@ export default function Facture() {
                 <div>
                   <label style={styles.label}>
                     <Building size={14} style={{display: 'inline', marginRight: '4px'}} />
-                    Émetteur
+                    Fournisseur
                   </label>
                   <input
                     type="text"
-                    name="emetteur"
-                    value={filterValue(invoiceData.emetteur)}
+                    name="fournisseur"
+                    value={filterValue(invoiceData.fournisseur, 'fournisseur')}
                     onChange={handleInputChange}
                     style={{
                       ...styles.input,
-                      ...(invoiceData.emetteur && extractionStatus === 'success' ? styles.inputExtracted : {})
+                      ...(invoiceData.fournisseur && extractionStatus === 'success' ? styles.inputExtracted : {})
                     }}
-                    placeholder="Nom de l'entreprise"
+                    placeholder="Nom du fournisseur"
                   />
                 
                 
@@ -548,7 +551,7 @@ export default function Facture() {
                 <input
                   type="number"
                   name="tauxTVA"
-                  value={filterValue(invoiceData.tauxTVA)}
+                  value={filterValue(invoiceData.tauxTVA, 'tauxTVA')}
                   onChange={handleInputChange}
                   step="0.01"
                   style={{
@@ -567,7 +570,7 @@ export default function Facture() {
                   <input
                     type="number"
                     name="montantHT"
-                    value={filterValue(invoiceData.montantHT)}
+                    value={filterValue(invoiceData.montantHT, 'montantHT')}
                     onChange={handleInputChange}
                     step="0.01"
                     style={{
@@ -588,7 +591,7 @@ export default function Facture() {
                 <input
                   type="number"
                   name="montantTVA"
-                  value={filterValue(invoiceData.montantTVA)}
+                  value={filterValue(invoiceData.montantTVA, 'montantTVA')}
                   onChange={handleInputChange}
                   step="0.01"
                   style={{
@@ -607,7 +610,7 @@ export default function Facture() {
                   <input
                     type="number"
                     name="montantTTC"
-                    value={filterValue(invoiceData.montantTTC)}
+                    value={filterValue(invoiceData.montantTTC, 'montantTTC')}
                     onChange={handleInputChange}
                     step="0.01"
                     style={{
@@ -686,7 +689,7 @@ export default function Facture() {
                       PDF ou Image (JPG, PNG, etc.) - Extraction automatique
                     </p>
                     <p style={styles.uploadSubtext}>
-                      Formats supportés: Émetteur, TVA, Montants HT/TTC
+                      Formats supportés: Fournisseur, TVA, Montants HT/TTC
                     </p>
                   </div>
                   <label style={styles.uploadButton}>
@@ -789,7 +792,7 @@ export default function Facture() {
             <p><strong>Champs extraits automatiquement avec PaddleOCR:</strong></p>
             <ul style={{marginLeft: '20px', marginTop: '8px'}}>
               <li>Numéro de facture (ex: IN2411-0001)</li>
-              <li>Émetteur (nom de l'entreprise)</li>
+              <li>Fournisseur (nom de l'entreprise)</li>
               <li>Client/Destinataire</li>
               <li>Taux de TVA (%)</li>
               <li>Montant HT, TVA et TTC</li>

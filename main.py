@@ -2,7 +2,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Any
 import json
 import os
 import pymupdf as fitz
@@ -65,10 +65,6 @@ class FieldCoordinates(BaseModel):
     height: float
 
 class FieldMapping(BaseModel):
-    field_map: Dict[str, Optional[FieldCoordinates]]
-
-class EmetteurMapping(BaseModel):
-    emetteur: str
     field_map: Dict[str, Optional[FieldCoordinates]]
 
 class ExtractionResult(BaseModel):
@@ -167,6 +163,23 @@ def process_pdf_to_image(file_content: bytes) -> Image.Image:
         logging.error(f"Erreur lors de la conversion PDF: {e}")
         raise e
 
+def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
+    """Convertir un PDF en une liste d'images (une par page) en utilisant PyMuPDF"""
+    try:
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        images = []
+        for page_num in range(doc.page_count):
+            page = doc[page_num]
+            pix = page.get_pixmap(matrix=fitz.Matrix(1.0, 1.0))
+            img_data = pix.tobytes("png")
+            img = Image.open(BytesIO(img_data))
+            images.append(img)
+        doc.close()
+        return images
+    except Exception as e:
+        logging.error(f"Erreur lors de la conversion PDF en images: {e}")
+        raise e
+
 # Routes API
 @app.get("/")
 async def root():
@@ -187,27 +200,20 @@ async def get_mapping(emetteur: str):
     return {"emetteur": emetteur, "mapping": mappings[emetteur]}
 
 @app.post("/mappings")
-async def save_emetteur_mapping(mapping: EmetteurMapping):
-    """Sauvegarder le mapping pour un émetteur"""
+async def save_field_mapping(mapping: FieldMapping):
+    """Sauvegarder un mapping sans exiger d'emetteur explicite"""
     mappings = load_mapping()
-    
-    # Convertir le mapping en format attendu
-    field_map = {}
-    for field, coords in mapping.field_map.items():
-        if coords:
-            field_map[field] = {
-                'left': coords.left,
-                'top': coords.top,
-                'width': coords.width,
-                'height': coords.height
-            }
-        else:
-            field_map[field] = None
-    
-    mappings[mapping.emetteur] = {'field_map': field_map}
-    
+    import hashlib
+    # Convert all FieldCoordinates to dicts for hashing and saving
+    field_map_dict = {
+        k: v.dict() if v else None
+        for k, v in mapping.field_map.items()
+    }
+    field_map_json = json.dumps(field_map_dict, sort_keys=True)
+    mapping_key = hashlib.md5(field_map_json.encode()).hexdigest()[:8]
+    mappings[mapping_key] = {'field_map': field_map_dict}
     if save_mapping(mappings):
-        return {"message": f"Mapping sauvegardé pour {mapping.emetteur}"}
+        return {"message": f"Mapping sauvegardé (clé: {mapping_key})"}
     else:
         raise HTTPException(status_code=500, detail="Erreur lors de la sauvegarde")
 
@@ -217,33 +223,33 @@ async def upload_for_dataprep(file: UploadFile = File(...)):
     try:
         # Lire le contenu du fichier
         file_content = await file.read()
-        
         # Traiter selon le type de fichier
         if file.filename.lower().endswith('.pdf'):
-            img = process_pdf_to_image(file_content)
-            processed_img = preprocess_image_cv(img)
-            
+            images = process_pdf_to_images(file_content)
+            # Always return both the first image and the list for compatibility
             return {
                 "success": True,
-                "image": image_to_base64(processed_img),
-                "width": processed_img.width,
-                "height": processed_img.height
+                "image": image_to_base64(images[0]) if images else None,
+                "width": images[0].width if images else None,
+                "height": images[0].height if images else None,
+                "images": [image_to_base64(img) for img in images],
+                "widths": [img.width for img in images],
+                "heights": [img.height for img in images]
             }
-        
         elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             img = Image.open(BytesIO(file_content)).convert('RGB')
             processed_img = preprocess_image_cv(img)
-            
             return {
                 "success": True,
                 "image": image_to_base64(processed_img),
                 "width": processed_img.width,
-                "height": processed_img.height
+                "height": processed_img.height,
+                "images": [image_to_base64(processed_img)],
+                "widths": [processed_img.width],
+                "heights": [processed_img.height]
             }
-        
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
-            
     except Exception as e:
         logging.error(f"Erreur lors de l'upload: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du traitement: {str(e)}")
@@ -298,7 +304,7 @@ def detect_ocr_boxes_from_image(img: Image.Image) -> List[Dict]:
                         confidence = text_info[1]
                         
                         # Filtrer pour les caractères latins et confiance élevée
-                        if confidence >= 0.5 and text.strip():
+                        if confidence >= 0.93 and text.strip():
                             # Convertir les coordonnées en format standard
                             left = min(coord[0] for coord in coords)
                             top = min(coord[1] for coord in coords)
@@ -347,52 +353,96 @@ def find_closest_ocr_box(target_rect, ocr_boxes):
 
 @app.post("/extract-data")
 async def extract_data(
-    emetteur: str = Form(...),
     file: UploadFile = File(...)
 ):
-    """Extraire les données d'un PDF selon les mappings de l'émetteur (smart bounding box matching)"""
+    """Extraire les données d'un PDF en cherchant pour chaque champ le mapping dont la boîte est la plus proche d'une boîte OCR détectée."""
     try:
-        # Vérifier si l'émetteur existe
         mappings = load_mapping()
-        if emetteur not in mappings:
-            raise HTTPException(status_code=404, detail=f"Emetteur '{emetteur}' non trouvé")
-        
-        field_map = mappings[emetteur]['field_map']
-        
         # Lire et traiter le fichier
         file_content = await file.read()
-        
         if file.filename.lower().endswith('.pdf'):
             img = process_pdf_to_image(file_content)
         elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             img = Image.open(BytesIO(file_content)).convert('RGB')
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
-        
+
         # Run OCR on the whole image
         img_array = np.array(img)
         ocr_result = ocr.ocr(img_array, cls=False)
         ocr_boxes = ocr_result[0] if ocr_result and len(ocr_result) > 0 else []
-        
-        # For each field, find the closest OCR box
+
+        # Build detected boxes as dict by text for matching
+        detected_boxes = []
+        for line in ocr_boxes:
+            coords = line[0]
+            left = min(coord[0] for coord in coords)
+            top = min(coord[1] for coord in coords)
+            right = max(coord[0] for coord in coords)
+            bottom = max(coord[1] for coord in coords)
+            width = right - left
+            height = bottom - top
+            detected_boxes.append({
+                'left': left,
+                'top': top,
+                'width': width,
+                'height': height,
+                'text': line[1][0] if len(line) > 1 and len(line[1]) > 0 else ''
+            })
+
+        # Get all field names (assume all mappings have the same fields)
+        if not mappings:
+            raise HTTPException(status_code=404, detail="Aucun mapping disponible")
+        field_names = list(next(iter(mappings.values()))['field_map'].keys())
+
+        # Helper: get center of a box
+        def box_center(box):
+            return (
+                box['left'] + box['width'] / 2,
+                box['top'] + box['height'] / 2
+            )
+
+        # Helper: compute distance between two boxes
+        def box_distance(box1, box2):
+            c1 = box_center(box1)
+            c2 = box_center(box2)
+            return hypot(c1[0] - c2[0], c1[1] - c2[1])
+
+        # For each field, find the mapping whose field is closest to a detected box
         extracted_data = {}
-        debug_images = []
-        for field, coords in field_map.items():
-            if coords is None:
-                extracted_data[field] = ""
-                continue
-            best_box = find_closest_ocr_box(coords, ocr_boxes)
-            if best_box and len(best_box) >= 2:
-                text = best_box[1][0]
-                extracted_data[field] = text
+        mapping_keys_for_fields = {}
+        for field in field_names:
+            best_key = None
+            best_score = float('inf')
+            best_box = None
+            for key, mapping in mappings.items():
+                coords = mapping['field_map'].get(field)
+                if coords is None:
+                    continue
+                # Find the closest detected box to this field
+                min_dist = float('inf')
+                closest_box = None
+                for det_box in detected_boxes:
+                    dist = box_distance(coords, det_box)
+                    if dist < min_dist:
+                        min_dist = dist
+                        closest_box = det_box
+                if min_dist < best_score:
+                    best_score = min_dist
+                    best_key = key
+                    best_box = closest_box
+            if best_box:
+                extracted_data[field] = best_box['text']
+                mapping_keys_for_fields[field] = best_key
             else:
                 extracted_data[field] = ""
-        extracted_data['emetteur'] = emetteur
-        logging.info(f'Données extraites pour {emetteur}: {extracted_data}')
+                mapping_keys_for_fields[field] = None
+        extracted_data['mapping_keys'] = json.dumps(mapping_keys_for_fields)
+        logging.info(f'Données extraites par champ: {extracted_data}')
         return ExtractionResult(
             success=True,
             data=extracted_data,
-            message="Extraction réussie (smart bounding box)",
+            message=f"Extraction réussie (par champ)",
             debug_images=[]
         )
     except Exception as e:
