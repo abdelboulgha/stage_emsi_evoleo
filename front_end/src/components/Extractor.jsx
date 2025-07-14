@@ -59,6 +59,13 @@ const Extractor = () => {
     currentRect: null
   });
 
+  // États pour la sélection manuelle dans DataPrep
+  const [drawingState, setDrawingState] = useState({
+    isDrawing: false,
+    startPos: { x: 0, y: 0 },
+    currentRect: null
+  });
+
   // Constantes
   const EXTRACTION_FIELDS = [
     { key: 'numeroFacture', label: 'Numéro de Facture', icon: '📄' },
@@ -122,11 +129,14 @@ const Extractor = () => {
       const result = await response.json();
 
       if (result.success) {
+        // Forcer 30% par défaut pour l'aperçu du document
+        const defaultZoom = 0.1; // TOUJOURS 30% par défaut
+
         setExtractionState(prev => ({
           ...prev,
           filePreview: result.image,
           previewDimensions: { width: result.width, height: result.height },
-          previewZoom: 1,
+          previewZoom: defaultZoom, // FORCE 30% pour l'aperçu du document
           isProcessing: false
         }));
         
@@ -315,7 +325,7 @@ const Extractor = () => {
     }
   };
 
-  // Redessiner le canvas d'extraction - VERSION AMÉLIORÉE IDENTIQUE À CONFIGURATION
+  // Redessiner le canvas d'extraction
   const redrawExtractionCanvas = useCallback((tempRect = null) => {
     const canvas = extractionCanvasRef.current;
     if (!canvas || !extractionState.filePreview) return;
@@ -448,7 +458,7 @@ const Extractor = () => {
     }
   };
 
-  // Gestionnaire de fichiers pour DataPrep
+  // Gestionnaire de fichiers pour DataPrep - VERSION CORRIGÉE AVEC ZOOM AUTO
   const handleDataPrepFileUpload = async (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -467,11 +477,18 @@ const Extractor = () => {
       const result = await response.json();
 
       if (result.success) {
+        // Calculer le zoom initial pour adapter l'image à l'espace disponible
+        const maxDisplayWidth = 800; // Plus large pour la configuration
+        const maxDisplayHeight = 500;
+        const scaleX = maxDisplayWidth / result.width;
+        const scaleY = maxDisplayHeight / result.height;
+        const initialZoom = Math.min(scaleX, scaleY, 1); // Pas de limite à 80%, utiliser 100% max
+
         setDataPrepState(prev => ({
           ...prev,
           uploadedImage: result.image,
           imageDimensions: { width: result.width, height: result.height },
-          currentZoom: 1,
+          currentZoom: Math.max(initialZoom, 2), // Zoom minimum de 20% pour éviter les images trop petites
           fieldMappings: {},
           selectionHistory: []
         }));
@@ -510,12 +527,6 @@ const Extractor = () => {
   };
 
   // Gestionnaires d'événements pour le canvas DataPrep - VERSION CORRIGÉE
-  const [drawingState, setDrawingState] = useState({
-    isDrawing: false,
-    startPos: { x: 0, y: 0 },
-    currentRect: null
-  });
-
   const handleCanvasMouseDown = (event) => {
     if (!dataPrepState.isSelecting || !canvasRef.current) return;
 
@@ -526,14 +537,21 @@ const Extractor = () => {
     const scrollLeft = scrollContainer.scrollLeft || 0;
     const scrollTop = scrollContainer.scrollTop || 0;
     
-    const x = Math.round((event.clientX - rect.left + scrollLeft) / dataPrepState.currentZoom);
-    const y = Math.round((event.clientY - rect.top + scrollTop) / dataPrepState.currentZoom);
-
-    // Vérifier que les coordonnées sont dans les limites de l'image
-    const maxX = dataPrepState.imageDimensions.width;
-    const maxY = dataPrepState.imageDimensions.height;
+    // Calculer le facteur d'échelle appliqué au canvas
+    const maxCanvasWidth = 800;
+    const maxCanvasHeight = 500;
+    const originalWidth = dataPrepState.imageDimensions.width;
+    const originalHeight = dataPrepState.imageDimensions.height;
+    const baseScaleX = Math.min(maxCanvasWidth / originalWidth, 1);
+    const baseScaleY = Math.min(maxCanvasHeight / originalHeight, 1);
+    const baseScale = Math.min(baseScaleX, baseScaleY);
+    const totalScale = baseScale * dataPrepState.currentZoom;
     
-    if (x < 0 || x >= maxX || y < 0 || y >= maxY) return;
+    const x = Math.round((event.clientX - rect.left + scrollLeft) / totalScale);
+    const y = Math.round((event.clientY - rect.top + scrollTop) / totalScale);
+
+    // Vérifier que les coordonnées sont dans les limites de l'image originale
+    if (x < 0 || x >= originalWidth || y < 0 || y >= originalHeight) return;
 
     setDrawingState({
       isDrawing: true,
@@ -552,14 +570,22 @@ const Extractor = () => {
     const scrollLeft = scrollContainer.scrollLeft || 0;
     const scrollTop = scrollContainer.scrollTop || 0;
     
-    const x = Math.round((event.clientX - rect.left + scrollLeft) / dataPrepState.currentZoom);
-    const y = Math.round((event.clientY - rect.top + scrollTop) / dataPrepState.currentZoom);
+    // Calculer le facteur d'échelle total
+    const maxCanvasWidth = 800;
+    const maxCanvasHeight = 500;
+    const originalWidth = dataPrepState.imageDimensions.width;
+    const originalHeight = dataPrepState.imageDimensions.height;
+    const baseScaleX = Math.min(maxCanvasWidth / originalWidth, 1);
+    const baseScaleY = Math.min(maxCanvasHeight / originalHeight, 1);
+    const baseScale = Math.min(baseScaleX, baseScaleY);
+    const totalScale = baseScale * dataPrepState.currentZoom;
+    
+    const x = Math.round((event.clientX - rect.left + scrollLeft) / totalScale);
+    const y = Math.round((event.clientY - rect.top + scrollTop) / totalScale);
 
-    // Contraindre les coordonnées dans les limites de l'image
-    const maxX = dataPrepState.imageDimensions.width;
-    const maxY = dataPrepState.imageDimensions.height;
-    const constrainedX = Math.max(0, Math.min(maxX - 1, x));
-    const constrainedY = Math.max(0, Math.min(maxY - 1, y));
+    // Contraindre les coordonnées dans les limites de l'image originale
+    const constrainedX = Math.max(0, Math.min(originalWidth - 1, x));
+    const constrainedY = Math.max(0, Math.min(originalHeight - 1, y));
 
     const currentRect = {
       left: Math.min(drawingState.startPos.x, constrainedX),
@@ -584,11 +610,11 @@ const Extractor = () => {
       return;
     }
 
-    // Vérifier que la sélection est dans les limites
-    const maxX = dataPrepState.imageDimensions.width;
-    const maxY = dataPrepState.imageDimensions.height;
+    // Vérifier que la sélection est dans les limites de l'image originale
+    const originalWidth = dataPrepState.imageDimensions.width;
+    const originalHeight = dataPrepState.imageDimensions.height;
     
-    if (currentRect.left + currentRect.width > maxX || currentRect.top + currentRect.height > maxY) {
+    if (currentRect.left + currentRect.width > originalWidth || currentRect.top + currentRect.height > originalHeight) {
       showNotification('Sélection en dehors des limites du document', 'error');
       resetDrawingState();
       return;
@@ -665,18 +691,28 @@ const Extractor = () => {
     }
   };
 
-  // Redessiner le canvas DataPrep - VERSION AMÉLIORÉE
+  // Redessiner le canvas DataPrep - VERSION CORRIGÉE AVEC NOUVEAU SYSTÈME
   const redrawCanvas = useCallback((tempRect = null) => {
     const canvas = canvasRef.current;
     if (!canvas || !dataPrepState.uploadedImage) return;
 
     const ctx = canvas.getContext('2d');
     
-    // Dimensionner le canvas selon les vraies dimensions
-    const scaledWidth = dataPrepState.imageDimensions.width * dataPrepState.currentZoom;
-    const scaledHeight = dataPrepState.imageDimensions.height * dataPrepState.currentZoom;
+    // Calculer les dimensions adaptées à l'espace disponible
+    const maxCanvasWidth = 800;
+    const maxCanvasHeight = 500;
+    const originalWidth = dataPrepState.imageDimensions.width;
+    const originalHeight = dataPrepState.imageDimensions.height;
     
-    // Utiliser les dimensions réelles pour éviter la troncature
+    // Appliquer le zoom à partir des dimensions adaptées
+    const baseScaleX = Math.min(maxCanvasWidth / originalWidth, 1);
+    const baseScaleY = Math.min(maxCanvasHeight / originalHeight, 1);
+    const baseScale = Math.min(baseScaleX, baseScaleY);
+    
+    const scaledWidth = originalWidth * baseScale * dataPrepState.currentZoom;
+    const scaledHeight = originalHeight * baseScale * dataPrepState.currentZoom;
+    
+    // Dimensionner le canvas
     canvas.width = scaledWidth;
     canvas.height = scaledHeight;
     canvas.style.width = `${scaledWidth}px`;
@@ -688,24 +724,27 @@ const Extractor = () => {
     if (imageRef.current && imageRef.current.complete) {
       ctx.drawImage(imageRef.current, 0, 0, scaledWidth, scaledHeight);
 
+      // Calculer le facteur d'échelle pour les coordonnées
+      const coordScale = baseScale * dataPrepState.currentZoom;
+
       // Dessiner les rectangles existants (mappings sauvegardés)
       Object.entries(dataPrepState.fieldMappings).forEach(([field, coords]) => {
-        drawRectangle(ctx, coords, field, '#e53e3e', false);
+        drawRectangle(ctx, coords, field, '#e53e3e', false, coordScale);
       });
 
       // Dessiner le rectangle temporaire (en cours de sélection)
       if (tempRect && dataPrepState.isSelecting) {
-        drawRectangle(ctx, tempRect, dataPrepState.selectedField, '#3182ce', true);
+        drawRectangle(ctx, tempRect, dataPrepState.selectedField, '#3182ce', true, coordScale);
       }
     }
   }, [dataPrepState]);
 
   // Dessiner un rectangle sur le canvas - VERSION AMÉLIORÉE
-  const drawRectangle = (ctx, coords, field, color, isTemporary) => {
-    const x = coords.left * dataPrepState.currentZoom;
-    const y = coords.top * dataPrepState.currentZoom;
-    const width = coords.width * dataPrepState.currentZoom;
-    const height = coords.height * dataPrepState.currentZoom;
+  const drawRectangle = (ctx, coords, field, color, isTemporary, coordScale = dataPrepState.currentZoom) => {
+    const x = coords.left * coordScale;
+    const y = coords.top * coordScale;
+    const width = coords.width * coordScale;
+    const height = coords.height * coordScale;
 
     // Sauvegarder le contexte
     ctx.save();
@@ -729,7 +768,7 @@ const Extractor = () => {
     }
 
     // Label avec fond
-    const fontSize = Math.max(11, 13 * dataPrepState.currentZoom);
+    const fontSize = Math.max(11, 13 * coordScale);
     ctx.font = `bold ${fontSize}px Arial`;
     const labelText = field;
     const textMetrics = ctx.measureText(labelText);
@@ -749,7 +788,7 @@ const Extractor = () => {
     // Coordonnées pour les sélections temporaires
     if (isTemporary) {
       const coordText = `${Math.round(coords.width)}×${Math.round(coords.height)}`;
-      ctx.font = `${Math.max(9, 11 * dataPrepState.currentZoom)}px monospace`;
+      ctx.font = `${Math.max(9, 11 * coordScale)}px monospace`;
       const coordMetrics = ctx.measureText(coordText);
       
       ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
@@ -850,8 +889,6 @@ const Extractor = () => {
     });
   };
 
-  
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
       {/* Header */}
@@ -859,16 +896,13 @@ const Extractor = () => {
         <div className="max-w-7xl mx-auto px-6 py-8">
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold bg-gradient-to-r from-white to-blue-200 bg-clip-text text-transparent mb-4">
-              🧾 Invoice Extractor Pro
+              Extraction de factures
             </h1>
-            <p className="text-blue-100 text-lg">
-              Intelligence artificielle pour l'extraction automatique de données de factures
-            </p>
           </div>
           
           {/* Navigation */}
           <nav className="flex justify-center">
-            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-2 border border-white/30">
+            <div className="bg-white/20 backdrop-blur-md rounded-2xl p-2 border border-white/30 flex gap-2">
               {[
                 { id: 'extract', label: 'Extraction', icon: <Search className="w-5 h-5" /> },
                 { id: 'dataprep', label: 'Configuration', icon: <Settings className="w-5 h-5" /> }
@@ -964,7 +998,7 @@ const Extractor = () => {
                   <div className="space-y-4">
                     <div>
                       <label className="block text-sm font-medium text-blue-100 mb-2">
-                        Émetteur existant
+                        Fournisseur existant
                       </label>
                       <select
                         value={extractionState.selectedIssuer}
@@ -975,7 +1009,7 @@ const Extractor = () => {
                         }))}
                         className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                       >
-                        <option value="">Sélectionnez un émetteur</option>
+                        <option value="">Sélectionnez un fournisseur</option>
                         {Object.keys(mappings).map(issuer => (
                           <option key={issuer} value={issuer} className="text-gray-900">
                             {issuer}
@@ -988,7 +1022,7 @@ const Extractor = () => {
 
                     <div>
                       <label className="block text-sm font-medium text-blue-100 mb-2">
-                        Nouvel émetteur
+                        Nouveau fournisseur
                       </label>
                       <input
                         type="text"
@@ -1200,7 +1234,7 @@ const Extractor = () => {
                       </div>
                     </div>
                     
-                    {/* Zone d'aperçu avec canvas interactif - VERSION AMÉLIORÉE IDENTIQUE À CONFIGURATION */}
+                    {/* Zone d'aperçu avec canvas interactif */}
                     <div className="bg-white/10 rounded-xl border border-white/20 relative" style={{ maxHeight: '500px', overflow: 'auto' }}>
                       <div className="relative" style={{ minWidth: 'max-content' }}>
                         {/* Mode sélection manuelle - Canvas interactif */}
@@ -1230,15 +1264,6 @@ const Extractor = () => {
                                 Min: 5×5px • Zoom: {Math.round(extractionState.previewZoom * 100)}% • Scrollez si nécessaire
                               </div>
                             </div>
-                            
-                            {/* Coordonnées en temps réel */}
-                            {/* {extractionDrawingState.currentRect && (
-                              <div className="absolute top-4 right-4 bg-black/90 text-white text-xs px-3 py-2 rounded-lg font-mono shadow-lg z-10">
-                                Sélection: {Math.round(extractionDrawingState.currentRect.width)}×{Math.round(extractionDrawingState.currentRect.height)}px
-                                <br />
-                                Position: ({Math.round(extractionDrawingState.currentRect.left)}, {Math.round(extractionDrawingState.currentRect.top)})
-                              </div>
-                            )} */}
                             
                             {/* Indicateur de champ actif */}
                             <div className="absolute top-4 left-4 bg-blue-500/80 text-white text-xs px-2 py-1 rounded shadow-lg z-10">
@@ -1321,7 +1346,7 @@ const Extractor = () => {
 
               <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
                 <label className="block text-sm font-medium text-blue-100 mb-2">
-                  Nom de l'émetteur
+                  Nom du fournisseur
                 </label>
                 <input
                   type="text"
@@ -1373,8 +1398,8 @@ const Extractor = () => {
                   </h3>
                   
                   {dataPrepState.uploadedImage ? (
-                    <div className="bg-white/10 rounded-xl border border-white/20 relative" style={{ maxHeight: '500px', overflow: 'auto' }}>
-                      <div className="relative" style={{ minWidth: 'max-content' }}>
+                    <div className="bg-white/10 rounded-xl border border-white/20 relative" style={{ maxHeight: '600px', maxWidth: '100%', overflow: 'auto' }}>
+                      <div className="relative flex justify-center" style={{ minWidth: 'max-content', minHeight: 'max-content' }}>
                         <canvas
                           ref={canvasRef}
                           onMouseDown={handleCanvasMouseDown}
@@ -1382,8 +1407,8 @@ const Extractor = () => {
                           onMouseUp={handleCanvasMouseUp}
                           className={`cursor-${dataPrepState.isSelecting ? 'crosshair' : 'default'} block`}
                           style={{
-                            width: dataPrepState.imageDimensions.width * dataPrepState.currentZoom,
-                            height: dataPrepState.imageDimensions.height * dataPrepState.currentZoom,
+                            maxWidth: '100%',
+                            height: 'auto',
                             border: dataPrepState.isSelecting ? '2px solid #3b82f6' : 'none',
                             borderRadius: '4px'
                           }}
@@ -1407,15 +1432,6 @@ const Extractor = () => {
                                 Min: 5×5px • Zoom: {Math.round(dataPrepState.currentZoom * 100)}% • Scrollez si nécessaire
                               </div>
                             </div>
-                            
-                            {/* Coordonnées en temps réel */}
-                            {/* {drawingState.currentRect && (
-                              <div className="absolute top-4 right-4 bg-black/90 text-white text-xs px-3 py-2 rounded-lg font-mono shadow-lg z-10">
-                                Sélection: {Math.round(drawingState.currentRect.width)}×{Math.round(drawingState.currentRect.height)}px
-                                <br />
-                                Position: ({Math.round(drawingState.currentRect.left)}, {Math.round(drawingState.currentRect.top)})
-                              </div>
-                            )} */}
                           </>
                         )}
                       </div>

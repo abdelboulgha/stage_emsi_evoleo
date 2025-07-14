@@ -168,5 +168,39 @@
         "height": 149.0
       }
     }
+  },
+  "d1": {
+    "field_map": {
+      "numeroFacture": {
+        "left": 4040.0,
+        "top": 253.0,
+        "width": 681.0,
+        "height": 133.0
+      },
+      "tauxTVA": {
+        "left": 3191.0,
+        "top": 5388.0,
+        "width": 204.0,
+        "height": 134.0
+      },
+      "montantHT": {
+        "left": 4349.0,
+        "top": 5304.0,
+        "width": 386.0,
+        "height": 119.0
+      },
+      "montantTVA": {
+        "left": 4377.0,
+        "top": 5409.0,
+        "width": 358.0,
+        "height": 113.0
+      },
+      "montantTTC": {
+        "left": 4363.0,
+        "top": 5508.0,
+        "width": 414.0,
+        "height": 168.0
+      }
+    }
   }
 }
