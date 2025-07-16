@@ -556,3 +556,11 @@ pip install python-multipart
 2025-07-13 22:10:03,446 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8o3myw85_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8o3myw85', 'txt']
 2025-07-13 22:10:03,690 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_obtqqkwm_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_obtqqkwm', 'txt']
 2025-07-13 22:10:03,991 INFO Données extraites pour radeema: {'numeroFacture': 'N°2025206481682', 'tauxTVA': '18,0', 'montantHT': '', 'montantTVA': '238,18', 'montantTTC': '280,93', 'emetteur': 'radeema'}
+2025-07-16 14:26:28,618 ERROR Form data requires "python-multipart" to be installed. 
+You can install "python-multipart" with: 
+
+pip install python-multipart
+
+2025-07-16 14:27:16,888 ERROR Erreur lors de la détection des boîtes OCR: PaddleOCR.predict() got an unexpected keyword argument 'cls'
+2025-07-16 14:27:54,580 ERROR Erreur lors de la détection des boîtes OCR: PaddleOCR.predict() got an unexpected keyword argument 'cls'
+2025-07-16 14:29:01,428 ERROR Erreur lors de l'extraction: PaddleOCR.predict() got an unexpected keyword argument 'cls'

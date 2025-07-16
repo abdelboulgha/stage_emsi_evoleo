@@ -1,4 +1,4 @@
- import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Upload, FileText, Eye, Download, Copy, Trash2, ZoomIn, ZoomOut, RotateCcw, Settings, CheckCircle, AlertCircle, Loader2, Search } from 'lucide-react';
 
 const API_BASE_URL = 'http://localhost:8000';
@@ -94,9 +94,9 @@ const Extractor = () => {
           body: formData
         });
         const result = await response.json();
-        results.push(result);
+        results.push(result.data); // <-- Only push the data object!
       } catch (error) {
-        results.push({ success: false, message: 'Erreur lors de l\'extraction', error });
+        results.push({}); // fallback to empty object
       }
     }
     setExtractionState(prev => ({

@@ -35,15 +35,19 @@ logging.basicConfig(
 
 # Initialiser PaddleOCR avec les paramètres spécifiés
 ocr = PaddleOCR(
-    det=True,
-    rec=True,
-    use_angle_cls=False,
-    det_algorithm='DB',
-    det_db_box_thresh=0.45,
-    lang='en',
-    gpu_mem=3000,
-    det_db_unclip_ratio=1.3,
-    use_gpu=True
+    use_doc_orientation_classify=False,  # Handle document-level rotation
+    use_doc_unwarping=False,  # Correct perspective distortion
+    use_textline_orientation=False,  # Improve line-level orientation
+
+    text_detection_model_name="PP-OCRv5_server_det",
+    text_recognition_model_name="PP-OCRv5_server_rec",
+    
+    #use_tensorrt=True,
+    #enable_hpi=True,
+    precision="fp16",
+    enable_mkldnn=True,
+    text_rec_score_thresh=0.5
+  
 )
 
 app = FastAPI(title="Invoice Extractor API", version="1.0.0")
@@ -121,23 +125,14 @@ def image_to_base64(img: Image.Image) -> str:
     return f"data:image/png;base64,{img_str}"
 
 def extract_text_with_paddleocr(img: Image.Image) -> str:
-    """Extraire le texte d'une image avec PaddleOCR"""
+    """Extraire le texte d'une image avec PaddleOCR (nouveau format v3+)"""
     try:
-        # Convertir PIL Image en numpy array
         img_array = np.array(img)
-        
-        # Utiliser PaddleOCR pour extraire le texte
-        result = ocr.ocr(img_array, cls=False)
-        
-        # Extraire le texte de tous les résultats
+        result = ocr.predict(img_array)
         texts = []
-        if result and result[0]:
-            for line in result[0]:
-                if line and len(line) >= 2:
-                    text = line[1][0]  # Le texte est dans le deuxième élément
-                    confidence = line[1][1]  # La confiance est dans le troisième élément
-                    texts.append(text)
-        
+        for res in result:
+            rec_texts = res.get('rec_texts', [])
+            texts.extend([t for t in rec_texts if t])
         return ' '.join(texts).strip()
     except Exception as e:
         logging.error(f"Erreur lors de l'extraction OCR: {e}")
@@ -284,72 +279,40 @@ async def detect_ocr_boxes(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=f"Erreur lors de la détection OCR: {str(e)}")
 
 def detect_ocr_boxes_from_image(img: Image.Image) -> List[Dict]:
-    """Détecter les boîtes OCR dans une image"""
+    """Détecter les boîtes OCR dans une image (nouveau format v3+)"""
     try:
-        # Convertir PIL Image en numpy array
         img_array = np.array(img)
-        
-        # Utiliser PaddleOCR pour détecter les boîtes
-        result = ocr.ocr(img_array, cls=False)
-        
+        result = ocr.predict(img_array)
         boxes = []
-        if result and result[0]:
-            for i, line in enumerate(result[0]):
-                if line and len(line) >= 2:
-                    coords = line[0]  # Coordonnées de la boîte
-                    text_info = line[1]
-                    
-                    if isinstance(text_info, tuple) and len(text_info) >= 2:
-                        text = text_info[0]
-                        confidence = text_info[1]
-                        
-                        # Filtrer pour les caractères latins et confiance élevée
-                        if confidence >= 0.93 and text.strip():
-                            # Convertir les coordonnées en format standard
-                            left = min(coord[0] for coord in coords)
-                            top = min(coord[1] for coord in coords)
-                            right = max(coord[0] for coord in coords)
-                            bottom = max(coord[1] for coord in coords)
-                            width = right - left
-                            height = bottom - top
-                            
-                            boxes.append({
-                                'id': i,
-                                'coords': {
-                                    'left': left,
-                                    'top': top,
-                                    'width': width,
-                                    'height': height
-                                },
-                                'text': text.strip(),
-                                'confidence': confidence
-                            })
-        
+        for res in result:
+            rec_polys = res.get('rec_polys', [])
+            rec_texts = res.get('rec_texts', [])
+            rec_scores = res.get('rec_scores', [])
+            for i, (poly, text, score) in enumerate(zip(rec_polys, rec_texts, rec_scores)):
+                if score is None or score < 0.93 or not text.strip():
+                    continue
+                # Convert all coordinates and score to Python float
+                x_coords = [float(pt[0]) for pt in poly]
+                y_coords = [float(pt[1]) for pt in poly]
+                left = float(min(x_coords))
+                top = float(min(y_coords))
+                width = float(max(x_coords) - left)
+                height = float(max(y_coords) - top)
+                boxes.append({
+                    'id': int(i),
+                    'coords': {
+                        'left': left,
+                        'top': top,
+                        'width': width,
+                        'height': height
+                    },
+                    'text': str(text).strip(),
+                    'confidence': float(score)
+                })
         return boxes
-        
     except Exception as e:
         logging.error(f"Erreur lors de la détection des boîtes OCR: {e}")
         return []
-
-# Helper: Find closest OCR box to a target rectangle
-
-def find_closest_ocr_box(target_rect, ocr_boxes):
-    # target_rect: dict with left, top, width, height
-    # ocr_boxes: list of (box, text, confidence)
-    tx = target_rect['left'] + target_rect['width'] / 2
-    ty = target_rect['top'] + target_rect['height'] / 2
-    best_box = None
-    best_dist = float('inf')
-    for box in ocr_boxes:
-        coords = box[0]  # 4 points
-        # Compute center of OCR box
-        bx = (coords[0][0] + coords[2][0]) / 2
-        by = (coords[0][1] + coords[2][1]) / 2
-        dist = hypot(tx - bx, ty - by)
-        if dist < best_dist:
-            best_dist = dist
-            best_box = box
-    return best_box
 
 @app.post("/extract-data")
 async def extract_data(
@@ -358,7 +321,6 @@ async def extract_data(
     """Extraire les données d'un PDF en cherchant pour chaque champ le mapping dont la boîte est la plus proche d'une boîte OCR détectée."""
     try:
         mappings = load_mapping()
-        # Lire et traiter le fichier
         file_content = await file.read()
         if file.filename.lower().endswith('.pdf'):
             img = process_pdf_to_image(file_content)
@@ -367,48 +329,45 @@ async def extract_data(
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
 
-        # Run OCR on the whole image
         img_array = np.array(img)
-        ocr_result = ocr.ocr(img_array, cls=False)
-        ocr_boxes = ocr_result[0] if ocr_result and len(ocr_result) > 0 else []
-
-        # Build detected boxes as dict by text for matching
+        result = ocr.predict(img_array)
         detected_boxes = []
-        for line in ocr_boxes:
-            coords = line[0]
-            left = min(coord[0] for coord in coords)
-            top = min(coord[1] for coord in coords)
-            right = max(coord[0] for coord in coords)
-            bottom = max(coord[1] for coord in coords)
-            width = right - left
-            height = bottom - top
-            detected_boxes.append({
-                'left': left,
-                'top': top,
-                'width': width,
-                'height': height,
-                'text': line[1][0] if len(line) > 1 and len(line[1]) > 0 else ''
-            })
+        for res in result:
+            rec_polys = res.get('rec_polys', [])
+            rec_texts = res.get('rec_texts', [])
+            rec_scores = res.get('rec_scores', [])
+            for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
+                if score is None or not text.strip():
+                    continue
+                x_coords = [pt[0] for pt in poly]
+                y_coords = [pt[1] for pt in poly]
+                left = min(x_coords)
+                top = min(y_coords)
+                width = max(x_coords) - left
+                height = max(y_coords) - top
+                detected_boxes.append({
+                    'left': left,
+                    'top': top,
+                    'width': width,
+                    'height': height,
+                    'text': text
+                })
 
-        # Get all field names (assume all mappings have the same fields)
         if not mappings:
             raise HTTPException(status_code=404, detail="Aucun mapping disponible")
         field_names = list(next(iter(mappings.values()))['field_map'].keys())
 
-        # Helper: get center of a box
         def box_center(box):
             return (
                 box['left'] + box['width'] / 2,
                 box['top'] + box['height'] / 2
             )
 
-        # Helper: compute distance between two boxes
         def box_distance(box1, box2):
             c1 = box_center(box1)
             c2 = box_center(box2)
             return hypot(c1[0] - c2[0], c1[1] - c2[1])
 
-        # For each field, find the mapping whose field is closest to a detected box
         extracted_data = {}
         mapping_keys_for_fields = {}
         for field in field_names:
@@ -419,7 +378,6 @@ async def extract_data(
                 coords = mapping['field_map'].get(field)
                 if coords is None:
                     continue
-                # Find the closest detected box to this field
                 min_dist = float('inf')
                 closest_box = None
                 for det_box in detected_boxes:
