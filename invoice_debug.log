@@ -564,3 +564,10 @@ pip install python-multipart
 2025-07-16 14:27:16,888 ERROR Erreur lors de la détection des boîtes OCR: PaddleOCR.predict() got an unexpected keyword argument 'cls'
 2025-07-16 14:27:54,580 ERROR Erreur lors de la détection des boîtes OCR: PaddleOCR.predict() got an unexpected keyword argument 'cls'
 2025-07-16 14:29:01,428 ERROR Erreur lors de l'extraction: PaddleOCR.predict() got an unexpected keyword argument 'cls'
+2025-07-17 14:28:35,808 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
+2025-07-17 14:30:07,819 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
+2025-07-17 14:30:07,825 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
+2025-07-17 14:32:00,136 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
+2025-07-17 14:32:14,390 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
+2025-07-17 14:32:14,447 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
+2025-07-17 14:33:08,602 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
