@@ -23,8 +23,6 @@ const Extractor = () => {
     filePreviews: []
   });
 
- 
-
   const [extractionState, setExtractionState] = useState({
     uploadedFiles: [],
     filePreviews: [],
@@ -37,7 +35,7 @@ const Extractor = () => {
   const [dataPrepState, setDataPrepState] = useState({
     uploadedImage: null,
     imageDimensions: { width: 0, height: 0 },
-    currentZoom: 1,
+    currentZoom: 0.5,
     isSelecting: false,
     selectedField: null,
     fieldMappings: {},
@@ -99,6 +97,10 @@ const Extractor = () => {
     try {
       const formData = new FormData();
       formData.append('file', file);
+      // Votre backend ne supporte pas ces paramètres, on les enlève
+      // formData.append('dpi', '300');
+      // formData.append('preserve_aspect_ratio', 'true');
+      // formData.append('include_margins', 'true');
 
       const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
         method: 'POST',
@@ -108,10 +110,15 @@ const Extractor = () => {
       const result = await response.json();
 
       if (result.success) {
+        // Préférer l'image originale si disponible
+        const imageToUse = result.unwarped_image || result.image;
+        const widthToUse = result.unwarped_width || result.width;
+        const heightToUse = result.unwarped_height || result.height;
+        
         setDataPrepState(prev => ({
           ...prev,
-          uploadedImage: result.unwarped_image || result.image,
-          imageDimensions: { width: result.unwarped_width || result.width, height: result.unwarped_height || result.height },
+          uploadedImage: imageToUse,
+          imageDimensions: { width: widthToUse, height: heightToUse },
           currentZoom: 1,
           fieldMappings: {},
           selectionHistory: [],
@@ -120,7 +127,7 @@ const Extractor = () => {
         }));
         
         showNotification(
-          `Image chargée avec succès (${result.width} × ${result.height} px) - ${result.box_count || (result.boxes ? result.boxes.length : 0)} boîtes OCR détectées`,
+          `Image chargée avec succès (${widthToUse} × ${heightToUse} px) - ${result.box_count || (result.boxes ? result.boxes.length : 0)} boîtes OCR détectées`,
           'success'
         );
       } else {
@@ -142,62 +149,86 @@ const Extractor = () => {
   }, []);
 
   const startFieldSelection = useCallback((fieldKey) => {
+    // Annuler le mode dessin si actif
+    setManualDrawState({ isDrawing: false, fieldKey: null, start: null, rect: null });
+    
     setDataPrepState(prev => ({
       ...prev,
       isSelecting: true,
       selectedField: fieldKey,
-      ocrPreview: `Cliquez sur une boîte OCR pour l'assigner à ${fieldKey}`
+      ocrPreview: `Mode sélection activé pour "${fieldKey}". Cliquez sur une boîte OCR rouge.`
     }));
-  }, []);
+    
+    showNotification(`Sélectionnez une boîte OCR pour "${fieldKey}"`, 'info');
+  }, [showNotification]);
 
   const findClickedBox = useCallback((x, y) => {
-    if (!dataPrepState.ocrBoxes.length) return null;
+    if (!dataPrepState.ocrBoxes || dataPrepState.ocrBoxes.length === 0) {
+      console.log('Aucune boîte OCR disponible');
+      return null;
+    }
 
+    console.log(`Recherche de boîte à la position (${x.toFixed(2)}, ${y.toFixed(2)})`);
+    
     for (const box of dataPrepState.ocrBoxes) {
-      const boxX = box.coords.left;
-      const boxY = box.coords.top;
-      const boxWidth = box.coords.width;
-      const boxHeight = box.coords.height;
+      if (!box.coords) continue;
+      
+      const boxLeft = box.coords.left;
+      const boxTop = box.coords.top;
+      const boxRight = boxLeft + box.coords.width;
+      const boxBottom = boxTop + box.coords.height;
 
-      if (x >= boxX && x <= boxX + boxWidth && y >= boxY && y <= boxY + boxHeight) {
+      console.log(`Boîte ${box.id}: (${boxLeft.toFixed(2)}, ${boxTop.toFixed(2)}) -> (${boxRight.toFixed(2)}, ${boxBottom.toFixed(2)}) : "${box.text}"`);
+
+      if (x >= boxLeft && x <= boxRight && y >= boxTop && y <= boxBottom) {
+        console.log(`✅ Boîte trouvée: ${box.id} - "${box.text}"`);
         return box;
       }
     }
+    
+    console.log('❌ Aucune boîte trouvée à cette position');
     return null;
   }, [dataPrepState.ocrBoxes]);
 
   const handleCanvasMouseDown = useCallback((event) => {
-    if (manualDrawState.isDrawing) {
-      const rect = canvasRef.current.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / dataPrepState.currentZoom;
-      const y = (event.clientY - rect.top) / dataPrepState.currentZoom;
-      setManualDrawState(prev => ({ ...prev, start: { x, y }, rect: null }));
-      return;
-    }
-    if (!dataPrepState.isSelecting || !canvasRef.current) return;
-
+    if (!canvasRef.current) return;
+    
     const rect = canvasRef.current.getBoundingClientRect();
     const x = (event.clientX - rect.left) / dataPrepState.currentZoom;
     const y = (event.clientY - rect.top) / dataPrepState.currentZoom;
-
-    const clickedBox = findClickedBox(x, y);
-    if (clickedBox) {
-      setDataPrepState(prev => ({
-        ...prev,
-        selectedBoxes: {
-          ...prev.selectedBoxes,
-          [prev.selectedField]: clickedBox
-        },
-        fieldMappings: {
-          ...prev.fieldMappings,
-          [prev.selectedField]: clickedBox.coords
-        },
-        isSelecting: false,
-        selectedField: null,
-        ocrPreview: `Boîte ${clickedBox.id} assignée à ${prev.selectedField}: "${clickedBox.text}"`
-      }));
+    
+    // Mode dessin manuel
+    if (manualDrawState.isDrawing) {
+      setManualDrawState(prev => ({ ...prev, start: { x, y }, rect: null }));
+      return;
     }
-  }, [dataPrepState.isSelecting, dataPrepState.currentZoom, dataPrepState.selectedField, findClickedBox, manualDrawState]);
+    
+    // Mode sélection OCR
+    if (dataPrepState.isSelecting && dataPrepState.selectedField) {
+      const clickedBox = findClickedBox(x, y);
+      if (clickedBox) {
+        setDataPrepState(prev => ({
+          ...prev,
+          selectedBoxes: {
+            ...prev.selectedBoxes,
+            [prev.selectedField]: clickedBox
+          },
+          fieldMappings: {
+            ...prev.fieldMappings,
+            [prev.selectedField]: clickedBox.coords
+          },
+          isSelecting: false,
+          selectedField: null,
+          ocrPreview: `Boîte assignée à ${prev.selectedField}: "${clickedBox.text}"`
+        }));
+        
+        showNotification(`Champ "${dataPrepState.selectedField}" mappé avec succès`, 'success');
+      } else {
+        // Aucune boîte cliquée
+        showNotification('Aucune boîte OCR trouvée à cet emplacement', 'error');
+      }
+    }
+  }, [dataPrepState.isSelecting, dataPrepState.selectedField, dataPrepState.currentZoom, findClickedBox, manualDrawState.isDrawing, showNotification]);
 
   const handleCanvasMouseMove = useCallback((event) => {
     if (manualDrawState.isDrawing && manualDrawState.start) {
@@ -212,7 +243,6 @@ const Extractor = () => {
     }
   }, [manualDrawState, dataPrepState.currentZoom]);
 
-  // Restore handleCanvasMouseUp to only save the manual rectangle, do not trigger OCR or update preview
   const handleCanvasMouseUp = useCallback((event) => {
     if (manualDrawState.isDrawing && manualDrawState.start && manualDrawState.rect) {
       const fieldKey = manualDrawState.fieldKey;
@@ -346,6 +376,10 @@ const Extractor = () => {
       for (const file of files) {
         const formData = new FormData();
         formData.append('file', file);
+        // Enlever les paramètres non supportés par votre backend
+        // formData.append('dpi', '200');
+        // formData.append('preserve_aspect_ratio', 'true');
+        // formData.append('include_margins', 'true');
         
         // Use /upload-basic for fast preview (no OCR)
         const response = await fetch(`${API_BASE_URL}/upload-basic`, {
@@ -391,7 +425,6 @@ const Extractor = () => {
     }
   };
 
-  // Fonction pour rediriger vers la configuration des mappings
   const goToMappingConfiguration = () => {
     setCurrentStep('dataprep');
     showNotification('Configurez vos mappings pour le nouveau fournisseur/client', 'info');
@@ -446,7 +479,6 @@ const Extractor = () => {
     scrollToIndex(newIndex);
   };
 
-  // Replace extractAllPdfs with a progressive extraction function
   const extractAllPdfs = async () => {
     setExtractionState(prev => ({ ...prev, isProcessing: true }));
     const results = [...extractionState.extractedDataList];
@@ -497,27 +529,37 @@ const Extractor = () => {
     }
   }, [dataPrepState.uploadedImage, redrawCanvas]);
 
-  const [showDataPrepUpload, setShowDataPrepUpload] = useState(false); // for modal or inline upload
+  const [showDataPrepUpload, setShowDataPrepUpload] = useState(false);
 
-  // New handler for single PDF upload for data prep
   const handleSingleDataPrepUpload = useCallback(async (event) => {
     const file = event.target.files[0];
     if (!file) return;
-    setCurrentStep('dataprep'); // Redirect immediately
+    setCurrentStep('dataprep');
     setIsLoading(true);
     try {
       const formData = new FormData();
       formData.append('file', file);
+      // Enlever les paramètres non supportés
+      // formData.append('dpi', '300');
+      // formData.append('preserve_aspect_ratio', 'true');
+      // formData.append('include_margins', 'true');
+      // formData.append('full_page', 'true');
+      
       const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
         method: 'POST',
         body: formData
       });
       const result = await response.json();
       if (result.success) {
+        // Préférer l'image originale complète
+        const imageToUse = result.unwarped_image || result.image;
+        const widthToUse = result.unwarped_width || result.width;
+        const heightToUse = result.unwarped_height || result.height;
+        
         setDataPrepState(prev => ({
           ...prev,
-          uploadedImage: result.unwarped_image || result.image,
-          imageDimensions: { width: result.unwarped_width || result.width, height: result.unwarped_height || result.height },
+          uploadedImage: imageToUse,
+          imageDimensions: { width: widthToUse, height: heightToUse },
           currentZoom: 1,
           fieldMappings: {},
           selectionHistory: [],
@@ -527,7 +569,7 @@ const Extractor = () => {
         setCurrentStep('dataprep');
         setShowDataPrepUpload(false);
         showNotification(
-          `Image chargée avec succès (${result.unwarped_width || result.width} × ${result.unwarped_height || result.height} px) - ${result.box_count || (result.boxes ? result.boxes.length : 0)} boîtes OCR détectées`,
+          `Image chargée avec succès (${widthToUse} × ${heightToUse} px) - ${result.box_count || (result.boxes ? result.boxes.length : 0)} boîtes OCR détectées`,
           'success'
         );
       } else {
@@ -540,13 +582,19 @@ const Extractor = () => {
     }
   }, [showNotification]);
 
-  // Add startManualDraw function
   const startManualDraw = (fieldKey) => {
+    // Annuler le mode sélection si actif
+    setDataPrepState(prev => ({ 
+      ...prev, 
+      isSelecting: false, 
+      selectedField: null,
+      ocrPreview: `Mode dessin activé pour "${fieldKey}". Dessinez un rectangle.`
+    }));
+    
     setManualDrawState({ isDrawing: true, fieldKey, start: null, rect: null });
-    setDataPrepState(prev => ({ ...prev, isSelecting: false, selectedField: null }));
+    showNotification(`Mode dessin activé pour "${fieldKey}". Dessinez un rectangle.`, 'info');
   };
 
-  // Attach mouse events to canvas
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -612,196 +660,187 @@ const Extractor = () => {
         ))}
       </div>
 
-      <main className="w-3/4 mx-auto px-8 py-6">
+      <main className="w-full px-4 py-6">
         <>
           {currentStep === 'setup' && (
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8">
-              <div className="max-w-4xl mx-auto">
-                
-                <div className="mb-8">
-                  <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                    <Receipt className="w-6 h-6" />
-                    1. Type de facture
-                  </h2>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <button
-                      onClick={() => setSetupState(prev => ({ ...prev, invoiceType: 'achat' }))}
-                      className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
-                        setupState.invoiceType === 'achat'
-                          ? 'border-blue-400 bg-blue-500/20 text-white shadow-lg scale-105'
-                          : 'border-white/30 bg-white/10 text-blue-100 hover:border-white/50'
-                      }`}
-                    >
-                      <ShoppingCart className="w-12 h-12 mx-auto mb-3" />
-                      <h3 className="text-xl font-semibold mb-2">Facture d'Achat</h3>
-                      <p className="text-sm opacity-80">Factures reçues de vos fournisseurs</p>
-                    </button>
-                    
-                    <button
-                      onClick={() => setSetupState(prev => ({ ...prev, invoiceType: 'vente' }))}
-                      className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
-                        setupState.invoiceType === 'vente'
-                          ? 'border-green-400 bg-green-500/20 text-white shadow-lg scale-105'
-                          : 'border-white/30 bg-white/10 text-blue-100 hover:border-white/50'
-                      }`}
-                    >
-                      <Receipt className="w-12 h-12 mx-auto mb-3" />
-                      <h3 className="text-xl font-semibold mb-2">Facture de Vente</h3>
-                      <p className="text-sm opacity-80">Factures émises vers vos clients</p>
-                    </button>
-                  </div>
-                </div>
-
-                {setupState.invoiceType && (
+            <div className="max-w-6xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8">
+                <div className="max-w-4xl mx-auto">
+                  
                   <div className="mb-8">
                     <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                      <Building2 className="w-6 h-6" />
-                      2. Ajout d'une facture {setupState.invoiceType === 'achat' ? 'Achat' : 'Vente'}
+                      <Receipt className="w-6 h-6" />
+                      1. Type de facture
                     </h2>
-                    
-                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                      <div className="space-y-4">
-                        {/* <div className="grid gap-3">
-                          {suppliers
-                            .filter(s => s.type === setupState.invoiceType || s.type === 'both')
-                            .map(supplier => (
-                              <div
-                                key={supplier.id}
-                                className="flex items-center p-4 rounded-xl border border-white/30 bg-white/10"
-                              >
-                                <Building2 className="w-5 h-5 text-blue-200 mr-3" />
-                                <span className="text-white font-medium">{supplier.name}</span>
-                              </div>
-                            ))}
-                        </div> */}
-                        
-                        <input
-                          type="file"
-                          accept=".pdf"
-                          onChange={handleSingleDataPrepUpload}
-                          className="hidden"
-                          id="single-dataprep-upload"
-                        />
-                        <label
-                          htmlFor="single-dataprep-upload"
-                          className="w-full p-6 border-2 border-dashed border-blue-400/50 rounded-xl text-blue-200 hover:border-blue-400 hover:text-white hover:bg-blue-500/10 transition-all flex items-center justify-center gap-3 bg-blue-500/5 cursor-pointer"
-                        >
-                          <Plus className="w-6 h-6" />
-                          <div className="text-center">
-                            <div className="font-semibold text-lg">Paramétrer une nouvelle facture</div>
-                          </div>
-                          <ArrowRight className="w-6 h-6" />
-                        </label>
-                      </div>
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <button
+                        onClick={() => setSetupState(prev => ({ ...prev, invoiceType: 'achat' }))}
+                        className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
+                          setupState.invoiceType === 'achat'
+                            ? 'border-blue-400 bg-blue-500/20 text-white shadow-lg scale-105'
+                            : 'border-white/30 bg-white/10 text-blue-100 hover:border-white/50'
+                        }`}
+                      >
+                        <ShoppingCart className="w-12 h-12 mx-auto mb-3" />
+                        <h3 className="text-xl font-semibold mb-2">Facture d'Achat</h3>
+                        <p className="text-sm opacity-80">Factures reçues de vos fournisseurs</p>
+                      </button>
+                      
+                      <button
+                        onClick={() => setSetupState(prev => ({ ...prev, invoiceType: 'vente' }))}
+                        className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
+                          setupState.invoiceType === 'vente'
+                            ? 'border-green-400 bg-green-500/20 text-white shadow-lg scale-105'
+                            : 'border-white/30 bg-white/10 text-blue-100 hover:border-white/50'
+                        }`}
+                      >
+                        <Receipt className="w-12 h-12 mx-auto mb-3" />
+                        <h3 className="text-xl font-semibold mb-2">Facture de Vente</h3>
+                        <p className="text-sm opacity-80">Factures émises vers vos clients</p>
+                      </button>
                     </div>
                   </div>
-                )}
 
-                {setupState.invoiceType && (
-                  <div className="mb-8">
-                    <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                      <FileText className="w-6 h-6" />
-                      3. Documents à traiter
-                    </h2>
-                    
-                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                      <div className="mb-6">
-                        <input
-                          type="file"
-                          accept=".pdf,.png,.jpg,.jpeg"
-                          multiple
-                          onChange={handleSetupFileUpload}
-                          className="hidden"
-                          id="setup-file-input"
-                        />
-                        <label
-                          htmlFor="setup-file-input"
-                          className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:border-white/50 transition-colors bg-white/10"
-                        >
-                          <Upload className="w-12 h-12 text-blue-200 mb-4" />
-                          <span className="text-white font-medium text-lg mb-2">
-                            Glissez vos fichiers ici ou cliquez pour sélectionner
-                          </span>
-                          <span className="text-blue-200 text-sm">
-                            PDF, PNG, JPG acceptés • Plusieurs fichiers possible
-                          </span>
-                        </label>
-                      </div>
-
-                      {setupState.filePreviews.length > 0 && (
-                        <div>
-                          <h4 className="text-white font-medium mb-3">
-                            Fichiers sélectionnés ({setupState.filePreviews.length} page(s))
-                          </h4>
-                          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {setupState.filePreviews.map((preview, index) => (
-                              <div key={index} className="relative group">
-                                <div className="aspect-[3/4] rounded-lg overflow-hidden border border-white/30 bg-white/10">
-                                  <img
-                                    src={preview.preview}
-                                    alt={`${preview.fileName} - Page ${preview.pageNumber}`}
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                                <button
-                                  onClick={() => removeFile(index)}
-                                  className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                  <X className="w-4 h-4" />
-                                </button>
-                                <div className="mt-2 text-xs text-blue-200 text-center">
-                                  {preview.fileName}
-                                  {preview.totalPages > 1 && ` (${preview.pageNumber}/${preview.totalPages})`}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
+                  {setupState.invoiceType && (
+                    <div className="mb-8">
+                      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                        <Building2 className="w-6 h-6" />
+                        2. Ajout d'une facture {setupState.invoiceType === 'achat' ? 'Achat' : 'Vente'}
+                      </h2>
+                      
+                      <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
+                        <div className="space-y-4">
+                          <input
+                            type="file"
+                            accept=".pdf"
+                            onChange={handleSingleDataPrepUpload}
+                            className="hidden"
+                            id="single-dataprep-upload"
+                          />
+                          <label
+                            htmlFor="single-dataprep-upload"
+                            className="w-full p-6 border-2 border-dashed border-blue-400/50 rounded-xl text-blue-200 hover:border-blue-400 hover:text-white hover:bg-blue-500/10 transition-all flex items-center justify-center gap-3 bg-blue-500/5 cursor-pointer"
+                          >
+                            <Plus className="w-6 h-6" />
+                            <div className="text-center">
+                              <div className="font-semibold text-lg">Paramétrer une nouvelle facture</div>
+                            </div>
+                            <ArrowRight className="w-6 h-6" />
+                          </label>
                         </div>
-                      )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {setupState.invoiceType && setupState.filePreviews.length > 0 && (
-                  <div className="text-center">
-                    <button
-                      onClick={validateSetupAndProceed}
-                      disabled={isLoading}
-                      className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold text-lg rounded-2xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 mx-auto shadow-lg"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-6 h-6 animate-spin" />
-                          Préparation...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle className="w-6 h-6" />
-                          Valider
-                          <ArrowRight className="w-6 h-6" />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
+                  {setupState.invoiceType && (
+                    <div className="mb-8">
+                      <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                        <FileText className="w-6 h-6" />
+                        3. Documents à traiter
+                      </h2>
+                      
+                      <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
+                        <div className="mb-6">
+                          <input
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg"
+                            multiple
+                            onChange={handleSetupFileUpload}
+                            className="hidden"
+                            id="setup-file-input"
+                          />
+                          <label
+                            htmlFor="setup-file-input"
+                            className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:border-white/50 transition-colors bg-white/10"
+                          >
+                            <Upload className="w-12 h-12 text-blue-200 mb-4" />
+                            <span className="text-white font-medium text-lg mb-2">
+                              Glissez vos fichiers ici ou cliquez pour sélectionner
+                            </span>
+                            <span className="text-blue-200 text-sm">
+                              PDF, PNG, JPG acceptés • Plusieurs fichiers possible
+                            </span>
+                          </label>
+                        </div>
+
+                        {setupState.filePreviews.length > 0 && (
+                          <div>
+                            <h4 className="text-white font-medium mb-3">
+                              Fichiers sélectionnés ({setupState.filePreviews.length} page(s))
+                            </h4>
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                              {setupState.filePreviews.map((preview, index) => (
+                                <div key={index} className="relative group">
+                                  <div className="aspect-[3/4] rounded-lg overflow-hidden border border-white/30 bg-white/10">
+                                    <img
+                                      src={preview.preview}
+                                      alt={`${preview.fileName} - Page ${preview.pageNumber}`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <button
+                                    onClick={() => removeFile(index)}
+                                    className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    <X className="w-4 h-4" />
+                                  </button>
+                                  <div className="mt-2 text-xs text-blue-200 text-center">
+                                    {preview.fileName}
+                                    {preview.totalPages > 1 && ` (${preview.pageNumber}/${preview.totalPages})`}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {setupState.invoiceType && setupState.filePreviews.length > 0 && (
+                    <div className="text-center">
+                      <button
+                        onClick={validateSetupAndProceed}
+                        disabled={isLoading}
+                        className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold text-lg rounded-2xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 mx-auto shadow-lg"
+                      >
+                        {isLoading ? (
+                          <>
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            Préparation...
+                          </>
+                        ) : (
+                          <>
+                            <CheckCircle className="w-6 h-6" />
+                            Valider
+                            <ArrowRight className="w-6 h-6" />
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           )}
 
           {currentStep === 'extract' && (
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-4 relative">
-              <div className="flex justify-center mb-4">
-                <button
-                  onClick={backToSetup}
-                  className="px-4 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 z-10"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Retour
-                </button>
-              </div>
-              <div className="flex flex-row gap-6">
-                  <div className="flex-1 max-w-[30%] min-w-[320px] space-y-4">
-                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30">
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6 relative">
+                <div className="flex justify-center mb-6">
+                  <button
+                    onClick={backToSetup}
+                    className="px-4 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 z-10"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Retour
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Sidebar with extracted data */}
+                  <div className="lg:col-span-1">
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30 h-full">
                       <h3 className="text-lg font-semibold text-white mb-4">Données Extraites</h3>
                       
                       <div className="mb-4 p-3 bg-blue-500/20 rounded-xl">
@@ -832,7 +871,7 @@ const Extractor = () => {
                         {EXTRACTION_FIELDS.map((field) => (
                           <div key={field.key}>
                             <label className="block text-sm font-medium text-blue-100 mb-1">
-                              {field.icon} {field.label}
+                              {field.label}
                             </label>
                             <input
                               type="text"
@@ -852,9 +891,10 @@ const Extractor = () => {
                     </div>
                   </div>
 
-                  <div className="flex-[2] min-w-0">
-                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 h-full flex flex-col">
-                      <div className="flex items-center justify-between mb-2">
+                  {/* Main document preview area */}
+                  <div className="lg:col-span-2">
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
+                      <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                           <Eye className="w-5 h-5" />
                           Aperçu des Documents
@@ -867,27 +907,25 @@ const Extractor = () => {
                       </div>
 
                       {extractionState.filePreviews.length > 0 ? (
-                        <div className="flex-1 flex flex-col">
-                          <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
-                            <div className="relative flex-1 flex items-center justify-center w-full h-full overflow-auto" style={{ minHeight: '60vh', height: '60vh' }}>
-                              <img
-                                ref={previewImageRef}
-                                src={extractionState.filePreviews[extractionState.currentPdfIndex]}
-                                alt="Aperçu du document"
-                                className="object-contain rounded-xl border border-white/10 shadow-lg"
-                                style={{
-                                  maxWidth: '100%',
-                                  maxHeight: '100%',
-                                  width: 'auto',
-                                  height: 'auto',
-                                  objectFit: 'contain',
-                                  display: 'block',
-                                  margin: '0 auto'
-                                }}
-                              />
+                        <div className="space-y-4">
+                          {/* Document preview container with proper sizing */}
+                          <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                            <div className="w-full" style={{ height: '70vh' }}>
+                              <div className="w-full h-full overflow-auto bg-white rounded-lg shadow-lg p-4">
+                                <img
+                                  ref={previewImageRef}
+                                  src={extractionState.filePreviews[extractionState.currentPdfIndex]}
+                                  alt="Aperçu du document"
+                                  className="w-full h-auto object-contain"
+                                  style={{
+                                    minWidth: '100%',
+                                    height: 'auto'
+                                  }}
+                                />
+                              </div>
                             </div>
                             
-                            <div className="mt-2 text-center">
+                            <div className="mt-4 text-center">
                               <div className="text-white font-medium">
                                 {extractionState.previewDimensions[extractionState.currentPdfIndex]?.fileName}
                               </div>
@@ -899,30 +937,27 @@ const Extractor = () => {
                             </div>
                           </div>
 
+                          {/* Navigation controls */}
                           {extractionState.filePreviews.length > 1 && (
-                            <div className="mt-4 pt-4 border-t border-white/20">
-                              <div className="flex items-center gap-2">
+                            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                              <div className="flex items-center gap-3">
                                 <button
                                   onClick={goToPrevPdf}
                                   disabled={extractionState.currentPdfIndex === 0}
                                   className="p-2 bg-white/20 rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                                 >
-                                  <ChevronLeft className="w-4 h-4 text-white" />
+                                  <ChevronLeft className="w-5 h-5 text-white" />
                                 </button>
                                 
-                                <div 
-                                  ref={horizontalScrollRef}
-                                  className="flex-1 overflow-x-auto"
-                                  style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                                >
-                                  <div className="flex gap-3 pb-2">
+                                <div className="flex-1 overflow-x-auto">
+                                  <div className="flex gap-2 pb-2">
                                     {extractionState.filePreviews.map((preview, index) => (
                                       <div
                                         key={index}
                                         onClick={() => scrollToIndex(index)}
                                         className={`relative flex-shrink-0 w-16 h-20 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
                                           index === extractionState.currentPdfIndex
-                                            ? 'border-blue-400 shadow-lg scale-110 ring-2 ring-blue-400/50'
+                                            ? 'border-blue-400 shadow-lg scale-105 ring-2 ring-blue-400/50'
                                             : 'border-white/30 hover:border-white/50 hover:scale-105'
                                         }`}
                                       >
@@ -944,11 +979,11 @@ const Extractor = () => {
                                   disabled={extractionState.currentPdfIndex === extractionState.filePreviews.length - 1}
                                   className="p-2 bg-white/20 rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
                                 >
-                                  <ChevronRight className="w-4 h-4 text-white" />
+                                  <ChevronRight className="w-5 h-5 text-white" />
                                 </button>
                               </div>
                               
-                              <div className="text-center mt-2">
+                              <div className="text-center mt-3">
                                 <span className="text-blue-200 text-sm">
                                   {extractionState.currentPdfIndex + 1} / {extractionState.filePreviews.length} pages
                                 </span>
@@ -966,81 +1001,129 @@ const Extractor = () => {
                   </div>
                 </div>
               </div>
-            
+            </div>
           )}
 
           {currentStep === 'dataprep' && (
-            <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-4 relative">
-              <div className="flex justify-center mb-4">
-                <button
-                  onClick={() => setCurrentStep('setup')}
-                  className="px-4 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 z-10"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                  Retour
-                </button>
-              </div>
-              <div className="flex flex-row gap-6">
-                  {/* Fields panel (left) */}
-                  <div className="flex-1 max-w-[30%] min-w-[320px] space-y-4">
-                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30">
+            <div className="max-w-7xl mx-auto">
+              <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6 relative">
+                <div className="flex justify-center mb-6">
+                  <button
+                    onClick={() => setCurrentStep('setup')}
+                    className="px-4 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 z-10"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    Retour
+                  </button>
+                </div>
+                
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                  {/* Fields panel */}
+                  <div className="lg:col-span-1">
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30 h-full">
                       <h3 className="text-lg font-semibold text-white mb-4">Champs à mapper</h3>
                       {dataPrepState.isSelecting && (
-                        <div className="mb-3 p-2 bg-blue-500/20 border border-blue-400/30 rounded-xl">
-                          <p className="text-blue-100 text-xs font-medium">
-                            🎯 Sélection: <strong>{dataPrepState.selectedField}</strong>
+                        <div className="mb-4 p-3 bg-blue-500/20 border border-blue-400/30 rounded-xl">
+                          <p className="text-blue-100 text-sm font-medium">
+                            🎯 Mode sélection actif pour: <strong>{dataPrepState.selectedField}</strong>
                           </p>
                           <p className="text-blue-200 text-xs mt-1">
-                            Cliquez sur une boîte OCR pour l'assigner à ce champ
+                            Cliquez sur une boîte OCR rouge dans l'image
                           </p>
+                          <button
+                            onClick={() => setDataPrepState(prev => ({ 
+                              ...prev, 
+                              isSelecting: false, 
+                              selectedField: null,
+                              ocrPreview: 'Sélection annulée'
+                            }))}
+                            className="mt-2 px-3 py-1 bg-red-500/20 border border-red-400/30 text-red-100 rounded text-xs hover:bg-red-500/30 transition-colors"
+                          >
+                            Annuler la sélection
+                          </button>
                         </div>
                       )}
-                      <div className="space-y-2">
+                      
+                      {manualDrawState.isDrawing && (
+                        <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-400/30 rounded-xl">
+                          <p className="text-yellow-100 text-sm font-medium">
+                            ✏️ Mode dessin actif pour: <strong>{manualDrawState.fieldKey}</strong>
+                          </p>
+                          <p className="text-yellow-200 text-xs mt-1">
+                            Dessinez un rectangle sur la zone à extraire
+                          </p>
+                          <button
+                            onClick={() => setManualDrawState({ 
+                              isDrawing: false, 
+                              fieldKey: null, 
+                              start: null, 
+                              rect: null 
+                            })}
+                            className="mt-2 px-3 py-1 bg-red-500/20 border border-red-400/30 text-red-100 rounded text-xs hover:bg-red-500/30 transition-colors"
+                          >
+                            Annuler le dessin
+                          </button>
+                        </div>
+                      )}
+                      
+                      <div className="space-y-3">
                         {EXTRACTION_FIELDS.map((field) => (
                           <div
                             key={field.key}
-                            className="bg-white/10 backdrop-blur-md rounded-xl p-3 border border-white/20 transition-all hover:bg-white/20"
+                            className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 transition-all hover:bg-white/20"
                           >
-                            <div className="flex items-center justify-between gap-2 mb-1">
-                              <label className="text-xs font-medium text-blue-100 min-w-[90px]">
+                            <div className="flex items-center justify-between mb-2">
+                              <label className="text-sm font-medium text-blue-100">
                                 {field.label}
                               </label>
                               {dataPrepState.selectedBoxes[field.key] && (
-                                <div className="text-xs text-green-200 font-mono text-center whitespace-nowrap px-2 max-w-[180px] overflow-hidden text-ellipsis">
-                                  "{filterValue(dataPrepState.selectedBoxes[field.key].text, field.key)}"
+                                <div className="text-xs text-green-200 font-mono bg-green-500/20 px-2 py-1 rounded">
+                                  Mappé
                                 </div>
                               )}
-                              <div className="flex flex-col gap-1 ml-2">
-                                <button
-                                  onClick={() => startFieldSelection(field.key)}
-                                  disabled={dataPrepState.isSelecting || !dataPrepState.uploadedImage || dataPrepState.ocrBoxes.length === 0}
-                                  className={`px-2 py-1 text-xs rounded-lg transition-colors ${
-                                    dataPrepState.selectedBoxes[field.key]
-                                      ? 'bg-green-500/20 border border-green-400/30 text-green-100'
-                                      : 'bg-blue-500/20 border border-blue-400/30 text-blue-100'
-                                  } hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed`}
-                                >
-                                  {dataPrepState.selectedBoxes[field.key] ? 'Changer' : 'Sélectionner'}
-                                </button>
-                                <button
-                                  onClick={() => startManualDraw(field.key)}
-                                  disabled={manualDrawState.isDrawing || !dataPrepState.uploadedImage}
-                                  className="px-2 py-1 text-xs rounded-lg bg-yellow-500/20 border border-yellow-400/30 text-yellow-900 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                  {dataPrepState.fieldMappings[field.key]?.manual ? 'Redessiner' : 'Dessiner'}
-                                </button>
-                              </div>
                             </div>
+                            
+                            {dataPrepState.selectedBoxes[field.key] && (
+                              <div className="text-xs text-white bg-white/20 p-2 rounded mb-2 font-mono">
+                                "{filterValue(dataPrepState.selectedBoxes[field.key].text, field.key)}"
+                              </div>
+                            )}
+                            
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => startFieldSelection(field.key)}
+                                disabled={dataPrepState.isSelecting || !dataPrepState.uploadedImage || dataPrepState.ocrBoxes.length === 0}
+                                className={`flex-1 px-3 py-2 text-xs rounded-lg transition-colors ${
+                                  dataPrepState.selectedBoxes[field.key]
+                                    ? 'bg-green-500/20 border border-green-400/30 text-green-100'
+                                    : 'bg-blue-500/20 border border-blue-400/30 text-blue-100'
+                                } hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed`}
+                              >
+                                {dataPrepState.selectedBoxes[field.key] ? 'Changer' : 'Sélectionner'}
+                              </button>
+                              
+                              <button
+                                onClick={() => startManualDraw(field.key)}
+                                disabled={manualDrawState.isDrawing || !dataPrepState.uploadedImage}
+                                className="flex-1 px-3 py-2 text-xs rounded-lg bg-yellow-500/20 border border-yellow-400/30 text-yellow-100 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                              >
+                                {dataPrepState.fieldMappings[field.key]?.manual ? 'Redessiner' : 'Dessiner'}
+                              </button>
+                            </div>
+                            
                             {dataPrepState.fieldMappings[field.key]?.manual && (
-                              <div className="text-xs text-yellow-400 font-mono text-center">[Manuel]</div>
+                              <div className="text-xs text-yellow-400 text-center mt-2 bg-yellow-500/20 py-1 rounded">
+                                [Manuel]
+                              </div>
                             )}
                           </div>
                         ))}
                       </div>
+                      
                       <button
                         onClick={saveMappings}
                         disabled={isLoading || Object.keys(dataPrepState.selectedBoxes).length === 0}
-                        className="w-full mt-4 px-4 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
+                        className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         {isLoading ? (
                           <>
@@ -1054,88 +1137,130 @@ const Extractor = () => {
                           </>
                         )}
                       </button>
-                    </div>
-                    {Object.keys(mappings).length > 0 && (
-                      <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30">
-                        <h3 className="text-base font-semibold text-white mb-2">Mappings existants</h3>
-                        <div className="space-y-1 max-h-32 overflow-y-auto">
-                          {Object.keys(mappings).map((key) => (
-                            <div key={key} className="text-xs text-blue-200 bg-white/10 rounded-lg p-2 flex items-center justify-between">
-                              <span className="font-mono">{key}</span>
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    const response = await fetch(`${API_BASE_URL}/mappings/${key}`, {
-                                      method: 'DELETE'
-                                    });
-                                    if (response.ok) {
-                                      showNotification(`Mapping ${key} supprimé`, 'success');
-                                      loadExistingMappings();
+                      
+                      {Object.keys(mappings).length > 0 && (
+                        <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
+                          <h4 className="text-base font-semibold text-white mb-3">Mappings existants</h4>
+                          <div className="space-y-2 max-h-32 overflow-y-auto">
+                            {Object.keys(mappings).map((key) => (
+                              <div key={key} className="text-xs text-blue-200 bg-white/10 rounded-lg p-2 flex items-center justify-between">
+                                <span className="font-mono">{key}</span>
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const response = await fetch(`${API_BASE_URL}/mappings/${key}`, {
+                                        method: 'DELETE'
+                                      });
+                                      if (response.ok) {
+                                        showNotification(`Mapping ${key} supprimé`, 'success');
+                                        loadExistingMappings();
+                                      }
+                                    } catch (error) {
+                                      showNotification('Erreur lors de la suppression', 'error');
                                     }
-                                  } catch (error) {
-                                    showNotification('Erreur lors de la suppression', 'error');
-                                  }
-                                }}
-                                className="p-1 text-red-300 hover:text-red-100 transition-colors"
-                              >
-                                <Trash2 className="w-3 h-3" />
-                              </button>
-                            </div>
-                          ))}
+                                  }}
+                                  className="p-1 text-red-300 hover:text-red-100 transition-colors"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
-                  {/* PDF/canvas panel (right) */}
-                  <div className="flex-[2] min-w-0">
-                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-4 border border-white/30 h-full flex flex-col">
-                      <div className="flex items-center justify-between mb-2">
+                  
+                  {/* Canvas/document area */}
+                  <div className="lg:col-span-2">
+                    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
+                      <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-white flex items-center gap-2">
                           <Eye className="w-5 h-5" />
                           Aperçu du Document
                         </h3>
-                        {dataPrepState.ocrBoxes.length > 0 && (
-                          <div className="text-sm text-blue-200 bg-blue-500/20 px-3 py-1 rounded-lg">
-                            {dataPrepState.ocrBoxes.length} boîtes OCR détectées
-                          </div>
-                        )}
+                        <div className="flex items-center gap-3">
+                          {dataPrepState.ocrBoxes.length > 0 && (
+                            <div className="text-sm text-blue-200 bg-blue-500/20 px-3 py-1 rounded-lg">
+                              {dataPrepState.ocrBoxes.length} boîtes OCR
+                            </div>
+                          )}
+                          {dataPrepState.uploadedImage && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={() => handleZoomChange(0.8)}
+                                className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                              >
+                                <ZoomOut className="w-4 h-4 text-white" />
+                              </button>
+                              <span className="text-white text-sm px-2">
+                                {Math.round(dataPrepState.currentZoom * 100)}%
+                              </span>
+                              <button
+                                onClick={() => handleZoomChange(1.25)}
+                                className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors"
+                              >
+                                <ZoomIn className="w-4 h-4 text-white" />
+                              </button>
+                            </div>
+                          )}
+                        </div>
                       </div>
+                      
                       {dataPrepState.uploadedImage ? (
-                        <div className="flex-1 flex flex-col items-center justify-center overflow-hidden">
-                          <div className="relative flex-1 flex items-center justify-center w-full h-full overflow-auto" style={{ minHeight: '60vh', height: '60vh' }}>
-                            <canvas
-                              ref={canvasRef}
-                              onMouseDown={handleCanvasMouseDown}
-                              onMouseMove={handleCanvasMouseMove}
-                              onMouseUp={handleCanvasMouseUp}
-                              className={`cursor-${dataPrepState.isSelecting ? 'pointer' : 'default'} max-w-full`}
-                              style={{
-                                width: dataPrepState.imageDimensions.width * dataPrepState.currentZoom,
-                                height: dataPrepState.imageDimensions.height * dataPrepState.currentZoom
-                              }}
-                            />
-                            <img
-                              ref={imageRef}
-                              src={dataPrepState.uploadedImage}
-                              alt="Document de référence"
-                              className="hidden"
-                            />
+                        <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                          <div className="w-full overflow-auto" style={{ maxHeight: '70vh' }}>
+                            <div className="bg-white rounded p-2 min-w-max">
+                              <canvas
+                                ref={canvasRef}
+                                onMouseDown={handleCanvasMouseDown}
+                                onMouseMove={handleCanvasMouseMove}
+                                onMouseUp={handleCanvasMouseUp}
+                                className={`cursor-${dataPrepState.isSelecting ? 'pointer' : manualDrawState.isDrawing ? 'crosshair' : 'default'} border border-gray-300 rounded`}
+                                style={{
+                                  width: dataPrepState.imageDimensions.width * dataPrepState.currentZoom,
+                                  height: dataPrepState.imageDimensions.height * dataPrepState.currentZoom,
+                                  backgroundColor: 'white',
+                                  display: 'block'
+                                }}
+                              />
+                              <img
+                                ref={imageRef}
+                                src={dataPrepState.uploadedImage}
+                                alt="Document de référence"
+                                className="hidden"
+                              />
+                            </div>
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/30 rounded-xl">
+                        <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed border-white/30 rounded-xl">
                           <FileText className="w-12 h-12 text-blue-200 mb-4" />
                           <p className="text-blue-100 text-center">
                             Chargez un document exemple pour commencer<br/>
                             la configuration des mappings
                           </p>
+                          <input
+                            type="file"
+                            accept=".pdf,.png,.jpg,.jpeg"
+                            onChange={handleDataPrepFileUpload}
+                            className="hidden"
+                            id="dataprep-file-input"
+                          />
+                          <label
+                            htmlFor="dataprep-file-input"
+                            className="mt-4 px-6 py-3 bg-blue-500/20 border border-blue-400/30 text-blue-100 rounded-xl hover:bg-blue-500/30 transition-colors cursor-pointer flex items-center gap-2"
+                          >
+                            <Upload className="w-5 h-5" />
+                            Charger un document
+                          </label>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
               </div>
-          
+            </div>
           )}
         </>
       </main>

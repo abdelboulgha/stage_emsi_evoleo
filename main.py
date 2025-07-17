@@ -36,7 +36,7 @@ logging.basicConfig(
 # Initialiser PaddleOCR avec les paramètres spécifiés
 ocr = PaddleOCR(
     use_doc_orientation_classify=False,  # Handle document-level rotation
-    use_doc_unwarping=True,  # Correct perspective distortion
+    use_doc_unwarping=False,  # Correct perspective distortion
     use_textline_orientation=False,  # Improve line-level orientation
 
     text_detection_model_name="PP-OCRv5_mobile_det",
@@ -137,7 +137,7 @@ def extract_text_with_paddleocr(img: Image.Image) -> str:
         return ""
 
 # Add a single variable for PDF rendering scale
-PDF_RENDER_SCALE = 1  # Change this value to affect all PDF image renderings
+PDF_RENDER_SCALE = 2  # Change this value to affect all PDF image renderings
 
 def process_pdf_to_image(file_content: bytes) -> Image.Image:
     """Convertir un PDF en image en utilisant PyMuPDF"""
