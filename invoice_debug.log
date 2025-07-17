@@ -574,3 +574,4 @@ pip install python-multipart
 2025-07-17 20:04:02,929 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
 2025-07-17 20:04:02,934 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
 2025-07-17 20:04:56,128 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
+2025-07-17 20:54:30,023 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)

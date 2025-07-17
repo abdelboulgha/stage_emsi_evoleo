@@ -1,3 +1,140 @@
 {
-  
+  "606e5472": {
+    "field_map": {
+      "fournisseur": {
+        "left": 52.0,
+        "top": 50.0,
+        "width": 72.0,
+        "height": 46.0,
+        "manual": false
+      },
+      "numeroFacture": {
+        "left": 873.0,
+        "top": 56.0,
+        "width": 258.0,
+        "height": 29.0,
+        "manual": false
+      },
+      "tauxTVA": {
+        "left": 679.0,
+        "top": 1272.0,
+        "width": 133.0,
+        "height": 27.0,
+        "manual": false
+      },
+      "montantHT": {
+        "left": 1066.0,
+        "top": 1248.0,
+        "width": 70.0,
+        "height": 30.0,
+        "manual": false
+      },
+      "montantTVA": {
+        "left": 1073.0,
+        "top": 1269.0,
+        "width": 64.0,
+        "height": 33.0,
+        "manual": false
+      },
+      "montantTTC": {
+        "left": 1065.0,
+        "top": 1292.0,
+        "width": 72.0,
+        "height": 33.0,
+        "manual": false
+      }
+    }
+  },
+  "7acf322e": {
+    "field_map": {
+      "fournisseur": {
+        "left": 68.0,
+        "top": 254.0,
+        "width": 101.0,
+        "height": 25.0,
+        "manual": false
+      },
+      "numeroFacture": {
+        "left": 970.7072830200194,
+        "top": 52.00718072255452,
+        "width": 173.6875000000001,
+        "height": 38.045833333333334,
+        "manual": true
+      },
+      "tauxTVA": {
+        "left": 679.0,
+        "top": 1294.0,
+        "width": 132.0,
+        "height": 27.0,
+        "manual": false
+      },
+      "montantHT": {
+        "left": 1052.0,
+        "top": 1273.0,
+        "width": 81.0,
+        "height": 25.0,
+        "manual": false
+      },
+      "montantTVA": {
+        "left": 1067.0,
+        "top": 1294.0,
+        "width": 68.0,
+        "height": 30.0,
+        "manual": false
+      },
+      "montantTTC": {
+        "left": 1052.0,
+        "top": 1318.0,
+        "width": 84.0,
+        "height": 27.0,
+        "manual": false
+      }
+    }
+  },
+  "33fd53f1": {
+    "field_map": {
+      "fournisseur": {
+        "left": 49.0,
+        "top": 172.0,
+        "width": 255.0,
+        "height": 14.0,
+        "manual": false
+      },
+      "numeroFacture": {
+        "left": 167.0,
+        "top": 105.0,
+        "width": 554.0,
+        "height": 31.0,
+        "manual": false
+      },
+      "tauxTVA": {
+        "left": 1001.0,
+        "top": 712.0,
+        "width": 38.0,
+        "height": 24.0,
+        "manual": false
+      },
+      "montantHT": {
+        "left": 1064.0,
+        "top": 814.0,
+        "width": 69.0,
+        "height": 28.0,
+        "manual": false
+      },
+      "montantTVA": {
+        "left": 1071.0,
+        "top": 834.0,
+        "width": 62.0,
+        "height": 32.0,
+        "manual": false
+      },
+      "montantTTC": {
+        "left": 1062.0,
+        "top": 879.0,
+        "width": 71.0,
+        "height": 29.0,
+        "manual": false
+      }
+    }
+  }
 }
