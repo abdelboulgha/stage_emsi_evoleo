@@ -1234,26 +1234,9 @@ const Extractor = () => {
                           </div>
                         </div>
                       ) : (
-                        <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed border-white/30 rounded-xl">
+                        <div className="flex items-center justify-center h-64 border-2 border-dashed border-white/30 rounded-xl">
                           <FileText className="w-12 h-12 text-blue-200 mb-4" />
-                          <p className="text-blue-100 text-center">
-                            Chargez un document exemple pour commencer<br/>
-                            la configuration des mappings
-                          </p>
-                          <input
-                            type="file"
-                            accept=".pdf,.png,.jpg,.jpeg"
-                            onChange={handleDataPrepFileUpload}
-                            className="hidden"
-                            id="dataprep-file-input"
-                          />
-                          <label
-                            htmlFor="dataprep-file-input"
-                            className="mt-4 px-6 py-3 bg-blue-500/20 border border-blue-400/30 text-blue-100 rounded-xl hover:bg-blue-500/30 transition-colors cursor-pointer flex items-center gap-2"
-                          >
-                            <Upload className="w-5 h-5" />
-                            Charger un document
-                          </label>
+                          <p className="text-blue-100"> Fichier en cours de traitement ...</p>
                         </div>
                       )}
                     </div>
