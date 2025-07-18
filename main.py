@@ -38,12 +38,13 @@ ocr = PaddleOCR(
     use_doc_orientation_classify=False,  # Handle document-level rotation
     use_doc_unwarping=False,  # Correct perspective distortion
     use_textline_orientation=False,  # Improve line-level orientation
-
+    text_det_input_shape = [3, 960, 960],
     text_detection_model_name="PP-OCRv5_mobile_det",
     text_recognition_model_name="PP-OCRv5_mobile_rec",
-    precision="fp16",
+    precision="fp32",
     enable_mkldnn=True,
-    text_rec_score_thresh=0.8
+    text_det_unclip_ratio=1.3,
+    text_rec_score_thresh=0.5
   
 )
 
