@@ -1179,22 +1179,36 @@ const Extractor = () => {
                                         <div
                                           key={index}
                                           onClick={() => scrollToIndex(index)}
-                                          className={`relative flex-shrink-0 w-16 h-20 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-200 ${
-                                            index ===
-                                            extractionState.currentPdfIndex
-                                              ? "border-blue-400 shadow-lg scale-105 ring-2 ring-blue-400/50"
-                                              : "border-white/30 hover:border-white/50 hover:scale-105"
-                                          }`}
+                                          className="group relative"
                                         >
-                                          <img
-                                            src={preview}
-                                            alt={`Page ${index + 1}`}
-                                            className="w-full h-full object-cover"
-                                          />
-                                          {index ===
-                                            extractionState.currentPdfIndex && (
-                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
-                                          )}
+                                          <div
+                                            className={`relative flex-shrink-0 w-16 h-20 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                                              index ===
+                                              extractionState.currentPdfIndex
+                                                ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
+                                                : "border-white/30 hover:border-blue-400"
+                                            }`}
+                                          >
+                                            <img
+                                              src={preview}
+                                              alt={`Page ${index + 1}`}
+                                              className="w-full h-full object-cover"
+                                            />
+                                            {index ===
+                                              extractionState.currentPdfIndex && (
+                                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
+                                            )}
+                                          </div>
+
+                                          <div className="hidden group-hover:block fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
+                                            <div className="bg-white rounded-lg shadow-2xl p-2">
+                                              <img
+                                                src={preview}
+                                                alt={`Page ${index + 1}`}
+                                                className="w-[300px] h-auto object-contain"
+                                              />
+                                            </div>
+                                          </div>
                                         </div>
                                       )
                                     )}
