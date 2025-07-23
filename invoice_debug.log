@@ -638,3 +638,8 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-07-23 01:50:13,094 WARNING No valid mappings found for template 2025-07-23
 2025-07-23 01:50:37,517 WARNING No valid mappings found for template 2025-07-23
 2025-07-23 01:52:07,264 INFO Database connection pool created successfully
+2025-07-23 12:14:10,171 ERROR Error creating connection pool: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-07-23 12:18:24,792 INFO Database connection pool created successfully
+2025-07-23 13:14:09,561 INFO Database connection pool created successfully
+2025-07-23 16:28:53,504 INFO Database connection pool created successfully
+2025-07-23 16:34:21,797 INFO Database connection pool created successfully

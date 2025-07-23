@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   Upload,
   FileText,
@@ -22,6 +23,13 @@ import {
   Receipt,
   ArrowRight,
   X,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Maximize2,
+  Minimize2,
+  RefreshCw,
+  Save,
 } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:8000";
@@ -52,13 +60,14 @@ const Extractor = () => {
     previewDimensions: [],
     currentPdfIndex: 0,
     extractedDataList: [],
+    confidenceScores: [],
     isProcessing: false,
   });
 
   const [dataPrepState, setDataPrepState] = useState({
     uploadedImage: null,
     imageDimensions: { width: 0, height: 0 },
-    currentZoom: 1.5,
+    currentZoom: 1,
     isSelecting: false,
     selectedField: null,
     fieldMappings: {},
@@ -66,6 +75,14 @@ const Extractor = () => {
     ocrPreview: "",
     ocrBoxes: [],
     selectedBoxes: {},
+    fileName: '',
+    fileType: '',
+  });
+
+  const [invoiceSelection, setInvoiceSelection] = useState({
+    isOpen: false,
+    selectedInvoices: [],
+    isSaving: false,
   });
 
   const canvasRef = useRef(null);
@@ -100,22 +117,126 @@ const Extractor = () => {
     try {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/mappings`);
-
-      if (response.ok) {
-        const data = await response.json();
-        setMappings(data.mappings || {});
-        showNotification(
-          `${Object.keys(data.mappings || {}).length} mappings chargés`,
-          "info"
-        );
+      const data = await response.json();
+      if (data.success) {
+        setMappings(data.mappings);
       }
     } catch (error) {
-      console.error("Erreur lors du chargement des mappings:", error);
-      showNotification("Erreur lors du chargement des mappings", "error");
+      console.error('Error loading mappings:', error);
     } finally {
       setIsLoading(false);
     }
   }, [showNotification]);
+
+  const handleSaveInvoices = useCallback(async () => {
+    try {
+      setInvoiceSelection(prev => ({ ...prev, isSaving: true }));
+      
+      const invoicesToSave = extractionState.extractedDataList
+        .filter((_, index) => invoiceSelection.selectedInvoices.includes(index))
+        .map((data) => {
+          // Apply filtering to each field using the filterValue function
+          const fournisseur = filterValue(data.fournisseur, 'fournisseur');
+          const numFacture = filterValue(data.numeroFacture, 'numFacture');
+          const tauxTVA = filterValue(data.tauxTVA, 'tauxTVA');
+          const montantHT = filterValue(data.montantHT, 'montantHT');
+          const montantTVA = filterValue(data.montantTVA, 'montantTVA');
+          const montantTTC = filterValue(data.montantTTC, 'montantTTC');
+
+          // Return the invoice data with proper types
+          return {
+            fournisseur,
+            numFacture,
+            tauxTVA: parseFloat(tauxTVA) || 0,
+            montantHT: parseFloat(montantHT) || 0,
+            montantTVA: parseFloat(montantTVA) || 0,
+            montantTTC: parseFloat(montantTTC) || 0,
+          };
+        });
+
+      console.log('Invoices to save:', invoicesToSave);
+      
+      // Save each invoice one by one
+      const results = [];
+      for (const invoice of invoicesToSave) {
+        try {
+          const response = await fetch(`${API_BASE_URL}/ajouter-facture`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(invoice),
+          });
+          
+          const result = await response.json();
+          results.push({ success: result.success, message: result.message });
+          
+          if (!result.success) {
+            console.error('Error saving invoice:', result.message);
+          }
+        } catch (error) {
+          console.error('Error saving invoice:', error);
+          results.push({ success: false, message: error.message });
+        }
+      }
+      
+      const successCount = results.filter(r => r.success).length;
+      const errorCount = results.length - successCount;
+      
+      if (errorCount === 0) {
+        showNotification(`${successCount} facture(s) enregistrée(s) avec succès`, 'success');
+      } else if (successCount === 0) {
+        showNotification(`Erreur lors de l'enregistrement des factures`, 'error');
+      } else {
+        showNotification(`${successCount} facture(s) enregistrée(s), ${errorCount} échec(s)`, 'warning');
+      }
+      
+      // Close the modal and reset state
+      setInvoiceSelection(prev => ({
+        ...prev,
+        isOpen: false,
+        selectedInvoices: [],
+        isSaving: false
+      }));
+      
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde des factures:', error);
+      showNotification(error.message || 'Erreur lors de la sauvegarde des factures', 'error');
+      setInvoiceSelection(prev => ({ ...prev, isSaving: false }));
+    }
+  }, [extractionState, setupState.invoiceType, invoiceSelection.selectedInvoices, showNotification]);
+
+  const toggleSelectAllInvoices = useCallback((checked) => {
+    if (checked) {
+      setInvoiceSelection(prev => ({
+        ...prev,
+        selectedInvoices: extractionState.extractedDataList.map((_, index) => index)
+      }));
+    } else {
+      setInvoiceSelection(prev => ({ ...prev, selectedInvoices: [] }));
+    }
+  }, [extractionState.extractedDataList]);
+
+  const toggleInvoiceSelection = useCallback((index) => {
+    setInvoiceSelection(prev => {
+      const selected = [...prev.selectedInvoices];
+      const idx = selected.indexOf(index);
+      if (idx === -1) {
+        selected.push(index);
+      } else {
+        selected.splice(idx, 1);
+      }
+      return { ...prev, selectedInvoices: selected };
+    });
+  }, []);
+
+  const openSaveModal = useCallback(() => {
+    setInvoiceSelection(prev => ({
+      ...prev,
+      isOpen: true,
+      selectedInvoices: extractionState.extractedDataList.map((_, index) => index)
+    }));
+  }, [extractionState.extractedDataList]);
 
   // Dans la fonction handleDataPrepFileUpload, changez aussi currentZoom à 0.6 * getDefaultZoom
   const handleDataPrepFileUpload = useCallback(
@@ -203,13 +324,11 @@ const Extractor = () => {
   const findClickedBox = useCallback(
     (x, y) => {
       if (!dataPrepState.ocrBoxes || dataPrepState.ocrBoxes.length === 0) {
-        console.log("Aucune boîte OCR disponible");
+       
         return null;
       }
 
-      console.log(
-        `Recherche de boîte à la position (${x.toFixed(2)}, ${y.toFixed(2)})`
-      );
+    
 
       for (const box of dataPrepState.ocrBoxes) {
         if (!box.coords) continue;
@@ -219,21 +338,15 @@ const Extractor = () => {
         const boxRight = boxLeft + box.coords.width;
         const boxBottom = boxTop + box.coords.height;
 
-        console.log(
-          `Boîte ${box.id}: (${boxLeft.toFixed(2)}, ${boxTop.toFixed(
-            2
-          )}) -> (${boxRight.toFixed(2)}, ${boxBottom.toFixed(2)}) : "${
-            box.text
-          }"`
-        );
+      
 
         if (x >= boxLeft && x <= boxRight && y >= boxTop && y <= boxBottom) {
-          console.log(`✅ Boîte trouvée: ${box.id} - "${box.text}"`);
+          
           return box;
         }
       }
 
-      console.log("❌ Aucune boîte trouvée à cette position");
+      
       return null;
     },
     [dataPrepState.ocrBoxes]
@@ -261,7 +374,7 @@ const Extractor = () => {
       if (dataPrepState.isSelecting && dataPrepState.selectedField) {
         const clickedBox = findClickedBox(x, y);
         if (clickedBox) {
-          console.log('Clicked box coords:', clickedBox.coords);
+          
           
           const fieldMappingsUpdate = {
             ...dataPrepState.fieldMappings,
@@ -274,7 +387,7 @@ const Extractor = () => {
             }
           };
           
-          console.log('Updated fieldMappings:', fieldMappingsUpdate);
+          
           
           setDataPrepState((prev) => ({
             ...prev,
@@ -452,7 +565,7 @@ const Extractor = () => {
   }, [dataPrepState, manualDrawState]);
 
   const saveMappings = useCallback(async () => {
-    console.log('saveMappings called');
+    
     
     if (!dataPrepState || !dataPrepState.selectedBoxes) {
       console.error('dataPrepState or selectedBoxes is undefined');
@@ -468,7 +581,7 @@ const Extractor = () => {
     setIsLoading(true);
 
     try {
-      console.log('Getting uploaded file name...');
+    
       let uploadedFileName = '';
       
       try {
@@ -476,7 +589,7 @@ const Extractor = () => {
         uploadedFileName = dataPrepState.uploadedImage?.name || 
                          dataPrepState.fileName || 
                          new Date().toISOString().slice(0, 10);
-        console.log('Original file name:', uploadedFileName);
+        
         
         if (typeof uploadedFileName !== 'string') {
           console.warn('Uploaded file name is not a string, converting...');
@@ -487,7 +600,7 @@ const Extractor = () => {
         uploadedFileName = 'untitled';
       }
       
-      console.log('Processing file name:', uploadedFileName);
+      
       
       // Generate template ID from file name without extension
       let templateId = 'untitled';
@@ -498,19 +611,19 @@ const Extractor = () => {
         if (!baseName) baseName = 'untitled';
         // Sanitize the name (keep only alphanumeric, underscore, hyphen)
         templateId = baseName.replace(/[^a-zA-Z0-9_-]/g, '_');
-        console.log('Generated template ID:', templateId);
+       
       } catch (e) {
         console.error('Error generating template ID, using fallback:', e);
         templateId = `doc_${Date.now()}`; // Fallback with timestamp
       }
       
-      console.log('Final template ID:', templateId);
+      
       
       if (!dataPrepState.fieldMappings) {
         throw new Error("Aucun mappage de champ à enregistrer");
       }
       
-      console.log('Sending request to server...');
+      
       const response = await fetch(`${API_BASE_URL}/mappings`, {
         method: "POST",
         headers: { 
@@ -531,7 +644,7 @@ const Extractor = () => {
       }
       
       const responseData = await response.json();
-      console.log('Server response:', responseData);
+   
       
       if (response.ok) {
         showNotification(`Mappings sauvegardés avec succès pour le template ${templateId}`, "success");
@@ -556,32 +669,40 @@ const Extractor = () => {
   ]);
 
   const handleSetupFileUpload = async (event) => {
+    
     const files = Array.from(event.target.files);
-    if (!files.length) return;
+    
+    if (!files.length) {
+      
+      return;
+    }
 
     setIsLoading(true);
 
     try {
       const previews = [];
-      for (const file of files) {
+      for (const [fileIndex, file] of files.entries()) {
+       
+        
         const formData = new FormData();
         formData.append("file", file);
-        // Enlever les paramètres non supportés par votre backend
-        // formData.append('dpi', '200');
-        // formData.append('preserve_aspect_ratio', 'true');
-        // formData.append('include_margins', 'true');
-
-        // Use /upload-basic for fast preview (no OCR)
+       
         const response = await fetch(`${API_BASE_URL}/upload-basic`, {
           method: "POST",
           body: formData,
         });
         const result = await response.json();
+       
+        
 
         if (result.success) {
           if (result.images) {
+            // Handle multi-page PDF results
             result.images.forEach((img, index) => {
+              const uniqueId = `${file.name}-${file.lastModified}-${Date.now()}-${index}`;
+              
               previews.push({
+                id: uniqueId,
                 file: file,
                 preview: img,
                 fileName: file.name,
@@ -589,8 +710,12 @@ const Extractor = () => {
                 totalPages: result.images.length,
               });
             });
-          } else if (result.image) {
+          } else {
+            // Handle single image result
+            const uniqueId = `${file.name}-${file.lastModified}-${Date.now()}`;
+          
             previews.push({
+              id: uniqueId,
               file: file,
               preview: result.image,
               fileName: file.name,
@@ -601,16 +726,36 @@ const Extractor = () => {
         }
       }
 
-      setSetupState((prev) => ({
-        ...prev,
+      // Create a new state with the updated previews
+      const newState = {
+        ...setupState,
         selectedFiles: files,
         filePreviews: previews,
-      }));
-
+      };
+      
+    
+      // Update the state
+      setSetupState(newState);
+      
+      // Show notification
       showNotification(
         `${files.length} fichier(s) ajouté(s) (${previews.length} page(s))`,
         "success"
       );
+      
+      // For single file uploads, auto-validate
+      if (files.length === 1) {
+       
+        validateSetupAndProceed({
+          ...setupState,
+          invoiceType: setupState.invoiceType,
+          selectedFiles: files,
+          filePreviews: previews,
+        });
+      } 
+      
+      // Clear the file input to allow re-uploading the same file
+      event.target.value = '';
     } catch (error) {
       showNotification("Erreur lors du chargement des fichiers", "error");
     } finally {
@@ -626,27 +771,63 @@ const Extractor = () => {
     );
   };
 
-  const validateSetupAndProceed = () => {
-    if (!setupState.invoiceType) {
-      showNotification("Veuillez sélectionner le type de facture", "error");
-      return;
+  const validateSetupAndProceed = (state = null) => {
+    // If no state is provided, use the current component state
+    if (state === null) {
+      state = {
+        ...setupState,
+        invoiceType: setupState.invoiceType,
+        selectedFiles: setupState.selectedFiles || [],
+        filePreviews: setupState.filePreviews || []
+      };
+    }
+    // Use the provided state (which now always has the latest values)
+    const currentState = state;
+    
+    
+
+    // Check if invoice type is selected in the current component state
+    // This ensures we always check the latest invoice type from the UI
+    const invoiceType = currentState.invoiceType || setupState.invoiceType;
+    
+    if (!invoiceType) {
+
+      return false;
     }
 
-    if (setupState.filePreviews.length === 0) {
+    if (!currentState.filePreviews || currentState.filePreviews.length === 0) {
+    
       showNotification("Veuillez sélectionner au moins un fichier", "error");
-      return;
+      return false;
     }
 
+    // Use the current state that was passed in or from setupState
+    const stateToUse = state || setupState;
+    
+    // Make sure we have the latest invoice type from the component state
+    const finalState = {
+      ...stateToUse,
+      invoiceType: stateToUse.invoiceType || setupState.invoiceType
+    };
+    
+    if (!finalState.invoiceType) {
+      console.error('No invoice type found in state');
+      showNotification("Erreur: Type de facture non défini", "error");
+      return false;
+    }
+    
+    
     setExtractionState({
-      uploadedFiles: setupState.selectedFiles,
-      filePreviews: setupState.filePreviews.map((p) => p.preview),
-      previewDimensions: setupState.filePreviews.map((p) => ({
+      uploadedFiles: finalState.selectedFiles,
+      filePreviews: finalState.filePreviews.map((p) => p.preview),
+      previewDimensions: finalState.filePreviews.map((p) => ({
         fileName: p.fileName,
         pageNumber: p.pageNumber,
         totalPages: p.totalPages,
       })),
       currentPdfIndex: 0,
-      extractedDataList: Array(setupState.filePreviews.length).fill({}),
+      extractedDataList: Array(finalState.filePreviews.length).fill({}),
+      confidenceScores: Array(finalState.filePreviews.length).fill({}),
       isProcessing: false,
     });
 
@@ -660,7 +841,54 @@ const Extractor = () => {
       filePreviews: prev.filePreviews.filter(
         (_, index) => index !== indexToRemove
       ),
+      selectedFiles: prev.selectedFiles.filter(
+        (_, index) => index !== indexToRemove
+      ),
     }));
+  };
+
+  // Function to remove a file from extraction view
+  const removeFileFromExtraction = (indexToRemove) => {
+    setExtractionState(prev => {
+      const newFilePreviews = [...prev.filePreviews];
+      const newPreviewDimensions = [...prev.previewDimensions];
+      const newExtractedDataList = [...prev.extractedDataList];
+      const newConfidenceScores = [...(prev.confidenceScores || [])];
+      
+      // Remove the file and its associated data
+      newFilePreviews.splice(indexToRemove, 1);
+      newPreviewDimensions.splice(indexToRemove, 1);
+      newExtractedDataList.splice(indexToRemove, 1);
+      if (newConfidenceScores.length > 0) {
+        newConfidenceScores.splice(indexToRemove, 1);
+      }
+      
+      // Adjust currentPdfIndex if needed
+      let newCurrentPdfIndex = prev.currentPdfIndex;
+      if (newCurrentPdfIndex >= newFilePreviews.length && newFilePreviews.length > 0) {
+        newCurrentPdfIndex = newFilePreviews.length - 1;
+      } else if (newFilePreviews.length === 0) {
+        newCurrentPdfIndex = 0;
+      }
+      
+      return {
+        ...prev,
+        filePreviews: newFilePreviews,
+        previewDimensions: newPreviewDimensions,
+        extractedDataList: newExtractedDataList,
+        confidenceScores: newConfidenceScores,
+        currentPdfIndex: newCurrentPdfIndex
+      };
+    });
+    
+    // Also update the setup state to keep them in sync
+    setSetupState(prev => ({
+      ...prev,
+      filePreviews: prev.filePreviews.filter((_, index) => index !== indexToRemove),
+      selectedFiles: prev.selectedFiles.filter((_, index) => index !== indexToRemove)
+    }));
+    
+    showNotification("Fichier supprimé avec succès", "success");
   };
 
   const scrollToIndex = (index) => {
@@ -683,6 +911,8 @@ const Extractor = () => {
   const extractAllPdfs = async () => {
     setExtractionState((prev) => ({ ...prev, isProcessing: true }));
     const results = [...extractionState.extractedDataList];
+    const confidenceScores = [...(extractionState.confidenceScores || [])];
+    
     for (let i = 0; i < extractionState.filePreviews.length; i++) {
       const base64 = extractionState.filePreviews[i];
       const res = await fetch(base64);
@@ -696,12 +926,15 @@ const Extractor = () => {
         });
         const result = await response.json();
         results[i] = result.data || {};
+        confidenceScores[i] = result.confidence_scores || {};
       } catch (error) {
         results[i] = {};
+        confidenceScores[i] = {};
       }
       setExtractionState((prev) => ({
         ...prev,
         extractedDataList: [...results],
+        confidenceScores: [...confidenceScores],
         isProcessing: i < extractionState.filePreviews.length - 1,
       }));
     }
@@ -711,8 +944,22 @@ const Extractor = () => {
   const filterValue = (val, fieldKey) => {
     if (!val) return "";
     if (fieldKey === "fournisseur") return val;
-    const matches = val.match(/[0-9.,;:/\\-]+/g);
-    return matches ? matches.join("") : "";
+    
+    // Convert to string in case it's a number
+    const strVal = val.toString();
+    
+    // For numeric fields, keep decimal points and commas
+    if (['tauxTVA', 'montantHT', 'montantTVA', 'montantTTC'].includes(fieldKey)) {
+      // Match numbers with optional decimal part (using either . or , as decimal separator)
+      const matches = strVal.match(/[0-9]+[.,]?[0-9]*/g);
+      if (!matches) return "0";
+      // Replace comma with dot for proper decimal parsing
+      return matches.join('').replace(',', '.');
+    }
+    
+    // For other fields like numFacture, keep only numbers and specific symbols
+    const matches = strVal.match(/[0-9.,;:/\\-]+/g);
+    return matches ? matches.join('') : "";
   };
 
   const backToSetup = () => {
@@ -732,7 +979,7 @@ const Extractor = () => {
 
   const [showDataPrepUpload, setShowDataPrepUpload] = useState(false);
 
-  // Dans la fonction handleSingleDataPrepUpload, assurez-vous que currentZoom est à 0.6 * getDefaultZoom
+  
   const handleSingleDataPrepUpload = useCallback(
     async (event) => {
       const file = event.target.files[0];
@@ -742,7 +989,20 @@ const Extractor = () => {
       try {
         const formData = new FormData();
         formData.append("file", file);
-
+     
+        // Create a preview URL for the uploaded file
+        const filePreview = URL.createObjectURL(file);
+        
+        // Update dataPrepState with the uploaded file info
+        setDataPrepState(prev => ({
+          ...prev,
+          uploadedImage: file,
+          fileName: file.name,
+          filePreview: filePreview
+        }));
+        
+        
+        
         const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
           method: "POST",
           body: formData,
@@ -845,9 +1105,7 @@ const Extractor = () => {
                   ? "bg-white text-indigo-600"
                   : "text-white/70 hover:text-white"
               }`}
-              onClick={() =>
-                currentStep !== "setup" && setCurrentStep("extract")
-              }
+              onClick={() => setCurrentStep("extract")}
             >
               <Search className="w-4 h-4" />
               <span className="font-medium">2. Extraction</span>
@@ -1024,8 +1282,8 @@ const Extractor = () => {
                               {setupState.filePreviews.length} page(s))
                             </h4>
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                              {setupState.filePreviews.map((preview, index) => (
-                                <div key={index} className="relative group">
+                              {setupState.filePreviews.map((preview) => (
+                                <div key={preview.id} className="relative group">
                                   <div className="aspect-[3/4] rounded-lg overflow-hidden border border-white/30 bg-white/10">
                                     <img
                                       src={preview.preview}
@@ -1034,12 +1292,15 @@ const Extractor = () => {
                                     />
                                   </div>
                                   <button
-                                    onClick={() => removeFile(index)}
+                                    onClick={() => {
+                                      const index = setupState.filePreviews.findIndex(p => p.id === preview.id);
+                                      if (index !== -1) removeFile(index);
+                                    }}
                                     className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                                   >
                                     <X className="w-4 h-4" />
                                   </button>
-                                  <div className="mt-2 text-xs text-blue-200 text-center">
+                                  <div className="mt-2 text-xs text-blue-200 text-center truncate px-1" title={preview.fileName}>
                                     {preview.fileName}
                                     {preview.totalPages > 1 &&
                                       ` (${preview.pageNumber}/${preview.totalPages})`}
@@ -1057,7 +1318,13 @@ const Extractor = () => {
                     setupState.filePreviews.length > 0 && (
                       <div className="text-center">
                         <button
-                          onClick={validateSetupAndProceed}
+                          onClick={() => validateSetupAndProceed({
+                            ...setupState,
+                            // Ensure we're using the latest state values
+                            invoiceType: setupState.invoiceType,
+                            selectedFiles: setupState.selectedFiles,
+                            filePreviews: setupState.filePreviews
+                          })}
                           disabled={isLoading}
                           className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold text-lg rounded-2xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 mx-auto shadow-lg"
                         >
@@ -1113,6 +1380,92 @@ const Extractor = () => {
                         </div>
                       </div>
 
+
+                      {/* Invoice Selection Modal */}
+                      {invoiceSelection.isOpen && createPortal(
+                        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
+                          <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
+                            <div className="p-6 border-b">
+                              <h3 className="text-xl font-semibold text-gray-800">
+                                Sélectionner les factures à enregistrer
+                              </h3>
+                              <p className="text-gray-600 text-sm mt-1">
+                                Cochez les factures que vous souhaitez enregistrer dans la base de données.
+                              </p>
+                            </div>
+                            
+                            <div className="overflow-y-auto flex-1 p-4">
+                              <div className="flex items-center gap-3 p-3 border-b sticky top-0 bg-white z-10">
+                                <input
+                                  type="checkbox"
+                                  id="select-all"
+                                  checked={invoiceSelection.selectedInvoices.length === extractionState.extractedDataList.length}
+                                  onChange={(e) => toggleSelectAllInvoices(e.target.checked)}
+                                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor="select-all" className="text-sm font-medium text-gray-700">
+                                  Sélectionner tout
+                                </label>
+                              </div>
+                              
+                              <div className="divide-y">
+                                {extractionState.extractedDataList.map((data, index) => (
+                                  <div key={index} className="p-3 hover:bg-gray-50 flex items-center gap-3">
+                                    <input
+                                      type="checkbox"
+                                      id={`invoice-${index}`}
+                                      checked={invoiceSelection.selectedInvoices.includes(index)}
+                                      onChange={() => toggleInvoiceSelection(index)}
+                                      className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                    />
+                                    <div className="flex-1 min-w-0">
+                                      <div className="text-sm font-medium text-gray-900 truncate">
+                                        {data.fournisseur || `Facture ${index + 1}`}
+                                      </div>
+                                      <div className="text-xs text-gray-500">
+                                        {data.numeroFacture && `N°${data.numeroFacture} • `}
+                                        
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                            
+                            <div className="p-4 border-t bg-gray-50 rounded-b-2xl flex justify-end gap-3">
+                              <button
+                                onClick={() => setInvoiceSelection(prev => ({ ...prev, isOpen: false }))}
+                                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                              >
+                                Annuler
+                              </button>
+                              <button
+                                onClick={handleSaveInvoices}
+                                disabled={invoiceSelection.selectedInvoices.length === 0 || invoiceSelection.isSaving}
+                                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                              >
+                                {invoiceSelection.isSaving ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                    Enregistrement...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Save className="w-4 h-4" />
+                                    Enregistrer ({invoiceSelection.selectedInvoices.length})
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          </div>
+                        </div>,
+                        document.body
+                      )}
+
+                      <div className="mt-4">
+                        <h4 className="text-sm font-medium text-white mb-2">Données extraites:</h4>
+                      </div>
+
                       <button
                         onClick={extractAllPdfs}
                         disabled={extractionState.isProcessing}
@@ -1137,34 +1490,58 @@ const Extractor = () => {
                             <label className="block text-sm font-medium text-blue-100 mb-1">
                               {field.label}
                             </label>
-                            <input
-                              type="text"
-                              value={filterValue(
-                                extractionState.extractedDataList[
-                                  extractionState.currentPdfIndex
-                                ]?.[field.key],
-                                field.key
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={filterValue(
+                                  extractionState.extractedDataList[
+                                    extractionState.currentPdfIndex
+                                  ]?.[field.key],
+                                  field.key
+                                )}
+                                onChange={(e) =>
+                                  setExtractionState((prev) => ({
+                                    ...prev,
+                                    extractedDataList: prev.extractedDataList.map(
+                                      (data, index) =>
+                                        index === prev.currentPdfIndex
+                                          ? {
+                                              ...data,
+                                              [field.key]: e.target.value,
+                                            }
+                                          : data
+                                    ),
+                                  }))
+                                }
+                                className="flex-1 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                                placeholder={`${field.label} sera extrait automatiquement`}
+                              />
+                              {extractionState.confidenceScores?.[extractionState.currentPdfIndex]?.[field.key] !== undefined && (
+                                <div 
+                                  className="w-16 flex items-center justify-center px-2 py-2 bg-black/30 rounded-xl text-white text-xs font-medium"
+                                  title={`Confiance: ${Math.round(extractionState.confidenceScores[extractionState.currentPdfIndex][field.key] * 100)}%`}
+                                >
+                                  {Math.round(extractionState.confidenceScores[extractionState.currentPdfIndex][field.key] * 100)}%
+                                </div>
                               )}
-                              onChange={(e) =>
-                                setExtractionState((prev) => ({
-                                  ...prev,
-                                  extractedDataList: prev.extractedDataList.map(
-                                    (data, index) =>
-                                      index === prev.currentPdfIndex
-                                        ? {
-                                            ...data,
-                                            [field.key]: e.target.value,
-                                          }
-                                        : data
-                                  ),
-                                }))
-                              }
-                              className="w-full px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                              placeholder={`${field.label} sera extrait automatiquement`}
-                            />
+                            </div>
                           </div>
                         ))}
+                        
+                      <div className="flex flex-col gap-3 mb-4">
+                      
+                        
+                      <button
+                        onClick={openSaveModal}
+                        disabled={extractionState.extractedDataList.length === 0}
+                        className="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Save className="w-4 h-4" />
+                        Enregistrer les factures
+                      </button>
+                    </div>
                       </div>
+                      
                     </div>
                   </div>
 
@@ -1256,35 +1633,84 @@ const Extractor = () => {
                                       (preview, index) => (
                                         <div
                                           key={index}
-                                          onClick={() => scrollToIndex(index)}
                                           className="group relative"
                                         >
-                                          <div
-                                            className={`relative flex-shrink-0 w-16 h-20 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                                              index ===
-                                              extractionState.currentPdfIndex
-                                                ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
-                                                : "border-white/30 hover:border-blue-400"
-                                            }`}
-                                          >
-                                            <img
-                                              src={preview}
-                                              alt={`Page ${index + 1}`}
-                                              className="w-full h-full object-cover"
-                                            />
-                                            {index ===
-                                              extractionState.currentPdfIndex && (
-                                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
-                                            )}
-                                          </div>
-
-                                          <div className="hidden group-hover:block fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50">
-                                            <div className="bg-white rounded-lg shadow-2xl p-2">
+                                          <div className="relative">
+                                            <div
+                                              onClick={() => scrollToIndex(index)}
+                                              className={`relative flex-shrink-0 w-16 h-20 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${
+                                                index ===
+                                                extractionState.currentPdfIndex
+                                                  ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
+                                                  : "border-white/30 hover:border-blue-400"
+                                              }`}
+                                            >
                                               <img
                                                 src={preview}
                                                 alt={`Page ${index + 1}`}
-                                                className="w-[300px] h-auto object-contain"
+                                                className="w-full h-full object-cover"
                                               />
+                                              {index === extractionState.currentPdfIndex && (
+                                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
+                                              )}
+                                              {extractionState.extractedDataList[index] && (
+                                                <>
+                                                  <div 
+                                                    className="absolute top-1 left-1 text-xs font-bold px-1 rounded"
+                                                    style={{
+                                                      backgroundColor: `rgba(${255 * (1 - (Object.keys(extractionState.extractedDataList[index] || {}).length / 6))}, ${255 * (Object.keys(extractionState.extractedDataList[index] || {}).length / 6)}, 0, 0.9)`,
+                                                      color: 'white',
+                                                      textShadow: '0 0 2px rgba(0,0,0,0.5)'
+                                                    }}
+                                                  >
+                                                    {Object.keys(extractionState.extractedDataList[index] || {}).length}
+                                                  </div>
+                                                  {extractionState.confidenceScores?.[index] && Object.keys(extractionState.confidenceScores[index] || {}).length > 0 && (
+                                                    <div 
+                                                      className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
+                                                      style={{
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                                        color: 'white',
+                                                        textShadow: '0 0 2px rgba(0,0,0,0.5)'
+                                                      }}
+                                                    >
+                                                      {Math.min(
+                                                        ...Object.values(extractionState.confidenceScores[index] || {})
+                                                          .filter(score => typeof score === 'number')
+                                                          .map(score => Math.round(score * 100) / 100)
+                                                      ).toFixed(2).replace('0.', '')}%
+                                                    </div>
+                                                  )}
+                                                </>
+                                              )}
+                                              {/* Cancel button (X) - appears on hover */}
+                                              <button
+                                                onClick={(e) => {
+                                                  e.stopPropagation();
+                                                  removeFileFromExtraction(index);
+                                                }}
+                                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
+                                                title="Supprimer ce fichier"
+                                              >
+                                                <X className="w-3 h-3" />
+                                              </button>
+                                            </div>
+                                            
+                                            {/* Hover preview */}
+                                            <div className="hidden group-hover:block fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 transform transition-all duration-300 scale-110">
+                                              <div className="bg-white rounded-xl shadow-2xl p-3 border-2 border-white/20" style={{
+                                                boxShadow: '0 20px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(59, 130, 246, 0.3)'
+                                              }}>
+                                                <img
+                                                  src={preview}
+                                                  alt={`Page ${index + 1}`}
+                                                  className="w-[400px] h-auto object-contain max-h-[80vh]"
+                                                  style={{
+                                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+                                                  }}
+                                                />
+                                                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45 -z-10"></div>
+                                              </div>
                                             </div>
                                           </div>
                                         </div>
@@ -1332,7 +1758,7 @@ const Extractor = () => {
           {currentStep === "dataprep" && (
             <div className="max-w-7xl mx-auto">
               <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6 relative">
-                <div className="flex justify-center mb-6">
+                <div className="flex justify-center gap-4 mb-6">
                   <button
                     onClick={() => setCurrentStep("setup")}
                     className="px-4 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 z-10"
@@ -1340,6 +1766,16 @@ const Extractor = () => {
                     <ChevronLeft className="w-4 h-4" />
                     Retour
                   </button>
+                  <label className="px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 z-10 cursor-pointer">
+                    <Upload className="w-4 h-4" />
+                    Nouveau fichier
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*,.pdf"
+                      onChange={handleSingleDataPrepUpload}
+                    />
+                  </label>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

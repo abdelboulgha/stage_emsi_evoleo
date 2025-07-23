@@ -2,8 +2,8 @@ import re
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from pydantic import BaseModel
-from typing import Optional, Dict, List, Any
+from pydantic import BaseModel, Field
+from typing import Optional, Dict, List, Any, Union
 import json
 import os
 import pymupdf as fitz
@@ -868,6 +868,7 @@ async def extract_data(
             
             # For each field, find the best matching box across all templates
             extracted_data = {}
+            confidence_scores = {}
             used_boxes = set()  # To avoid reusing the same box for multiple fields
             
             # Get all unique field names from all templates
@@ -881,6 +882,7 @@ async def extract_data(
                 best_distance = float('inf')
                 best_box = None
                 best_template = None
+                best_score = 0.0
                 
                 # For each template that has this field
                 for tpl_id, mappings in all_mappings.items():
@@ -919,12 +921,14 @@ async def extract_data(
                             best_match = det_box['text']
                             best_box = i
                             best_template = tpl_id
+                            best_score = det_box.get('score', 0.0)
             
                 # If we found a good match, add it to results
                 if best_box is not None and best_distance < 200:  # Threshold for max allowed distance
                     extracted_data[field_name] = best_match
+                    confidence_scores[field_name] = best_score
                     used_boxes.add(best_box)  # Mark this box as used
-                    logging.info(f"Field '{field_name}' matched from template '{best_template}' with distance {best_distance:.2f}")
+                    logging.info(f"Field '{field_name}' matched from template '{best_template}' with distance {best_distance:.2f} and score {best_score:.2f}")
             
             if not extracted_data:
                 return {
@@ -937,6 +941,7 @@ async def extract_data(
             return {
                 "success": True,
                 "data": extracted_data,
+                "confidence_scores": confidence_scores,
                 "message": f"Extraction réussie avec correspondance automatique sur {len(extracted_data)} champs",
                 "debug_images": []
             }
@@ -955,6 +960,7 @@ async def extract_data(
         
         # Extract data using the specified template
         extracted_data = {}
+        confidence_scores = {}
         for field_key, coords in mappings.items():
             if not coords:
                 continue
@@ -979,11 +985,13 @@ async def extract_data(
             
             if best_box and best_distance < 200:  # Threshold for max allowed distance
                 extracted_data[field_key] = best_box['text']
+                confidence_scores[field_key] = best_box.get('score', 0.0)
         
         logging.info(f'Données extraites par champ: {extracted_data}')
         return {
             "success": True,
             "data": extracted_data,
+            "confidence_scores": confidence_scores,
             "message": f"Extraction réussie avec le template {template_id}",
             "debug_images": []
         }
@@ -1079,6 +1087,81 @@ async def delete_mapping(template_id: str):
         if cursor:
             cursor.close()
         if connection and connection.is_connected():
+            connection.close()
+
+# Pydantic model for invoice data
+class InvoiceData(BaseModel):
+    fournisseur: str
+    numFacture: str
+    tauxTVA: float
+    montantHT: float
+    montantTVA: float
+    montantTTC: float
+
+
+
+@app.post("/ajouter-facture")
+async def ajouter_facture(invoice: InvoiceData):
+    """
+    Save invoice data to the database.
+    
+    Args:
+        invoice: InvoiceData containing the invoice information
+        
+    Returns:
+        dict: Success or error message
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        # Insert the invoice data
+        query = """
+        INSERT INTO Facture 
+        (fournisseur, numFacture, tauxTVA, montantHT, montantTVA, montantTTC)
+        VALUES (%s, %s, %s, %s, %s, %s)
+        """
+        
+        values = (
+            invoice.fournisseur,
+            invoice.numFacture,
+            invoice.tauxTVA,
+            invoice.montantHT,
+            invoice.montantTVA,
+            invoice.montantTTC
+        )
+        
+        cursor.execute(query, values)
+        connection.commit()
+        
+        return {
+            "success": True,
+            "message": "Facture enregistrée avec succès",
+            "invoice_id": cursor.lastrowid
+        }
+        
+    except mysql.connector.IntegrityError as e:
+        if "unique_invoice" in str(e).lower():
+            return {
+                "success": False,
+                "message": "Une facture avec ce numéro existe déjà pour ce fournisseur"
+            }
+        return {
+            "success": False,
+            "message": f"Erreur d'intégrité de la base de données: {str(e)}"
+        }
+    except Error as e:
+        logging.error(f"Error saving invoice: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors de l'enregistrement de la facture: {str(e)}"
+        }
+    finally:
+        if connection and connection.is_connected():
+            if cursor:
+                cursor.close()
             connection.close()
 
 if __name__ == "__main__":
