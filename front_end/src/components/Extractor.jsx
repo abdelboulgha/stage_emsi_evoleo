@@ -261,16 +261,28 @@ const Extractor = () => {
       if (dataPrepState.isSelecting && dataPrepState.selectedField) {
         const clickedBox = findClickedBox(x, y);
         if (clickedBox) {
+          console.log('Clicked box coords:', clickedBox.coords);
+          
+          const fieldMappingsUpdate = {
+            ...dataPrepState.fieldMappings,
+            [dataPrepState.selectedField]: {
+              left: parseFloat(clickedBox.coords.left),
+              top: parseFloat(clickedBox.coords.top),
+              width: parseFloat(clickedBox.coords.width),
+              height: parseFloat(clickedBox.coords.height),
+              manual: false
+            }
+          };
+          
+          console.log('Updated fieldMappings:', fieldMappingsUpdate);
+          
           setDataPrepState((prev) => ({
             ...prev,
             selectedBoxes: {
               ...prev.selectedBoxes,
               [prev.selectedField]: clickedBox,
             },
-            fieldMappings: {
-              ...prev.fieldMappings,
-              [prev.selectedField]: clickedBox.coords,
-            },
+            fieldMappings: fieldMappingsUpdate,
             isSelecting: false,
             selectedField: null,
             ocrPreview: `Boîte assignée à ${prev.selectedField}: "${clickedBox.text}"`,
@@ -440,6 +452,14 @@ const Extractor = () => {
   }, [dataPrepState, manualDrawState]);
 
   const saveMappings = useCallback(async () => {
+    console.log('saveMappings called');
+    
+    if (!dataPrepState || !dataPrepState.selectedBoxes) {
+      console.error('dataPrepState or selectedBoxes is undefined');
+      showNotification("Erreur: État de l'application invalide", "error");
+      return;
+    }
+    
     if (Object.keys(dataPrepState.selectedBoxes).length === 0) {
       showNotification("Veuillez sélectionner au moins un champ", "error");
       return;
@@ -448,25 +468,83 @@ const Extractor = () => {
     setIsLoading(true);
 
     try {
-      const mappingData = {
-        field_map: dataPrepState.fieldMappings,
-      };
-
+      console.log('Getting uploaded file name...');
+      let uploadedFileName = '';
+      
+      try {
+        // Safely get the file name with multiple fallbacks
+        uploadedFileName = dataPrepState.uploadedImage?.name || 
+                         dataPrepState.fileName || 
+                         new Date().toISOString().slice(0, 10);
+        console.log('Original file name:', uploadedFileName);
+        
+        if (typeof uploadedFileName !== 'string') {
+          console.warn('Uploaded file name is not a string, converting...');
+          uploadedFileName = String(uploadedFileName);
+        }
+      } catch (e) {
+        console.error('Error getting file name:', e);
+        uploadedFileName = 'untitled';
+      }
+      
+      console.log('Processing file name:', uploadedFileName);
+      
+      // Generate template ID from file name without extension
+      let templateId = 'untitled';
+      try {
+        // Remove file extension
+        let baseName = uploadedFileName.replace(/\.[^/.]+$/, '');
+        // If empty after removing extension, use 'untitled'
+        if (!baseName) baseName = 'untitled';
+        // Sanitize the name (keep only alphanumeric, underscore, hyphen)
+        templateId = baseName.replace(/[^a-zA-Z0-9_-]/g, '_');
+        console.log('Generated template ID:', templateId);
+      } catch (e) {
+        console.error('Error generating template ID, using fallback:', e);
+        templateId = `doc_${Date.now()}`; // Fallback with timestamp
+      }
+      
+      console.log('Final template ID:', templateId);
+      
+      if (!dataPrepState.fieldMappings) {
+        throw new Error("Aucun mappage de champ à enregistrer");
+      }
+      
+      console.log('Sending request to server...');
       const response = await fetch(`${API_BASE_URL}/mappings`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mappingData),
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Debug": "true"
+        },
+        body: JSON.stringify({
+          template_id: templateId,
+          field_map: dataPrepState.fieldMappings,
+          timestamp: new Date().toISOString()
+        }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Server response error:', response.status, errorText);
+        throw new Error(`Erreur serveur: ${response.status} - ${errorText}`);
+      }
+      
+      const responseData = await response.json();
+      console.log('Server response:', responseData);
+      
       if (response.ok) {
-        showNotification(`Mappings sauvegardés`, "success");
+        showNotification(`Mappings sauvegardés avec succès pour le template ${templateId}`, "success");
         loadExistingMappings();
+        return responseData; // Return the response data for further processing if needed
       } else {
-        throw new Error("Erreur lors de la sauvegarde");
+        const errorMsg = responseData.detail || "Erreur lors de la sauvegarde";
+        throw new Error(errorMsg);
       }
     } catch (error) {
-      console.error("Erreur:", error);
-      showNotification("Erreur lors de la sauvegarde", "error");
+      console.error("Erreur lors de la sauvegarde:", error);
+      showNotification(`Erreur: ${error.message}`, "error");
+      throw error; // Re-throw to allow error handling by the caller if needed
     } finally {
       setIsLoading(false);
     }
