@@ -1,7 +1,7 @@
 import re
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Depends
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, List, Any, Union
 import json
@@ -19,6 +19,7 @@ from math import hypot
 import mysql.connector
 from mysql.connector import Error, pooling
 from dotenv import load_dotenv
+import dbf
 
 # Load environment variables
 load_dotenv()
@@ -1098,32 +1099,56 @@ class InvoiceData(BaseModel):
     montantTVA: float
     montantTTC: float
 
+# Fonction pour écrire dans un fichier DBF FoxPro
+
+def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
+    """
+    Ajoute une facture dans un fichier DBF compatible FoxPro.
+    Si le fichier n'existe pas, il est créé avec la bonne structure.
+    Les noms de champs sont limités à 10 caractères.
+    """
+    import os
+    # Supprimer le fichier s'il existe mais est vide (sécurité)
+    if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
+        os.remove(dbf_path)
+    if not os.path.exists(dbf_path):
+        # Créer la table DBF avec des noms de champs <= 10 caractères
+        table = dbf.Table(
+            dbf_path,
+            'fournissr C(50); numfact C(20); tauxTVA N(5,2); mntHT N(10,2); mntTVA N(10,2); mntTTC N(10,2)'
+        )
+        table.open(mode=dbf.READ_WRITE)
+    else:
+        table = dbf.Table(dbf_path)
+        table.open(mode=dbf.READ_WRITE)
+    # Ajouter la facture (adapter l'ordre des champs)
+    table.append((
+        invoice_data['fournisseur'],
+        invoice_data['numFacture'],
+        float(invoice_data['tauxTVA']),
+        float(invoice_data['montantHT']),
+        float(invoice_data['montantTVA']),
+        float(invoice_data['montantTTC'])
+    ))
+    table.close()
 
 
 @app.post("/ajouter-facture")
 async def ajouter_facture(invoice: InvoiceData):
     """
     Save invoice data to the database.
-    
-    Args:
-        invoice: InvoiceData containing the invoice information
-        
-    Returns:
-        dict: Success or error message
     """
     connection = None
     cursor = None
     try:
         connection = get_connection()
         cursor = connection.cursor()
-        
         # Insert the invoice data
         query = """
         INSERT INTO Facture 
         (fournisseur, numFacture, tauxTVA, montantHT, montantTVA, montantTTC)
         VALUES (%s, %s, %s, %s, %s, %s)
         """
-        
         values = (
             invoice.fournisseur,
             invoice.numFacture,
@@ -1132,16 +1157,15 @@ async def ajouter_facture(invoice: InvoiceData):
             invoice.montantTVA,
             invoice.montantTTC
         )
-        
         cursor.execute(query, values)
         connection.commit()
-        
+        # Enregistrer aussi dans le fichier DBF FoxPro
+        write_invoice_to_dbf(invoice.dict())
         return {
             "success": True,
             "message": "Facture enregistrée avec succès",
             "invoice_id": cursor.lastrowid
         }
-        
     except mysql.connector.IntegrityError as e:
         if "unique_invoice" in str(e).lower():
             return {
@@ -1163,6 +1187,17 @@ async def ajouter_facture(invoice: InvoiceData):
             if cursor:
                 cursor.close()
             connection.close()
+
+@app.get("/download-dbf")
+async def download_dbf():
+    dbf_path = "factures.dbf"
+    if not os.path.exists(dbf_path):
+        raise HTTPException(status_code=404, detail="Fichier DBF non trouvé")
+    return FileResponse(
+        path=dbf_path,
+        filename="factures.dbf",
+        media_type="application/octet-stream"
+    )
 
 if __name__ == "__main__":
     import uvicorn

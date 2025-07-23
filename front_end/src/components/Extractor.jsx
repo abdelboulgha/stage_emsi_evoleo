@@ -1072,6 +1072,68 @@ const Extractor = () => {
     };
   }, [handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp]);
 
+  // Extraction automatique lors du changement de page sélectionnée
+  useEffect(() => {
+    if (
+      extractionState.filePreviews.length > 0 &&
+      (!extractionState.extractedDataList[extractionState.currentPdfIndex] ||
+        Object.keys(extractionState.extractedDataList[extractionState.currentPdfIndex] || {}).length === 0)
+    ) {
+      extractCurrentPdf();
+    }
+    // eslint-disable-next-line
+  }, [extractionState.currentPdfIndex]);
+
+  // Fonction pour extraire la page courante
+  const extractCurrentPdf = async () => {
+    setExtractionState((prev) => ({ ...prev, isProcessing: true }));
+    const index = extractionState.currentPdfIndex;
+    const base64 = extractionState.filePreviews[index];
+    const res = await fetch(base64);
+    const blob = await res.blob();
+    const formData = new FormData();
+    formData.append("file", blob, `page_${index}.png`);
+    try {
+      const response = await fetch(`${API_BASE_URL}/extract-data`, {
+        method: "POST",
+        body: formData,
+      });
+      const result = await response.json();
+      setExtractionState((prev) => {
+        const newExtracted = [...prev.extractedDataList];
+        newExtracted[index] = result.data || {};
+        const newScores = [...(prev.confidenceScores || [])];
+        newScores[index] = result.confidence_scores || {};
+        return {
+          ...prev,
+          extractedDataList: newExtracted,
+          confidenceScores: newScores,
+          isProcessing: false,
+        };
+      });
+    } catch (error) {
+      setExtractionState((prev) => ({
+        ...prev,
+        isProcessing: false,
+      }));
+    }
+  };
+
+  // Extraction automatique du premier fichier à l'arrivée sur la page d'extraction
+  useEffect(() => {
+    if (
+      currentStep === "extract" &&
+      extractionState.filePreviews.length > 0 &&
+      (!extractionState.extractedDataList[0] ||
+        Object.keys(extractionState.extractedDataList[0] || {}).length === 0)
+    ) {
+      extractCurrentPdf();
+    }
+    // eslint-disable-next-line
+  }, [currentStep]);
+
+  const [hoveredIndex, setHoveredIndex] = useState(null);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 w-full">
       <header className="relative bg-white/10 backdrop-blur-lg border-b border-white/20 py-2 w-full">
@@ -1151,6 +1213,15 @@ const Extractor = () => {
       </div>
 
       <main className="w-full px-4 py-6">
+        {/* Overlay de chargement pendant l'extraction */}
+        {extractionState.isProcessing && (
+          <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+            <div className="flex flex-col items-center">
+              <Loader2 className="w-16 h-16 text-white animate-spin mb-4" />
+              <span className="text-white text-lg font-semibold">Extraction en cours...</span>
+            </div>
+          </div>
+        )}
         <>
           {currentStep === "setup" && (
             <div className="max-w-6xl mx-auto">
@@ -1358,6 +1429,16 @@ const Extractor = () => {
                   >
                     <ChevronLeft className="w-4 h-4" />
                     Retour
+                  </button>
+                  {/* BOUTON DE TELECHARGEMENT DBF */}
+                  <button
+                    onClick={() => {
+                      window.open(`${API_BASE_URL}/download-dbf`, '_blank');
+                    }}
+                    className="ml-4 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors flex items-center gap-2 z-10"
+                  >
+                    <Download className="w-4 h-4" />
+                    Télécharger fichier FoxPro (.dbf)
                   </button>
                 </div>
 
@@ -1626,99 +1707,92 @@ const Extractor = () => {
                                 >
                                   <ChevronLeft className="w-5 h-5 text-white" />
                                 </button>
-
                                 <div className="flex-1 overflow-x-auto">
                                   <div className="flex gap-2 pb-2">
-                                    {extractionState.filePreviews.map(
-                                      (preview, index) => (
+                                    {extractionState.filePreviews.map((preview, index) => (
+                                      <div
+                                        key={index}
+                                        className={`relative group transition-all duration-300`}
+                                        onMouseEnter={() => setHoveredIndex(index)}
+                                        onMouseLeave={() => setHoveredIndex(null)}
+                                        style={{
+                                          zIndex: hoveredIndex === index ? 2 : 1,
+                                        }}
+                                      >
                                         <div
-                                          key={index}
-                                          className="group relative"
+                                          onClick={() => scrollToIndex(index)}
+                                          className={
+                                            `relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ` +
+                                            (index === extractionState.currentPdfIndex
+                                              ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
+                                              : "border-white/30 hover:border-blue-400")
+                                          }
+                                          style={{
+                                            width: hoveredIndex === index ? 320 : 64,
+                                            height: hoveredIndex === index ? 420 : 90,
+                                            boxShadow: hoveredIndex === index ? "0 8px 32px rgba(0,0,0,0.25)" : undefined,
+                                            transform: hoveredIndex === index ? "scale(1.1)" : "scale(1)",
+                                            borderWidth: hoveredIndex === index ? 4 : 2,
+                                            borderColor: hoveredIndex === index ? "#3b82f6" : undefined,
+                                          }}
                                         >
-                                          <div className="relative">
-                                            <div
-                                              onClick={() => scrollToIndex(index)}
-                                              className={`relative flex-shrink-0 w-16 h-20 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ${
-                                                index ===
-                                                extractionState.currentPdfIndex
-                                                  ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
-                                                  : "border-white/30 hover:border-blue-400"
-                                              }`}
-                                            >
-                                              <img
-                                                src={preview}
-                                                alt={`Page ${index + 1}`}
-                                                className="w-full h-full object-cover"
-                                              />
-                                              {index === extractionState.currentPdfIndex && (
-                                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
-                                              )}
-                                              {extractionState.extractedDataList[index] && (
-                                                <>
-                                                  <div 
-                                                    className="absolute top-1 left-1 text-xs font-bold px-1 rounded"
-                                                    style={{
-                                                      backgroundColor: `rgba(${255 * (1 - (Object.keys(extractionState.extractedDataList[index] || {}).length / 6))}, ${255 * (Object.keys(extractionState.extractedDataList[index] || {}).length / 6)}, 0, 0.9)`,
-                                                      color: 'white',
-                                                      textShadow: '0 0 2px rgba(0,0,0,0.5)'
-                                                    }}
-                                                  >
-                                                    {Object.keys(extractionState.extractedDataList[index] || {}).length}
-                                                  </div>
-                                                  {extractionState.confidenceScores?.[index] && Object.keys(extractionState.confidenceScores[index] || {}).length > 0 && (
-                                                    <div 
-                                                      className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
-                                                      style={{
-                                                        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-                                                        color: 'white',
-                                                        textShadow: '0 0 2px rgba(0,0,0,0.5)'
-                                                      }}
-                                                    >
-                                                      {Math.min(
-                                                        ...Object.values(extractionState.confidenceScores[index] || {})
-                                                          .filter(score => typeof score === 'number')
-                                                          .map(score => Math.round(score * 100) / 100)
-                                                      ).toFixed(2).replace('0.', '')}%
-                                                    </div>
-                                                  )}
-                                                </>
-                                              )}
-                                              {/* Cancel button (X) - appears on hover */}
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  removeFileFromExtraction(index);
+                                          <img
+                                            src={preview}
+                                            alt={`Page ${index + 1}`}
+                                            className="w-full h-full object-contain bg-white"
+                                          />
+                                          {index === extractionState.currentPdfIndex && (
+                                            <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
+                                          )}
+                                          {extractionState.extractedDataList[index] && (
+                                            <>
+                                              <div 
+                                                className="absolute top-1 left-1 text-xs font-bold px-1 rounded"
+                                                style={{
+                                                  backgroundColor: `rgba(${255 * (1 - (Object.keys(extractionState.extractedDataList[index] || {}).length / 6))}, ${255 * (Object.keys(extractionState.extractedDataList[index] || {}).length / 6)}, 0, 0.9)`,
+                                                  color: 'white',
+                                                  textShadow: '0 0 2px rgba(0,0,0,0.5)'
                                                 }}
-                                                className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-10 hover:bg-red-600"
-                                                title="Supprimer ce fichier"
                                               >
-                                                <X className="w-3 h-3" />
-                                              </button>
-                                            </div>
-                                            
-                                            {/* Hover preview */}
-                                            <div className="hidden group-hover:block fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-40 transform transition-all duration-300 scale-110">
-                                              <div className="bg-white rounded-xl shadow-2xl p-3 border-2 border-white/20" style={{
-                                                boxShadow: '0 20px 50px -12px rgba(0, 0, 0, 0.5), 0 0 30px rgba(59, 130, 246, 0.3)'
-                                              }}>
-                                                <img
-                                                  src={preview}
-                                                  alt={`Page ${index + 1}`}
-                                                  className="w-[400px] h-auto object-contain max-h-[80vh]"
-                                                  style={{
-                                                    boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-                                                  }}
-                                                />
-                                                <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-4 h-4 bg-white rotate-45 -z-10"></div>
+                                                {Object.keys(extractionState.extractedDataList[index] || {}).length}
                                               </div>
-                                            </div>
-                                          </div>
+                                              {extractionState.confidenceScores?.[index] && Object.keys(extractionState.confidenceScores[index] || {}).length > 0 && (
+                                                <div 
+                                                  className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
+                                                  style={{
+                                                    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+                                                    color: 'white',
+                                                    textShadow: '0 0 2px rgba(0,0,0,0.5)'
+                                                  }}
+                                                >
+                                                  {Math.min(
+                                                    ...Object.values(extractionState.confidenceScores[index] || {})
+                                                      .filter(score => typeof score === 'number')
+                                                      .map(score => Math.round(score * 100) / 100)
+                                                  ).toFixed(2).replace('0.', '')}%
+                                                </div>
+                                              )}
+                                            </>
+                                          )}
+                                          {/* Cancel button (X) - appears on hover */}
+                                          <button
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              removeFileFromExtraction(index);
+                                            }}
+                                            className={`absolute ${hoveredIndex === index ? 'top-2 right-2 w-10 h-10' : '-top-2 -right-2 w-5 h-5'} bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-red-600`}
+                                            style={{
+                                              fontSize: hoveredIndex === index ? 24 : 14,
+                                            }}
+                                            title="Supprimer ce fichier"
+                                          >
+                                            <X className={hoveredIndex === index ? "w-6 h-6" : "w-3 h-3"} />
+                                          </button>
                                         </div>
-                                      )
-                                    )}
+                                      </div>
+                                    ))}
                                   </div>
                                 </div>
-
                                 <button
                                   onClick={goToNextPdf}
                                   disabled={
@@ -1730,7 +1804,6 @@ const Extractor = () => {
                                   <ChevronRight className="w-5 h-5 text-white" />
                                 </button>
                               </div>
-
                               <div className="text-center mt-3">
                                 <span className="text-blue-200 text-sm">
                                   {extractionState.currentPdfIndex + 1} /{" "}
