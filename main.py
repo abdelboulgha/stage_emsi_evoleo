@@ -20,6 +20,8 @@ import mysql.connector
 from mysql.connector import Error, pooling
 from dotenv import load_dotenv
 import dbf
+import pytesseract
+import cv2
 
 # Load environment variables
 load_dotenv()
@@ -112,7 +114,7 @@ def get_connection():
         raise
 
 async def save_mapping_db(template_id: str, field_map: Dict[str, Any]) -> bool:
-    """Save field mappings to the database using field IDs"""
+    """Save field mappings to the database using field IDs, including the 'manual' flag"""
     connection = None
     cursor = None
     try:
@@ -170,26 +172,29 @@ async def save_mapping_db(template_id: str, field_map: Dict[str, Any]) -> bool:
             top = float(coords.get('top', 0)) if coords.get('top') is not None else 0.0
             width = float(coords.get('width', 0)) if coords.get('width') is not None else 0.0
             height = float(coords.get('height', 0)) if coords.get('height') is not None else 0.0
+            manual = int(coords.get('manual', False))  # <-- Ajout gestion du champ manual
             
-            logging.info(f"Processing field: {field_name} (ID: {field_id}) with coords: left={left}, top={top}, width={width}, height={height}")
+            logging.info(f"Processing field: {field_name} (ID: {field_id}) with coords: left={left}, top={top}, width={width}, height={height}, manual={manual}")
             
             try:
                 cursor.execute("""
                     INSERT INTO Mappings 
-                    (template_id, field_id, `left`, `top`, `width`, `height`)
-                    VALUES (%s, %s, %s, %s, %s, %s)
+                    (template_id, field_id, `left`, `top`, `width`, `height`, `manual`)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
                     ON DUPLICATE KEY UPDATE
                     `left` = VALUES(`left`),
                     `top` = VALUES(`top`),
                     `width` = VALUES(`width`),
-                    `height` = VALUES(`height`)
+                    `height` = VALUES(`height`),
+                    `manual` = VALUES(`manual`)
                 """, (
                     template_id,
                     field_id,
                     left,
                     top,
                     width,
-                    height
+                    height,
+                    manual
                 ))
                 logging.info(f"Successfully processed field: {field_name}")
                 
@@ -216,7 +221,7 @@ async def save_mapping_db(template_id: str, field_map: Dict[str, Any]) -> bool:
             connection.close()
 
 async def load_mapping_db(template_id: str) -> Dict:
-    """Load field mappings from the database using field names"""
+    """Load field mappings from the database using field names, including the 'manual' flag"""
     connection = None
     cursor = None
     try:
@@ -229,9 +234,9 @@ async def load_mapping_db(template_id: str) -> Dict:
         id_to_name = {row['id']: row['name'] for row in cursor.fetchall()}
         logging.info(f"Loaded field name mapping: {id_to_name}")
         
-        # Get all mappings for this template
+        # Get all mappings for this template (inclut 'manual')
         cursor.execute("""
-            SELECT field_id, `left`, `top`, `width`, `height` 
+            SELECT field_id, `left`, `top`, `width`, `height`, `manual`
             FROM Mappings 
             WHERE template_id = %s
         """, (template_id,))
@@ -250,7 +255,7 @@ async def load_mapping_db(template_id: str) -> Dict:
                         'top': float(row['top']) if row['top'] is not None else 0.0,
                         'width': float(row['width']) if row['width'] is not None else 0.0,
                         'height': float(row['height']) if row['height'] is not None else 0.0,
-                        'manual': False  # Default value for backward compatibility
+                        'manual': bool(row.get('manual', 0))  # <-- Ajout du flag manual
                     }
                     logging.info(f"Loaded mapping for {field_name}: {field_map[field_name]}")
                 except (ValueError, TypeError) as e:
@@ -296,8 +301,22 @@ def safe_crop_bounds(left: float, top: float, width: float, height: float, img_w
     return left, top, right, bottom
 
 def preprocess_image_cv(img: Image.Image) -> Image.Image:
-    """Retourner l'image originale pour PaddleOCR (pas de préprocessing nécessaire)"""
+    """Préprocesseur d'image avec binarisation et contraste fort pour améliorer l'OCR sur les petites zones"""
+    img = img.convert('L')  # grayscale
+    img = ImageOps.autocontrast(img)
+    img = ImageOps.invert(img)
+    img = img.point(lambda x: 0 if x < 128 else 255, '1')  # binarisation forte
     return img
+
+def preprocess_image_cv_opencv(img: Image.Image) -> Image.Image:
+    img_cv = np.array(img.convert('L'))
+    h, w = img_cv.shape
+    scale = 2
+    img_cv = cv2.resize(img_cv, (w * scale, h * scale), interpolation=cv2.INTER_LINEAR)
+    img_cv = cv2.bilateralFilter(img_cv, 11, 17, 17)
+    img_cv = cv2.adaptiveThreshold(img_cv, 255, cv2.ADAPTIVE_THRESH_MEAN_C,
+                                   cv2.THRESH_BINARY, 15, 10)
+    return Image.fromarray(img_cv)
 
 def image_to_base64(img: Image.Image) -> str:
     """Convertir une image PIL en base64"""
@@ -966,6 +985,26 @@ async def extract_data(
             if not coords:
                 continue
                 
+            # Si mapping manuel, on croppe et on fait l'OCR direct
+            if coords.get('manual', False):
+                left = coords.get('left', 0)
+                top = coords.get('top', 0)
+                width = coords.get('width', 0)
+                height = coords.get('height', 0)
+                left_safe, top_safe, right_safe, bottom_safe = safe_crop_bounds(
+                    left, top, width, height, img.width, img.height
+                )
+                crop_img = img.crop((left_safe, top_safe, right_safe, bottom_safe))
+                processed_crop = preprocess_image_cv(crop_img)
+                processed_crop_for_ocr = processed_crop.resize((processed_crop.width * 4, processed_crop.height * 4), Image.Resampling.LANCZOS)
+                text = extract_text_with_paddleocr(processed_crop_for_ocr)
+                # Fallback Tesseract si besoin
+                if not text or text.strip() == "":
+                    processed_cv = preprocess_image_cv_opencv(crop_img)
+                    text = pytesseract.image_to_string(processed_cv).strip()
+                extracted_data[field_key] = text
+                continue
+            # Sinon, comportement normal (matching avec les boîtes OCR)
             template_box = {
                 'left': coords.get('left', 0),
                 'top': coords.get('top', 0),
@@ -974,20 +1013,16 @@ async def extract_data(
                 'center_x': coords.get('left', 0) + coords.get('width', 0) / 2,
                 'center_y': coords.get('top', 0) + coords.get('height', 0) / 2
             }
-            
             best_box = None
             best_distance = float('inf')
-            
             for det_box in detected_boxes:
                 distance = box_distance(template_box, det_box)
                 if distance < best_distance:
                     best_distance = distance
                     best_box = det_box
-            
-            if best_box and best_distance < 200:  # Threshold for max allowed distance
+            if best_box and best_distance < 200:
                 extracted_data[field_key] = best_box['text']
                 confidence_scores[field_key] = best_box.get('score', 0.0)
-        
         logging.info(f'Données extraites par champ: {extracted_data}')
         return {
             "success": True,
@@ -1006,17 +1041,18 @@ async def ocr_preview(
     top: float = Form(...),
     width: float = Form(...),
     height: float = Form(...),
-    image_data: str = Form(...)
+    image_data: str = Form(...),
+    template_id: str = Form(None)
 ):
     """Prévisualiser l'OCR pour une zone spécifique"""
     try:
+        if template_id:
+            logging.info(f"template_id reçu pour ocr-preview: {template_id}")
         # Décoder l'image base64
         if image_data.startswith('data:image'):
             image_data = image_data.split(',')[1]
-        
         img_bytes = base64.b64decode(image_data)
         img = Image.open(BytesIO(img_bytes))
-        
         # Cropper la zone spécifiée
         img_w, img_h = img.size
         left_safe, top_safe, right_safe, bottom_safe = safe_crop_bounds(
@@ -1024,18 +1060,24 @@ async def ocr_preview(
         )
         crop_box = (left_safe, top_safe, right_safe, bottom_safe)
         crop_img = img.crop(crop_box)
-        
+        # DEBUG: Sauvegarde la zone cropée pour vérification
+        debug_path = f"debug_crop_{left_safe}_{top_safe}_{right_safe}_{bottom_safe}.png"
+        crop_img.save(debug_path)
+        logging.info(f"Image cropée sauvegardée pour debug: {debug_path}")
         # Double the resolution of the cropped image before OCR
         processed_crop = preprocess_image_cv(crop_img)
-        processed_crop_for_ocr = processed_crop.resize((processed_crop.width * 2, processed_crop.height * 2), Image.Resampling.LANCZOS)
+        processed_crop_for_ocr = processed_crop.resize((processed_crop.width * 4, processed_crop.height * 4), Image.Resampling.LANCZOS)
         text = extract_text_with_paddleocr(processed_crop_for_ocr)
-        
+        # Fallback Tesseract si rien trouvé
+        if not text or text.strip() == "":
+            processed_cv = preprocess_image_cv_opencv(crop_img)
+            text = pytesseract.image_to_string(processed_cv).strip()
+            logging.info(f"Tesseract fallback OCR: {text}")
         return {
             "success": True,
             "text": text or "[Aucun texte trouvé]",
             "crop_image": image_to_base64(processed_crop)
         }
-        
     except Exception as e:
         logging.error(f"Erreur lors de la prévisualisation OCR: {e}")
         return {

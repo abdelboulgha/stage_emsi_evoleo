@@ -652,3 +652,34 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-07-23 22:03:13,166 INFO Database connection pool created successfully
 2025-07-23 22:31:33,577 INFO Database connection pool created successfully
 2025-07-24 11:39:33,533 INFO Database connection pool created successfully
+2025-07-25 18:53:39,204 INFO Database connection pool created successfully
+2025-07-25 18:55:33,474 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 18:56:01,995 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 18:56:30,056 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 18:56:30,927 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 18:57:02,212 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 18:57:02,791 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 18:57:35,347 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 18:57:35,748 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 19:51:46,572 INFO Database connection pool created successfully
+2025-07-25 19:56:48,392 INFO Database connection pool created successfully
+2025-07-25 19:57:20,368 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 19:57:20,859 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 19:59:42,953 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:03:50,425 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:03:51,036 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:04:37,179 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:04:38,123 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:05:59,009 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:05:59,370 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:06:13,607 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:06:14,003 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:15:52,744 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:15:53,208 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:19:17,948 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:19:18,365 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:19:57,392 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:19:57,832 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:20:23,618 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:29:56,799 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-25 20:29:57,496 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)

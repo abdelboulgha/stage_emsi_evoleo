@@ -118,7 +118,7 @@ const Extractor = () => {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/mappings`);
       const data = await response.json();
-      if (data.success) {
+      if (data.status === "success") {
         setMappings(data.mappings);
       }
     } catch (error) {
@@ -455,6 +455,9 @@ const Extractor = () => {
     [manualDrawState, dataPrepState.currentZoom]
   );
 
+  // Dans handleCanvasMouseUp, ajoute un seuil minimum de taille
+  const MIN_WIDTH = 30;
+  const MIN_HEIGHT = 15;
   const handleCanvasMouseUp = useCallback(
     (event) => {
       if (
@@ -464,6 +467,17 @@ const Extractor = () => {
       ) {
         const fieldKey = manualDrawState.fieldKey;
         const rect = manualDrawState.rect;
+        // Vérifie la taille minimale
+        if (rect.width < MIN_WIDTH || rect.height < MIN_HEIGHT) {
+          showNotification(`Sélection trop petite (minimum ${MIN_WIDTH}×${MIN_HEIGHT} pixels)`, 'error');
+          setManualDrawState({
+            isDrawing: false,
+            fieldKey: null,
+            start: null,
+            rect: null,
+          });
+          return;
+        }
         setDataPrepState((prev) => ({
           ...prev,
           fieldMappings: {
@@ -481,9 +495,23 @@ const Extractor = () => {
           start: null,
           rect: null,
         });
+        // --- OCR Preview Call ---
+        if (dataPrepState.uploadedImage) {
+          ocrPreviewManual(rect, dataPrepState.uploadedImage).then(result => {
+            if (result.success) {
+              showNotification(`Texte extrait: ${result.text}`, "success");
+              setOcrPreviewFields(prev => ({
+                ...prev,
+                [fieldKey]: result.text
+              }));
+            } else {
+              showNotification("Erreur OCR: " + result.text, "error");
+            }
+          });
+        }
       }
     },
-    [manualDrawState]
+    [manualDrawState, dataPrepState.uploadedImage]
   );
 
   const drawOcrBox = useCallback(
@@ -894,6 +922,9 @@ const Extractor = () => {
 
   const scrollToIndex = (index) => {
     setExtractionState((prev) => ({ ...prev, currentPdfIndex: index }));
+    setPendingExtractIndex(index);
+    setShowModelSelectModal(true);
+    setModalSelectedTemplateId("");
   };
 
   const goToPrevPdf = () => {
@@ -946,22 +977,23 @@ const Extractor = () => {
     if (!val) return "";
     if (fieldKey === "fournisseur") return val;
     
-    // Convert to string in case it's a number
-    const strVal = val.toString();
-    
+    // Pour numFacture ou numeroFacture, autoriser alphanumérique, tirets, slash et espaces
+    if (fieldKey === "numFacture" || fieldKey === "numeroFacture") {
+      const matches = val.toString().match(/[a-zA-Z0-9\-\/ ]+/g);
+      return matches ? matches.join("") : "";
+    }
     // For numeric fields, keep decimal points and commas
     if (
       ["tauxTVA", "montantHT", "montantTVA", "montantTTC"].includes(fieldKey)
     ) {
       // Match numbers with optional decimal part (using either . or , as decimal separator)
-      const matches = strVal.match(/[0-9]+[.,]?[0-9]*/g);
+      const matches = val.toString().match(/[0-9]+[.,]?[0-9]*/g);
       if (!matches) return "0";
       // Replace comma with dot for proper decimal parsing
       return matches.join("").replace(",", ".");
     }
-    
     // For other fields like numFacture, keep only numbers and specific symbols
-    const matches = strVal.match(/[0-9.,;:/\\-]+/g);
+    const matches = val.toString().match(/[0-9.,;:/\\-]+/g);
     return matches ? matches.join("") : "";
   };
 
@@ -1088,14 +1120,19 @@ const Extractor = () => {
   }, [extractionState.currentPdfIndex]);
 
   // Fonction pour extraire la page courante
-  const extractCurrentPdf = async () => {
+  const extractCurrentPdf = async (templateId, index) => {
+    if (!templateId) {
+      showNotification("Veuillez sélectionner un modèle de facture avant d'extraire.", "error");
+      return;
+    }
     setExtractionState((prev) => ({ ...prev, isProcessing: true }));
-    const index = extractionState.currentPdfIndex;
-    const base64 = extractionState.filePreviews[index];
+    const idx = index !== undefined ? index : extractionState.currentPdfIndex;
+    const base64 = extractionState.filePreviews[idx];
     const res = await fetch(base64);
     const blob = await res.blob();
     const formData = new FormData();
-    formData.append("file", blob, `page_${index}.png`);
+    formData.append("file", blob, `page_${idx}.png`);
+    formData.append("template_id", templateId);
     try {
       const response = await fetch(`${API_BASE_URL}/extract-data`, {
         method: "POST",
@@ -1104,9 +1141,9 @@ const Extractor = () => {
       const result = await response.json();
       setExtractionState((prev) => {
         const newExtracted = [...prev.extractedDataList];
-        newExtracted[index] = result.data || {};
+        newExtracted[idx] = result.data || {};
         const newScores = [...(prev.confidenceScores || [])];
-        newScores[index] = result.confidence_scores || {};
+        newScores[idx] = result.confidence_scores || {};
         return {
           ...prev,
           extractedDataList: newExtracted,
@@ -1158,6 +1195,96 @@ const Extractor = () => {
       (field) => data[field] && String(data[field]).trim() !== ""
     );
   };
+
+  // Ajoute cette fonction utilitaire dans le composant Extractor
+  const ocrPreviewManual = async (coords, imageBase64) => {
+    let uploadedFileName = dataPrepState.uploadedImage?.name || dataPrepState.fileName || new Date().toISOString().slice(0, 10);
+    let baseName = uploadedFileName.replace(/\.[^/.]+$/, "");
+    let templateId = baseName.replace(/[^a-zA-Z0-9_-]/g, "_") || "untitled";
+
+    const formData = new FormData();
+    formData.append("left", Math.round(coords.left).toString());
+    formData.append("top", Math.round(coords.top).toString());
+    formData.append("width", Math.round(coords.width).toString());
+    formData.append("height", Math.round(coords.height).toString());
+    formData.append("image_data", imageBase64.split(',')[1]);
+    formData.append("template_id", templateId);
+
+    const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
+      method: "POST",
+      body: formData,
+    });
+    return await response.json();
+  };
+
+  // Ajoute l'état pour stocker l'aperçu OCR par champ
+  const [ocrPreviewFields, setOcrPreviewFields] = useState({});
+
+  // Ajoute un état pour le template sélectionné lors de l'extraction
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
+
+  // Ajoute un nouvel état pour la modale de sélection de modèle
+  const [showModelSelectModal, setShowModelSelectModal] = useState(false);
+  const [pendingExtractIndex, setPendingExtractIndex] = useState(null);
+  const [modalSelectedTemplateId, setModalSelectedTemplateId] = useState("");
+
+  // Déplace le menu déroulant et le bouton d'extraction dans une modale
+  // Ajoute ce bloc juste avant le return principal
+  const renderModelSelectModal = () => {
+    if (!showModelSelectModal) return null;
+    return createPortal(
+      <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
+        <div className="bg-white rounded-2xl w-full max-w-md flex flex-col">
+          <div className="p-6 border-b">
+            <h3 className="text-xl font-semibold text-gray-800 mb-2">Sélectionnez un modèle</h3>
+            <p className="text-gray-600 text-sm mb-1">Choisissez le modèle à utiliser pour l'extraction de cette page.</p>
+          </div>
+          <div className="p-6 flex flex-col gap-4">
+            <select
+              value={modalSelectedTemplateId}
+              onChange={e => setModalSelectedTemplateId(e.target.value)}
+              className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-gray-800 placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+            >
+              <option value="">Sélectionnez un modèle</option>
+              {Object.keys(mappings).map(tpl => (
+                <option key={tpl} value={tpl}>{tpl}</option>
+              ))}
+            </select>
+            <button
+              onClick={async () => {
+                if (!modalSelectedTemplateId) return;
+                setSelectedTemplateId(modalSelectedTemplateId);
+                setShowModelSelectModal(false);
+                // Lance l'extraction pour la page sélectionnée
+                await extractCurrentPdf(modalSelectedTemplateId, pendingExtractIndex);
+              }}
+              disabled={!modalSelectedTemplateId}
+              className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Extraire
+            </button>
+            <button
+              onClick={() => setShowModelSelectModal(false)}
+              className="w-full px-4 py-2 mt-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      </div>,
+      document.body
+    );
+  };
+
+  // Ajoute ce useEffect pour afficher la modale dès l'arrivée sur l'étape d'extraction
+  useEffect(() => {
+    if (currentStep === "extract" && extractionState.filePreviews.length > 0) {
+      setPendingExtractIndex(0);
+      setShowModelSelectModal(true);
+      setModalSelectedTemplateId("");
+    }
+    // eslint-disable-next-line
+  }, [currentStep]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 w-full">
@@ -1606,9 +1733,28 @@ const Extractor = () => {
                         </h4>
                       </div>
 
+                      <div className="mb-4">
+                        <label className="block text-sm font-medium text-blue-100 mb-2">
+                          Modèle de facture (template) à utiliser pour l'extraction
+                        </label>
+                        <select
+                          value={selectedTemplateId}
+                          onChange={e => setSelectedTemplateId(e.target.value)}
+                          className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        >
+                          <option value="">Sélectionnez un modèle</option>
+                          {Object.keys(mappings).map(tpl => (
+                            <option key={tpl} value={tpl}>{tpl}</option>
+                          ))}
+                        </select>
+                        {selectedTemplateId && (
+                          <div className="text-xs text-green-200 mt-1">Modèle utilisé : <b>{selectedTemplateId}</b></div>
+                        )}
+                      </div>
+
                       <button
                         onClick={extractAllPdfs}
-                        disabled={extractionState.isProcessing}
+                        disabled={extractionState.isProcessing || !selectedTemplateId}
                         className="w-full mb-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         {extractionState.isProcessing ? (
@@ -2186,7 +2332,9 @@ const Extractor = () => {
                       )}
 
                       <div className="space-y-3">
-                        {EXTRACTION_FIELDS.map((field) => (
+                        {EXTRACTION_FIELDS.map((field) => {
+                          const rect = manualDrawState.isDrawing && manualDrawState.fieldKey === field.key && manualDrawState.rect ? manualDrawState.rect : null;
+                          return (
                           <div
                             key={field.key}
                             className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 transition-all hover:bg-white/20"
@@ -2201,7 +2349,6 @@ const Extractor = () => {
                                 </div>
                               )}
                             </div>
-
                             {dataPrepState.selectedBoxes[field.key] && (
                               <div className="text-xs text-white bg-white/20 p-2 rounded mb-2 font-mono">
                                 "
@@ -2212,7 +2359,18 @@ const Extractor = () => {
                                 "
                               </div>
                             )}
-
+                              {/* Affiche le texte OCR extrait si disponible */}
+                              {ocrPreviewFields[field.key] && (
+                                <div className="text-xs text-green-200 mt-1">
+                                  <span className="font-bold">Texte extrait :</span> {ocrPreviewFields[field.key]}
+                                </div>
+                              )}
+                              {/* Affiche la taille de la zone en cours de sélection */}
+                              {rect && (
+                                <div className="text-xs text-blue-200 mt-1">
+                                  Zone sélectionnée : {Math.round(rect.width)}×{Math.round(rect.height)} px
+                                </div>
+                              )}
                             <div className="flex gap-2">
                               <button
                                 onClick={() => startFieldSelection(field.key)}
@@ -2231,7 +2389,6 @@ const Extractor = () => {
                                   ? "Changer"
                                   : "Sélectionner"}
                               </button>
-
                               <button
                                 onClick={() => startManualDraw(field.key)}
                                 disabled={
@@ -2245,14 +2402,14 @@ const Extractor = () => {
                                   : "Dessiner"}
                               </button>
                             </div>
-
                             {dataPrepState.fieldMappings[field.key]?.manual && (
                               <div className="text-xs text-yellow-400 text-center mt-2 bg-yellow-500/20 py-1 rounded">
                                 [Manuel]
                               </div>
                             )}
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
 
                       <button
@@ -2415,6 +2572,7 @@ const Extractor = () => {
           )}
         </>
       </main>
+      {renderModelSelectModal()}
     </div>
   );
 };
