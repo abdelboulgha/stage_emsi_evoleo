@@ -89,6 +89,7 @@ const Extractor = () => {
   const imageRef = useRef(null);
   const previewImageRef = useRef(null);
   const horizontalScrollRef = useRef(null);
+  const extractCanvasRef = useRef(null);
 
   const EXTRACTION_FIELDS = [
     { key: "fournisseur", label: "Fournisseur" },
@@ -1286,6 +1287,143 @@ const Extractor = () => {
     // eslint-disable-next-line
   }, [currentStep]);
 
+  // Ajoute l'état pour le mode dessin extraction
+  const [extractDrawState, setExtractDrawState] = useState({
+    isDrawing: false,
+    fieldKey: null,
+    start: null,
+    rect: null,
+  });
+
+  // Ajoute la gestion du dessin extraction sur le canvas d'extraction
+  const handleExtractCanvasMouseDown = useCallback(
+    (event) => {
+      if (!extractDrawState.isDrawing) return;
+      const canvas = extractCanvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const x = (event.clientX - rect.left);
+      const y = (event.clientY - rect.top);
+      setExtractDrawState((prev) => ({
+        ...prev,
+        start: { x, y },
+        rect: null,
+      }));
+    },
+    [extractDrawState.isDrawing]
+  );
+
+  const handleExtractCanvasMouseMove = useCallback(
+    (event) => {
+      if (extractDrawState.isDrawing && extractDrawState.start) {
+        const canvas = extractCanvasRef.current;
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = (event.clientX - rect.left);
+        const y = (event.clientY - rect.top);
+        const left = Math.min(extractDrawState.start.x, x);
+        const top = Math.min(extractDrawState.start.y, y);
+        const width = Math.abs(x - extractDrawState.start.x);
+        const height = Math.abs(y - extractDrawState.start.y);
+        setExtractDrawState((prev) => ({
+          ...prev,
+          rect: { left, top, width, height },
+        }));
+      }
+    },
+    [extractDrawState]
+  );
+
+  const handleExtractCanvasMouseUp = useCallback(
+    async (event) => {
+      if (
+        extractDrawState.isDrawing &&
+        extractDrawState.start &&
+        extractDrawState.rect
+      ) {
+        const rect = extractDrawState.rect;
+        // Récupère la taille réelle de l'image
+        const img = previewImageRef.current;
+        if (!img) return;
+        const canvas = extractCanvasRef.current;
+        if (!canvas) return;
+        const canvasRect = canvas.getBoundingClientRect();
+        // Calcule le ratio entre le canvas et l'image réelle
+        const scaleX = img.naturalWidth / canvas.width;
+        const scaleY = img.naturalHeight / canvas.height;
+        // Convertit les coordonnées du rectangle en coordonnées réelles de l'image
+        const realRect = {
+          left: rect.left * scaleX,
+          top: rect.top * scaleY,
+          width: rect.width * scaleX,
+          height: rect.height * scaleY,
+        };
+        // On récupère l'image affichée (base64)
+        const base64 = extractionState.filePreviews[extractionState.currentPdfIndex];
+        // Appel OCR preview
+        try {
+          const result = await ocrPreviewManual(realRect, base64);
+          if (result.success) {
+            setExtractionState((prev) => {
+              const newExtracted = [...prev.extractedDataList];
+              newExtracted[prev.currentPdfIndex] = {
+                ...newExtracted[prev.currentPdfIndex],
+                [extractDrawState.fieldKey]: result.text,
+              };
+              return { ...prev, extractedDataList: newExtracted };
+            });
+            showNotification(`Texte extrait: ${result.text}`, "success");
+          } else {
+            showNotification("Erreur OCR: " + result.text, "error");
+          }
+        } catch (e) {
+          showNotification("Erreur lors de l'extraction OCR", "error");
+        }
+        setExtractDrawState({ isDrawing: false, fieldKey: null, start: null, rect: null });
+      }
+    },
+    [extractDrawState, extractionState.filePreviews, extractionState.currentPdfIndex]
+  );
+
+  // Ajoute les listeners sur l'image d'extraction
+  useEffect(() => {
+    const img = previewImageRef.current;
+    if (!img) return;
+    if (!extractDrawState.isDrawing) return;
+    img.addEventListener("mousedown", handleExtractCanvasMouseDown);
+    img.addEventListener("mousemove", handleExtractCanvasMouseMove);
+    img.addEventListener("mouseup", handleExtractCanvasMouseUp);
+    return () => {
+      img.removeEventListener("mousedown", handleExtractCanvasMouseDown);
+      img.removeEventListener("mousemove", handleExtractCanvasMouseMove);
+      img.removeEventListener("mouseup", handleExtractCanvasMouseUp);
+    };
+  }, [extractDrawState.isDrawing, handleExtractCanvasMouseDown, handleExtractCanvasMouseMove, handleExtractCanvasMouseUp]);
+
+  // 3. Redessine le canvas d'extraction à chaque changement de rectangle ou d'image
+  useEffect(() => {
+    const canvas = extractCanvasRef.current;
+    const img = previewImageRef.current;
+    if (!canvas || !img) return;
+    // Ajuste la taille du canvas à celle de l'image affichée
+    canvas.width = img.clientWidth;
+    canvas.height = img.clientHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    // Affiche le rectangle de sélection si en cours
+    if (extractDrawState.isDrawing && extractDrawState.rect) {
+      ctx.save();
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 2]);
+      const { left, top, width, height } = extractDrawState.rect;
+      ctx.strokeRect(left, top, width, height);
+      ctx.fillStyle = 'rgba(251,191,36,0.15)';
+      ctx.fillRect(left, top, width, height);
+      ctx.restore();
+    }
+  }, [extractDrawState, extractionState.currentPdfIndex, extractionState.filePreviews]);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 w-full">
       <header className="relative bg-white/10 backdrop-blur-lg border-b border-white/20 py-2 w-full">
@@ -1776,7 +1914,7 @@ const Extractor = () => {
                             <label className="block text-sm font-medium text-blue-100 mb-1">
                               {field.label}
                             </label>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
                               <input
                                 type="text"
                                 value={filterValue(
@@ -1803,25 +1941,22 @@ const Extractor = () => {
                                 className="flex-1 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                                 placeholder={`${field.label} sera extrait automatiquement`}
                               />
-                              {extractionState.confidenceScores?.[
-                                extractionState.currentPdfIndex
-                              ]?.[field.key] !== undefined && (
-                                <div 
-                                  className="w-16 flex items-center justify-center px-2 py-2 bg-black/30 rounded-xl text-white text-xs font-medium"
-                                  title={`Confiance: ${Math.round(
-                                    extractionState.confidenceScores[
-                                      extractionState.currentPdfIndex
-                                    ][field.key] * 100
-                                  )}%`}
-                                >
-                                  {Math.round(
-                                    extractionState.confidenceScores[
-                                      extractionState.currentPdfIndex
-                                    ][field.key] * 100
-                                  )}
-                                  %
-                                </div>
-                              )}
+                              {/* Bouton d'icône pour activer/désactiver le mode dessin extraction */}
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (extractDrawState.isDrawing && extractDrawState.fieldKey === field.key) {
+                                    setExtractDrawState({ isDrawing: false, fieldKey: null, start: null, rect: null });
+                                  } else {
+                                    setExtractDrawState({ isDrawing: true, fieldKey: field.key, start: null, rect: null });
+                                    showNotification(`Mode dessin extraction activé pour \"${field.label}\". Dessinez un rectangle sur l'image.`, "info");
+                                  }
+                                }}
+                                className={`p-2 rounded-full border-2 transition-colors duration-200 ${extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'border-yellow-400 bg-yellow-500/20 text-yellow-100' : 'border-white/30 bg-white/10 text-blue-100 hover:border-blue-400'}`}
+                                title={extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'Annuler le dessin' : 'Dessiner pour extraire'}
+                              >
+                                <ZoomIn className="w-4 h-4" />
+                              </button>
                             </div>
                           </div>
                         ))}
@@ -1864,20 +1999,36 @@ const Extractor = () => {
                           <div className="bg-white/10 rounded-xl p-4 border border-white/10">
                             <div className="w-full" style={{ height: "70vh" }}>
                               <div className="w-full h-full overflow-auto bg-white rounded-lg shadow-lg p-4">
-                                <img
-                                  ref={previewImageRef}
-                                  src={
-                                    extractionState.filePreviews[
-                                      extractionState.currentPdfIndex
-                                    ]
-                                  }
-                                  alt="Aperçu du document"
-                                  className="w-full h-auto object-contain"
-                                  style={{
-                                    minWidth: "100%",
-                                    height: "auto",
-                                  }}
-                                />
+                                <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
+                                  <img
+                                    ref={previewImageRef}
+                                    src={
+                                      extractionState.filePreviews[
+                                        extractionState.currentPdfIndex
+                                      ]
+                                    }
+                                    alt="Aperçu du document"
+                                    className="w-full h-auto object-contain"
+                                    style={{ minWidth: "100%", height: "auto" }}
+                                  />
+                                  {/* Canvas de dessin extraction superposé */}
+                                  <canvas
+                                    ref={extractCanvasRef}
+                                    style={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: 0,
+                                      width: '100%',
+                                      height: '100%',
+                                      pointerEvents: extractDrawState.isDrawing ? 'auto' : 'none',
+                                      zIndex: 10,
+                                      cursor: extractDrawState.isDrawing ? 'crosshair' : 'default',
+                                    }}
+                                    onMouseDown={handleExtractCanvasMouseDown}
+                                    onMouseMove={handleExtractCanvasMouseMove}
+                                    onMouseUp={handleExtractCanvasMouseUp}
+                                  />
+                                </div>
                               </div>
                             </div>
 
@@ -2573,6 +2724,21 @@ const Extractor = () => {
         </>
       </main>
       {renderModelSelectModal()}
+      {extractDrawState.isDrawing && extractDrawState.rect && (
+        <div
+          style={{
+            position: 'absolute',
+            left: extractDrawState.rect.left,
+            top: extractDrawState.rect.top,
+            width: extractDrawState.rect.width,
+            height: extractDrawState.rect.height,
+            border: '2px dashed #fbbf24',
+            background: 'rgba(251,191,36,0.15)',
+            pointerEvents: 'none',
+            zIndex: 10,
+          }}
+        />
+      )}
     </div>
   );
 };

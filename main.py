@@ -1061,7 +1061,7 @@ async def ocr_preview(
         crop_box = (left_safe, top_safe, right_safe, bottom_safe)
         crop_img = img.crop(crop_box)
         # DEBUG: Sauvegarde la zone cropée pour vérification
-        debug_path = f"debug_crop_{left_safe}_{top_safe}_{right_safe}_{bottom_safe}.png"
+        debug_path = os.path.join(DEBUG_DIR, f"debug_crop_{left_safe}_{top_safe}_{right_safe}_{bottom_safe}.png")
         crop_img.save(debug_path)
         logging.info(f"Image cropée sauvegardée pour debug: {debug_path}")
         # Double the resolution of the cropped image before OCR
