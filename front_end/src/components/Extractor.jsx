@@ -52,6 +52,8 @@ const Extractor = () => {
     invoiceType: "achat",
     selectedFiles: [],
     filePreviews: [],
+    processingMode: "different", // "different" ou "same"
+    selectedModel: "", // Pour le mode "same"
   });
 
   const [extractionState, setExtractionState] = useState({
@@ -807,6 +809,8 @@ const Extractor = () => {
         invoiceType: setupState.invoiceType,
         selectedFiles: setupState.selectedFiles || [],
         filePreviews: setupState.filePreviews || [],
+        processingMode: setupState.processingMode,
+        selectedModel: setupState.selectedModel,
       };
     }
     // Use the provided state (which now always has the latest values)
@@ -825,6 +829,12 @@ const Extractor = () => {
       return false;
     }
 
+    // Vérifier la sélection du modèle pour le mode "same"
+    if (currentState.processingMode === "same" && !currentState.selectedModel) {
+      showNotification("Veuillez sélectionner un modèle pour le mode 'même modèle'", "error");
+      return false;
+    }
+
     // Use the current state that was passed in or from setupState
     const stateToUse = state || setupState;
     
@@ -832,6 +842,8 @@ const Extractor = () => {
     const finalState = {
       ...stateToUse,
       invoiceType: stateToUse.invoiceType || setupState.invoiceType,
+      processingMode: stateToUse.processingMode || setupState.processingMode,
+      selectedModel: stateToUse.selectedModel || setupState.selectedModel,
     };
     
     if (!finalState.invoiceType) {
@@ -852,6 +864,8 @@ const Extractor = () => {
       extractedDataList: Array(finalState.filePreviews.length).fill({}),
       confidenceScores: Array(finalState.filePreviews.length).fill({}),
       isProcessing: false,
+      processingMode: finalState.processingMode,
+      selectedModel: finalState.selectedModel,
     });
 
     setCurrentStep("extract");
@@ -923,9 +937,20 @@ const Extractor = () => {
 
   const scrollToIndex = (index) => {
     setExtractionState((prev) => ({ ...prev, currentPdfIndex: index }));
-    setPendingExtractIndex(index);
-    setShowModelSelectModal(true);
-    setModalSelectedTemplateId("");
+    
+    // En mode "same", extraire automatiquement avec le modèle sélectionné
+    if (extractionState.processingMode === "same" && extractionState.selectedModel) {
+      // Vérifier si l'extraction n'a pas déjà été faite pour cette page
+      if (!extractionState.extractedDataList[index] || 
+          Object.keys(extractionState.extractedDataList[index] || {}).length === 0) {
+        extractCurrentPdf(extractionState.selectedModel, index);
+      }
+    } else {
+      // En mode "different", afficher la modale de sélection
+      setPendingExtractIndex(index);
+      setShowModelSelectModal(true);
+      setModalSelectedTemplateId("");
+    }
   };
 
   const goToPrevPdf = () => {
@@ -946,12 +971,27 @@ const Extractor = () => {
     const results = [...extractionState.extractedDataList];
     const confidenceScores = [...(extractionState.confidenceScores || [])];
     
+    // Déterminer le template à utiliser
+    let templateToUse = null;
+    if (extractionState.processingMode === "same" && extractionState.selectedModel) {
+      templateToUse = extractionState.selectedModel;
+    }
+    
     for (let i = 0; i < extractionState.filePreviews.length; i++) {
       const base64 = extractionState.filePreviews[i];
       const res = await fetch(base64);
       const blob = await res.blob();
       const formData = new FormData();
       formData.append("file", blob, `page_${i}.png`);
+      
+      // Ajouter le template_id si on est en mode "same"
+      if (templateToUse) {
+        formData.append("template_id", templateToUse);
+      } else if (extractionState.processingMode === "same" && extractionState.selectedModel) {
+        // Fallback pour le mode "same"
+        formData.append("template_id", extractionState.selectedModel);
+      }
+      
       try {
         const response = await fetch(`${API_BASE_URL}/extract-data`, {
           method: "POST",
@@ -1122,6 +1162,11 @@ const Extractor = () => {
 
   // Fonction pour extraire la page courante
   const extractCurrentPdf = async (templateId, index) => {
+    // En mode "same", utiliser le modèle sélectionné si aucun templateId n'est fourni
+    if (!templateId && extractionState.processingMode === "same" && extractionState.selectedModel) {
+      templateId = extractionState.selectedModel;
+    }
+    
     if (!templateId) {
       showNotification("Veuillez sélectionner un modèle de facture avant d'extraire.", "error");
       return;
@@ -1280,9 +1325,15 @@ const Extractor = () => {
   // Ajoute ce useEffect pour afficher la modale dès l'arrivée sur l'étape d'extraction
   useEffect(() => {
     if (currentStep === "extract" && extractionState.filePreviews.length > 0) {
-      setPendingExtractIndex(0);
-      setShowModelSelectModal(true);
-      setModalSelectedTemplateId("");
+      // Afficher la modale seulement si on est en mode "different"
+      if (extractionState.processingMode === "different") {
+        setPendingExtractIndex(0);
+        setShowModelSelectModal(true);
+        setModalSelectedTemplateId("");
+      } else if (extractionState.processingMode === "same" && extractionState.selectedModel) {
+        // En mode "same", extraire directement avec le modèle sélectionné
+        extractCurrentPdf(extractionState.selectedModel, 0);
+      }
     }
     // eslint-disable-next-line
   }, [currentStep]);
@@ -1602,6 +1653,69 @@ const Extractor = () => {
                       </h2>
 
                       <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
+                        {/* Mode de traitement */}
+                        <div className="mb-6">
+                          <h3 className="text-white font-semibold mb-3">Mode de traitement :</h3>
+                          <div className="flex flex-col sm:flex-row gap-4">
+                            <label className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="processingMode"
+                                value="different"
+                                checked={setupState.processingMode === "different"}
+                                onChange={(e) => setSetupState(prev => ({
+                                  ...prev,
+                                  processingMode: e.target.value,
+                                  selectedModel: "" // Reset selected model
+                                }))}
+                                className="w-4 h-4 text-blue-600 bg-white/20 border-white/30 focus:ring-blue-500"
+                              />
+                              <span className="text-white">Fichiers de modèles différents</span>
+                            </label>
+                            <label className="flex items-center gap-3 cursor-pointer">
+                              <input
+                                type="radio"
+                                name="processingMode"
+                                value="same"
+                                checked={setupState.processingMode === "same"}
+                                onChange={(e) => setSetupState(prev => ({
+                                  ...prev,
+                                  processingMode: e.target.value
+                                }))}
+                                className="w-4 h-4 text-blue-600 bg-white/20 border-white/30 focus:ring-blue-500"
+                              />
+                              <span className="text-white">Fichiers du même modèle</span>
+                            </label>
+                          </div>
+                        </div>
+
+                        {/* Sélection du modèle pour le mode "same" */}
+                        {setupState.processingMode === "same" && (
+                          <div className="mb-6">
+                            <label className="block text-white font-medium mb-2">
+                              Sélectionnez le modèle à utiliser :
+                            </label>
+                            <select
+                              value={setupState.selectedModel}
+                              onChange={(e) => setSetupState(prev => ({
+                                ...prev,
+                                selectedModel: e.target.value
+                              }))}
+                              className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                            >
+                              <option value="">Sélectionnez un modèle</option>
+                              {Object.keys(mappings).map(tpl => (
+                                <option key={tpl} value={tpl}>{tpl}</option>
+                              ))}
+                            </select>
+                            {setupState.processingMode === "same" && !setupState.selectedModel && (
+                              <p className="text-yellow-300 text-sm mt-1">
+                                ⚠️ Veuillez sélectionner un modèle pour continuer
+                              </p>
+                            )}
+                          </div>
+                        )}
+
                         <div className="mb-6">
                           <input
                             type="file"
@@ -1871,28 +1985,62 @@ const Extractor = () => {
                         </h4>
                       </div>
 
-                      <div className="mb-4">
-                        <label className="block text-sm font-medium text-blue-100 mb-2">
-                          Modèle de facture (template) à utiliser pour l'extraction
-                        </label>
-                        <select
-                          value={selectedTemplateId}
-                          onChange={e => setSelectedTemplateId(e.target.value)}
-                          className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                        >
-                          <option value="">Sélectionnez un modèle</option>
-                          {Object.keys(mappings).map(tpl => (
-                            <option key={tpl} value={tpl}>{tpl}</option>
-                          ))}
-                        </select>
-                        {selectedTemplateId && (
-                          <div className="text-xs text-green-200 mt-1">Modèle utilisé : <b>{selectedTemplateId}</b></div>
-                        )}
+                      {/* Indicateur de mode de traitement */}
+                      <div className="mb-4 p-3 bg-white/10 rounded-xl border border-white/20">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Settings className="w-4 h-4 text-blue-200" />
+                          <span className="text-sm font-medium text-blue-100">Mode de traitement</span>
+                        </div>
+                        <div className="text-xs text-white">
+                          {extractionState.processingMode === "same" ? (
+                            <>
+                              <span className="text-green-300">✓ Mode "Même modèle"</span>
+                              {extractionState.selectedModel && (
+                                <span className="block text-green-200 mt-1">
+                                  Modèle sélectionné : <b>{extractionState.selectedModel}</b>
+                                </span>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-yellow-300">⚠ Mode "Modèles différents"</span>
+                              <span className="block text-blue-200 mt-1">
+                                Sélectionnez un modèle pour chaque fichier
+                              </span>
+                            </>
+                          )}
+                        </div>
                       </div>
+
+                      {/* Sélection du modèle seulement en mode "different" */}
+                      {extractionState.processingMode === "different" && (
+                        <div className="mb-4">
+                          <label className="block text-sm font-medium text-blue-100 mb-2">
+                            Modèle de facture (template) à utiliser pour l'extraction
+                          </label>
+                          <select
+                            value={selectedTemplateId}
+                            onChange={e => setSelectedTemplateId(e.target.value)}
+                            className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                          >
+                            <option value="">Sélectionnez un modèle</option>
+                            {Object.keys(mappings).map(tpl => (
+                              <option key={tpl} value={tpl}>{tpl}</option>
+                            ))}
+                          </select>
+                          {selectedTemplateId && (
+                            <div className="text-xs text-green-200 mt-1">Modèle utilisé : <b>{selectedTemplateId}</b></div>
+                          )}
+                        </div>
+                      )}
 
                       <button
                         onClick={extractAllPdfs}
-                        disabled={extractionState.isProcessing || !selectedTemplateId}
+                        disabled={
+                          extractionState.isProcessing || 
+                          (extractionState.processingMode === "different" && !selectedTemplateId) ||
+                          (extractionState.processingMode === "same" && !extractionState.selectedModel)
+                        }
                         className="w-full mb-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-2"
                       >
                         {extractionState.isProcessing ? (
@@ -1904,6 +2052,9 @@ const Extractor = () => {
                           <>
                             <Search className="w-5 h-5" />
                             Extraire toutes les pages
+                            {extractionState.processingMode === "same" && extractionState.selectedModel && (
+                              <span className="text-xs opacity-75"> (Modèle: {extractionState.selectedModel})</span>
+                            )}
                           </>
                         )}
                       </button>
