@@ -858,3 +858,312 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-07-26 01:38:09,096 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
 2025-07-26 01:38:54,495 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
 2025-07-26 01:38:54,914 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 11:49:27,704 INFO Database connection pool created successfully
+2025-07-28 11:52:55,446 ERROR Error processing field fournisseur: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 180, in save_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:52:55,454 ERROR Error in save_mapping_db: Error processing field fournisseur: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 180, in save_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 204, in save_mapping_db
+    raise Exception(error_msg) from field_error
+Exception: Error processing field fournisseur: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:52:55,459 ERROR Failed to save mappings to database for template RADEEMA_Mars_-2
+2025-07-28 11:53:47,185 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:53:47,188 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 11:53:49,203 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:53:49,205 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 11:53:52,104 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:53:52,106 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 11:53:54,329 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:53:54,331 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 11:54:25,348 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:54:25,350 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 11:54:27,634 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:54:27,635 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 11:54:29,913 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:54:29,915 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 11:54:32,286 ERROR Error loading mapping from database: 1054 (42S22): Unknown column 'manual' in 'field list'
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 772, in cmd_query
+    self._cmysql.query(
+_mysql_connector.MySQLInterfaceError: Unknown column 'manual' in 'field list'
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 238, in load_mapping_db
+    cursor.execute("""
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\cursor_cext.py", line 353, in execute
+    self._connection.cmd_query(
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\opentelemetry\context_propagation.py", line 97, in wrapper
+    return method(cnx, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\mysql\connector\connection_cext.py", line 781, in cmd_query
+    raise get_mysql_exception(
+mysql.connector.errors.ProgrammingError: 1054 (42S22): Unknown column 'manual' in 'field list'
+2025-07-28 11:54:32,288 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'RADEEMA_Mars_-1'. Veuillez d'abord enregistrer un mapping pour ce template.
+2025-07-28 13:21:37,426 INFO Database connection pool created successfully
+2025-07-28 14:49:12,632 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 14:49:33,897 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 14:50:39,547 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 15:11:08,343 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 11:56:31,678 ERROR Error creating connection pool: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-07-30 12:00:25,860 INFO Database connection pool created successfully
+2025-07-30 12:09:09,549 INFO Database connection pool created successfully
+2025-07-30 12:20:36,999 INFO Database connection pool created successfully
+2025-07-30 12:23:16,892 INFO Database connection pool created successfully
+2025-07-30 12:23:57,336 INFO Database connection pool created successfully
+2025-07-30 12:24:32,872 INFO Database connection pool created successfully
+2025-07-30 12:25:09,189 INFO Database connection pool created successfully
+2025-07-30 12:26:02,280 INFO Database connection pool created successfully
+2025-07-30 12:26:36,628 INFO Database connection pool created successfully
+2025-07-30 12:31:29,189 INFO Database connection pool created successfully
+2025-07-30 12:32:36,598 INFO Database connection pool created successfully
+2025-07-30 12:35:53,417 INFO Database connection pool created successfully
+2025-07-30 12:36:27,063 INFO Database connection pool created successfully
+2025-07-30 12:39:41,048 INFO Database connection pool created successfully
+2025-07-30 12:40:06,074 INFO Database connection pool created successfully
+2025-07-30 12:50:01,959 INFO Database connection pool created successfully
+2025-07-30 12:58:01,567 INFO Database connection pool created successfully
+2025-07-30 12:58:20,202 INFO Database connection pool created successfully
+2025-07-30 12:58:38,341 INFO Database connection pool created successfully
+2025-07-30 13:00:44,529 INFO Database connection pool created successfully
+2025-07-30 13:12:20,343 INFO Database connection pool created successfully
+2025-07-30 13:12:45,108 INFO Database connection pool created successfully
+2025-07-30 13:13:24,116 INFO Database connection pool created successfully
+2025-07-30 13:17:32,879 INFO Database connection pool created successfully
+2025-07-30 13:17:57,993 INFO Database connection pool created successfully
+2025-07-30 13:18:18,870 INFO Database connection pool created successfully
+2025-07-30 13:31:23,701 INFO Database connection pool created successfully
+2025-07-30 13:34:09,181 INFO Database connection pool created successfully
+2025-07-30 13:37:16,409 INFO Database connection pool created successfully
+2025-07-30 13:37:35,468 INFO Database connection pool created successfully
+2025-07-30 13:37:53,010 INFO Database connection pool created successfully
+2025-07-30 13:51:38,369 INFO Database connection pool created successfully
+2025-07-30 14:04:41,514 INFO Database connection pool created successfully
+2025-07-30 14:05:07,005 INFO Database connection pool created successfully
+2025-07-30 14:05:21,770 INFO Database connection pool created successfully
+2025-07-30 14:05:37,220 INFO Database connection pool created successfully
+2025-07-30 14:18:57,973 INFO Database connection pool created successfully
+2025-07-30 14:23:19,530 INFO Database connection pool created successfully
+2025-07-30 14:32:44,725 INFO Database connection pool created successfully
+2025-07-30 14:38:27,446 INFO Database connection pool created successfully
+2025-07-30 14:38:47,878 INFO Database connection pool created successfully
+2025-07-30 14:39:04,937 INFO Database connection pool created successfully
+2025-07-30 14:39:39,968 INFO Database connection pool created successfully
+2025-07-30 14:48:54,408 INFO Database connection pool created successfully
+2025-07-30 15:09:01,962 INFO Database connection pool created successfully
+2025-07-30 15:25:28,416 INFO Database connection pool created successfully
+2025-07-30 15:32:05,381 INFO Database connection pool created successfully
+2025-07-30 15:38:39,245 INFO Database connection pool created successfully
+2025-07-30 15:40:00,525 INFO Database connection pool created successfully
+2025-07-30 15:40:30,932 INFO Database connection pool created successfully
+2025-07-30 15:42:21,547 ERROR Error in extract_test: 'pos'
+2025-07-30 15:44:20,937 ERROR Error in extract_test: 'pos'
+2025-07-30 15:45:54,547 INFO Database connection pool created successfully
+2025-07-30 15:47:10,632 INFO Database connection pool created successfully
+2025-07-30 15:49:07,999 INFO Database connection pool created successfully
+2025-07-30 15:54:35,956 INFO Database connection pool created successfully
+2025-07-30 16:37:35,953 INFO Database connection pool created successfully
+2025-07-30 16:45:06,314 INFO Database connection pool created successfully
+2025-07-30 16:45:33,874 INFO Database connection pool created successfully
+2025-07-30 16:48:11,881 ERROR Error in extract_test: can only concatenate str (not "float") to str
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 1322, in extract_test
+    ttc_extracted = ht_extracted + tva_extracted
+                    ~~~~~~~~~~~~~^~~~~~~~~~~~~~~
+TypeError: can only concatenate str (not "float") to str
+2025-07-30 16:49:11,361 INFO Database connection pool created successfully
+2025-07-30 16:53:11,063 INFO Database connection pool created successfully
+2025-07-30 16:56:54,250 INFO Database connection pool created successfully
+2025-07-30 16:59:07,626 INFO Database connection pool created successfully
+2025-07-30 16:59:24,820 INFO Database connection pool created successfully
+2025-07-30 17:02:03,111 INFO Database connection pool created successfully
+2025-07-30 17:02:29,914 INFO Database connection pool created successfully
+2025-07-30 17:03:26,425 INFO Database connection pool created successfully
+2025-07-30 17:05:18,205 INFO Database connection pool created successfully
+2025-07-30 17:09:45,067 INFO Database connection pool created successfully
+2025-07-30 17:10:16,170 INFO Database connection pool created successfully
+2025-07-30 17:10:38,350 INFO Database connection pool created successfully
+2025-07-30 17:54:36,243 INFO Database connection pool created successfully
+2025-07-30 17:54:55,029 INFO Database connection pool created successfully
+2025-07-30 17:55:16,510 ERROR Error in extract_test: name 'debug_info' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 1384, in extract_test
+    "debug_info": debug_info
+                  ^^^^^^^^^^
+NameError: name 'debug_info' is not defined
+2025-07-30 17:55:59,697 INFO Database connection pool created successfully
+2025-07-30 18:14:48,004 INFO Database connection pool created successfully
+2025-07-30 18:25:28,647 INFO Database connection pool created successfully
+2025-07-30 18:34:32,021 INFO Database connection pool created successfully
+2025-07-30 18:46:18,519 INFO Database connection pool created successfully
+2025-07-30 18:50:04,105 INFO Database connection pool created successfully
+2025-07-30 19:03:52,898 INFO Database connection pool created successfully
+2025-07-30 19:05:16,840 INFO Database connection pool created successfully
+2025-07-30 19:49:08,321 INFO Database connection pool created successfully
+2025-07-30 20:00:36,654 INFO Database connection pool created successfully
+2025-07-30 20:10:05,956 INFO Database connection pool created successfully

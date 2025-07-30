@@ -64,6 +64,7 @@ const Extractor = () => {
     extractedDataList: [],
     confidenceScores: [],
     isProcessing: false,
+    extractionBoxes: [], 
   });
 
   const [dataPrepState, setDataPrepState] = useState({
@@ -92,6 +93,7 @@ const Extractor = () => {
   const previewImageRef = useRef(null);
   const horizontalScrollRef = useRef(null);
   const extractCanvasRef = useRef(null);
+  const extractionBoxesCanvasRef = useRef(null);
 
   const EXTRACTION_FIELDS = [
     { key: "fournisseur", label: "Fournisseur" },
@@ -120,7 +122,7 @@ const Extractor = () => {
     try {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/mappings`);
-      const data = await response.json();
+        const data = await response.json();
       if (data.status === "success") {
         setMappings(data.mappings);
       }
@@ -157,7 +159,8 @@ const Extractor = () => {
           };
         });
 
-      console.log("Invoices to save:", invoicesToSave);
+      
+        
       
       // Save each invoice one by one
       const results = [];
@@ -365,7 +368,7 @@ const Extractor = () => {
           return box;
         }
       }
-      
+
       return null;
     },
     [dataPrepState.ocrBoxes]
@@ -607,6 +610,76 @@ const Extractor = () => {
     }
   }, [dataPrepState, manualDrawState]);
 
+  const drawExtractionBoxes = useCallback(() => {
+    const canvas = extractionBoxesCanvasRef.current;
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Get current extraction boxes with proper null checks
+    const currentBoxes = extractionState.extractionBoxes?.[extractionState.currentPdfIndex];
+    if (!currentBoxes || typeof currentBoxes !== 'object') return;
+    
+    // Get image dimensions with proper null checks
+    const img = previewImageRef.current;
+    if (!img || !img.complete || !img.naturalWidth || !img.naturalHeight) return;
+    
+    // Set canvas size to match image
+    canvas.width = img.offsetWidth;
+    canvas.height = img.offsetHeight;
+    
+    // Define colors for different field types
+    const colors = {
+      ht_keyword: "#3b82f6", // Blue
+      ht_value: "#10b981",   // Green
+      tva_value: "#f59e0b",  // Orange
+      ttc_value: "#ef4444"   // Red
+    };
+    
+    // Draw bounding boxes with proper error handling
+    try {
+      Object.entries(currentBoxes).forEach(([field, data]) => {
+        if (data && data.bounds && typeof data.bounds === 'object') {
+          const bounds = data.bounds;
+          
+          // Validate bounds properties
+          if (typeof bounds.left !== 'number' || typeof bounds.top !== 'number' || 
+              typeof bounds.width !== 'number' || typeof bounds.height !== 'number') {
+            return;
+          }
+          
+          // Scale coordinates to match the displayed image
+          const scaleX = img.offsetWidth / img.naturalWidth;
+          const scaleY = img.offsetHeight / img.naturalHeight;
+          
+          const x = bounds.left * scaleX;
+          const y = bounds.top * scaleY;
+          const width = bounds.width * scaleX;
+          const height = bounds.height * scaleY;
+          
+          ctx.save();
+          ctx.strokeStyle = colors[field] || "#6b7280";
+          ctx.lineWidth = 3;
+          ctx.setLineDash([]);
+          
+          // Draw rectangle around the text
+          ctx.strokeRect(x, y, width, height);
+          
+          // Add label
+          ctx.fillStyle = colors[field] || "#6b7280";
+          ctx.font = "bold 12px Arial";
+          ctx.textAlign = "center";
+          ctx.fillText(field.toUpperCase(), x + width/2, y - 5);
+          
+          ctx.restore();
+        }
+      });
+    } catch (error) {
+      console.error('Error drawing extraction boxes:', error);
+    }
+  }, [extractionState.extractionBoxes, extractionState.currentPdfIndex]);
+
   const saveMappings = useCallback(async () => {
     if (!dataPrepState || !dataPrepState.selectedBoxes) {
       console.error("dataPrepState or selectedBoxes is undefined");
@@ -657,7 +730,7 @@ const Extractor = () => {
       if (!dataPrepState.fieldMappings) {
         throw new Error("Aucun mappage de champ à enregistrer");
       }
-      
+
       const response = await fetch(`${API_BASE_URL}/mappings`, {
         method: "POST",
         headers: { 
@@ -678,7 +751,7 @@ const Extractor = () => {
       }
       
       const responseData = await response.json();
-      
+
       if (response.ok) {
         showNotification(
           `Mappings sauvegardés avec succès pour le template ${templateId}`,
@@ -718,7 +791,7 @@ const Extractor = () => {
       for (const [fileIndex, file] of files.entries()) {
         const formData = new FormData();
         formData.append("file", file);
-       
+
         const response = await fetch(`${API_BASE_URL}/upload-basic`, {
           method: "POST",
           body: formData,
@@ -764,7 +837,7 @@ const Extractor = () => {
         selectedFiles: files,
         filePreviews: previews,
       };
-    
+
       // Update the state
       setSetupState(newState);
       
@@ -851,7 +924,7 @@ const Extractor = () => {
       showNotification("Erreur: Type de facture non défini", "error");
       return false;
     }
-    
+
     setExtractionState({
       uploadedFiles: finalState.selectedFiles,
       filePreviews: finalState.filePreviews.map((p) => p.preview),
@@ -970,44 +1043,59 @@ const Extractor = () => {
     setExtractionState((prev) => ({ ...prev, isProcessing: true }));
     const results = [...extractionState.extractedDataList];
     const confidenceScores = [...(extractionState.confidenceScores || [])];
+    const extractionBoxes = [...(extractionState.extractionBoxes || [])];
     
-    // Déterminer le template à utiliser
-    let templateToUse = null;
-    if (extractionState.processingMode === "same" && extractionState.selectedModel) {
-      templateToUse = extractionState.selectedModel;
-    }
+    // Since we're using extract-test, we don't need template validation
+    const isTestEndpoint = true;
     
-    for (let i = 0; i < extractionState.filePreviews.length; i++) {
-      const base64 = extractionState.filePreviews[i];
-      const res = await fetch(base64);
-      const blob = await res.blob();
-      const formData = new FormData();
-      formData.append("file", blob, `page_${i}.png`);
-      
-      // Ajouter le template_id si on est en mode "same"
-      if (templateToUse) {
-        formData.append("template_id", templateToUse);
-      } else if (extractionState.processingMode === "same" && extractionState.selectedModel) {
-        // Fallback pour le mode "same"
-        formData.append("template_id", extractionState.selectedModel);
-      }
-      
-      try {
-        const response = await fetch(`${API_BASE_URL}/extract-data`, {
-          method: "POST",
-          body: formData,
-        });
-        const result = await response.json();
+for (let i = 0; i < extractionState.filePreviews.length; i++) {
+  const base64 = extractionState.filePreviews[i];
+  const res = await fetch(base64);
+  const blob = await res.blob();
+  const formData = new FormData();
+  formData.append("file", blob, `page_${i}.png`);
+
+  // Always add template_id for extract-test endpoint
+  // Use selectedModel for "same" mode, selectedTemplateId for "different" mode
+  let templateIdToSend = "";
+  if (extractionState.processingMode === "same") {
+    templateIdToSend = extractionState.selectedModel;
+  } else if (extractionState.processingMode === "different") {
+    templateIdToSend = selectedTemplateId;
+  }
+  formData.append("template_id", templateIdToSend);
+
+  try {
+   
+    
+    const response = await fetch(`${API_BASE_URL}/extract-test`, {
+      method: "POST",
+      body: formData,
+    });
+    const result = await response.json();
+     
+        
+       
         results[i] = result.data || {};
         confidenceScores[i] = result.confidence_scores || {};
+        
+        // Store bounding boxes for visualization if available
+        if (result.debug_info && result.debug_info.positions && typeof result.debug_info.positions === 'object') {
+          extractionBoxes[i] = result.debug_info.positions;
+         
+          
+        }
       } catch (error) {
+        console.error(`💥 Batch extraction error for page ${i + 1}:`, error);
         results[i] = {};
         confidenceScores[i] = {};
+        extractionBoxes[i] = {};
       }
       setExtractionState((prev) => ({
         ...prev,
         extractedDataList: [...results],
         confidenceScores: [...confidenceScores],
+        extractionBoxes: [...extractionBoxes],
         isProcessing: i < extractionState.filePreviews.length - 1,
       }));
     }
@@ -1053,8 +1141,15 @@ const Extractor = () => {
     }
   }, [dataPrepState.uploadedImage, redrawCanvas]);
 
+  useEffect(() => {
+    // Draw extraction boxes when they change
+    if (extractionState.extractionBoxes && extractionState.extractionBoxes.length > 0) {
+      drawExtractionBoxes();
+    }
+  }, [extractionState.extractionBoxes, extractionState.currentPdfIndex, drawExtractionBoxes]);
+
   const [showDataPrepUpload, setShowDataPrepUpload] = useState(false);
-  
+
   const handleSingleDataPrepUpload = useCallback(
     async (event) => {
       const file = event.target.files[0];
@@ -1075,7 +1170,7 @@ const Extractor = () => {
           fileName: file.name,
           filePreview: filePreview,
         }));
-        
+
         const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
           method: "POST",
           body: formData,
@@ -1145,20 +1240,7 @@ const Extractor = () => {
     };
   }, [handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp]);
 
-  // Extraction automatique lors du changement de page sélectionnée
-  useEffect(() => {
-    if (
-      extractionState.filePreviews.length > 0 &&
-      (!extractionState.extractedDataList[extractionState.currentPdfIndex] ||
-        Object.keys(
-          extractionState.extractedDataList[extractionState.currentPdfIndex] ||
-            {}
-        ).length === 0)
-    ) {
-      extractCurrentPdf();
-    }
-    // eslint-disable-next-line
-  }, [extractionState.currentPdfIndex]);
+  
 
   // Fonction pour extraire la page courante
   const extractCurrentPdf = async (templateId, index) => {
@@ -1167,7 +1249,10 @@ const Extractor = () => {
       templateId = extractionState.selectedModel;
     }
     
-    if (!templateId) {
+    // Skip template validation for extract-test endpoint
+    const isTestEndpoint = true; // Since we're using extract-test
+    
+    if (!templateId && !isTestEndpoint) {
       showNotification("Veuillez sélectionner un modèle de facture avant d'extraire.", "error");
       return;
     }
@@ -1178,26 +1263,55 @@ const Extractor = () => {
     const blob = await res.blob();
     const formData = new FormData();
     formData.append("file", blob, `page_${idx}.png`);
-    formData.append("template_id", templateId);
+    
+    // Only add template_id if it exists and we're not using test endpoint
+    if (templateId) {
+  formData.append("template_id", templateId);
+}
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/extract-data`, {
+     
+      
+      const response = await fetch(`${API_BASE_URL}/extract-test`, {
         method: "POST",
         body: formData,
       });
       const result = await response.json();
-      setExtractionState((prev) => {
-        const newExtracted = [...prev.extractedDataList];
-        newExtracted[idx] = result.data || {};
-        const newScores = [...(prev.confidenceScores || [])];
-        newScores[idx] = result.confidence_scores || {};
-        return {
-          ...prev,
-          extractedDataList: newExtracted,
-          confidenceScores: newScores,
-          isProcessing: false,
-        };
-      });
+      
+     
+      
+      
+     
+      
+      
+setExtractionState((prev) => {
+  const newExtracted = [...prev.extractedDataList];
+  let data = result.data || {};
+  // Map backend numFacture to frontend numeroFacture
+  if (data.numFacture && !data.numeroFacture) {
+    data.numeroFacture = data.numFacture;
+  }
+  newExtracted[idx] = data;
+  const newScores = [...(prev.confidenceScores || [])];
+  newScores[idx] = result.confidence_scores || {};
+
+  // Store bounding boxes for visualization if available
+  const newExtractionBoxes = [...(prev.extractionBoxes || [])];
+  if (result.debug_info && result.debug_info.positions && typeof result.debug_info.positions === 'object') {
+    newExtractionBoxes[idx] = result.debug_info.positions;
+ 
+  }
+
+  return {
+    ...prev,
+    extractedDataList: newExtracted,
+    confidenceScores: newScores,
+    extractionBoxes: newExtractionBoxes,
+    isProcessing: false,
+  };
+});
     } catch (error) {
+      console.error(`💥 Extraction error for page ${idx + 1}:`, error);
       setExtractionState((prev) => ({
         ...prev,
         isProcessing: false,
@@ -1205,18 +1319,7 @@ const Extractor = () => {
     }
   };
 
-  // Extraction automatique du premier fichier à l'arrivée sur la page d'extraction
-  useEffect(() => {
-    if (
-      currentStep === "extract" &&
-      extractionState.filePreviews.length > 0 &&
-      (!extractionState.extractedDataList[0] ||
-        Object.keys(extractionState.extractedDataList[0] || {}).length === 0)
-    ) {
-      extractCurrentPdf();
-    }
-    // eslint-disable-next-line
-  }, [currentStep]);
+  
 
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
@@ -1452,28 +1555,53 @@ const Extractor = () => {
   }, [extractDrawState.isDrawing, handleExtractCanvasMouseDown, handleExtractCanvasMouseMove, handleExtractCanvasMouseUp]);
 
   // 3. Redessine le canvas d'extraction à chaque changement de rectangle ou d'image
-  useEffect(() => {
-    const canvas = extractCanvasRef.current;
-    const img = previewImageRef.current;
-    if (!canvas || !img) return;
-    // Ajuste la taille du canvas à celle de l'image affichée
-    canvas.width = img.clientWidth;
-    canvas.height = img.clientHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Affiche le rectangle de sélection si en cours
-    if (extractDrawState.isDrawing && extractDrawState.rect) {
-      ctx.save();
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([4, 2]);
-      const { left, top, width, height } = extractDrawState.rect;
-      ctx.strokeRect(left, top, width, height);
-      ctx.fillStyle = 'rgba(251,191,36,0.15)';
-      ctx.fillRect(left, top, width, height);
-      ctx.restore();
-    }
-  }, [extractDrawState, extractionState.currentPdfIndex, extractionState.filePreviews]);
+ useEffect(() => {
+  const canvas = extractionBoxesCanvasRef.current;
+  const img = previewImageRef.current;
+  if (!canvas || !img) return;
+
+  // Get the current extraction data for the page
+  const data = extractionState.extractedDataList[extractionState.currentPdfIndex];
+  if (!data) return;
+
+  // Set canvas size to match the displayed image
+  canvas.width = img.clientWidth;
+  canvas.height = img.clientHeight;
+
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // Helper to draw a box
+  const drawBox = (box, color, label) => {
+    if (!box) return;
+    // Scale coordinates
+    const scaleX = img.clientWidth / img.naturalWidth;
+    const scaleY = img.clientHeight / img.naturalHeight;
+    const x = box.left * scaleX;
+    const y = box.top * scaleY;
+    const w = box.width * scaleX;
+    const h = box.height * scaleY;
+
+    ctx.save();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.setLineDash([]);
+    ctx.strokeRect(x, y, w, h);
+
+    // Draw label
+    ctx.fillStyle = color;
+    ctx.font = "bold 13px Arial";
+    ctx.textAlign = "left";
+    ctx.fillText(label, x + 2, y - 5 < 10 ? y + 13 : y - 5);
+    ctx.restore();
+  };
+  drawBox(data.boxNumFacture, "#6366f1", "N° Facture");
+  drawBox(data.boxHT, "#b91010ff", "HT");
+  drawBox(data.boxTVA, "#0b0ff5ff", "TVA");
+}, [
+  extractionState.extractedDataList,
+  extractionState.currentPdfIndex,
+]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 w-full">
@@ -2066,32 +2194,32 @@ const Extractor = () => {
                               {field.label}
                             </label>
                             <div className="flex gap-2 items-center">
-                              <input
-                                type="text"
-                                value={filterValue(
-                                  extractionState.extractedDataList[
-                                    extractionState.currentPdfIndex
-                                  ]?.[field.key],
-                                  field.key
-                                )}
-                                onChange={(e) =>
-                                  setExtractionState((prev) => ({
-                                    ...prev,
+                            <input
+                              type="text"
+                              value={filterValue(
+                                extractionState.extractedDataList[
+                                  extractionState.currentPdfIndex
+                                ]?.[field.key],
+                                field.key
+                              )}
+                              onChange={(e) =>
+                                setExtractionState((prev) => ({
+                                  ...prev,
                                     extractedDataList:
                                       prev.extractedDataList.map(
-                                      (data, index) =>
-                                        index === prev.currentPdfIndex
-                                          ? {
-                                              ...data,
-                                              [field.key]: e.target.value,
-                                            }
-                                          : data
-                                    ),
-                                  }))
-                                }
+                                    (data, index) =>
+                                      index === prev.currentPdfIndex
+                                        ? {
+                                            ...data,
+                                            [field.key]: e.target.value,
+                                          }
+                                        : data
+                                  ),
+                                }))
+                              }
                                 className="flex-1 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                                placeholder={`${field.label} sera extrait automatiquement`}
-                              />
+                              placeholder={`${field.label} sera extrait automatiquement`}
+                            />
                               {/* Bouton d'icône pour activer/désactiver le mode dessin extraction */}
                               <button
                                 type="button"
@@ -2151,16 +2279,38 @@ const Extractor = () => {
                             <div className="w-full" style={{ height: "70vh" }}>
                               <div className="w-full h-full overflow-auto bg-white rounded-lg shadow-lg p-4">
                                 <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
-                                  <img
-                                    ref={previewImageRef}
-                                    src={
-                                      extractionState.filePreviews[
-                                        extractionState.currentPdfIndex
-                                      ]
-                                    }
-                                    alt="Aperçu du document"
-                                    className="w-full h-auto object-contain"
+                                <img
+                                  ref={previewImageRef}
+                                  src={
+                                    extractionState.filePreviews[
+                                      extractionState.currentPdfIndex
+                                    ]
+                                  }
+                                  alt="Aperçu du document"
+                                  className="w-full h-auto object-contain"
                                     style={{ minWidth: "100%", height: "auto" }}
+                                    onLoad={() => {
+                                      // Add a small delay to ensure image is fully loaded
+                                      setTimeout(() => {
+                                        if (extractionState.extractionBoxes && 
+                                            extractionState.extractionBoxes[extractionState.currentPdfIndex]) {
+                                          drawExtractionBoxes();
+                                        }
+                                      }, 100);
+                                    }}
+                                  />
+                                  {/* Canvas for extraction bounding boxes */}
+                                  <canvas
+                                    ref={extractionBoxesCanvasRef}
+                                  style={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: 0,
+                                      width: '100%',
+                                      height: '100%',
+                                      pointerEvents: 'none',
+                                      zIndex: 10,
+                                    }}
                                   />
                                   {/* Canvas de dessin extraction superposé */}
                                   <canvas
@@ -2245,12 +2395,7 @@ const Extractor = () => {
                                             0 &&
                                           !extractionOk;
                                         // Log pour diagnostic
-                                        console.log(
-                                          "ExtractionData (page",
-                                          index + 1,
-                                          "):",
-                                          extractionData
-                                        );
+                                      
                                         return (
                                         <div
                                           key={index}
@@ -2265,8 +2410,8 @@ const Extractor = () => {
                                               zIndex:
                                                 hoveredIndex === index ? 2 : 1,
                                             }}
-                                          >
-                                            <div
+                                        >
+                                          <div
                                               onClick={() => {
                                                 if (extractionState.isProcessing) {
                                                   showNotification("Veuillez attendre la fin de l'extraction en cours.", "warning");
@@ -2277,8 +2422,8 @@ const Extractor = () => {
                                               className={
                                                 `relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ` +
                                                 (index ===
-                                                extractionState.currentPdfIndex
-                                                  ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
+                                              extractionState.currentPdfIndex
+                                                ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
                                                   : "border-white/30 hover:border-blue-400")
                                               }
                                               style={{
@@ -2307,10 +2452,10 @@ const Extractor = () => {
                                                     ? "#3b82f6"
                                                     : undefined,
                                               }}
-                                            >
-                                              <img
-                                                src={preview}
-                                                alt={`Page ${index + 1}`}
+                                          >
+                                            <img
+                                              src={preview}
+                                              alt={`Page ${index + 1}`}
                                                 className="w-full h-full object-contain bg-white"
                                               />
                                               {/* Badge d'avertissement si extraction incomplète */}
@@ -2319,10 +2464,10 @@ const Extractor = () => {
                                                   <span>⚠️ Non paramétré</span>
                                                 </div>
                                               )}
-                                              {index ===
-                                                extractionState.currentPdfIndex && (
-                                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
-                                              )}
+                                            {index ===
+                                              extractionState.currentPdfIndex && (
+                                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
+                                            )}
                                               {extractionState
                                                 .extractedDataList[index] && (
                                                 <>
@@ -2362,7 +2507,7 @@ const Extractor = () => {
                                                         ] || {}
                                                       ).length
                                                     }
-                                                  </div>
+                                          </div>
                                                   {extractionState
                                                     .confidenceScores?.[
                                                     index
@@ -2511,8 +2656,8 @@ const Extractor = () => {
                                                   Paramétrer ce fichier
                                                 </button>
                                               )}
-                                              </div>
                                             </div>
+                                          </div>
                                         );
                                       }
                                     )}
