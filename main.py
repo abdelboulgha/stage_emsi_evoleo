@@ -22,6 +22,7 @@ from dotenv import load_dotenv
 import dbf
 import pytesseract
 import cv2
+import datetime
 
 # Load environment variables
 load_dotenv()
@@ -958,6 +959,9 @@ async def extract_data(
                     "debug_images": []
                 }
             
+            # Sauvegarder les données extraites pour FoxPro
+            save_extraction_for_foxpro(extracted_data, confidence_scores)
+            
             return {
                 "success": True,
                 "data": extracted_data,
@@ -1024,6 +1028,10 @@ async def extract_data(
                 extracted_data[field_key] = best_box['text']
                 confidence_scores[field_key] = best_box.get('score', 0.0)
         logging.info(f'Données extraites par champ: {extracted_data}')
+        
+        # Sauvegarder les données extraites pour FoxPro
+        save_extraction_for_foxpro(extracted_data, confidence_scores)
+        
         return {
             "success": True,
             "data": extracted_data,
@@ -1034,6 +1042,60 @@ async def extract_data(
     except Exception as e:
         logging.error(f"Erreur lors de l'extraction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'extraction: {str(e)}")
+
+def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float]):
+    """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
+    try:
+        # Nettoyer le taux TVA - extraire juste le nombre
+        taux_tva_raw = extracted_data.get("tauxTVA", "0")
+        taux_tva_clean = "0"
+        if taux_tva_raw:
+            # Chercher un nombre dans la chaîne (ex: "Total TVA 20%" -> "20")
+            import re
+            match = re.search(r'(\d+(?:[.,]\d+)?)', str(taux_tva_raw))
+            if match:
+                taux_tva_clean = match.group(1)
+        
+        # Créer un fichier JSON avec les données extraites
+        foxpro_data = {
+            "success": True,
+            "data": extracted_data,
+            "confidence_scores": confidence_scores,
+            "timestamp": str(datetime.datetime.now()),
+            "fields": {
+                "fournisseur": extracted_data.get("fournisseur", ""),
+                "numeroFacture": extracted_data.get("numeroFacture", ""),
+                "tauxTVA": taux_tva_clean,
+                "montantHT": extracted_data.get("montantHT", "0"),
+                "montantTVA": extracted_data.get("montantTVA", "0"),
+                "montantTTC": extracted_data.get("montantTTC", "0")
+            }
+        }
+        
+        # Créer automatiquement le fichier JSON
+        with open('ocr_extraction.json', 'w', encoding='utf-8') as f:
+            json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
+        
+        # Créer automatiquement le fichier texte simple pour FoxPro
+        with open('ocr_extraction.txt', 'w', encoding='utf-8') as f:
+            f.write(f"Fournisseur: {extracted_data.get('fournisseur', '')}\n")
+            f.write(f"Numéro Facture: {extracted_data.get('numeroFacture', '')}\n")
+            f.write(f"Taux TVA: {taux_tva_clean}\n")
+            f.write(f"Montant HT: {extracted_data.get('montantHT', '0')}\n")
+            f.write(f"Montant TVA: {extracted_data.get('montantTVA', '0')}\n")
+            f.write(f"Montant TTC: {extracted_data.get('montantTTC', '0')}\n")
+        
+        logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement")
+        
+        # Créer aussi automatiquement le fichier DBF s'il n'existe pas
+        try:
+            write_invoice_to_dbf(extracted_data)
+            logging.info("Fichier factures.dbf créé/mis à jour automatiquement")
+        except Exception as dbf_error:
+            logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde pour FoxPro: {e}")
 
 @app.post("/ocr-preview")
 async def ocr_preview(
@@ -1135,7 +1197,7 @@ async def delete_mapping(template_id: str):
 # Pydantic model for invoice data
 class InvoiceData(BaseModel):
     fournisseur: str
-    numFacture: str
+    numeroFacture: str
     tauxTVA: float
     montantHT: float
     montantTVA: float
@@ -1146,33 +1208,69 @@ class InvoiceData(BaseModel):
 def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
     """
     Ajoute une facture dans un fichier DBF compatible FoxPro.
-    Si le fichier n'existe pas, il est créé avec la bonne structure.
-    Les noms de champs sont limités à 10 caractères.
+    Si le fichier n'existe pas, il est créé automatiquement avec la bonne structure.
     """
     import os
-    # Supprimer le fichier s'il existe mais est vide (sécurité)
-    if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
-        os.remove(dbf_path)
-    if not os.path.exists(dbf_path):
-        # Créer la table DBF avec des noms de champs <= 10 caractères
-        table = dbf.Table(
-            dbf_path,
-            'fournissr C(50); numfact C(20); tauxTVA N(5,2); mntHT N(10,2); mntTVA N(10,2); mntTTC N(10,2)'
-        )
-        table.open(mode=dbf.READ_WRITE)
-    else:
+    
+    try:
+        # Vérifier si le fichier existe et n'est pas vide
+        if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
+            os.remove(dbf_path)
+            logging.info("Fichier DBF vide supprimé")
+        
+        # Créer le fichier DBF s'il n'existe pas
+        if not os.path.exists(dbf_path):
+            logging.info("Création automatique du fichier factures.dbf")
+            # Créer la table DBF avec une structure compatible FoxPro
+            table = dbf.Table(
+                dbf_path,
+                'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+            )
+            table.open(mode=dbf.READ_WRITE)
+            table.close()
+            logging.info("Fichier factures.dbf créé avec succès")
+        
+        # Ouvrir la table existante
         table = dbf.Table(dbf_path)
         table.open(mode=dbf.READ_WRITE)
-    # Ajouter la facture (adapter l'ordre des champs)
-    table.append((
-        invoice_data['fournisseur'],
-        invoice_data['numFacture'],
-        float(invoice_data['tauxTVA']),
-        float(invoice_data['montantHT']),
-        float(invoice_data['montantTVA']),
-        float(invoice_data['montantTTC'])
-    ))
-    table.close()
+        
+        # Ajouter la facture
+        table.append((
+            invoice_data['fournisseur'],
+            invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
+            float(invoice_data['tauxTVA']),
+            float(invoice_data['montantHT']),
+            float(invoice_data['montantTVA']),
+            float(invoice_data['montantTTC'])
+        ))
+        table.close()
+        
+        logging.info(f"Facture ajoutée au fichier DBF: {invoice_data.get('numeroFacture', 'N/A')}")
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de l'écriture dans le fichier DBF: {e}")
+        # En cas d'erreur, essayer de recréer le fichier
+        try:
+            if os.path.exists(dbf_path):
+                os.remove(dbf_path)
+            table = dbf.Table(
+                dbf_path,
+                'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+            )
+            table.open(mode=dbf.READ_WRITE)
+            table.append((
+                invoice_data['fournisseur'],
+                invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
+                float(invoice_data['tauxTVA']),
+                float(invoice_data['montantHT']),
+                float(invoice_data['montantTVA']),
+                float(invoice_data['montantTTC'])
+            ))
+            table.close()
+            logging.info("Fichier DBF recréé et facture ajoutée avec succès")
+        except Exception as retry_error:
+            logging.error(f"Erreur fatale lors de la création du fichier DBF: {retry_error}")
+            raise retry_error
 
 
 @app.post("/ajouter-facture")
@@ -1193,7 +1291,7 @@ async def ajouter_facture(invoice: InvoiceData):
         """
         values = (
             invoice.fournisseur,
-            invoice.numFacture,
+            invoice.numeroFacture,  # On garde numeroFacture dans le modèle mais on mappe vers numFacture en DB
             invoice.tauxTVA,
             invoice.montantHT,
             invoice.montantTVA,
@@ -1209,11 +1307,35 @@ async def ajouter_facture(invoice: InvoiceData):
             "invoice_id": cursor.lastrowid
         }
     except mysql.connector.IntegrityError as e:
-        if "unique_invoice" in str(e).lower():
-            return {
-                "success": False,
-                "message": "Une facture avec ce numéro existe déjà pour ce fournisseur"
-            }
+        if "unique_invoice" in str(e).lower() or "duplicate" in str(e).lower():
+            # Essayer de mettre à jour l'enregistrement existant
+            try:
+                update_query = """
+                UPDATE Facture 
+                SET tauxTVA = %s, montantHT = %s, montantTVA = %s, montantTTC = %s
+                WHERE fournisseur = %s AND numFacture = %s
+                """
+                update_values = (
+                    invoice.tauxTVA,
+                    invoice.montantHT,
+                    invoice.montantTVA,
+                    invoice.montantTTC,
+                    invoice.fournisseur,
+                    invoice.numeroFacture
+                )
+                cursor.execute(update_query, update_values)
+                connection.commit()
+                
+                return {
+                    "success": True,
+                    "message": "Facture mise à jour avec succès (remplacement de l'enregistrement existant)",
+                    "invoice_id": "updated"
+                }
+            except Exception as update_error:
+                return {
+                    "success": False,
+                    "message": f"Erreur lors de la mise à jour: {str(update_error)}"
+                }
         return {
             "success": False,
             "message": f"Erreur d'intégrité de la base de données: {str(e)}"
@@ -1240,6 +1362,93 @@ async def download_dbf():
         filename="factures.dbf",
         media_type="application/octet-stream"
     )
+
+@app.post("/launch-foxpro")
+async def launch_foxpro():
+    """Lancer FoxPro avec le formulaire de saisie"""
+    try:
+        import subprocess
+        import platform
+        
+        # Vérifier si le fichier d'extraction existe
+        if not os.path.exists('ocr_extraction.json'):
+            return {
+                "success": False,
+                "message": "Aucune donnée extraite trouvée. Veuillez d'abord extraire une facture via l'interface web."
+            }
+        
+        # Vérifier si le fichier DBF existe, sinon le créer
+        if not os.path.exists('factures.dbf'):
+            try:
+                # Créer un fichier DBF vide avec la bonne structure
+                table = dbf.Table(
+                    'factures.dbf',
+                    'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+                )
+                table.open(mode=dbf.READ_WRITE)
+                table.close()
+                logging.info("Fichier factures.dbf créé automatiquement")
+            except Exception as dbf_error:
+                logging.error(f"Erreur lors de la création automatique du fichier DBF: {dbf_error}")
+                return {
+                    "success": False,
+                    "message": f"Erreur lors de la création de la base de données: {str(dbf_error)}"
+                }
+        
+        # Chercher FoxPro automatiquement
+        foxpro_path = None
+        
+        # Emplacements courants
+        possible_paths = [
+            r"C:\Program Files (x86)\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Program Files\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Users\pc\Desktop\microsoft visual foxpro 9\microsoft visual foxpro 9\vfp9.exe"
+        ]
+        
+        # Chercher dans les emplacements courants
+        for path in possible_paths:
+            if os.path.exists(path):
+                foxpro_path = path
+                break
+        
+        # Si pas trouvé, chercher avec where
+        if not foxpro_path:
+            try:
+                import subprocess
+                result = subprocess.run(['where', 'vfp9.exe'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    foxpro_path = result.stdout.strip().split('\n')[0]
+            except:
+                pass
+        
+        if not foxpro_path or not os.path.exists(foxpro_path):
+            return {
+                "success": False,
+                "message": "FoxPro non trouvé. Vérifiez l'installation ou ajoutez-le au PATH."
+            }
+        
+        # Lancer FoxPro avec le formulaire
+        if platform.system() == "Windows":
+            subprocess.Popen([foxpro_path, "formulaire_foxpro_final.prg"], 
+                           cwd=os.getcwd(),
+                           shell=True)
+        else:
+            return {
+                "success": False,
+                "message": "Cette fonctionnalité n'est disponible que sur Windows."
+            }
+        
+        return {
+            "success": True,
+            "message": "FoxPro lancé avec succès. Le formulaire devrait s'ouvrir."
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors du lancement de FoxPro: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors du lancement de FoxPro: {str(e)}"
+        }
 
 if __name__ == "__main__":
     import uvicorn

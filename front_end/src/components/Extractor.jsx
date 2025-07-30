@@ -30,6 +30,7 @@ import {
   Minimize2,
   RefreshCw,
   Save,
+  Database,
 } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:8000";
@@ -140,7 +141,7 @@ const Extractor = () => {
         .map((data) => {
           // Apply filtering to each field using the filterValue function
           const fournisseur = filterValue(data.fournisseur, "fournisseur");
-          const numFacture = filterValue(data.numeroFacture, "numFacture");
+          const numeroFacture = filterValue(data.numeroFacture, "numeroFacture");
           const tauxTVA = filterValue(data.tauxTVA, "tauxTVA");
           const montantHT = filterValue(data.montantHT, "montantHT");
           const montantTVA = filterValue(data.montantTVA, "montantTVA");
@@ -149,7 +150,7 @@ const Extractor = () => {
           // Return the invoice data with proper types
           return {
             fournisseur,
-            numFacture,
+            numeroFacture,
             tauxTVA: parseFloat(tauxTVA) || 0,
             montantHT: parseFloat(montantHT) || 0,
             montantTVA: parseFloat(montantTVA) || 0,
@@ -1018,8 +1019,8 @@ const Extractor = () => {
     if (!val) return "";
     if (fieldKey === "fournisseur") return val;
     
-    // Pour numFacture ou numeroFacture, autoriser alphanumérique, tirets, slash et espaces
-    if (fieldKey === "numFacture" || fieldKey === "numeroFacture") {
+    // Pour numeroFacture, autoriser alphanumérique, tirets, slash et espaces
+    if (fieldKey === "numeroFacture") {
       const matches = val.toString().match(/[a-zA-Z0-9\-\/ ]+/g);
       return matches ? matches.join("") : "";
     }
@@ -1033,7 +1034,7 @@ const Extractor = () => {
       // Replace comma with dot for proper decimal parsing
       return matches.join("").replace(",", ".");
     }
-    // For other fields like numFacture, keep only numbers and specific symbols
+    // For other fields like numeroFacture, keep only numbers and specific symbols
     const matches = val.toString().match(/[0-9.,;:/\\-]+/g);
     return matches ? matches.join("") : "";
   };
@@ -1261,6 +1262,29 @@ const Extractor = () => {
       body: formData,
     });
     return await response.json();
+  };
+
+  // Fonction pour lancer FoxPro
+  const launchFoxPro = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/launch-foxpro', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        alert('FoxPro lancé avec succès ! Le formulaire devrait s\'ouvrir.');
+      } else {
+        alert('Erreur: ' + result.message);
+      }
+    } catch (error) {
+      console.error('Erreur lors du lancement de FoxPro:', error);
+      alert('Erreur lors du lancement de FoxPro');
+    }
   };
 
   // Ajoute l'état pour stocker l'aperçu OCR par champ
@@ -1837,7 +1861,7 @@ const Extractor = () => {
                     Retour
                   </button>
                   {/* BOUTON DE TELECHARGEMENT DBF */}
-                  <button
+                  {/* <button
                     onClick={() => {
                       window.open(`${API_BASE_URL}/download-dbf`, "_blank");
                     }}
@@ -1845,7 +1869,7 @@ const Extractor = () => {
                   >
                     <Download className="w-4 h-4" />
                     Télécharger fichier FoxPro (.dbf)
-                  </button>
+                  </button> */}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1856,7 +1880,7 @@ const Extractor = () => {
                         Données Extraites
                       </h3>
 
-                      <div className="mb-4 p-3 bg-blue-500/20 rounded-xl">
+                      {/* <div className="mb-4 p-3 bg-blue-500/20 rounded-xl">
                         <div className="text-sm text-blue-100">
                           Type:{" "}
                           <span className="font-medium">
@@ -1865,7 +1889,7 @@ const Extractor = () => {
                               : "Facture de vente"}
                           </span>
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* Invoice Selection Modal */}
                       {invoiceSelection.isOpen &&
@@ -1979,14 +2003,14 @@ const Extractor = () => {
                         document.body
                       )}
 
-                      <div className="mt-4">
+                      {/* <div className="mt-4">
                         <h4 className="text-sm font-medium text-white mb-2">
                           Données extraites:
                         </h4>
-                      </div>
+                      </div> */}
 
                       {/* Indicateur de mode de traitement */}
-                      <div className="mb-4 p-3 bg-white/10 rounded-xl border border-white/20">
+                      {/* <div className="mb-4 p-3 bg-white/10 rounded-xl border border-white/20">
                         <div className="flex items-center gap-2 mb-2">
                           <Settings className="w-4 h-4 text-blue-200" />
                           <span className="text-sm font-medium text-blue-100">Mode de traitement</span>
@@ -2010,7 +2034,7 @@ const Extractor = () => {
                             </>
                           )}
                         </div>
-                      </div>
+                      </div> */}
 
                       {/* Sélection du modèle seulement en mode "different" */}
                       {extractionState.processingMode === "different" && (
@@ -2122,6 +2146,17 @@ const Extractor = () => {
                       >
                         <Save className="w-4 h-4" />
                         Enregistrer les factures
+                      </button>
+                      
+                      <button
+                        onClick={launchFoxPro}
+                        disabled={
+                          extractionState.extractedDataList.length === 0
+                        }
+                        className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Database className="w-4 h-4" />
+                        Enregistrer dans FoxPro
                       </button>
                     </div>
                       </div>
@@ -2284,12 +2319,12 @@ const Extractor = () => {
                                               style={{
                                                 width:
                                                   hoveredIndex === index
-                                                    ? 320
-                                                    : 64,
+                                                    ? 200
+                                                    : 96,
                                                 height:
                                                   hoveredIndex === index
-                                                    ? 420
-                                                    : 90,
+                                                    ? 200
+                                                    : 135,
                                                 boxShadow:
                                                   hoveredIndex === index
                                                     ? "0 8px 32px rgba(0,0,0,0.25)"

@@ -1,860 +1,97 @@
-2025-07-13 21:56:18,189 ERROR Form data requires "python-multipart" to be installed. 
-You can install "python-multipart" with: 
-
-pip install python-multipart
-
-2025-07-13 22:08:21,217 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:21,217 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:08:21,217 DEBUG Calling on_header_value with data[63:117]
-2025-07-13 22:08:21,218 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:21,218 DEBUG Calling on_header_field with data[119:131]
-2025-07-13 22:08:21,218 DEBUG Calling on_header_value with data[133:148]
-2025-07-13 22:08:21,218 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:21,218 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:21,218 DEBUG Calling on_part_data with data[152:163840]
-2025-07-13 22:08:21,219 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:21,220 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:21,220 DEBUG Calling on_part_data with data[0:124631]
-2025-07-13 22:08:21,220 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:21,221 DEBUG Calling on_end with no data
-2025-07-13 22:08:39,831 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:39,831 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:08:39,831 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:08:39,831 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_part_data with data[89:107]
-2025-07-13 22:08:39,832 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_header_field with data[151:170]
-2025-07-13 22:08:39,832 DEBUG Calling on_header_value with data[172:193]
-2025-07-13 22:08:39,832 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_part_data with data[197:215]
-2025-07-13 22:08:39,832 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:39,832 DEBUG Calling on_header_field with data[259:278]
-2025-07-13 22:08:39,833 DEBUG Calling on_header_value with data[280:303]
-2025-07-13 22:08:39,833 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:39,833 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:39,833 DEBUG Calling on_part_data with data[307:324]
-2025-07-13 22:08:39,833 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:39,833 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:39,833 DEBUG Calling on_header_field with data[368:387]
-2025-07-13 22:08:39,833 DEBUG Calling on_header_value with data[389:413]
-2025-07-13 22:08:39,833 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:39,833 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:39,833 DEBUG Calling on_part_data with data[417:434]
-2025-07-13 22:08:39,833 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:39,833 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:39,834 DEBUG Calling on_header_field with data[478:497]
-2025-07-13 22:08:39,834 DEBUG Calling on_header_value with data[499:527]
-2025-07-13 22:08:39,834 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:39,834 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:39,834 DEBUG Calling on_part_data with data[531:49152]
-2025-07-13 22:08:39,835 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:39,835 DEBUG Calling on_part_data with data[0:242511]
-2025-07-13 22:08:39,836 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:39,836 DEBUG Calling on_end with no data
-2025-07-13 22:08:39,838 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:08:39,838 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:08:39,950 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_twilmzdz_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_twilmzdz', 'txt']
-2025-07-13 22:08:51,921 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:51,922 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:08:51,922 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:08:51,922 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:51,922 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:51,923 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:08:51,923 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:51,923 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:51,923 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:08:51,923 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:08:51,923 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:51,923 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:51,924 DEBUG Calling on_part_data with data[196:214]
-2025-07-13 22:08:51,924 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:51,924 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:51,924 DEBUG Calling on_header_field with data[258:277]
-2025-07-13 22:08:51,924 DEBUG Calling on_header_value with data[279:302]
-2025-07-13 22:08:51,924 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:51,924 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:51,925 DEBUG Calling on_part_data with data[306:323]
-2025-07-13 22:08:51,925 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:51,925 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:51,925 DEBUG Calling on_header_field with data[367:386]
-2025-07-13 22:08:51,925 DEBUG Calling on_header_value with data[388:412]
-2025-07-13 22:08:51,925 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:51,925 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:51,926 DEBUG Calling on_part_data with data[416:434]
-2025-07-13 22:08:51,926 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:51,926 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:51,926 DEBUG Calling on_header_field with data[478:497]
-2025-07-13 22:08:51,926 DEBUG Calling on_header_value with data[499:527]
-2025-07-13 22:08:51,926 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:51,926 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:51,926 DEBUG Calling on_part_data with data[531:245760]
-2025-07-13 22:08:51,927 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:51,928 DEBUG Calling on_part_data with data[0:45903]
-2025-07-13 22:08:51,928 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:51,929 DEBUG Calling on_end with no data
-2025-07-13 22:08:51,931 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:08:51,932 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:08:52,025 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nkow643x_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nkow643x', 'txt']
-2025-07-13 22:08:55,220 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:55,220 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:08:55,220 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:08:55,220 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:55,220 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:55,221 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:08:55,221 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:55,221 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:55,221 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:08:55,221 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:08:55,221 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:55,221 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:55,222 DEBUG Calling on_part_data with data[196:214]
-2025-07-13 22:08:55,222 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:55,222 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:55,222 DEBUG Calling on_header_field with data[258:277]
-2025-07-13 22:08:55,222 DEBUG Calling on_header_value with data[279:302]
-2025-07-13 22:08:55,222 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:55,223 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:55,223 DEBUG Calling on_part_data with data[306:323]
-2025-07-13 22:08:55,223 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:55,223 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:55,223 DEBUG Calling on_header_field with data[367:386]
-2025-07-13 22:08:55,223 DEBUG Calling on_header_value with data[388:412]
-2025-07-13 22:08:55,223 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:55,224 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:55,224 DEBUG Calling on_part_data with data[416:434]
-2025-07-13 22:08:55,224 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:55,224 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:55,224 DEBUG Calling on_header_field with data[478:497]
-2025-07-13 22:08:55,224 DEBUG Calling on_header_value with data[499:527]
-2025-07-13 22:08:55,224 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:55,225 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:55,225 DEBUG Calling on_part_data with data[531:16384]
-2025-07-13 22:08:55,226 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:55,227 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:55,228 DEBUG Calling on_part_data with data[0:13135]
-2025-07-13 22:08:55,228 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:55,228 DEBUG Calling on_end with no data
-2025-07-13 22:08:55,232 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:08:55,232 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:08:55,369 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_rtqs2cc5_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_rtqs2cc5', 'txt']
-2025-07-13 22:08:58,671 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:58,671 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:08:58,671 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:08:58,671 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:58,671 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:58,672 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:08:58,672 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:58,672 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:58,672 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:08:58,672 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:08:58,672 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:58,672 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:58,672 DEBUG Calling on_part_data with data[196:214]
-2025-07-13 22:08:58,672 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:58,672 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:58,672 DEBUG Calling on_header_field with data[258:277]
-2025-07-13 22:08:58,673 DEBUG Calling on_header_value with data[279:302]
-2025-07-13 22:08:58,673 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:58,673 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:58,673 DEBUG Calling on_part_data with data[306:323]
-2025-07-13 22:08:58,673 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:58,673 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:58,673 DEBUG Calling on_header_field with data[367:386]
-2025-07-13 22:08:58,673 DEBUG Calling on_header_value with data[388:412]
-2025-07-13 22:08:58,673 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:58,673 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:58,673 DEBUG Calling on_part_data with data[416:434]
-2025-07-13 22:08:58,673 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:58,673 DEBUG Calling on_part_begin with no data
-2025-07-13 22:08:58,674 DEBUG Calling on_header_field with data[478:497]
-2025-07-13 22:08:58,674 DEBUG Calling on_header_value with data[499:527]
-2025-07-13 22:08:58,674 DEBUG Calling on_header_end with no data
-2025-07-13 22:08:58,674 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:08:58,674 DEBUG Calling on_part_data with data[531:16384]
-2025-07-13 22:08:58,674 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:58,675 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:08:58,675 DEBUG Calling on_part_data with data[0:13135]
-2025-07-13 22:08:58,675 DEBUG Calling on_part_end with no data
-2025-07-13 22:08:58,676 DEBUG Calling on_end with no data
-2025-07-13 22:08:58,678 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:08:58,678 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:08:58,772 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8ffu5yvd_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8ffu5yvd', 'txt']
-2025-07-13 22:09:01,250 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:01,250 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:01,250 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:01,250 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:01,250 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:01,250 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:09:01,250 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:01,251 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:01,251 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:09:01,251 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:09:01,251 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:01,251 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:01,251 DEBUG Calling on_part_data with data[196:213]
-2025-07-13 22:09:01,251 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:01,251 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:01,251 DEBUG Calling on_header_field with data[257:276]
-2025-07-13 22:09:01,251 DEBUG Calling on_header_value with data[278:301]
-2025-07-13 22:09:01,251 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_part_data with data[305:323]
-2025-07-13 22:09:01,252 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_header_field with data[367:386]
-2025-07-13 22:09:01,252 DEBUG Calling on_header_value with data[388:412]
-2025-07-13 22:09:01,252 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_part_data with data[416:433]
-2025-07-13 22:09:01,252 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:01,252 DEBUG Calling on_header_field with data[477:496]
-2025-07-13 22:09:01,253 DEBUG Calling on_header_value with data[498:526]
-2025-07-13 22:09:01,253 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:01,253 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:01,253 DEBUG Calling on_part_data with data[530:32768]
-2025-07-13 22:09:01,253 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:01,254 DEBUG Calling on_part_data with data[0:258894]
-2025-07-13 22:09:01,254 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:01,254 DEBUG Calling on_end with no data
-2025-07-13 22:09:01,256 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:01,257 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:01,346 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7344t2gd_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7344t2gd', 'txt']
-2025-07-13 22:09:04,058 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:04,058 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:04,059 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:04,059 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:04,059 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:04,059 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:09:04,059 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:04,059 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:04,060 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:09:04,060 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:09:04,060 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:04,060 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:04,060 DEBUG Calling on_part_data with data[196:212]
-2025-07-13 22:09:04,060 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:04,060 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:04,060 DEBUG Calling on_header_field with data[256:275]
-2025-07-13 22:09:04,060 DEBUG Calling on_header_value with data[277:300]
-2025-07-13 22:09:04,060 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_part_data with data[304:321]
-2025-07-13 22:09:04,061 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_header_field with data[365:384]
-2025-07-13 22:09:04,061 DEBUG Calling on_header_value with data[386:410]
-2025-07-13 22:09:04,061 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_part_data with data[414:432]
-2025-07-13 22:09:04,061 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:04,061 DEBUG Calling on_header_field with data[476:495]
-2025-07-13 22:09:04,062 DEBUG Calling on_header_value with data[497:525]
-2025-07-13 22:09:04,062 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:04,062 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:04,062 DEBUG Calling on_part_data with data[529:49152]
-2025-07-13 22:09:04,062 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:04,063 DEBUG Calling on_part_data with data[0:242509]
-2025-07-13 22:09:04,063 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:04,063 DEBUG Calling on_end with no data
-2025-07-13 22:09:04,065 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:04,065 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:04,151 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ny8fz0sj_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ny8fz0sj', 'txt']
-2025-07-13 22:09:10,675 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:10,675 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:10,675 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:10,675 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:10,675 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:10,676 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:09:10,676 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:10,676 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:10,676 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:09:10,676 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:09:10,676 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:10,676 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:10,676 DEBUG Calling on_part_data with data[196:213]
-2025-07-13 22:09:10,676 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:10,676 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:10,676 DEBUG Calling on_header_field with data[257:276]
-2025-07-13 22:09:10,676 DEBUG Calling on_header_value with data[278:301]
-2025-07-13 22:09:10,676 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:10,677 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:10,677 DEBUG Calling on_part_data with data[305:322]
-2025-07-13 22:09:10,677 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:10,677 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:10,677 DEBUG Calling on_header_field with data[366:385]
-2025-07-13 22:09:10,677 DEBUG Calling on_header_value with data[387:411]
-2025-07-13 22:09:10,677 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:10,677 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:10,677 DEBUG Calling on_part_data with data[415:433]
-2025-07-13 22:09:10,677 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:10,677 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:10,678 DEBUG Calling on_header_field with data[477:496]
-2025-07-13 22:09:10,678 DEBUG Calling on_header_value with data[498:526]
-2025-07-13 22:09:10,678 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:10,678 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:10,678 DEBUG Calling on_part_data with data[530:16384]
-2025-07-13 22:09:10,679 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:10,679 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:10,679 DEBUG Calling on_part_data with data[0:13134]
-2025-07-13 22:09:10,680 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:10,680 DEBUG Calling on_end with no data
-2025-07-13 22:09:10,682 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:10,682 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:10,771 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ztepr7vh_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ztepr7vh', 'txt']
-2025-07-13 22:09:14,424 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:14,424 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:14,424 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:14,424 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:14,424 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:14,425 DEBUG Calling on_part_data with data[89:105]
-2025-07-13 22:09:14,425 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:14,425 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:14,425 DEBUG Calling on_header_field with data[149:168]
-2025-07-13 22:09:14,425 DEBUG Calling on_header_value with data[170:191]
-2025-07-13 22:09:14,425 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:14,425 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:14,426 DEBUG Calling on_part_data with data[195:213]
-2025-07-13 22:09:14,426 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:14,426 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:14,426 DEBUG Calling on_header_field with data[257:276]
-2025-07-13 22:09:14,426 DEBUG Calling on_header_value with data[278:301]
-2025-07-13 22:09:14,426 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:14,426 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:14,427 DEBUG Calling on_part_data with data[305:322]
-2025-07-13 22:09:14,427 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:14,427 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:14,427 DEBUG Calling on_header_field with data[366:385]
-2025-07-13 22:09:14,427 DEBUG Calling on_header_value with data[387:411]
-2025-07-13 22:09:14,427 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:14,427 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:14,428 DEBUG Calling on_part_data with data[415:432]
-2025-07-13 22:09:14,428 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:14,428 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:14,428 DEBUG Calling on_header_field with data[476:495]
-2025-07-13 22:09:14,428 DEBUG Calling on_header_value with data[497:525]
-2025-07-13 22:09:14,428 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:14,428 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:14,428 DEBUG Calling on_part_data with data[529:16384]
-2025-07-13 22:09:14,429 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:14,430 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:14,430 DEBUG Calling on_part_data with data[0:13133]
-2025-07-13 22:09:14,430 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:14,431 DEBUG Calling on_end with no data
-2025-07-13 22:09:14,433 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:14,434 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:14,514 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ebwlmp26_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_ebwlmp26', 'txt']
-2025-07-13 22:09:18,590 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:18,590 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:18,590 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:18,590 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:18,590 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:18,590 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:09:18,590 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:18,591 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:18,591 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:09:18,591 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:09:18,591 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:18,591 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:18,591 DEBUG Calling on_part_data with data[196:214]
-2025-07-13 22:09:18,591 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:18,591 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:18,591 DEBUG Calling on_header_field with data[258:277]
-2025-07-13 22:09:18,592 DEBUG Calling on_header_value with data[279:302]
-2025-07-13 22:09:18,592 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:18,592 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:18,592 DEBUG Calling on_part_data with data[306:324]
-2025-07-13 22:09:18,592 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:18,592 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:18,592 DEBUG Calling on_header_field with data[368:387]
-2025-07-13 22:09:18,592 DEBUG Calling on_header_value with data[389:413]
-2025-07-13 22:09:18,593 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:18,593 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:18,593 DEBUG Calling on_part_data with data[417:434]
-2025-07-13 22:09:18,593 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:18,593 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:18,593 DEBUG Calling on_header_field with data[478:497]
-2025-07-13 22:09:18,593 DEBUG Calling on_header_value with data[499:527]
-2025-07-13 22:09:18,593 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:18,593 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:18,594 DEBUG Calling on_part_data with data[531:32768]
-2025-07-13 22:09:18,594 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:18,595 DEBUG Calling on_part_data with data[0:258895]
-2025-07-13 22:09:18,595 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:18,595 DEBUG Calling on_end with no data
-2025-07-13 22:09:18,597 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:18,597 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:18,674 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_0aza782i_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_0aza782i', 'txt']
-2025-07-13 22:09:22,580 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:22,580 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:22,580 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:22,580 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:22,580 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:22,580 DEBUG Calling on_part_data with data[89:106]
-2025-07-13 22:09:22,580 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:22,580 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:22,580 DEBUG Calling on_header_field with data[150:169]
-2025-07-13 22:09:22,580 DEBUG Calling on_header_value with data[171:192]
-2025-07-13 22:09:22,580 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_part_data with data[196:212]
-2025-07-13 22:09:22,581 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_header_field with data[256:275]
-2025-07-13 22:09:22,581 DEBUG Calling on_header_value with data[277:300]
-2025-07-13 22:09:22,581 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_part_data with data[304:321]
-2025-07-13 22:09:22,581 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:22,581 DEBUG Calling on_header_field with data[365:384]
-2025-07-13 22:09:22,582 DEBUG Calling on_header_value with data[386:410]
-2025-07-13 22:09:22,582 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:22,582 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:22,582 DEBUG Calling on_part_data with data[414:431]
-2025-07-13 22:09:22,582 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:22,582 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:22,582 DEBUG Calling on_header_field with data[475:494]
-2025-07-13 22:09:22,582 DEBUG Calling on_header_value with data[496:524]
-2025-07-13 22:09:22,582 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:22,582 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:22,582 DEBUG Calling on_part_data with data[528:16384]
-2025-07-13 22:09:22,583 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:22,584 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:22,584 DEBUG Calling on_part_data with data[0:13132]
-2025-07-13 22:09:22,584 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:22,584 DEBUG Calling on_end with no data
-2025-07-13 22:09:22,586 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:22,586 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:22,659 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_cuxuvg0q_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_cuxuvg0q', 'txt']
-2025-07-13 22:09:26,245 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:26,245 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:26,245 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:26,245 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:26,246 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:26,246 DEBUG Calling on_part_data with data[89:107]
-2025-07-13 22:09:26,246 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:26,246 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:26,246 DEBUG Calling on_header_field with data[151:170]
-2025-07-13 22:09:26,246 DEBUG Calling on_header_value with data[172:193]
-2025-07-13 22:09:26,246 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:26,246 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:26,246 DEBUG Calling on_part_data with data[197:214]
-2025-07-13 22:09:26,246 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:26,246 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:26,247 DEBUG Calling on_header_field with data[258:277]
-2025-07-13 22:09:26,247 DEBUG Calling on_header_value with data[279:302]
-2025-07-13 22:09:26,247 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:26,247 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:26,247 DEBUG Calling on_part_data with data[306:323]
-2025-07-13 22:09:26,247 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:26,247 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:26,247 DEBUG Calling on_header_field with data[367:386]
-2025-07-13 22:09:26,247 DEBUG Calling on_header_value with data[388:412]
-2025-07-13 22:09:26,247 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:26,247 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:26,247 DEBUG Calling on_part_data with data[416:434]
-2025-07-13 22:09:26,247 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:26,248 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:26,248 DEBUG Calling on_header_field with data[478:497]
-2025-07-13 22:09:26,248 DEBUG Calling on_header_value with data[499:527]
-2025-07-13 22:09:26,248 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:26,248 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:26,248 DEBUG Calling on_part_data with data[531:16384]
-2025-07-13 22:09:26,249 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:26,249 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:26,249 DEBUG Calling on_part_data with data[0:13135]
-2025-07-13 22:09:26,249 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:26,250 DEBUG Calling on_end with no data
-2025-07-13 22:09:26,252 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:26,252 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:26,332 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7t7rlm18_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_7t7rlm18', 'txt']
-2025-07-13 22:09:32,988 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:32,989 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:32,989 DEBUG Calling on_header_value with data[63:85]
-2025-07-13 22:09:32,989 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:32,989 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:32,989 DEBUG Calling on_part_data with data[89:107]
-2025-07-13 22:09:32,989 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:32,990 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:32,990 DEBUG Calling on_header_field with data[151:170]
-2025-07-13 22:09:32,990 DEBUG Calling on_header_value with data[172:193]
-2025-07-13 22:09:32,990 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:32,990 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:32,990 DEBUG Calling on_part_data with data[197:214]
-2025-07-13 22:09:32,990 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:32,991 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:32,991 DEBUG Calling on_header_field with data[258:277]
-2025-07-13 22:09:32,991 DEBUG Calling on_header_value with data[279:302]
-2025-07-13 22:09:32,991 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:32,991 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:32,991 DEBUG Calling on_part_data with data[306:322]
-2025-07-13 22:09:32,991 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:32,991 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:32,991 DEBUG Calling on_header_field with data[366:385]
-2025-07-13 22:09:32,992 DEBUG Calling on_header_value with data[387:411]
-2025-07-13 22:09:32,992 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:32,992 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:32,992 DEBUG Calling on_part_data with data[415:433]
-2025-07-13 22:09:32,992 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:32,992 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:32,992 DEBUG Calling on_header_field with data[477:496]
-2025-07-13 22:09:32,993 DEBUG Calling on_header_value with data[498:526]
-2025-07-13 22:09:32,993 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:32,993 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:32,993 DEBUG Calling on_part_data with data[530:229376]
-2025-07-13 22:09:32,994 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:32,995 DEBUG Calling on_part_data with data[0:62286]
-2025-07-13 22:09:32,995 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:32,995 DEBUG Calling on_end with no data
-2025-07-13 22:09:32,998 DEBUG STREAM b'IHDR' 16 13
-2025-07-13 22:09:32,998 DEBUG STREAM b'IDAT' 41 65536
-2025-07-13 22:09:33,089 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_er3zh8ru_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_er3zh8ru', 'txt']
-2025-07-13 22:09:52,162 DEBUG Calling on_part_begin with no data
-2025-07-13 22:09:52,162 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:09:52,162 DEBUG Calling on_header_value with data[63:117]
-2025-07-13 22:09:52,162 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:52,162 DEBUG Calling on_header_field with data[119:131]
-2025-07-13 22:09:52,163 DEBUG Calling on_header_value with data[133:148]
-2025-07-13 22:09:52,163 DEBUG Calling on_header_end with no data
-2025-07-13 22:09:52,163 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:09:52,163 DEBUG Calling on_part_data with data[152:163840]
-2025-07-13 22:09:52,164 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:52,165 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:09:52,167 DEBUG Calling on_part_data with data[0:124631]
-2025-07-13 22:09:52,167 DEBUG Calling on_part_end with no data
-2025-07-13 22:09:52,167 DEBUG Calling on_end with no data
-2025-07-13 22:10:00,520 DEBUG Calling on_part_begin with no data
-2025-07-13 22:10:00,520 DEBUG Calling on_header_field with data[42:61]
-2025-07-13 22:10:00,520 DEBUG Calling on_header_value with data[63:89]
-2025-07-13 22:10:00,520 DEBUG Calling on_header_end with no data
-2025-07-13 22:10:00,520 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:10:00,520 DEBUG Calling on_part_data with data[93:100]
-2025-07-13 22:10:00,521 DEBUG Calling on_part_end with no data
-2025-07-13 22:10:00,521 DEBUG Calling on_part_begin with no data
-2025-07-13 22:10:00,521 DEBUG Calling on_header_field with data[144:163]
-2025-07-13 22:10:00,521 DEBUG Calling on_header_value with data[165:219]
-2025-07-13 22:10:00,521 DEBUG Calling on_header_end with no data
-2025-07-13 22:10:00,521 DEBUG Calling on_header_field with data[221:233]
-2025-07-13 22:10:00,521 DEBUG Calling on_header_value with data[235:250]
-2025-07-13 22:10:00,521 DEBUG Calling on_header_end with no data
-2025-07-13 22:10:00,522 DEBUG Calling on_headers_finished with no data
-2025-07-13 22:10:00,522 DEBUG Calling on_part_data with data[254:245760]
-2025-07-13 22:10:00,523 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:10:00,524 DEBUG Calling on_part_data with data[0:262144]
-2025-07-13 22:10:00,524 DEBUG Calling on_part_data with data[0:42813]
-2025-07-13 22:10:00,524 DEBUG Calling on_part_end with no data
-2025-07-13 22:10:00,525 DEBUG Calling on_end with no data
-2025-07-13 22:10:02,517 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_opvhfob5_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_opvhfob5', 'txt']
-2025-07-13 22:10:02,895 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_iy5w_pel_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_iy5w_pel', 'txt']
-2025-07-13 22:10:03,192 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nvju93b1_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_nvju93b1', 'txt']
-2025-07-13 22:10:03,446 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8o3myw85_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_8o3myw85', 'txt']
-2025-07-13 22:10:03,690 DEBUG ['tesseract', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_obtqqkwm_input.PNG', 'C:\\Users\\wadii\\AppData\\Local\\Temp\\tess_obtqqkwm', 'txt']
-2025-07-13 22:10:03,991 INFO Données extraites pour radeema: {'numeroFacture': 'N°2025206481682', 'tauxTVA': '18,0', 'montantHT': '', 'montantTVA': '238,18', 'montantTTC': '280,93', 'emetteur': 'radeema'}
-2025-07-16 14:26:28,618 ERROR Form data requires "python-multipart" to be installed. 
-You can install "python-multipart" with: 
-
-pip install python-multipart
-
-2025-07-16 14:27:16,888 ERROR Erreur lors de la détection des boîtes OCR: PaddleOCR.predict() got an unexpected keyword argument 'cls'
-2025-07-16 14:27:54,580 ERROR Erreur lors de la détection des boîtes OCR: PaddleOCR.predict() got an unexpected keyword argument 'cls'
-2025-07-16 14:29:01,428 ERROR Erreur lors de l'extraction: PaddleOCR.predict() got an unexpected keyword argument 'cls'
-2025-07-17 14:28:35,808 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 14:30:07,819 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 14:30:07,825 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 14:32:00,136 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 14:32:14,390 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 14:32:14,447 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 14:33:08,602 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 20:04:02,929 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 20:04:02,934 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 20:04:56,128 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-17 20:54:30,023 ERROR Erreur lors du chargement des mappings: Expecting value: line 1 column 1 (char 0)
-2025-07-18 02:14:56,809 ERROR Erreur lors de l'upload: In user code:
-
-
-    InvalidArgumentError: Broadcast dimension mismatch. Operands could not be broadcast together with the shape of X = [1, 96, 2, 180] and the shape of Y = [1, 96, 4, 180]. Received [2] in X is not equal to [4] in Y at i:2.
-      [Hint: Expected x_dims_array[i] == y_dims_array[i] || (x_dims_array[i] <= 1 && x_dims_array[i] != 0) || (y_dims_array[i] <= 1 && y_dims_array[i] != 0) == true, but received x_dims_array[i] == y_dims_array[i] || (x_dims_array[i] <= 1 && x_dims_array[i] != 0) || (y_dims_array[i] <= 1 && y_dims_array[i] != 0):0 != true:1.] (at ..\paddle/phi/kernels/funcs/common_shape.h:86)
-      [operator < pd_kernel.phi_kernel > error]
-2025-07-22 21:49:03,293 INFO Database connection pool created successfully
-2025-07-22 21:49:50,733 INFO Database connection pool created successfully
-2025-07-22 21:50:28,895 ERROR Error saving mapping to database: 'FieldCoordinates' object has no attribute 'get'
-2025-07-22 21:50:35,984 ERROR Error saving mapping to database: 'FieldCoordinates' object has no attribute 'get'
-2025-07-22 21:53:02,321 INFO Database connection pool created successfully
-2025-07-22 21:54:26,517 ERROR Error in save_mapping_db: 'FieldCoordinates' object has no attribute 'get'
-Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 149, in save_mapping_db
-    left = float(coords.get('left', 0))
-                 ^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\pydantic\main.py", line 991, in __getattr__
-    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
-AttributeError: 'FieldCoordinates' object has no attribute 'get'
-2025-07-22 21:55:30,005 ERROR Error in save_mapping_db: 'FieldCoordinates' object has no attribute 'get'
-Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 149, in save_mapping_db
-    left = float(coords.get('left', 0))
-                 ^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\tens\Lib\site-packages\pydantic\main.py", line 991, in __getattr__
-    raise AttributeError(f'{type(self).__name__!r} object has no attribute {item!r}')
-AttributeError: 'FieldCoordinates' object has no attribute 'get'
-2025-07-22 21:58:44,180 INFO Database connection pool created successfully
-2025-07-22 21:59:38,143 INFO Database connection pool created successfully
-2025-07-22 22:00:14,420 INFO Database connection pool created successfully
-2025-07-22 23:02:32,444 INFO Database connection pool created successfully
-2025-07-22 23:02:57,731 INFO Database connection pool created successfully
-2025-07-22 23:06:06,186 INFO Database connection pool created successfully
-2025-07-22 23:10:37,799 INFO Database connection pool created successfully
-2025-07-22 23:14:32,453 INFO Database connection pool created successfully
-2025-07-22 23:16:55,721 ERROR Erreur lors de l'extraction: name 'load_mapping' is not defined
-2025-07-22 23:18:45,048 INFO Database connection pool created successfully
-2025-07-22 23:30:28,782 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'default'. Veuillez d'abord enregistrer un mapping pour ce template.
-2025-07-22 23:31:31,895 INFO Database connection pool created successfully
-2025-07-22 23:32:19,899 ERROR Erreur lors de l'extraction: 404: Aucun mapping trouvé pour le template 'default'. Veuillez d'abord enregistrer un mapping pour ce template.
-2025-07-22 23:35:27,218 INFO Database connection pool created successfully
-2025-07-22 23:40:02,952 INFO Database connection pool created successfully
-2025-07-23 00:16:03,453 INFO Database connection pool created successfully
-2025-07-23 00:17:11,539 ERROR Erreur lors de l'extraction: name 're' is not defined
-2025-07-23 00:18:17,105 INFO Database connection pool created successfully
-2025-07-23 00:18:57,223 ERROR Erreur lors de l'extraction: name 're' is not defined
-2025-07-23 00:20:02,712 INFO Database connection pool created successfully
-2025-07-23 00:21:32,157 INFO Database connection pool created successfully
-2025-07-23 00:34:32,745 INFO Database connection pool created successfully
-2025-07-23 00:37:53,016 INFO Database connection pool created successfully
-2025-07-23 00:38:37,598 INFO Database connection pool created successfully
-2025-07-23 01:19:52,190 INFO Database connection pool created successfully
-2025-07-23 01:34:03,951 INFO Database connection pool created successfully
-2025-07-23 01:36:40,766 INFO Database connection pool created successfully
-2025-07-23 01:43:54,200 INFO Database connection pool created successfully
-2025-07-23 01:46:52,650 WARNING No valid mappings found for template 2025-07-23
-2025-07-23 01:46:52,651 ERROR Erreur lors de l'extraction: 'NoneType' object has no attribute 'cursor'
-2025-07-23 01:47:31,547 WARNING No valid mappings found for template 2025-07-23
-2025-07-23 01:47:31,547 ERROR Erreur lors de l'extraction: 'NoneType' object has no attribute 'cursor'
-2025-07-23 01:48:26,993 INFO Database connection pool created successfully
-2025-07-23 01:50:13,094 WARNING No valid mappings found for template 2025-07-23
-2025-07-23 01:50:37,517 WARNING No valid mappings found for template 2025-07-23
-2025-07-23 01:52:07,264 INFO Database connection pool created successfully
-2025-07-23 12:14:10,171 ERROR Error creating connection pool: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
-2025-07-23 12:18:24,792 INFO Database connection pool created successfully
-2025-07-23 13:14:09,561 INFO Database connection pool created successfully
-2025-07-23 16:28:53,504 INFO Database connection pool created successfully
-2025-07-23 16:34:21,797 INFO Database connection pool created successfully
-2025-07-23 17:46:05,254 INFO Database connection pool created successfully
-2025-07-23 18:29:22,946 INFO Database connection pool created successfully
-2025-07-23 18:34:20,949 INFO Database connection pool created successfully
-2025-07-23 19:10:53,926 INFO Database connection pool created successfully
-2025-07-23 19:14:21,793 INFO Database connection pool created successfully
-2025-07-23 22:02:41,160 INFO Database connection pool created successfully
-2025-07-23 22:03:13,166 INFO Database connection pool created successfully
-2025-07-23 22:31:33,577 INFO Database connection pool created successfully
-2025-07-24 11:39:33,533 INFO Database connection pool created successfully
-2025-07-25 18:53:39,204 INFO Database connection pool created successfully
-2025-07-25 18:55:33,474 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 18:56:01,995 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 18:56:30,056 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 18:56:30,927 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 18:57:02,212 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 18:57:02,791 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 18:57:35,347 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 18:57:35,748 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 19:51:46,572 INFO Database connection pool created successfully
-2025-07-25 19:56:48,392 INFO Database connection pool created successfully
-2025-07-25 19:57:20,368 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 19:57:20,859 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 19:59:42,953 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:03:50,425 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:03:51,036 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:04:37,179 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:04:38,123 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:05:59,009 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:05:59,370 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:06:13,607 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:06:14,003 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:15:52,744 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:15:53,208 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:19:17,948 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:19:18,365 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:19:57,392 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:19:57,832 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:20:23,618 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:29:56,799 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:29:57,496 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:39:29,602 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:39:30,379 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:39:57,438 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:39:57,953 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:40:22,385 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:40:23,158 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:40:50,057 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:40:50,754 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:41:06,025 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:41:06,797 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:59:09,103 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 20:59:09,899 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:00:18,993 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:00:19,669 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:02:27,085 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:02:27,501 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:03:03,376 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:11:19,050 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:11:19,573 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:11:37,427 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:11:46,167 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:12:33,848 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:12:50,023 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:16:57,269 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:16:58,073 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:18:09,865 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:18:10,363 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:29:27,408 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:29:28,105 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:29:38,212 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:29:48,637 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:29:58,705 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:30:10,060 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:34:30,007 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:34:40,990 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:35:58,926 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:35:59,352 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:35:59,992 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:36:09,614 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:36:17,646 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:36:27,013 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:36:35,359 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:46:05,677 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:46:06,187 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:54:00,582 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:54:01,299 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:54:11,980 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:54:32,306 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:55:16,083 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 21:55:16,504 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:00:26,530 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:00:50,823 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:01:01,621 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:02:09,125 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:02:09,686 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:03:23,509 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:03:23,959 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:03:58,072 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:03:58,497 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:04:45,549 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:04:55,947 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:05:02,383 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:05:06,247 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:18:25,058 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:18:25,499 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:22:19,064 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:22:28,289 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:23:34,768 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:35:40,445 INFO Database connection pool created successfully
-2025-07-25 22:36:22,224 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:36:22,692 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:36:34,416 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:52:44,988 INFO Database connection pool created successfully
-2025-07-25 22:54:10,842 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:54:11,800 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:55:17,136 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:55:17,686 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:57:29,985 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:57:30,766 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:58:56,553 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:59:26,960 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-25 22:59:27,656 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:11:14,101 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:11:14,879 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:11:35,745 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:11:36,707 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:12:09,271 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:12:09,881 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:12:28,728 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:12:29,022 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:12:54,441 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:12:55,840 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:13:20,637 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:13:21,699 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:13:46,758 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:13:47,643 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:14:17,831 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:14:18,798 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:14:44,753 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:14:45,319 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:15:16,338 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:15:17,276 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:15:33,701 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:15:34,211 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:15:58,009 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:15:58,724 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:16:25,892 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:16:26,342 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:16:59,868 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:17:00,451 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:17:18,129 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:17:18,505 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:17:34,446 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:17:34,963 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:17:52,028 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:17:52,265 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:18:08,434 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:18:09,121 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:18:27,108 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:18:27,676 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:19:57,626 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:21:10,745 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:21:21,405 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:21:36,067 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:21:47,026 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:24:23,223 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:24:34,389 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:03,759 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:04,159 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:20,106 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:20,486 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:39,277 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:39,638 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:54,573 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:26:55,131 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:27:17,679 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:27:18,247 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:27:34,925 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:27:35,288 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:27:58,247 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:27:59,067 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:14,076 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:14,308 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:31,277 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:31,503 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:46,210 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:46,406 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:46,702 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:28:46,937 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:29:10,783 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:30:45,848 INFO Database connection pool created successfully
-2025-07-26 01:32:35,285 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:32:35,692 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:32:52,142 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:32:52,666 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:06,732 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:06,912 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:21,485 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:22,175 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:36,491 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:36,697 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:50,164 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:33:50,357 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:34:44,336 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:34:44,826 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:35:00,012 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:35:00,316 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:35:54,514 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:35:55,017 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:37:29,979 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:37:30,836 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:38:08,703 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:38:09,096 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:38:54,495 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
-2025-07-26 01:38:54,914 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+ 2025-07-28 22:16:18,543 INFO Database connection pool created successfully
+2025-07-28 22:17:14,760 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:17:15,160 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:17:28,165 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:17:28,351 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:27:05,704 INFO Database connection pool created successfully
+2025-07-28 22:27:39,161 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:27:39,538 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:27:53,307 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:27:53,512 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:29:39,997 INFO Database connection pool created successfully
+2025-07-28 22:30:28,949 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:30:29,525 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:30:43,928 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:30:44,204 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:33:42,435 INFO Database connection pool created successfully
+2025-07-28 22:37:07,110 INFO Database connection pool created successfully
+2025-07-28 22:37:53,460 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:37:53,929 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:38:07,185 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:38:07,360 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:42:07,744 INFO Database connection pool created successfully
+2025-07-28 22:43:51,049 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:43:51,411 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:44:04,734 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:44:04,979 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:48:40,009 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:48:40,390 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:49:01,858 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:49:02,237 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:54:27,136 INFO Database connection pool created successfully
+2025-07-28 22:56:14,302 INFO Database connection pool created successfully
+2025-07-28 22:56:52,542 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:56:52,863 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:57:10,363 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 22:57:10,806 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:02:58,915 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:02:59,162 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:03:15,166 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:03:15,864 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:52:38,616 INFO Database connection pool created successfully
+2025-07-28 23:52:52,732 INFO Database connection pool created successfully
+2025-07-28 23:54:18,369 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:54:18,627 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:54:36,214 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:54:36,440 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:57:00,344 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-28 23:57:00,360 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-28 23:58:09,155 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:58:10,255 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:58:41,657 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:58:42,331 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-28 23:58:42,806 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-28 23:58:42,866 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-28 23:59:16,982 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-28 23:59:16,996 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-28 23:59:23,526 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-29 00:00:08,259 ERROR Error saving invoice: 1054 (42S22): Unknown column 'numeroFacture' in 'field list'
+2025-07-29 00:00:50,549 INFO Database connection pool created successfully
+2025-07-29 00:01:24,420 INFO Database connection pool created successfully
+2025-07-29 00:02:31,659 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 00:02:32,039 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 00:02:45,612 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 00:02:45,826 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 08:18:19,061 INFO Database connection pool created successfully
+2025-07-29 09:10:07,714 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 09:10:16,531 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 20:26:15,963 INFO Database connection pool created successfully
+2025-07-29 20:35:19,788 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 20:35:27,246 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-29 20:41:07,164 INFO Database connection pool created successfully
+2025-07-29 20:58:58,642 INFO Database connection pool created successfully
+2025-07-29 21:17:14,761 INFO Database connection pool created successfully
+2025-07-29 21:18:33,300 INFO Database connection pool created successfully
+2025-07-29 23:43:00,585 INFO Database connection pool created successfully
+2025-07-30 11:22:27,279 INFO Database connection pool created successfully
+2025-07-30 11:27:38,384 INFO Database connection pool created successfully
+2025-07-30 11:52:34,169 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 11:52:35,145 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 11:52:35,647 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 11:52:35,647 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 11:52:35,647 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 11:52:50,298 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 11:52:50,517 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 11:52:50,726 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 11:52:50,730 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 11:52:50,730 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 12:01:21,992 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 12:01:22,198 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 12:01:22,377 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 12:01:22,377 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 12:01:22,377 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 12:01:37,585 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 12:01:38,552 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 12:01:39,083 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 12:01:39,083 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 12:01:39,083 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'

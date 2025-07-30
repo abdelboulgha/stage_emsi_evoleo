@@ -1,0 +1,26 @@
+{
+  "success": true,
+  "data": {
+    "fournisseur": "NOUJOUM",
+    "numeroFacture": "2025207462845",
+    "tauxTVA": "18,0",
+    "montantHT": "194,86",
+    "montantTVA": "34,97",
+    "montantTTC": "229,83"
+  },
+  "confidence_scores": {
+    "tauxTVA": 0.8966420888900757,
+    "montantHT": 0.9879792332649231,
+    "montantTVA": 0.9756571650505066,
+    "montantTTC": 0.9850934147834778
+  },
+  "timestamp": "2025-07-30 12:01:39.076806",
+  "fields": {
+    "fournisseur": "NOUJOUM",
+    "numeroFacture": "2025207462845",
+    "tauxTVA": "18,0",
+    "montantHT": "194,86",
+    "montantTVA": "34,97",
+    "montantTTC": "229,83"
+  }
+}
