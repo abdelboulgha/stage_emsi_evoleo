@@ -1,27 +1,3 @@
 {
-  "success": true,
-  "data": {
-    "fournisseur": "",
-    "numeroFacture": "E PUBLIQUE FRANCAISE",
-    "tauxTVA": "Montant",
-    "montantHT": "20 895,84€",
-    "montantTVA": "20 895,84€",
-    "montantTTC": "20 895,84€"
-  },
-  "corrected_data": null,
-  "confidence_scores": {
-    "tauxTVA": 0.9981327652931213,
-    "montantHT": 0.8749731183052063,
-    "montantTVA": 0.8749731183052063,
-    "montantTTC": 0.8749731183052063
-  },
-  "timestamp": "2025-07-30 14:32:11.870809",
-  "fields": {
-    "fournisseur": "",
-    "numeroFacture": "E PUBLIQUE FRANCAISE",
-    "tauxTVA": "0",
-    "montantHT": "20 895,84€",
-    "montantTVA": "20 895,84€",
-    "montantTTC": "20 895,84€"
-  }
+  
 }

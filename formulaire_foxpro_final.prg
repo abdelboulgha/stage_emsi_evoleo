@@ -62,19 +62,8 @@ numfact_display = "@S" + STR(numfact_size, 2, 0)
 * Afficher le formulaire avec les données pré-remplies
 CLEAR
 @ 2, 5 SAY "=========================================="
-@ 3, 5 SAY "  SAISIE DES FACTURES EXTRACTES PAR OCR"
+@ 3, 5 SAY "*****FACTURE EXTRACTE ****"
 @ 4, 5 SAY "=========================================="
-@ 5, 5 SAY "Données extraites automatiquement:"
-@ 6, 5 SAY ""
-
-* Afficher les données extraites pour vérification
-@ 7, 5 SAY "Fournisseur extrait: [" + ALLTRIM(m_fournissr) + "]"
-@ 8, 5 SAY "N° Facture extrait: [" + ALLTRIM(m_numfact) + "]"
-@ 9, 5 SAY "Montant HT extrait: " + STR(m_mntht, 10, 2)
-@ 10, 5 SAY "Tailles calculées - Fournisseur: " + STR(fournissr_size,2) + ", N° Facture: " + STR(numfact_size,2)
-@ 11, 5 SAY "=========================================="
-@ 12, 5 SAY ""
-
 @ 14, 5 SAY "Fournisseur:"
 @ 14, 20 GET m_fournissr PICTURE (fournissr_display)
 

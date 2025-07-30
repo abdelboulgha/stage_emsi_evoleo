@@ -1,6 +1,6 @@
-Fournisseur: 
-Numéro Facture: E PUBLIQUE FRANCAISE
-Taux TVA: 0
-Montant HT: 20 895,84€
-Montant TVA: 20 895,84€
-Montant TTC: 20 895,84€
+Fournisseur: NOUJOUM
+Numéro Facture: 2025207462920
+Taux TVA: 10.0
+Montant HT: 11.63
+Montant TVA: 1.16
+Montant TTC: 12.79

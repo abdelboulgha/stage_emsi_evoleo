@@ -373,3 +373,66 @@
 2025-07-30 14:32:11,877 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: 'Montant'
 2025-07-30 14:32:11,877 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
 2025-07-30 14:32:11,877 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:24:07,218 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:24:07,620 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:24:07,934 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 15:24:07,934 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:24:07,949 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:24:21,928 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:24:22,128 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:24:22,321 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 15:24:22,321 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:24:22,321 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:25:35,373 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:25:35,788 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:25:36,171 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 15:25:36,171 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:25:36,171 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:26:28,598 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:26:28,891 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:26:29,189 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: 'Qté'
+2025-07-30 15:26:29,189 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:26:29,189 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:26:35,150 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:26:35,331 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 15:26:35,498 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: 'Qté'
+2025-07-30 15:26:35,498 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 15:26:35,498 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:35:12,694 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:35:13,250 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:35:13,669 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 20:35:13,671 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:35:13,671 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:35:29,429 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:35:29,657 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:35:29,880 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 20:35:29,880 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:35:29,880 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:35:45,472 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:35:45,897 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:35:46,223 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 20:35:46,223 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:35:46,223 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:36:06,733 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:36:07,138 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:36:07,437 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '10,0'
+2025-07-30 20:36:07,437 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:36:07,437 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:36:31,107 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:36:31,508 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:36:31,933 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '10,0'
+2025-07-30 20:36:31,935 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:36:31,935 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:37:02,456 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:37:02,999 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:37:03,678 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 20:37:03,679 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:37:03,679 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:37:20,337 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:37:20,776 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-30 20:37:21,087 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '18,0'
+2025-07-30 20:37:21,087 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:37:21,087 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:37:57,711 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-07-30 20:37:57,712 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 20:37:57,712 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
