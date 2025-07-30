@@ -1,6 +1,6 @@
-Fournisseur: NOUJOUM
-Numéro Facture: 2025207462920
-Taux TVA: 10.0
-Montant HT: 11.63
-Montant TVA: 1.16
-Montant TTC: 12.79
+Fournisseur: ee
+Numéro Facture: FACTURE ELECTRICITEN2025207462845
+Taux TVA: 18
+Montant HT: 194.86
+Montant TVA: 34.97
+Montant TTC: 229.83

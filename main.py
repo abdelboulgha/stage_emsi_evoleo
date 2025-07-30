@@ -23,6 +23,7 @@ import dbf
 import pytesseract
 import cv2
 import datetime
+import math
 
 # Load environment variables
 load_dotenv()
@@ -51,6 +52,7 @@ logging.basicConfig(
 )
 
 # Create database connection pool
+connection_pool = None
 try:
     connection_pool = mysql.connector.pooling.MySQLConnectionPool(
         pool_name="evoleo_pool",
@@ -60,7 +62,11 @@ try:
     logging.info("Database connection pool created successfully")
 except Error as e:
     logging.error(f"Error creating connection pool: {e}")
-    raise
+    # Don't raise here, allow the app to start without database if needed
+    logging.warning("Continuing without database connection pool")
+except Exception as e:
+    logging.error(f"Unexpected error creating connection pool: {e}")
+    logging.warning("Continuing without database connection pool")
 
 # Initialize PaddleOCR with specified parameters
 ocr = PaddleOCR(
@@ -107,6 +113,8 @@ class ExtractionResult(BaseModel):
 # Database Utilities
 def get_connection():
     """Get a connection from the pool"""
+    if connection_pool is None:
+        raise Exception("Database connection pool not available")
     try:
         connection = connection_pool.get_connection()
         return connection
@@ -384,6 +392,36 @@ def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
 @app.get("/")
 async def root():
     return {"message": "Invoice Extractor API"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify server status"""
+    try:
+        # Test database connection if available
+        db_status = "unknown"
+        if connection_pool is not None:
+            try:
+                connection = get_connection()
+                connection.close()
+                db_status = "connected"
+            except Exception as e:
+                db_status = f"error: {str(e)}"
+        else:
+            db_status = "not_configured"
+        
+        return {
+            "status": "healthy",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "database": db_status,
+            "ocr_engine": "PaddleOCR",
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": "2024-01-01T00:00:00Z"
+        }
 
 @app.get("/mappings")
 async def get_mappings():
@@ -729,7 +767,7 @@ def detect_ocr_boxes_from_image(img: Image.Image) -> List[Dict]:
 @app.post("/extract-data")
 async def extract_data(
     file: UploadFile = File(...),
-    template_id: Optional[str] = Form(None)
+    template_id: str = Form(...)
 ):
     """
     Extraire les données d'un document avec ou sans template.
@@ -929,7 +967,7 @@ async def extract_data(
                         # Skip already used boxes
                         if i in used_boxes:
                             continue
-                            
+                        
                         # Calculate distance between template field and detected box
                         distance = box_distance(tpl_box, det_box)
                         
@@ -1106,53 +1144,351 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
 
 @app.post("/ocr-preview")
 async def ocr_preview(
-    left: float = Form(...),
-    top: float = Form(...),
-    width: float = Form(...),
-    height: float = Form(...),
-    image_data: str = Form(...),
+    file: UploadFile = File(...),
     template_id: str = Form(None)
 ):
-    """Prévisualiser l'OCR pour une zone spécifique"""
     try:
-        if template_id:
-            logging.info(f"template_id reçu pour ocr-preview: {template_id}")
-        # Décoder l'image base64
-        if image_data.startswith('data:image'):
-            image_data = image_data.split(',')[1]
-        img_bytes = base64.b64decode(image_data)
-        img = Image.open(BytesIO(img_bytes))
-        # Cropper la zone spécifiée
-        img_w, img_h = img.size
-        left_safe, top_safe, right_safe, bottom_safe = safe_crop_bounds(
-            left, top, width, height, img_w, img_h
-        )
-        crop_box = (left_safe, top_safe, right_safe, bottom_safe)
-        crop_img = img.crop(crop_box)
-        # DEBUG: Sauvegarde la zone cropée pour vérification
-        debug_path = os.path.join(DEBUG_DIR, f"debug_crop_{left_safe}_{top_safe}_{right_safe}_{bottom_safe}.png")
-        crop_img.save(debug_path)
-        logging.info(f"Image cropée sauvegardée pour debug: {debug_path}")
-        # Double the resolution of the cropped image before OCR
-        processed_crop = preprocess_image_cv(crop_img)
-        processed_crop_for_ocr = processed_crop.resize((processed_crop.width * 4, processed_crop.height * 4), Image.Resampling.LANCZOS)
-        text = extract_text_with_paddleocr(processed_crop_for_ocr)
-        # Fallback Tesseract si rien trouvé
-        if not text or text.strip() == "":
-            processed_cv = preprocess_image_cv_opencv(crop_img)
-            text = pytesseract.image_to_string(processed_cv).strip()
-            logging.info(f"Tesseract fallback OCR: {text}")
+        # Read and process the uploaded file
+        file_content = await file.read()
+        if file.filename and file.filename.lower().endswith('.pdf'):
+            images = process_pdf_to_images(file_content)
+            img = images[0] if images else None
+        elif file.filename and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            img = Image.open(BytesIO(file_content)).convert('RGB')
+        else:
+            raise HTTPException(status_code=400, detail="Type de fichier non supporté")
+        
+        if img is None:
+            raise HTTPException(status_code=400, detail="No image available for extraction.")
+            
+        img_array = np.array(img)
+        result = ocr.predict(img_array)
+        
+        # Collect detected boxes with confidence filtering
+        detected_boxes = []
+        for res in result:
+            rec_polys = res.get('rec_polys', [])
+            rec_texts = res.get('rec_texts', [])
+            rec_scores = res.get('rec_scores', [])
+            for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
+                if score is None or score < 0.75 or not text.strip():
+                    logging.info(f"Filtered out low confidence text: '{text}' (confidence: {score:.3f})")
+                    continue
+                
+                x_coords = [p[0] for p in poly]
+                y_coords = [p[1] for p in poly]
+                left = min(x_coords)
+                top = min(y_coords)
+                right = max(x_coords)
+                bottom = max(y_coords)
+                width = right - left
+                height = bottom - top
+                center_x = (left + right) / 2
+                center_y = (top + bottom) / 2
+                
+                detected_boxes.append({
+                    'left': float(left),
+                    'top': float(top),
+                    'width': float(width),
+                    'height': float(height),
+                    'text': text.strip(),
+                    'center_x': float(center_x),
+                    'center_y': float(center_y),
+                    'score': float(score)
+                })
+        
+        logging.info(f"Total detected boxes (after confidence filtering): {len(detected_boxes)}")
+        
+        # Helper functions
+        def extract_number(text):
+            import re
+            if re.search(r'[a-zA-Z]', text):
+                return None
+            cleaned = re.sub(r'[^\d.,-]', '', text)
+            if ',' in cleaned and '.' in cleaned:
+                if cleaned.rfind(',') > cleaned.rfind('.'):
+                    cleaned = cleaned.replace('.', '').replace(',', '.')
+                else:
+                    cleaned = cleaned.replace(',', '')
+            elif ',' in cleaned:
+                parts = cleaned.split(',')
+                if len(parts[-1]) == 2:
+                    cleaned = cleaned.replace(',', '.')
+                else:
+                    cleaned = cleaned.replace(',', '')
+            if cleaned.count('.') > 1:
+                parts = cleaned.split('.')
+                cleaned = ''.join(parts[:-1]) + '.' + parts[-1]
+            if not re.fullmatch(r'-?\d+(?:\.\d+)?', cleaned):
+                return None
+            try:
+                return float(cleaned)
+            except ValueError:
+                return None
+
+        def is_valid_ht_keyword(text):
+            if not text or not isinstance(text, str):
+                return False
+            text_upper = text.upper().strip()
+            patterns = [
+                r'^SOUS-TOTAL$',           
+                r'^HT\b',
+                r'^TOTAL\s+HT\b',
+                r'^TOTAL\s+HT\s*:',
+                r'^HORS\s+TAXES$',
+                r'^TOTAL\s+HORS\s*TAXES$',
+                r'^MONTANT\s+(TOTAL\s+)?HT\b',
+                r'^MONTANT\s+(TOTAL\s+)?HORS\s+TAXES\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?H\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?HORS\s+TAXE[S]?\b'
+            ]
+            for pattern in patterns:
+                if re.search(pattern, text_upper):
+                    return True
+            return False
+
+        def is_valid_tva_keyword(text):
+            if not text or not isinstance(text, str):
+                return False
+            text_upper = text.upper().strip()
+            patterns = [
+                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?V\.?A\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TVA\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+SUR\s+LA\s+VALEUR\s+AJOUT[ÉE]E\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+AJOUT[ÉE]E\b',
+                r'^TVA\s*:',
+            ]
+            for pattern in patterns:
+                if re.search(pattern, text_upper):
+                    return True
+            return False
+
+        # --- HT extraction ---
+        ht_candidates = []
+        for i, box in enumerate(detected_boxes):
+            text = box['text']
+            is_ht = is_valid_ht_keyword(text)
+            if is_ht:
+                ht_x, ht_y = box['center_x'], box['center_y']
+                best_match = None
+                min_distance = float('inf')
+                for j in range(i + 1, min(i + 10, len(detected_boxes))):
+                    next_box = detected_boxes[j]
+                    next_text = next_box['text'].strip()
+                    if abs(next_box['center_y'] - ht_y) < 20:
+                        next_value = extract_number(next_text)
+                        if next_value is not None:
+                            distance = next_box['center_x'] - ht_x
+                            if 0 < distance < min_distance:
+                                best_match = {
+                                    'keyword_box': box,
+                                    'value_box': next_box,
+                                    'value': next_value,
+                                    'keyword_text': box['text'],
+                                    'value_text': next_text,
+                                    'distance': distance
+                                }
+                                min_distance = distance
+                if best_match:
+                    ht_candidates.append(best_match)
+        if not ht_candidates:
+            return {
+                "success": False,
+                "data": {},
+                "message": "Aucun mot-clé HT trouvé"
+            }
+        ht_candidates.sort(key=lambda x: x['distance'])
+        ht_selected = ht_candidates[0]
+        ht_extracted = ht_selected['value']
+
+        # --- TVA extraction ---
+        tva_candidates = []
+        for i, box in enumerate(detected_boxes):
+            if is_valid_tva_keyword(box['text']):
+                tva_x, tva_y = box['center_x'], box['center_y']
+                best_match = None
+                min_distance = float('inf')
+                for j in range(i + 1, min(i + 10, len(detected_boxes))):
+                    next_box = detected_boxes[j]
+                    next_text = next_box['text'].strip()
+                    if abs(next_box['center_y'] - tva_y) < 20:
+                        next_value = extract_number(next_text)
+                        if next_value is not None:
+                            distance = next_box['center_x'] - tva_x
+                            if 0 < distance < min_distance:
+                                best_match = {
+                                    'keyword_box': box,
+                                    'value_box': next_box,
+                                    'value': next_value,
+                                    'keyword_text': box['text'],
+                                    'value_text': next_text,
+                                    'distance': distance
+                                }
+                                min_distance = distance
+                if best_match:
+                    tva_candidates.append(best_match)
+        if not tva_candidates:
+            return {
+                "success": False,
+                "data": {},
+                "message": "Aucun mot-clé TVA trouvé"
+            }
+        tva_candidates.sort(key=lambda x: x['distance'])
+        tva_selected = tva_candidates[0]
+        tva_extracted = tva_selected['value']
+
+        # --- TTC & tauxTVA ---
+        ttc_extracted = round(ht_extracted + tva_extracted, 2)
+        if ht_extracted != 0:
+            raw_taux = (tva_extracted * 100) / ht_extracted
+            decimal_part = raw_taux - math.floor(raw_taux)
+            if decimal_part > 0.5:
+                taux_tva = math.ceil(raw_taux)
+            else:
+                taux_tva = math.floor(raw_taux)
+        else:
+            taux_tva = 0
+
+        # --- numFacture extraction using mapping ---
+        numfacture_value = None
+        numfacture_box = None
+        try:
+            connection = get_connection()
+            cursor = connection.cursor(dictionary=True)
+            # Get field_id for numFacture
+            cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
+            row = cursor.fetchone()
+            if row:
+                numfacture_field_id = row['id']
+                cursor.execute("""
+                    SELECT `left`, `top`, `width`, `height`
+                    FROM Mappings
+                    WHERE template_id = %s AND field_id = %s
+                    LIMIT 1
+                """, (template_id, numfacture_field_id))
+                mapping = cursor.fetchone()
+                if mapping:
+                    mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
+                    mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
+
+                    vertical_threshold = 30  # allowed vertical deviation
+                    best_match = None
+                    best_score = -1
+
+                    def is_valid_invoice_number(text):
+                        """Improved validation that accepts invoice patterns"""
+                        text = text.strip()
+                        # Must contain at least 4 consecutive digits
+                        if not re.search(r'\d{4,}', text):
+                            return False
+                        # Accepts common invoice formats with letters/numbers/symbols
+                        return bool(re.match(r'^[\w\s\-/°#]+$', text, re.UNICODE))
+
+                    def calculate_invoice_score(text):
+                        """Score based on digit count and invoice-like patterns"""
+                        # Count total digits
+                        digit_count = len(re.findall(r'\d', text))
+                        # Bonus for long consecutive digit sequences
+                        max_consecutive = max(len(m) for m in re.findall(r'\d+', text))
+                        # Bonus for common invoice patterns
+                        pattern_bonus = 2 if re.search(r'(n[°º]|no|num|ref|facture)\s*\d', text.lower()) else 0
+                        return digit_count + max_consecutive + pattern_bonus
+
+                    # Step 1: Find best candidate near mapped position
+                    for box in detected_boxes:
+                        text = box["text"].strip()
+                        if not is_valid_invoice_number(text):
+                            continue
+                            
+                        # Check vertical alignment
+                        if abs(box["center_y"] - mapped_cy) > vertical_threshold:
+                            continue
+                        
+                        # Calculate score
+                        score = calculate_invoice_score(text)
+                        
+                        # Adjust score by position (closer = better)
+                        dist_x = abs(box["center_x"] - mapped_cx)
+                        dist_y = abs(box["center_y"] - mapped_cy)
+                        position_factor = 1/(1 + dist_x + dist_y)  # 1 for perfect match
+                        score *= position_factor
+                        
+                        if score > best_score:
+                            best_score = score
+                            best_match = box
+
+                    # Step 2: Verify and store best match
+                    if best_match:
+                        numfacture_value = best_match["text"].strip()
+                        numfacture_box = {
+                            "left": best_match["left"],
+                            "top": best_match["top"],
+                            "width": best_match["width"],
+                            "height": best_match["height"],
+                        }
+
+                    # Step 3: Fallback - global search for best invoice number
+                    if not numfacture_value:
+                        global_best = None
+                        global_score = -1
+                        for box in detected_boxes:
+                            text = box["text"].strip()
+                            if not is_valid_invoice_number(text):
+                                continue
+                                
+                            score = calculate_invoice_score(text)
+                            if score > global_score:
+                                global_score = score
+                                global_best = box
+                        
+                        if global_best:
+                            numfacture_value = global_best["text"].strip()
+                            numfacture_box = {
+                                "left": global_best["left"],
+                                "top": global_best["top"],
+                                "width": global_best["width"],
+                                "height": global_best["height"],
+                            }
+
+        except Exception as e:
+            logging.error(f"Error extracting numFacture: {e}", exc_info=True)
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection and connection.is_connected():
+                connection.close()
+        # --- Prepare response ---
+        result_data = {
+            "montantHT": ht_extracted,
+            "montantTVA": tva_extracted,
+            "montantTTC": ttc_extracted,
+            "tauxTVA": round(taux_tva, 2),
+            "boxHT": {
+                "left": ht_selected['value_box']['left'],
+                "top": ht_selected['value_box']['top'],
+                "width": ht_selected['value_box']['width'],
+                "height": ht_selected['value_box']['height'],
+            },
+            "boxTVA": {
+                "left": tva_selected['value_box']['left'],
+                "top": tva_selected['value_box']['top'],
+                "width": tva_selected['value_box']['width'],
+                "height": tva_selected['value_box']['height'],
+            },
+            "numFacture": numfacture_value,
+            "boxNumFacture": numfacture_box,
+        }
         return {
             "success": True,
-            "text": text or "[Aucun texte trouvé]",
-            "crop_image": image_to_base64(processed_crop)
+            "data": result_data,
+            "message": "Extraction réussie"
         }
     except Exception as e:
-        logging.error(f"Erreur lors de la prévisualisation OCR: {e}")
+        logging.error(f"Error in extract_test: {str(e)}", exc_info=True)
         return {
             "success": False,
-            "text": f"[Erreur: {str(e)}]",
-            "crop_image": None
+            "data": {},
+            "message": f"Erreur lors de l'extraction: {str(e)}"
         }
 
 @app.delete("/mappings/{template_id}")
@@ -1493,4 +1829,19 @@ async def launch_foxpro():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    import signal
+    import sys
+    
+    def signal_handler(sig, frame):
+        print("\nShutting down server gracefully...")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    try:
+        uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    except KeyboardInterrupt:
+        print("\nServer stopped by user")
+    except Exception as e:
+        print(f"Server error: {e}")
+        sys.exit(1)
