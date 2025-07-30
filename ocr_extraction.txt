@@ -1,6 +1,6 @@
-Fournisseur: NOUJOUMTest
-Numéro Facture: 2025207462845Test
-Taux TVA: 1
-Montant HT: 1
-Montant TVA: 1
-Montant TTC: 1
+Fournisseur: 
+Numéro Facture: E PUBLIQUE FRANCAISE
+Taux TVA: 0
+Montant HT: 20 895,84€
+Montant TVA: 20 895,84€
+Montant TTC: 20 895,84€

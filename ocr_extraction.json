@@ -1,34 +1,27 @@
 {
   "success": true,
   "data": {
-    "fournisseur": "NOUJOUM",
-    "numeroFacture": "2025207462845",
-    "tauxTVA": "18,0",
-    "montantHT": "194,86",
-    "montantTVA": "34,97",
-    "montantTTC": "229,83"
+    "fournisseur": "",
+    "numeroFacture": "E PUBLIQUE FRANCAISE",
+    "tauxTVA": "Montant",
+    "montantHT": "20 895,84€",
+    "montantTVA": "20 895,84€",
+    "montantTTC": "20 895,84€"
   },
-  "corrected_data": {
-    "fournisseur": "NOUJOUMTest",
-    "numeroFacture": "2025207462845Test",
-    "tauxTVA": "1",
-    "montantHT": "1",
-    "montantTVA": "1",
-    "montantTTC": "1"
-  },
+  "corrected_data": null,
   "confidence_scores": {
-    "tauxTVA": 0.8966420888900757,
-    "montantHT": 0.9879792332649231,
-    "montantTVA": 0.9756571650505066,
-    "montantTTC": 0.9850934147834778
+    "tauxTVA": 0.9981327652931213,
+    "montantHT": 0.8749731183052063,
+    "montantTVA": 0.8749731183052063,
+    "montantTTC": 0.8749731183052063
   },
-  "timestamp": "2025-07-30 13:28:04.010147",
+  "timestamp": "2025-07-30 14:32:11.870809",
   "fields": {
-    "fournisseur": "NOUJOUMTest",
-    "numeroFacture": "2025207462845Test",
-    "tauxTVA": "1",
-    "montantHT": "1",
-    "montantTVA": "1",
-    "montantTTC": "1"
+    "fournisseur": "",
+    "numeroFacture": "E PUBLIQUE FRANCAISE",
+    "tauxTVA": "0",
+    "montantHT": "20 895,84€",
+    "montantTVA": "20 895,84€",
+    "montantTTC": "20 895,84€"
   }
 }

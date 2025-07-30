@@ -1313,11 +1313,7 @@ const Extractor = () => {
       
       const result = await response.json();
       
-      if (result.success) {
-        alert('FoxPro lancé avec succès avec les données corrigées ! Le formulaire devrait s\'ouvrir.');
-      } else {
-        alert('Erreur: ' + result.message);
-      }
+      
     } catch (error) {
       console.error('Erreur lors du lancement de FoxPro:', error);
       alert('Erreur lors du lancement de FoxPro');
@@ -2218,9 +2214,9 @@ const Extractor = () => {
                       </div>
 
                       {extractionState.filePreviews.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="relative">
                           {/* Document preview container with proper sizing */}
-                          <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                          <div className="bg-white/10 rounded-xl p-4 border border-white/10 relative">
                             <div className="w-full" style={{ height: "70vh" }}>
                               <div className="w-full h-full overflow-auto bg-white rounded-lg shadow-lg p-4">
                                 <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
@@ -2254,6 +2250,159 @@ const Extractor = () => {
                                   />
                                 </div>
                               </div>
+                              
+                              {/* Miniatures superposées sur l'image */}
+                              {extractionState.filePreviews.length > 1 && (
+                                <div className="absolute bottom-0 left-0 right-0 z-10 bg-transparent p-3">
+                                  <div className="flex items-center justify-between w-full">
+                                    <button
+                                      onClick={goToPrevPdf}
+                                      disabled={extractionState.currentPdfIndex === 0}
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-full shadow-lg"
+                                    >
+                                      <ChevronLeft className="w-5 h-5 text-white" />
+                                    </button>
+                                    
+                                    <div className="flex gap-1">
+                                      {extractionState.filePreviews.map((preview, index) => {
+                                        const fileName = extractionState.previewDimensions?.[index]?.fileName || "";
+                                        const extractionData = extractionState.extractedDataList[index];
+                                        const extractionOk = isExtractionComplete(extractionData);
+                                        const showBadge = extractionData && Object.keys(extractionData).length > 0 && !extractionOk;
+                                        
+                                        return (
+                                          <div
+                                            key={index}
+                                            onClick={() => scrollToIndex(index)}
+                                            className={`relative cursor-pointer transition-all duration-300 group`}
+                                            onMouseEnter={() => setHoveredIndex(index)}
+                                            onMouseLeave={() => setHoveredIndex(null)}
+                                            style={{
+                                              zIndex: hoveredIndex === index ? 2 : 1,
+                                              width: hoveredIndex === index ? 120 : 60,
+                                              height: hoveredIndex === index ? 120 : 85,
+                                              boxShadow: hoveredIndex === index ? "0 8px 32px rgba(0,0,0,0.25)" : undefined,
+                                              transform: hoveredIndex === index ? "scale(1.1)" : "scale(1)",
+                                              borderWidth: hoveredIndex === index ? 4 : 2,
+                                              borderColor: hoveredIndex === index ? "#3b82f6" : "#ffffff40",
+                                            }}
+                                          >
+                                            <img
+                                              src={preview}
+                                              alt={`Page ${index + 1}`}
+                                              className="w-full h-full object-contain bg-white rounded"
+                                            />
+                                            
+                                            {/* Badge d'avertissement si extraction incomplète */}
+                                            {showBadge && (
+                                              <div className="absolute top-1 left-1 bg-red-600 text-white text-xs font-bold px-1 py-0.5 rounded shadow z-30">
+                                                ⚠️ Non paramétré
+                                              </div>
+                                            )}
+                                            
+                                            {/* Indicateur de page active */}
+                                            {index === extractionState.currentPdfIndex && (
+                                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
+                                            )}
+                                            
+                                            {/* Badge du nombre de champs extraits */}
+                                            {extractionState.extractedDataList[index] && (
+                                              <>
+                                                <div 
+                                                  className="absolute top-1 left-1 text-xs font-bold px-1 rounded"
+                                                  style={{
+                                                    backgroundColor: `rgba(${
+                                                      255 * (1 - Object.keys(extractionState.extractedDataList[index] || {}).length / 6)
+                                                    }, ${
+                                                      255 * (Object.keys(extractionState.extractedDataList[index] || {}).length / 6)
+                                                    }, 0, 0.9)`,
+                                                    color: "white",
+                                                    textShadow: "0 0 2px rgba(0,0,0,0.5)",
+                                                  }}
+                                                >
+                                                  {Object.keys(extractionState.extractedDataList[index] || {}).length}
+                                                </div>
+                                                
+                                                {/* Pourcentage de confiance */}
+                                                {extractionState.confidenceScores?.[index] && Object.keys(extractionState.confidenceScores[index] || {}).length > 0 && (
+                                                  <div 
+                                                    className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
+                                                    style={{
+                                                      backgroundColor: "rgba(0, 0, 0, 0.7)",
+                                                      color: "white",
+                                                      textShadow: "0 0 2px rgba(0,0,0,0.5)",
+                                                    }}
+                                                  >
+                                                    {Math.min(...Object.values(extractionState.confidenceScores[index] || {}).filter(score => typeof score === "number").map(score => Math.round(score * 100) / 100)).toFixed(2).replace("0.", "")}%
+                                                  </div>
+                                                )}
+                                              </>
+                                            )}
+                                            
+                                            {/* Bouton pour paramétrer si extraction incomplète */}
+                                            {showBadge && (
+                                              <button
+                                                onClick={async (e) => {
+                                                  e.stopPropagation();
+                                                  setCurrentStep("dataprep");
+                                                  setIsLoading(true);
+                                                  const res = await fetch(preview);
+                                                  const blob = await res.blob();
+                                                  const formData = new FormData();
+                                                  formData.append("file", blob, fileName || "page.png");
+                                                  try {
+                                                    const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
+                                                      method: "POST",
+                                                      body: formData,
+                                                    });
+                                                    const result = await response.json();
+                                                    if (result.success) {
+                                                      const imageToUse = result.unwarped_image || result.image;
+                                                      const widthToUse = result.unwarped_width || result.width;
+                                                      const heightToUse = result.unwarped_height || result.height;
+                                                      setDataPrepState((prev) => ({
+                                                        ...prev,
+                                                        uploadedImage: imageToUse,
+                                                        fileName: fileName,
+                                                        filePreview: imageToUse,
+                                                        imageDimensions: { width: widthToUse, height: heightToUse },
+                                                        ocrBoxes: result.boxes || [],
+                                                        fieldMappings: {},
+                                                        selectedBoxes: {},
+                                                      }));
+                                                    }
+                                                  } catch (error) {
+                                                    // Gestion d'erreur
+                                                  } finally {
+                                                    setIsLoading(false);
+                                                  }
+                                                }}
+                                                className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-xs font-bold px-2 py-0.5 rounded shadow z-30 hover:bg-yellow-600 transition-colors"
+                                              >
+                                                ⚙️ Paramétrer
+                                              </button>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                    
+                                    <button
+                                      onClick={goToNextPdf}
+                                      disabled={extractionState.currentPdfIndex === extractionState.filePreviews.length - 1}
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-full shadow-lg"
+                                    >
+                                      <ChevronRight className="w-5 h-5 text-white" />
+                                    </button>
+                                  </div>
+                                  
+                                  <div className="text-center mt-2">
+                                    <span className="text-white text-xs">
+                                      {extractionState.currentPdfIndex + 1} / {extractionState.filePreviews.length}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="mt-4 text-center">
@@ -2285,331 +2434,7 @@ const Extractor = () => {
                             </div>
                           </div>
 
-                          {/* Navigation controls */}
-                          {extractionState.filePreviews.length > 1 && (
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={goToPrevPdf}
-                                  disabled={
-                                    extractionState.currentPdfIndex === 0
-                                  }
-                                  className="p-2 bg-white/20 rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-                                >
-                                  <ChevronLeft className="w-5 h-5 text-white" />
-                                </button>
-                                <div className="flex-1 overflow-x-auto">
-                                  <div className="flex gap-2 pb-2">
-                                    {extractionState.filePreviews.map(
-                                      (preview, index) => {
-                                        const fileName =
-                                          extractionState.previewDimensions?.[
-                                            index
-                                          ]?.fileName || "";
-                                        const extractionData =
-                                          extractionState.extractedDataList[
-                                            index
-                                          ];
-                                        const extractionOk =
-                                          isExtractionComplete(extractionData);
-                                        const showBadge =
-                                          extractionData &&
-                                          Object.keys(extractionData).length >
-                                            0 &&
-                                          !extractionOk;
-                                        // Log pour diagnostic
-                                        console.log(
-                                          "ExtractionData (page",
-                                          index + 1,
-                                          "):",
-                                          extractionData
-                                        );
-                                        return (
-                                        <div
-                                          key={index}
-                                            className={`relative group transition-all duration-300`}
-                                            onMouseEnter={() =>
-                                              setHoveredIndex(index)
-                                            }
-                                            onMouseLeave={() =>
-                                              setHoveredIndex(null)
-                                            }
-                                            style={{
-                                              zIndex:
-                                                hoveredIndex === index ? 2 : 1,
-                                            }}
-                                          >
-                                            <div
-                                              onClick={() => {
-                                                if (extractionState.isProcessing) {
-                                                  showNotification("Veuillez attendre la fin de l'extraction en cours.", "warning");
-                                                  return;
-                                                }
-                                                scrollToIndex(index);
-                                              }}
-                                              className={
-                                                `relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ` +
-                                                (index ===
-                                                extractionState.currentPdfIndex
-                                                  ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
-                                                  : "border-white/30 hover:border-blue-400")
-                                              }
-                                              style={{
-                                                width:
-                                                  hoveredIndex === index
-                                                    ? 200
-                                                    : 96,
-                                                height:
-                                                  hoveredIndex === index
-                                                    ? 200
-                                                    : 135,
-                                                boxShadow:
-                                                  hoveredIndex === index
-                                                    ? "0 8px 32px rgba(0,0,0,0.25)"
-                                                    : undefined,
-                                                transform:
-                                                  hoveredIndex === index
-                                                    ? "scale(1.1)"
-                                                    : "scale(1)",
-                                                borderWidth:
-                                                  hoveredIndex === index
-                                                    ? 4
-                                                    : 2,
-                                                borderColor:
-                                                  hoveredIndex === index
-                                                    ? "#3b82f6"
-                                                    : undefined,
-                                              }}
-                                            >
-                                              <img
-                                                src={preview}
-                                                alt={`Page ${index + 1}`}
-                                                className="w-full h-full object-contain bg-white"
-                                              />
-                                              {/* Badge d'avertissement si extraction incomplète */}
-                                              {showBadge && (
-                                                <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow z-30 flex items-center gap-1">
-                                                  <span>⚠️ Non paramétré</span>
-                                                </div>
-                                              )}
-                                              {index ===
-                                                extractionState.currentPdfIndex && (
-                                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
-                                              )}
-                                              {extractionState
-                                                .extractedDataList[index] && (
-                                                <>
-                                                  <div 
-                                                    className="absolute top-1 left-1 text-xs font-bold px-1 rounded"
-                                                    style={{
-                                                      backgroundColor: `rgba(${
-                                                        255 *
-                                                        (1 -
-                                                          Object.keys(
-                                                            extractionState
-                                                              .extractedDataList[
-                                                              index
-                                                            ] || {}
-                                                          ).length /
-                                                            6)
-                                                      }, ${
-                                                        255 *
-                                                        (Object.keys(
-                                                          extractionState
-                                                            .extractedDataList[
-                                                            index
-                                                          ] || {}
-                                                        ).length /
-                                                          6)
-                                                      }, 0, 0.9)`,
-                                                      color: "white",
-                                                      textShadow:
-                                                        "0 0 2px rgba(0,0,0,0.5)",
-                                                    }}
-                                                  >
-                                                    {
-                                                      Object.keys(
-                                                        extractionState
-                                                          .extractedDataList[
-                                                          index
-                                                        ] || {}
-                                                      ).length
-                                                    }
-                                                  </div>
-                                                  {extractionState
-                                                    .confidenceScores?.[
-                                                    index
-                                                  ] &&
-                                                    Object.keys(
-                                                      extractionState
-                                                        .confidenceScores[
-                                                        index
-                                                      ] || {}
-                                                    ).length > 0 && (
-                                                    <div 
-                                                      className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
-                                                      style={{
-                                                          backgroundColor:
-                                                            "rgba(0, 0, 0, 0.7)",
-                                                          color: "white",
-                                                          textShadow:
-                                                            "0 0 2px rgba(0,0,0,0.5)",
-                                                      }}
-                                                    >
-                                                      {Math.min(
-                                                          ...Object.values(
-                                                            extractionState
-                                                              .confidenceScores[
-                                                              index
-                                                            ] || {}
-                                                          )
-                                                            .filter(
-                                                              (score) =>
-                                                                typeof score ===
-                                                                "number"
-                                                            )
-                                                            .map(
-                                                              (score) =>
-                                                                Math.round(
-                                                                  score * 100
-                                                                ) / 100
-                                                            )
-                                                        )
-                                                          .toFixed(2)
-                                                          .replace("0.", "")}
-                                                        %
-                                                    </div>
-                                                  )}
-                                                </>
-                                              )}
-                                              {/* Cancel button (X) - appears on hover */}
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  removeFileFromExtraction(
-                                                    index
-                                                  );
-                                                }}
-                                                className={`absolute ${
-                                                  hoveredIndex === index
-                                                    ? "top-2 right-2 w-10 h-10"
-                                                    : "-top-2 -right-2 w-5 h-5"
-                                                } bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-red-600`}
-                                                style={{
-                                                  fontSize:
-                                                    hoveredIndex === index
-                                                      ? 24
-                                                      : 14,
-                                                }}
-                                                title="Supprimer ce fichier"
-                                              >
-                                                <X
-                                                  className={
-                                                    hoveredIndex === index
-                                                      ? "w-6 h-6"
-                                                      : "w-3 h-3"
-                                                  }
-                                                />
-                                              </button>
-                                              {/* Bouton pour paramétrer si extraction incomplète */}
-                                              {showBadge && (
-                                                <button
-                                                  onClick={async (e) => {
-                                                    e.stopPropagation();
-                                                    setCurrentStep("dataprep");
-                                                    setIsLoading(true);
-                                                    // Envoie l'image base64 de la page affichée
-                                                    const res = await fetch(
-                                                      preview
-                                                    );
-                                                    const blob =
-                                                      await res.blob();
-                                                    const formData =
-                                                      new FormData();
-                                                    formData.append(
-                                                      "file",
-                                                      blob,
-                                                      fileName || "page.png"
-                                                    );
-                                                    try {
-                                                      const response =
-                                                        await fetch(
-                                                          `${API_BASE_URL}/upload-for-dataprep`,
-                                                          {
-                                                            method: "POST",
-                                                            body: formData,
-                                                          }
-                                                        );
-                                                      const result =
-                                                        await response.json();
-                                                      if (result.success) {
-                                                        const imageToUse =
-                                                          result.unwarped_image ||
-                                                          result.image;
-                                                        const widthToUse =
-                                                          result.unwarped_width ||
-                                                          result.width;
-                                                        const heightToUse =
-                                                          result.unwarped_height ||
-                                                          result.height;
-                                                        setDataPrepState(
-                                                          (prev) => ({
-                                                            ...prev,
-                                                            uploadedImage:
-                                                              imageToUse,
-                                                            fileName: fileName,
-                                                            filePreview:
-                                                              imageToUse,
-                                                            imageDimensions: {
-                                                              width: widthToUse,
-                                                              height:
-                                                                heightToUse,
-                                                            },
-                                                            ocrBoxes:
-                                                              result.boxes ||
-                                                              [],
-                                                            fieldMappings: {},
-                                                            selectedBoxes: {},
-                                                          })
-                                                        );
-                                                      }
-                                                    } catch (error) {
-                                                      // Optionnel : notification d'erreur
-                                                    } finally {
-                                                      setIsLoading(false);
-                                                    }
-                                                  }}
-                                                  className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded shadow z-30 hover:bg-yellow-600 transition-colors"
-                                                >
-                                                  Paramétrer ce fichier
-                                                </button>
-                                              )}
-                                              </div>
-                                            </div>
-                                        );
-                                      }
-                                    )}
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={goToNextPdf}
-                                  disabled={
-                                    extractionState.currentPdfIndex ===
-                                    extractionState.filePreviews.length - 1
-                                  }
-                                  className="p-2 bg-white/20 rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-                                >
-                                  <ChevronRight className="w-5 h-5 text-white" />
-                                </button>
-                              </div>
-                              <div className="text-center mt-3">
-                                <span className="text-blue-200 text-sm">
-                                  {extractionState.currentPdfIndex + 1} /{" "}
-                                  {extractionState.filePreviews.length} pages
-                                </span>
-                              </div>
-                            </div>
-                          )}
+                          
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/30 rounded-xl">
