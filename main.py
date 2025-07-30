@@ -1043,11 +1043,17 @@ async def extract_data(
         logging.error(f"Erreur lors de l'extraction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'extraction: {str(e)}")
 
-def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float]):
+def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float], corrected_data: Dict[str, str] = None):
     """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
     try:
+        # Utiliser les données corrigées si disponibles et non vides, sinon les données extraites
+        if corrected_data and any(corrected_data.values()):
+            data_to_use = corrected_data
+        else:
+            data_to_use = extracted_data
+        
         # Nettoyer le taux TVA - extraire juste le nombre
-        taux_tva_raw = extracted_data.get("tauxTVA", "0")
+        taux_tva_raw = data_to_use.get("tauxTVA", "0")
         taux_tva_clean = "0"
         if taux_tva_raw:
             # Chercher un nombre dans la chaîne (ex: "Total TVA 20%" -> "20")
@@ -1056,19 +1062,20 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
             if match:
                 taux_tva_clean = match.group(1)
         
-        # Créer un fichier JSON avec les données extraites
+        # Créer un fichier JSON avec les données (corrigées ou extraites)
         foxpro_data = {
             "success": True,
-            "data": extracted_data,
+            "data": extracted_data,  # Garder les données originales pour référence
+            "corrected_data": corrected_data,  # Ajouter les données corrigées
             "confidence_scores": confidence_scores,
             "timestamp": str(datetime.datetime.now()),
             "fields": {
-                "fournisseur": extracted_data.get("fournisseur", ""),
-                "numeroFacture": extracted_data.get("numeroFacture", ""),
+                "fournisseur": data_to_use.get("fournisseur", ""),
+                "numeroFacture": data_to_use.get("numeroFacture", ""),
                 "tauxTVA": taux_tva_clean,
-                "montantHT": extracted_data.get("montantHT", "0"),
-                "montantTVA": extracted_data.get("montantTVA", "0"),
-                "montantTTC": extracted_data.get("montantTTC", "0")
+                "montantHT": data_to_use.get("montantHT", "0"),
+                "montantTVA": data_to_use.get("montantTVA", "0"),
+                "montantTTC": data_to_use.get("montantTTC", "0")
             }
         }
         
@@ -1078,12 +1085,12 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
         
         # Créer automatiquement le fichier texte simple pour FoxPro
         with open('ocr_extraction.txt', 'w', encoding='utf-8') as f:
-            f.write(f"Fournisseur: {extracted_data.get('fournisseur', '')}\n")
-            f.write(f"Numéro Facture: {extracted_data.get('numeroFacture', '')}\n")
+            f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
+            f.write(f"Numéro Facture: {data_to_use.get('numeroFacture', '')}\n")
             f.write(f"Taux TVA: {taux_tva_clean}\n")
-            f.write(f"Montant HT: {extracted_data.get('montantHT', '0')}\n")
-            f.write(f"Montant TVA: {extracted_data.get('montantTVA', '0')}\n")
-            f.write(f"Montant TTC: {extracted_data.get('montantTTC', '0')}\n")
+            f.write(f"Montant HT: {data_to_use.get('montantHT', '0')}\n")
+            f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
+            f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
         
         logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement")
         
@@ -1362,6 +1369,40 @@ async def download_dbf():
         filename="factures.dbf",
         media_type="application/octet-stream"
     )
+
+@app.post("/save-corrected-data")
+async def save_corrected_data(corrected_data: Dict[str, str]):
+    """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
+    try:
+        # Récupérer les données d'extraction originales
+        if not os.path.exists('ocr_extraction.json'):
+            return {
+                "success": False,
+                "message": "Aucune donnée d'extraction trouvée. Veuillez d'abord extraire une facture."
+            }
+        
+        # Lire les données originales
+        with open('ocr_extraction.json', 'r', encoding='utf-8') as f:
+            original_data = json.load(f)
+        
+        # Sauvegarder avec les données corrigées
+        save_extraction_for_foxpro(
+            extracted_data=original_data.get('data', {}),
+            confidence_scores=original_data.get('confidence_scores', {}),
+            corrected_data=corrected_data
+        )
+        
+        return {
+            "success": True,
+            "message": "Données corrigées sauvegardées pour FoxPro"
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde des données corrigées: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors de la sauvegarde: {str(e)}"
+        }
 
 @app.post("/launch-foxpro")
 async def launch_foxpro():

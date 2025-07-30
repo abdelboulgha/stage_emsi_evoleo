@@ -37,15 +37,15 @@ ENDIF
 * Lire le fichier JSON directement
 json_content = FILETOSTR(ocr_file)
 
-* Extraire les données avec une méthode plus robuste
-m_fournissr = PADR(ALLTRIM(ExtractJSONValue(json_content, "fournisseur")), 100)
-m_numfact = PADR(ALLTRIM(ExtractJSONValue(json_content, "numeroFacture")), 50)
+* Extraire les données avec une méthode plus robuste - LIRE DANS LA SECTION "fields"
+m_fournissr = PADR(ALLTRIM(ExtractJSONValueFromSection(json_content, "fields", "fournisseur")), 100)
+m_numfact = PADR(ALLTRIM(ExtractJSONValueFromSection(json_content, "fields", "numeroFacture")), 50)
 
 * Convertir les nombres avec gestion des virgules - LIRE DANS LA SECTION "fields"
 m_tauxtva = VAL(STRTRAN(ExtractJSONValueFromSection(json_content, "fields", "tauxTVA"), ",", "."))
-m_mntht = VAL(STRTRAN(ExtractJSONValue(json_content, "montantHT"), ",", "."))
-m_mnttva = VAL(STRTRAN(ExtractJSONValue(json_content, "montantTVA"), ",", "."))
-m_mntttc = VAL(STRTRAN(ExtractJSONValue(json_content, "montantTTC"), ",", "."))
+m_mntht = VAL(STRTRAN(ExtractJSONValueFromSection(json_content, "fields", "montantHT"), ",", "."))
+m_mnttva = VAL(STRTRAN(ExtractJSONValueFromSection(json_content, "fields", "montantTVA"), ",", "."))
+m_mntttc = VAL(STRTRAN(ExtractJSONValueFromSection(json_content, "fields", "montantTTC"), ",", "."))
 
 * Calculer automatiquement les tailles d'affichage optimales
 fournissr_size = CalculateDisplaySize(ALLTRIM(m_fournissr), 15, 60)  && Min 15, Max 60
@@ -76,22 +76,22 @@ CLEAR
 @ 12, 5 SAY ""
 
 @ 14, 5 SAY "Fournisseur:"
-@ 14, 18 GET m_fournissr PICTURE (fournissr_display)
+@ 14, 20 GET m_fournissr PICTURE (fournissr_display)
 
 @ 16, 5 SAY "N° Facture:"
-@ 16, 18 GET m_numfact PICTURE (numfact_display)
+@ 16, 20 GET m_numfact PICTURE (numfact_display)
 
 @ 18, 5 SAY "Taux TVA (%):"
-@ 18, 18 GET m_tauxtva PICTURE "999999.99"
+@ 18, 20 GET m_tauxtva PICTURE "999999.99"
 
 @ 20, 5 SAY "Montant HT:"
-@ 20, 18 GET m_mntht PICTURE "999999.99"
+@ 20, 20 GET m_mntht PICTURE "999999.99"
 
 @ 22, 5 SAY "Montant TVA:"
-@ 22, 18 GET m_mnttva PICTURE "999999.99"
+@ 22, 20 GET m_mnttva PICTURE "999999.99"
 
 @ 24, 5 SAY "Montant TTC:"
-@ 24, 18 GET m_mntttc PICTURE "999999.99"
+@ 24, 20 GET m_mntttc PICTURE "999999.99"
 
 @ 26, 5 SAY "=========================================="
 @ 27, 5 SAY "Appuyez sur ENTER pour sauvegarder, ESC pour annuler"

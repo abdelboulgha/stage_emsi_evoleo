@@ -1267,6 +1267,43 @@ const Extractor = () => {
   // Fonction pour lancer FoxPro
   const launchFoxPro = async () => {
     try {
+      // Récupérer les données corrigées depuis les champs de saisie
+      // Récupérer directement depuis les champs input
+      const fournisseurInput = document.querySelector('input[name="fournisseur"]');
+      const numeroFactureInput = document.querySelector('input[name="numeroFacture"]');
+      const tauxTVAInput = document.querySelector('input[name="tauxTVA"]');
+      const montantHTInput = document.querySelector('input[name="montantHT"]');
+      const montantTVAInput = document.querySelector('input[name="montantTVA"]');
+      const montantTTCInput = document.querySelector('input[name="montantTTC"]');
+      
+      // Utiliser les valeurs des champs input si disponibles, sinon les données originales
+      const currentData = extractionState.extractedDataList[extractionState.currentPdfIndex] || {};
+      
+      const correctedData = {
+        fournisseur: fournisseurInput ? fournisseurInput.value : (currentData.fournisseur || ''),
+        numeroFacture: numeroFactureInput ? numeroFactureInput.value : (currentData.numeroFacture || ''),
+        tauxTVA: tauxTVAInput ? tauxTVAInput.value : (currentData.tauxTVA || '0'),
+        montantHT: montantHTInput ? montantHTInput.value : (currentData.montantHT || '0'),
+        montantTVA: montantTVAInput ? montantTVAInput.value : (currentData.montantTVA || '0'),
+        montantTTC: montantTTCInput ? montantTTCInput.value : (currentData.montantTTC || '0')
+      };
+      
+      // D'abord sauvegarder les données corrigées
+      const saveResponse = await fetch('http://localhost:8000/save-corrected-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(correctedData),
+      });
+      
+      const saveResult = await saveResponse.json();
+      if (!saveResult.success) {
+        alert('Erreur lors de la sauvegarde des données: ' + saveResult.message);
+        return;
+      }
+      
+      // Ensuite lancer FoxPro
       const response = await fetch('http://localhost:8000/launch-foxpro', {
         method: 'POST',
         headers: {
@@ -1277,7 +1314,7 @@ const Extractor = () => {
       const result = await response.json();
       
       if (result.success) {
-        alert('FoxPro lancé avec succès ! Le formulaire devrait s\'ouvrir.');
+        alert('FoxPro lancé avec succès avec les données corrigées ! Le formulaire devrait s\'ouvrir.');
       } else {
         alert('Erreur: ' + result.message);
       }
@@ -2092,6 +2129,7 @@ const Extractor = () => {
                             <div className="flex gap-2 items-center">
                               <input
                                 type="text"
+                                name={field.key}
                                 value={filterValue(
                                   extractionState.extractedDataList[
                                     extractionState.currentPdfIndex
