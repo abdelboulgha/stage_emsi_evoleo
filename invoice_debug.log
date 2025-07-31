@@ -858,3 +858,6 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-07-26 01:38:09,096 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
 2025-07-26 01:38:54,495 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
 2025-07-26 01:38:54,914 ERROR Erreur lors de l'extraction OCR: not enough values to unpack (expected 3, got 2)
+2025-07-31 01:21:58,469 INFO Database connection pool created successfully
+2025-07-31 02:08:04,960 INFO Database connection pool created successfully
+2025-07-31 11:53:33,050 INFO Database connection pool created successfully
