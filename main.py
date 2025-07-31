@@ -22,6 +22,8 @@ from dotenv import load_dotenv
 import dbf
 import pytesseract
 import cv2
+import datetime
+import math
 
 # Load environment variables
 load_dotenv()
@@ -50,6 +52,7 @@ logging.basicConfig(
 )
 
 # Create database connection pool
+connection_pool = None
 try:
     connection_pool = mysql.connector.pooling.MySQLConnectionPool(
         pool_name="evoleo_pool",
@@ -59,7 +62,11 @@ try:
     logging.info("Database connection pool created successfully")
 except Error as e:
     logging.error(f"Error creating connection pool: {e}")
-    raise
+    # Don't raise here, allow the app to start without database if needed
+    logging.warning("Continuing without database connection pool")
+except Exception as e:
+    logging.error(f"Unexpected error creating connection pool: {e}")
+    logging.warning("Continuing without database connection pool")
 
 # Initialize PaddleOCR with specified parameters
 ocr = PaddleOCR(
@@ -106,6 +113,8 @@ class ExtractionResult(BaseModel):
 # Database Utilities
 def get_connection():
     """Get a connection from the pool"""
+    if connection_pool is None:
+        raise Exception("Database connection pool not available")
     try:
         connection = connection_pool.get_connection()
         return connection
@@ -383,6 +392,36 @@ def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
 @app.get("/")
 async def root():
     return {"message": "Invoice Extractor API"}
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint to verify server status"""
+    try:
+        # Test database connection if available
+        db_status = "unknown"
+        if connection_pool is not None:
+            try:
+                connection = get_connection()
+                connection.close()
+                db_status = "connected"
+            except Exception as e:
+                db_status = f"error: {str(e)}"
+        else:
+            db_status = "not_configured"
+        
+        return {
+            "status": "healthy",
+            "timestamp": "2024-01-01T00:00:00Z",
+            "database": db_status,
+            "ocr_engine": "PaddleOCR",
+            "version": "1.0.0"
+        }
+    except Exception as e:
+        return {
+            "status": "unhealthy",
+            "error": str(e),
+            "timestamp": "2024-01-01T00:00:00Z"
+        }
 
 @app.get("/mappings")
 async def get_mappings():
@@ -728,7 +767,7 @@ def detect_ocr_boxes_from_image(img: Image.Image) -> List[Dict]:
 @app.post("/extract-data")
 async def extract_data(
     file: UploadFile = File(...),
-    template_id: Optional[str] = Form(None)
+    template_id: str = Form(...)
 ):
     """
     Extraire les données d'un document avec ou sans template.
@@ -928,7 +967,7 @@ async def extract_data(
                         # Skip already used boxes
                         if i in used_boxes:
                             continue
-                            
+                        
                         # Calculate distance between template field and detected box
                         distance = box_distance(tpl_box, det_box)
                         
@@ -957,6 +996,9 @@ async def extract_data(
                     "message": "Aucune correspondance trouvée avec les templates existants.",
                     "debug_images": []
                 }
+            
+            # Sauvegarder les données extraites pour FoxPro
+            save_extraction_for_foxpro(extracted_data, confidence_scores)
             
             return {
                 "success": True,
@@ -1024,6 +1066,10 @@ async def extract_data(
                 extracted_data[field_key] = best_box['text']
                 confidence_scores[field_key] = best_box.get('score', 0.0)
         logging.info(f'Données extraites par champ: {extracted_data}')
+        
+        # Sauvegarder les données extraites pour FoxPro
+        save_extraction_for_foxpro(extracted_data, confidence_scores)
+        
         return {
             "success": True,
             "data": extracted_data,
@@ -1035,55 +1081,414 @@ async def extract_data(
         logging.error(f"Erreur lors de l'extraction: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de l'extraction: {str(e)}")
 
+def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float], corrected_data: Dict[str, str] = None):
+    """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
+    try:
+        # Utiliser les données corrigées si disponibles et non vides, sinon les données extraites
+        if corrected_data and any(corrected_data.values()):
+            data_to_use = corrected_data
+        else:
+            data_to_use = extracted_data
+        
+        # Nettoyer le taux TVA - extraire juste le nombre
+        taux_tva_raw = data_to_use.get("tauxTVA", "0")
+        taux_tva_clean = "0"
+        if taux_tva_raw:
+            # Chercher un nombre dans la chaîne (ex: "Total TVA 20%" -> "20")
+            import re
+            match = re.search(r'(\d+(?:[.,]\d+)?)', str(taux_tva_raw))
+            if match:
+                taux_tva_clean = match.group(1)
+        
+        # Créer un fichier JSON avec les données (corrigées ou extraites)
+        foxpro_data = {
+            "success": True,
+            "data": extracted_data,  # Garder les données originales pour référence
+            "corrected_data": corrected_data,  # Ajouter les données corrigées
+            "confidence_scores": confidence_scores,
+            "timestamp": str(datetime.datetime.now()),
+            "fields": {
+                "fournisseur": data_to_use.get("fournisseur", ""),
+                "numeroFacture": data_to_use.get("numeroFacture", ""),
+                "tauxTVA": taux_tva_clean,
+                "montantHT": data_to_use.get("montantHT", "0"),
+                "montantTVA": data_to_use.get("montantTVA", "0"),
+                "montantTTC": data_to_use.get("montantTTC", "0")
+            }
+        }
+        
+        # Créer automatiquement le fichier JSON
+        with open('ocr_extraction.json', 'w', encoding='utf-8') as f:
+            json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
+        
+        # Créer automatiquement le fichier texte simple pour FoxPro
+        with open('ocr_extraction.txt', 'w', encoding='utf-8') as f:
+            f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
+            f.write(f"Numéro Facture: {data_to_use.get('numeroFacture', '')}\n")
+            f.write(f"Taux TVA: {taux_tva_clean}\n")
+            f.write(f"Montant HT: {data_to_use.get('montantHT', '0')}\n")
+            f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
+            f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
+        
+        logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement")
+        
+        # Créer aussi automatiquement le fichier DBF s'il n'existe pas
+        try:
+            write_invoice_to_dbf(extracted_data)
+            logging.info("Fichier factures.dbf créé/mis à jour automatiquement")
+        except Exception as dbf_error:
+            logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde pour FoxPro: {e}")
+
 @app.post("/ocr-preview")
 async def ocr_preview(
-    left: float = Form(...),
-    top: float = Form(...),
-    width: float = Form(...),
-    height: float = Form(...),
-    image_data: str = Form(...),
+    file: UploadFile = File(...),
     template_id: str = Form(None)
 ):
-    """Prévisualiser l'OCR pour une zone spécifique"""
     try:
-        if template_id:
-            logging.info(f"template_id reçu pour ocr-preview: {template_id}")
-        # Décoder l'image base64
-        if image_data.startswith('data:image'):
-            image_data = image_data.split(',')[1]
-        img_bytes = base64.b64decode(image_data)
-        img = Image.open(BytesIO(img_bytes))
-        # Cropper la zone spécifiée
-        img_w, img_h = img.size
-        left_safe, top_safe, right_safe, bottom_safe = safe_crop_bounds(
-            left, top, width, height, img_w, img_h
-        )
-        crop_box = (left_safe, top_safe, right_safe, bottom_safe)
-        crop_img = img.crop(crop_box)
-        # DEBUG: Sauvegarde la zone cropée pour vérification
-        debug_path = os.path.join(DEBUG_DIR, f"debug_crop_{left_safe}_{top_safe}_{right_safe}_{bottom_safe}.png")
-        crop_img.save(debug_path)
-        logging.info(f"Image cropée sauvegardée pour debug: {debug_path}")
-        # Double the resolution of the cropped image before OCR
-        processed_crop = preprocess_image_cv(crop_img)
-        processed_crop_for_ocr = processed_crop.resize((processed_crop.width * 4, processed_crop.height * 4), Image.Resampling.LANCZOS)
-        text = extract_text_with_paddleocr(processed_crop_for_ocr)
-        # Fallback Tesseract si rien trouvé
-        if not text or text.strip() == "":
-            processed_cv = preprocess_image_cv_opencv(crop_img)
-            text = pytesseract.image_to_string(processed_cv).strip()
-            logging.info(f"Tesseract fallback OCR: {text}")
+        # Read and process the uploaded file
+        file_content = await file.read()
+        if file.filename and file.filename.lower().endswith('.pdf'):
+            images = process_pdf_to_images(file_content)
+            img = images[0] if images else None
+        elif file.filename and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            img = Image.open(BytesIO(file_content)).convert('RGB')
+        else:
+            raise HTTPException(status_code=400, detail="Type de fichier non supporté")
+        
+        if img is None:
+            raise HTTPException(status_code=400, detail="No image available for extraction.")
+            
+        img_array = np.array(img)
+        result = ocr.predict(img_array)
+        
+        # Collect detected boxes with confidence filtering
+        detected_boxes = []
+        for res in result:
+            rec_polys = res.get('rec_polys', [])
+            rec_texts = res.get('rec_texts', [])
+            rec_scores = res.get('rec_scores', [])
+            for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
+                if score is None or score < 0.75 or not text.strip():
+                    logging.info(f"Filtered out low confidence text: '{text}' (confidence: {score:.3f})")
+                    continue
+                
+                x_coords = [p[0] for p in poly]
+                y_coords = [p[1] for p in poly]
+                left = min(x_coords)
+                top = min(y_coords)
+                right = max(x_coords)
+                bottom = max(y_coords)
+                width = right - left
+                height = bottom - top
+                center_x = (left + right) / 2
+                center_y = (top + bottom) / 2
+                
+                detected_boxes.append({
+                    'left': float(left),
+                    'top': float(top),
+                    'width': float(width),
+                    'height': float(height),
+                    'text': text.strip(),
+                    'center_x': float(center_x),
+                    'center_y': float(center_y),
+                    'score': float(score)
+                })
+        
+        logging.info(f"Total detected boxes (after confidence filtering): {len(detected_boxes)}")
+        
+        # Helper functions
+        def extract_number(text):
+            import re
+            if re.search(r'[a-zA-Z]', text):
+                return None
+            cleaned = re.sub(r'[^\d.,-]', '', text)
+            if ',' in cleaned and '.' in cleaned:
+                if cleaned.rfind(',') > cleaned.rfind('.'):
+                    cleaned = cleaned.replace('.', '').replace(',', '.')
+                else:
+                    cleaned = cleaned.replace(',', '')
+            elif ',' in cleaned:
+                parts = cleaned.split(',')
+                if len(parts[-1]) == 2:
+                    cleaned = cleaned.replace(',', '.')
+                else:
+                    cleaned = cleaned.replace(',', '')
+            if cleaned.count('.') > 1:
+                parts = cleaned.split('.')
+                cleaned = ''.join(parts[:-1]) + '.' + parts[-1]
+            if not re.fullmatch(r'-?\d+(?:\.\d+)?', cleaned):
+                return None
+            try:
+                return float(cleaned)
+            except ValueError:
+                return None
+
+        def is_valid_ht_keyword(text):
+            if not text or not isinstance(text, str):
+                return False
+            text_upper = text.upper().strip()
+            patterns = [
+                r'^SOUS-TOTAL$',           
+                r'^HT\b',
+                r'^TOTAL\s+HT\b',
+                r'^TOTAL\s+HT\s*:',
+                r'^HORS\s+TAXES$',
+                r'^TOTAL\s+HORS\s*TAXES$',
+                r'^MONTANT\s+(TOTAL\s+)?HT\b',
+                r'^MONTANT\s+(TOTAL\s+)?HORS\s+TAXES\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?H\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?HORS\s+TAXE[S]?\b'
+            ]
+            for pattern in patterns:
+                if re.search(pattern, text_upper):
+                    return True
+            return False
+
+        def is_valid_tva_keyword(text):
+            if not text or not isinstance(text, str):
+                return False
+            text_upper = text.upper().strip()
+            patterns = [
+                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?V\.?A\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TVA\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+SUR\s+LA\s+VALEUR\s+AJOUT[ÉE]E\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+AJOUT[ÉE]E\b',
+                r'^TVA\s*:',
+            ]
+            for pattern in patterns:
+                if re.search(pattern, text_upper):
+                    return True
+            return False
+
+        # --- HT extraction ---
+        ht_candidates = []
+        for i, box in enumerate(detected_boxes):
+            text = box['text']
+            is_ht = is_valid_ht_keyword(text)
+            if is_ht:
+                ht_x, ht_y = box['center_x'], box['center_y']
+                best_match = None
+                min_distance = float('inf')
+                for j in range(i + 1, min(i + 10, len(detected_boxes))):
+                    next_box = detected_boxes[j]
+                    next_text = next_box['text'].strip()
+                    if abs(next_box['center_y'] - ht_y) < 20:
+                        next_value = extract_number(next_text)
+                        if next_value is not None:
+                            distance = next_box['center_x'] - ht_x
+                            if 0 < distance < min_distance:
+                                best_match = {
+                                    'keyword_box': box,
+                                    'value_box': next_box,
+                                    'value': next_value,
+                                    'keyword_text': box['text'],
+                                    'value_text': next_text,
+                                    'distance': distance
+                                }
+                                min_distance = distance
+                if best_match:
+                    ht_candidates.append(best_match)
+        if not ht_candidates:
+            return {
+                "success": False,
+                "data": {},
+                "message": "Aucun mot-clé HT trouvé"
+            }
+        ht_candidates.sort(key=lambda x: x['distance'])
+        ht_selected = ht_candidates[0]
+        ht_extracted = ht_selected['value']
+
+        # --- TVA extraction ---
+        tva_candidates = []
+        for i, box in enumerate(detected_boxes):
+            if is_valid_tva_keyword(box['text']):
+                tva_x, tva_y = box['center_x'], box['center_y']
+                best_match = None
+                min_distance = float('inf')
+                for j in range(i + 1, min(i + 10, len(detected_boxes))):
+                    next_box = detected_boxes[j]
+                    next_text = next_box['text'].strip()
+                    if abs(next_box['center_y'] - tva_y) < 20:
+                        next_value = extract_number(next_text)
+                        if next_value is not None:
+                            distance = next_box['center_x'] - tva_x
+                            if 0 < distance < min_distance:
+                                best_match = {
+                                    'keyword_box': box,
+                                    'value_box': next_box,
+                                    'value': next_value,
+                                    'keyword_text': box['text'],
+                                    'value_text': next_text,
+                                    'distance': distance
+                                }
+                                min_distance = distance
+                if best_match:
+                    tva_candidates.append(best_match)
+        if not tva_candidates:
+            return {
+                "success": False,
+                "data": {},
+                "message": "Aucun mot-clé TVA trouvé"
+            }
+        tva_candidates.sort(key=lambda x: x['distance'])
+        tva_selected = tva_candidates[0]
+        tva_extracted = tva_selected['value']
+
+        # --- TTC & tauxTVA ---
+        ttc_extracted = round(ht_extracted + tva_extracted, 2)
+        if ht_extracted != 0:
+            raw_taux = (tva_extracted * 100) / ht_extracted
+            decimal_part = raw_taux - math.floor(raw_taux)
+            if decimal_part > 0.5:
+                taux_tva = math.ceil(raw_taux)
+            else:
+                taux_tva = math.floor(raw_taux)
+        else:
+            taux_tva = 0
+
+        # --- numFacture extraction using mapping ---
+        numfacture_value = None
+        numfacture_box = None
+        try:
+            connection = get_connection()
+            cursor = connection.cursor(dictionary=True)
+            # Get field_id for numFacture
+            cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
+            row = cursor.fetchone()
+            if row:
+                numfacture_field_id = row['id']
+                cursor.execute("""
+                    SELECT `left`, `top`, `width`, `height`
+                    FROM Mappings
+                    WHERE template_id = %s AND field_id = %s
+                    LIMIT 1
+                """, (template_id, numfacture_field_id))
+                mapping = cursor.fetchone()
+                if mapping:
+                    mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
+                    mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
+
+                    vertical_threshold = 30  # allowed vertical deviation
+                    best_match = None
+                    best_score = -1
+
+                    def is_valid_invoice_number(text):
+                        """Improved validation that accepts invoice patterns"""
+                        text = text.strip()
+                        # Must contain at least 4 consecutive digits
+                        if not re.search(r'\d{4,}', text):
+                            return False
+                        # Accepts common invoice formats with letters/numbers/symbols
+                        return bool(re.match(r'^[\w\s\-/°#]+$', text, re.UNICODE))
+
+                    def calculate_invoice_score(text):
+                        """Score based on digit count and invoice-like patterns"""
+                        # Count total digits
+                        digit_count = len(re.findall(r'\d', text))
+                        # Bonus for long consecutive digit sequences
+                        max_consecutive = max(len(m) for m in re.findall(r'\d+', text))
+                        # Bonus for common invoice patterns
+                        pattern_bonus = 2 if re.search(r'(n[°º]|no|num|ref|facture)\s*\d', text.lower()) else 0
+                        return digit_count + max_consecutive + pattern_bonus
+
+                    # Step 1: Find best candidate near mapped position
+                    for box in detected_boxes:
+                        text = box["text"].strip()
+                        if not is_valid_invoice_number(text):
+                            continue
+                            
+                        # Check vertical alignment
+                        if abs(box["center_y"] - mapped_cy) > vertical_threshold:
+                            continue
+                        
+                        # Calculate score
+                        score = calculate_invoice_score(text)
+                        
+                        # Adjust score by position (closer = better)
+                        dist_x = abs(box["center_x"] - mapped_cx)
+                        dist_y = abs(box["center_y"] - mapped_cy)
+                        position_factor = 1/(1 + dist_x + dist_y)  # 1 for perfect match
+                        score *= position_factor
+                        
+                        if score > best_score:
+                            best_score = score
+                            best_match = box
+
+                    # Step 2: Verify and store best match
+                    if best_match:
+                        numfacture_value = best_match["text"].strip()
+                        numfacture_box = {
+                            "left": best_match["left"],
+                            "top": best_match["top"],
+                            "width": best_match["width"],
+                            "height": best_match["height"],
+                        }
+
+                    # Step 3: Fallback - global search for best invoice number
+                    if not numfacture_value:
+                        global_best = None
+                        global_score = -1
+                        for box in detected_boxes:
+                            text = box["text"].strip()
+                            if not is_valid_invoice_number(text):
+                                continue
+                                
+                            score = calculate_invoice_score(text)
+                            if score > global_score:
+                                global_score = score
+                                global_best = box
+                        
+                        if global_best:
+                            numfacture_value = global_best["text"].strip()
+                            numfacture_box = {
+                                "left": global_best["left"],
+                                "top": global_best["top"],
+                                "width": global_best["width"],
+                                "height": global_best["height"],
+                            }
+
+        except Exception as e:
+            logging.error(f"Error extracting numFacture: {e}", exc_info=True)
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection and connection.is_connected():
+                connection.close()
+        # --- Prepare response ---
+        result_data = {
+            "montantHT": ht_extracted,
+            "montantTVA": tva_extracted,
+            "montantTTC": ttc_extracted,
+            "tauxTVA": round(taux_tva, 2),
+            "boxHT": {
+                "left": ht_selected['value_box']['left'],
+                "top": ht_selected['value_box']['top'],
+                "width": ht_selected['value_box']['width'],
+                "height": ht_selected['value_box']['height'],
+            },
+            "boxTVA": {
+                "left": tva_selected['value_box']['left'],
+                "top": tva_selected['value_box']['top'],
+                "width": tva_selected['value_box']['width'],
+                "height": tva_selected['value_box']['height'],
+            },
+            "numFacture": numfacture_value,
+            "boxNumFacture": numfacture_box,
+        }
         return {
             "success": True,
-            "text": text or "[Aucun texte trouvé]",
-            "crop_image": image_to_base64(processed_crop)
+            "data": result_data,
+            "message": "Extraction réussie"
         }
     except Exception as e:
-        logging.error(f"Erreur lors de la prévisualisation OCR: {e}")
+        logging.error(f"Error in extract_test: {str(e)}", exc_info=True)
         return {
             "success": False,
-            "text": f"[Erreur: {str(e)}]",
-            "crop_image": None
+            "data": {},
+            "message": f"Erreur lors de l'extraction: {str(e)}"
         }
 
 @app.delete("/mappings/{template_id}")
@@ -1135,7 +1540,7 @@ async def delete_mapping(template_id: str):
 # Pydantic model for invoice data
 class InvoiceData(BaseModel):
     fournisseur: str
-    numFacture: str
+    numeroFacture: str
     tauxTVA: float
     montantHT: float
     montantTVA: float
@@ -1146,33 +1551,69 @@ class InvoiceData(BaseModel):
 def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
     """
     Ajoute une facture dans un fichier DBF compatible FoxPro.
-    Si le fichier n'existe pas, il est créé avec la bonne structure.
-    Les noms de champs sont limités à 10 caractères.
+    Si le fichier n'existe pas, il est créé automatiquement avec la bonne structure.
     """
     import os
-    # Supprimer le fichier s'il existe mais est vide (sécurité)
-    if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
-        os.remove(dbf_path)
-    if not os.path.exists(dbf_path):
-        # Créer la table DBF avec des noms de champs <= 10 caractères
-        table = dbf.Table(
-            dbf_path,
-            'fournissr C(50); numfact C(20); tauxTVA N(5,2); mntHT N(10,2); mntTVA N(10,2); mntTTC N(10,2)'
-        )
-        table.open(mode=dbf.READ_WRITE)
-    else:
+    
+    try:
+        # Vérifier si le fichier existe et n'est pas vide
+        if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
+            os.remove(dbf_path)
+            logging.info("Fichier DBF vide supprimé")
+        
+        # Créer le fichier DBF s'il n'existe pas
+        if not os.path.exists(dbf_path):
+            logging.info("Création automatique du fichier factures.dbf")
+            # Créer la table DBF avec une structure compatible FoxPro
+            table = dbf.Table(
+                dbf_path,
+                'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+            )
+            table.open(mode=dbf.READ_WRITE)
+            table.close()
+            logging.info("Fichier factures.dbf créé avec succès")
+        
+        # Ouvrir la table existante
         table = dbf.Table(dbf_path)
         table.open(mode=dbf.READ_WRITE)
-    # Ajouter la facture (adapter l'ordre des champs)
-    table.append((
-        invoice_data['fournisseur'],
-        invoice_data['numFacture'],
-        float(invoice_data['tauxTVA']),
-        float(invoice_data['montantHT']),
-        float(invoice_data['montantTVA']),
-        float(invoice_data['montantTTC'])
-    ))
-    table.close()
+        
+        # Ajouter la facture
+        table.append((
+            invoice_data['fournisseur'],
+            invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
+            float(invoice_data['tauxTVA']),
+            float(invoice_data['montantHT']),
+            float(invoice_data['montantTVA']),
+            float(invoice_data['montantTTC'])
+        ))
+        table.close()
+        
+        logging.info(f"Facture ajoutée au fichier DBF: {invoice_data.get('numeroFacture', 'N/A')}")
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de l'écriture dans le fichier DBF: {e}")
+        # En cas d'erreur, essayer de recréer le fichier
+        try:
+            if os.path.exists(dbf_path):
+                os.remove(dbf_path)
+            table = dbf.Table(
+                dbf_path,
+                'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+            )
+            table.open(mode=dbf.READ_WRITE)
+            table.append((
+                invoice_data['fournisseur'],
+                invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
+                float(invoice_data['tauxTVA']),
+                float(invoice_data['montantHT']),
+                float(invoice_data['montantTVA']),
+                float(invoice_data['montantTTC'])
+            ))
+            table.close()
+            logging.info("Fichier DBF recréé et facture ajoutée avec succès")
+        except Exception as retry_error:
+            logging.error(f"Erreur fatale lors de la création du fichier DBF: {retry_error}")
+            raise retry_error
 
 
 @app.post("/ajouter-facture")
@@ -1193,7 +1634,7 @@ async def ajouter_facture(invoice: InvoiceData):
         """
         values = (
             invoice.fournisseur,
-            invoice.numFacture,
+            invoice.numeroFacture,  # On garde numeroFacture dans le modèle mais on mappe vers numFacture en DB
             invoice.tauxTVA,
             invoice.montantHT,
             invoice.montantTVA,
@@ -1209,11 +1650,35 @@ async def ajouter_facture(invoice: InvoiceData):
             "invoice_id": cursor.lastrowid
         }
     except mysql.connector.IntegrityError as e:
-        if "unique_invoice" in str(e).lower():
-            return {
-                "success": False,
-                "message": "Une facture avec ce numéro existe déjà pour ce fournisseur"
-            }
+        if "unique_invoice" in str(e).lower() or "duplicate" in str(e).lower():
+            # Essayer de mettre à jour l'enregistrement existant
+            try:
+                update_query = """
+                UPDATE Facture 
+                SET tauxTVA = %s, montantHT = %s, montantTVA = %s, montantTTC = %s
+                WHERE fournisseur = %s AND numFacture = %s
+                """
+                update_values = (
+                    invoice.tauxTVA,
+                    invoice.montantHT,
+                    invoice.montantTVA,
+                    invoice.montantTTC,
+                    invoice.fournisseur,
+                    invoice.numeroFacture
+                )
+                cursor.execute(update_query, update_values)
+                connection.commit()
+                
+                return {
+                    "success": True,
+                    "message": "Facture mise à jour avec succès (remplacement de l'enregistrement existant)",
+                    "invoice_id": "updated"
+                }
+            except Exception as update_error:
+                return {
+                    "success": False,
+                    "message": f"Erreur lors de la mise à jour: {str(update_error)}"
+                }
         return {
             "success": False,
             "message": f"Erreur d'intégrité de la base de données: {str(e)}"
@@ -1241,6 +1706,142 @@ async def download_dbf():
         media_type="application/octet-stream"
     )
 
+@app.post("/save-corrected-data")
+async def save_corrected_data(corrected_data: Dict[str, str]):
+    """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
+    try:
+        # Récupérer les données d'extraction originales
+        if not os.path.exists('ocr_extraction.json'):
+            return {
+                "success": False,
+                "message": "Aucune donnée d'extraction trouvée. Veuillez d'abord extraire une facture."
+            }
+        
+        # Lire les données originales
+        with open('ocr_extraction.json', 'r', encoding='utf-8') as f:
+            original_data = json.load(f)
+        
+        # Sauvegarder avec les données corrigées
+        save_extraction_for_foxpro(
+            extracted_data=original_data.get('data', {}),
+            confidence_scores=original_data.get('confidence_scores', {}),
+            corrected_data=corrected_data
+        )
+        
+        return {
+            "success": True,
+            "message": "Données corrigées sauvegardées pour FoxPro"
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde des données corrigées: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors de la sauvegarde: {str(e)}"
+        }
+
+@app.post("/launch-foxpro")
+async def launch_foxpro():
+    """Lancer FoxPro avec le formulaire de saisie"""
+    try:
+        import subprocess
+        import platform
+        
+        # Vérifier si le fichier d'extraction existe
+        if not os.path.exists('ocr_extraction.json'):
+            return {
+                "success": False,
+                "message": "Aucune donnée extraite trouvée. Veuillez d'abord extraire une facture via l'interface web."
+            }
+        
+        # Vérifier si le fichier DBF existe, sinon le créer
+        if not os.path.exists('factures.dbf'):
+            try:
+                # Créer un fichier DBF vide avec la bonne structure
+                table = dbf.Table(
+                    'factures.dbf',
+                    'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+                )
+                table.open(mode=dbf.READ_WRITE)
+                table.close()
+                logging.info("Fichier factures.dbf créé automatiquement")
+            except Exception as dbf_error:
+                logging.error(f"Erreur lors de la création automatique du fichier DBF: {dbf_error}")
+                return {
+                    "success": False,
+                    "message": f"Erreur lors de la création de la base de données: {str(dbf_error)}"
+                }
+        
+        # Chercher FoxPro automatiquement
+        foxpro_path = None
+        
+        # Emplacements courants
+        possible_paths = [
+            r"C:\Program Files (x86)\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Program Files\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Users\pc\Desktop\microsoft visual foxpro 9\microsoft visual foxpro 9\vfp9.exe"
+        ]
+        
+        # Chercher dans les emplacements courants
+        for path in possible_paths:
+            if os.path.exists(path):
+                foxpro_path = path
+                break
+        
+        # Si pas trouvé, chercher avec where
+        if not foxpro_path:
+            try:
+                import subprocess
+                result = subprocess.run(['where', 'vfp9.exe'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    foxpro_path = result.stdout.strip().split('\n')[0]
+            except:
+                pass
+        
+        if not foxpro_path or not os.path.exists(foxpro_path):
+            return {
+                "success": False,
+                "message": "FoxPro non trouvé. Vérifiez l'installation ou ajoutez-le au PATH."
+            }
+        
+        # Lancer FoxPro avec le formulaire
+        if platform.system() == "Windows":
+            subprocess.Popen([foxpro_path, "formulaire_foxpro_final.prg"], 
+                           cwd=os.getcwd(),
+                           shell=True)
+        else:
+            return {
+                "success": False,
+                "message": "Cette fonctionnalité n'est disponible que sur Windows."
+            }
+        
+        return {
+            "success": True,
+            "message": "FoxPro lancé avec succès. Le formulaire devrait s'ouvrir."
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors du lancement de FoxPro: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors du lancement de FoxPro: {str(e)}"
+        }
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    import signal
+    import sys
+    
+    def signal_handler(sig, frame):
+        print("\nShutting down server gracefully...")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    try:
+        uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    except KeyboardInterrupt:
+        print("\nServer stopped by user")
+    except Exception as e:
+        print(f"Server error: {e}")
+        sys.exit(1)

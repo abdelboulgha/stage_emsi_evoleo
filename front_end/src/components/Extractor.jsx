@@ -30,6 +30,7 @@ import {
   Minimize2,
   RefreshCw,
   Save,
+  Database,
 } from "lucide-react";
 
 const API_BASE_URL = "http://localhost:8000";
@@ -52,7 +53,7 @@ const Extractor = () => {
     invoiceType: "achat",
     selectedFiles: [],
     filePreviews: [],
-    processingMode: "different", // "different" ou "same"
+    processingMode: "same", // "different" ou "same"
     selectedModel: "", // Pour le mode "same"
   });
 
@@ -64,6 +65,7 @@ const Extractor = () => {
     extractedDataList: [],
     confidenceScores: [],
     isProcessing: false,
+    extractionBoxes: [], 
   });
 
   const [dataPrepState, setDataPrepState] = useState({
@@ -92,6 +94,7 @@ const Extractor = () => {
   const previewImageRef = useRef(null);
   const horizontalScrollRef = useRef(null);
   const extractCanvasRef = useRef(null);
+  const extractionBoxesCanvasRef = useRef(null);
 
   const EXTRACTION_FIELDS = [
     { key: "fournisseur", label: "Fournisseur" },
@@ -120,7 +123,7 @@ const Extractor = () => {
     try {
       setIsLoading(true);
       const response = await fetch(`${API_BASE_URL}/mappings`);
-      const data = await response.json();
+        const data = await response.json();
       if (data.status === "success") {
         setMappings(data.mappings);
       }
@@ -140,7 +143,7 @@ const Extractor = () => {
         .map((data) => {
           // Apply filtering to each field using the filterValue function
           const fournisseur = filterValue(data.fournisseur, "fournisseur");
-          const numFacture = filterValue(data.numeroFacture, "numFacture");
+          const numeroFacture = filterValue(data.numeroFacture, "numeroFacture");
           const tauxTVA = filterValue(data.tauxTVA, "tauxTVA");
           const montantHT = filterValue(data.montantHT, "montantHT");
           const montantTVA = filterValue(data.montantTVA, "montantTVA");
@@ -149,7 +152,7 @@ const Extractor = () => {
           // Return the invoice data with proper types
           return {
             fournisseur,
-            numFacture,
+            numeroFacture,
             tauxTVA: parseFloat(tauxTVA) || 0,
             montantHT: parseFloat(montantHT) || 0,
             montantTVA: parseFloat(montantTVA) || 0,
@@ -157,7 +160,8 @@ const Extractor = () => {
           };
         });
 
-      console.log("Invoices to save:", invoicesToSave);
+      
+        
       
       // Save each invoice one by one
       const results = [];
@@ -365,7 +369,7 @@ const Extractor = () => {
           return box;
         }
       }
-      
+
       return null;
     },
     [dataPrepState.ocrBoxes]
@@ -607,103 +611,99 @@ const Extractor = () => {
     }
   }, [dataPrepState, manualDrawState]);
 
-  const saveMappings = useCallback(async () => {
-    if (!dataPrepState || !dataPrepState.selectedBoxes) {
-      console.error("dataPrepState or selectedBoxes is undefined");
-      showNotification("Erreur: État de l'application invalide", "error");
-      return;
-    }
-    
-    if (Object.keys(dataPrepState.selectedBoxes).length === 0) {
-      showNotification("Veuillez sélectionner au moins un champ", "error");
-      return;
-    }
 
-    setIsLoading(true);
 
+const saveMappings = useCallback(async () => {
+  if (!dataPrepState) {
+    showNotification("Erreur: État de l'application invalide", "error");
+    return;
+  }
+
+  // Build the field_map to send
+  const field_map = {};
+  // Only include fournisseur if filled
+ if (dataPrepState.fieldMappings.fournisseur?.manualValue) {
+  field_map.fournisseur = {
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+    manual: true,
+    text: dataPrepState.fieldMappings.fournisseur.manualValue,
+  };
+}
+  // Only include numeroFacture if mapped
+  if (dataPrepState.fieldMappings.numeroFacture) {
+    field_map.numeroFacture = dataPrepState.fieldMappings.numeroFacture;
+  }
+
+  if (!field_map.fournisseur && !field_map.numeroFacture) {
+    showNotification("Veuillez saisir le fournisseur ou mapper le numéro de facture", "error");
+    return;
+  }
+
+  setIsLoading(true);
+
+  try {
+    let uploadedFileName = "";
     try {
-      let uploadedFileName = "";
-      
-      try {
-        // Safely get the file name with multiple fallbacks
-        uploadedFileName =
-          dataPrepState.uploadedImage?.name ||
-                         dataPrepState.fileName || 
-                         new Date().toISOString().slice(0, 10);
-        
-        if (typeof uploadedFileName !== "string") {
-          console.warn("Uploaded file name is not a string, converting...");
-          uploadedFileName = String(uploadedFileName);
-        }
-      } catch (e) {
-        console.error("Error getting file name:", e);
-        uploadedFileName = "untitled";
+      uploadedFileName =
+        dataPrepState.uploadedImage?.name ||
+        dataPrepState.fileName ||
+        new Date().toISOString().slice(0, 10);
+      if (typeof uploadedFileName !== "string") {
+        uploadedFileName = String(uploadedFileName);
       }
-      
-      // Generate template ID from file name without extension
-      let templateId = "untitled";
-      try {
-        // Remove file extension
-        let baseName = uploadedFileName.replace(/\.[^/.]+$/, "");
-        // If empty after removing extension, use 'untitled'
-        if (!baseName) baseName = "untitled";
-        // Sanitize the name (keep only alphanumeric, underscore, hyphen)
-        templateId = baseName.replace(/[^a-zA-Z0-9_-]/g, "_");
-      } catch (e) {
-        console.error("Error generating template ID, using fallback:", e);
-        templateId = `doc_${Date.now()}`; // Fallback with timestamp
-      }
-      
-      if (!dataPrepState.fieldMappings) {
-        throw new Error("Aucun mappage de champ à enregistrer");
-      }
-      
-      const response = await fetch(`${API_BASE_URL}/mappings`, {
-        method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "X-Debug": "true",
-        },
-        body: JSON.stringify({
-          template_id: templateId,
-          field_map: dataPrepState.fieldMappings,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Server response error:", response.status, errorText);
-        throw new Error(`Erreur serveur: ${response.status} - ${errorText}`);
-      }
-      
-      const responseData = await response.json();
-      
-      if (response.ok) {
-        showNotification(
-          `Mappings sauvegardés avec succès pour le template ${templateId}`,
-          "success"
-        );
-        loadExistingMappings();
-        return responseData; // Return the response data for further processing if needed
-      } else {
-        const errorMsg = responseData.detail || "Erreur lors de la sauvegarde";
-        throw new Error(errorMsg);
-      }
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde:", error);
-      showNotification(`Erreur: ${error.message}`, "error");
-      throw error; // Re-throw to allow error handling by the caller if needed
-    } finally {
-      setIsLoading(false);
+    } catch (e) {
+      uploadedFileName = "untitled";
     }
-  }, [
-    dataPrepState.selectedBoxes,
-    dataPrepState.fieldMappings,
-    showNotification,
-    loadExistingMappings,
-  ]);
+  let templateId = "untitled";
+if (dataPrepState.fieldMappings.fournisseur?.manualValue) {
+ 
+  templateId = dataPrepState.fieldMappings.fournisseur.manualValue
+   
+}
+if (!templateId) templateId = "untitled";
 
+    const response = await fetch(`${API_BASE_URL}/mappings`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        "X-Debug": "true",
+      },
+      body: JSON.stringify({
+        template_id: templateId,
+        field_map,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Erreur serveur: ${response.status} - ${errorText}`);
+    }
+
+    const responseData = await response.json();
+
+    showNotification(
+      `Mappings sauvegardés avec succès pour le template ${templateId}`,
+      "success"
+    );
+    loadExistingMappings();
+    return responseData;
+  } catch (error) {
+    showNotification(`Erreur: ${error.message}`, "error");
+    throw error;
+  } finally {
+    setIsLoading(false);
+  }
+}, [
+  dataPrepState.fieldMappings,
+  dataPrepState.uploadedImage,
+  dataPrepState.fileName,
+  showNotification,
+  loadExistingMappings,
+]);
   const handleSetupFileUpload = async (event) => {
     const files = Array.from(event.target.files);
     
@@ -718,7 +718,7 @@ const Extractor = () => {
       for (const [fileIndex, file] of files.entries()) {
         const formData = new FormData();
         formData.append("file", file);
-       
+
         const response = await fetch(`${API_BASE_URL}/upload-basic`, {
           method: "POST",
           body: formData,
@@ -764,7 +764,7 @@ const Extractor = () => {
         selectedFiles: files,
         filePreviews: previews,
       };
-    
+
       // Update the state
       setSetupState(newState);
       
@@ -802,7 +802,8 @@ const Extractor = () => {
   };
 
   const validateSetupAndProceed = (state = null) => {
-    // If no state is provided, use the current component state
+  
+    
     if (state === null) {
       state = {
         ...setupState,
@@ -813,11 +814,9 @@ const Extractor = () => {
         selectedModel: setupState.selectedModel,
       };
     }
-    // Use the provided state (which now always has the latest values)
+   
     const currentState = state;
 
-    // Check if invoice type is selected in the current component state
-    // This ensures we always check the latest invoice type from the UI
     const invoiceType = currentState.invoiceType || setupState.invoiceType;
     
     if (!invoiceType) {
@@ -839,12 +838,12 @@ const Extractor = () => {
     const stateToUse = state || setupState;
     
     // Make sure we have the latest invoice type from the component state
-    const finalState = {
-      ...stateToUse,
-      invoiceType: stateToUse.invoiceType || setupState.invoiceType,
-      processingMode: stateToUse.processingMode || setupState.processingMode,
-      selectedModel: stateToUse.selectedModel || setupState.selectedModel,
-    };
+   const finalState = {
+  ...stateToUse,
+  invoiceType: stateToUse.invoiceType || setupState.invoiceType,
+  processingMode: stateToUse.processingMode || setupState.processingMode,
+  selectedModel: stateToUse.selectedModel || setupState.selectedModel,
+};
     
     if (!finalState.invoiceType) {
       console.error("No invoice type found in state");
@@ -852,20 +851,24 @@ const Extractor = () => {
       return false;
     }
     
-    setExtractionState({
-      uploadedFiles: finalState.selectedFiles,
-      filePreviews: finalState.filePreviews.map((p) => p.preview),
-      previewDimensions: finalState.filePreviews.map((p) => ({
-        fileName: p.fileName,
-        pageNumber: p.pageNumber,
-        totalPages: p.totalPages,
-      })),
-      currentPdfIndex: 0,
-      extractedDataList: Array(finalState.filePreviews.length).fill({}),
-      confidenceScores: Array(finalState.filePreviews.length).fill({}),
-      isProcessing: false,
-      processingMode: finalState.processingMode,
-      selectedModel: finalState.selectedModel,
+const fournisseurName = finalState.selectedModel || "";
+const extractedDataList = Array(finalState.filePreviews.length)
+  .fill({})
+  .map(() => ({ fournisseur: fournisseurName }));
+   setExtractionState({
+  uploadedFiles: finalState.selectedFiles,
+  filePreviews: finalState.filePreviews.map((p) => p.preview),
+  previewDimensions: finalState.filePreviews.map((p) => ({
+    fileName: p.fileName,
+    pageNumber: p.pageNumber,
+    totalPages: p.totalPages,
+  })),
+  currentPdfIndex: 0,
+  extractedDataList, 
+  confidenceScores: Array(finalState.filePreviews.length).fill({}),
+  isProcessing: false,
+  processingMode: finalState.processingMode,
+  selectedModel: finalState.selectedModel,
     });
 
     setCurrentStep("extract");
@@ -970,44 +973,57 @@ const Extractor = () => {
     setExtractionState((prev) => ({ ...prev, isProcessing: true }));
     const results = [...extractionState.extractedDataList];
     const confidenceScores = [...(extractionState.confidenceScores || [])];
+    const extractionBoxes = [...(extractionState.extractionBoxes || [])];
     
-    // Déterminer le template à utiliser
-    let templateToUse = null;
-    if (extractionState.processingMode === "same" && extractionState.selectedModel) {
-      templateToUse = extractionState.selectedModel;
+            // Since we're using ocr-preview, we don't need template validation
+    const isTestEndpoint = true;
+    
+for (let i = 0; i < extractionState.filePreviews.length; i++) {
+  const base64 = extractionState.filePreviews[i];
+  const res = await fetch(base64);
+  const blob = await res.blob();
+  const formData = new FormData();
+  formData.append("file", blob, `page_${i}.png`);
+
+const templateIdToSend = extractionState.selectedModel;
+  formData.append("template_id", templateIdToSend);
+
+  try {
+   
+    
+            const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
+      method: "POST",
+      body: formData,
+    });
+    const result = await response.json();
+        let data = result.data || {};
+    if (data.numFacture && !data.numeroFacture) {
+      data.numeroFacture = data.numFacture;
     }
-    
-    for (let i = 0; i < extractionState.filePreviews.length; i++) {
-      const base64 = extractionState.filePreviews[i];
-      const res = await fetch(base64);
-      const blob = await res.blob();
-      const formData = new FormData();
-      formData.append("file", blob, `page_${i}.png`);
-      
-      // Ajouter le template_id si on est en mode "same"
-      if (templateToUse) {
-        formData.append("template_id", templateToUse);
-      } else if (extractionState.processingMode === "same" && extractionState.selectedModel) {
-        // Fallback pour le mode "same"
-        formData.append("template_id", extractionState.selectedModel);
-      }
-      
-      try {
-        const response = await fetch(`${API_BASE_URL}/extract-data`, {
-          method: "POST",
-          body: formData,
-        });
-        const result = await response.json();
+    data.fournisseur = extractionState.selectedModel || extractionState.extractedDataList[i]?.fournisseur || "";
+    results[i] = data;
+        
+       
         results[i] = result.data || {};
         confidenceScores[i] = result.confidence_scores || {};
+        
+        // Store bounding boxes for visualization if available
+        if (result.debug_info && result.debug_info.positions && typeof result.debug_info.positions === 'object') {
+          extractionBoxes[i] = result.debug_info.positions;
+         
+          
+        }
       } catch (error) {
+        console.error(`💥 Batch extraction error for page ${i + 1}:`, error);
         results[i] = {};
         confidenceScores[i] = {};
+        extractionBoxes[i] = {};
       }
       setExtractionState((prev) => ({
         ...prev,
         extractedDataList: [...results],
         confidenceScores: [...confidenceScores],
+        extractionBoxes: [...extractionBoxes],
         isProcessing: i < extractionState.filePreviews.length - 1,
       }));
     }
@@ -1018,11 +1034,20 @@ const Extractor = () => {
     if (!val) return "";
     if (fieldKey === "fournisseur") return val;
     
-    // Pour numFacture ou numeroFacture, autoriser alphanumérique, tirets, slash et espaces
-    if (fieldKey === "numFacture" || fieldKey === "numeroFacture") {
-      const matches = val.toString().match(/[a-zA-Z0-9\-\/ ]+/g);
-      return matches ? matches.join("") : "";
+    // Pour numeroFacture, autoriser alphanumérique, tirets, slash et espaces
+   if (fieldKey === "numeroFacture") {
+    // Split by space or colon
+    const parts = val.toString().split(/[\s:]+/);
+    // Find the first part containing a digit
+    let candidate = parts.find(p => /\d/.test(p)) || val.toString();
+    // Find the index of the first digit
+    const firstDigit = candidate.search(/\d/);
+    // If there are more than 4 letters before the first digit, remove them
+    if (firstDigit > 4) {
+      candidate = candidate.slice(firstDigit);
     }
+    return candidate;
+  }
     // For numeric fields, keep decimal points and commas
     if (
       ["tauxTVA", "montantHT", "montantTVA", "montantTTC"].includes(fieldKey)
@@ -1033,7 +1058,7 @@ const Extractor = () => {
       // Replace comma with dot for proper decimal parsing
       return matches.join("").replace(",", ".");
     }
-    // For other fields like numFacture, keep only numbers and specific symbols
+    // For other fields like numeroFacture, keep only numbers and specific symbols
     const matches = val.toString().match(/[0-9.,;:/\\-]+/g);
     return matches ? matches.join("") : "";
   };
@@ -1054,7 +1079,7 @@ const Extractor = () => {
   }, [dataPrepState.uploadedImage, redrawCanvas]);
 
   const [showDataPrepUpload, setShowDataPrepUpload] = useState(false);
-  
+
   const handleSingleDataPrepUpload = useCallback(
     async (event) => {
       const file = event.target.files[0];
@@ -1075,7 +1100,7 @@ const Extractor = () => {
           fileName: file.name,
           filePreview: filePreview,
         }));
-        
+
         const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
           method: "POST",
           body: formData,
@@ -1145,20 +1170,7 @@ const Extractor = () => {
     };
   }, [handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp]);
 
-  // Extraction automatique lors du changement de page sélectionnée
-  useEffect(() => {
-    if (
-      extractionState.filePreviews.length > 0 &&
-      (!extractionState.extractedDataList[extractionState.currentPdfIndex] ||
-        Object.keys(
-          extractionState.extractedDataList[extractionState.currentPdfIndex] ||
-            {}
-        ).length === 0)
-    ) {
-      extractCurrentPdf();
-    }
-    // eslint-disable-next-line
-  }, [extractionState.currentPdfIndex]);
+  
 
   // Fonction pour extraire la page courante
   const extractCurrentPdf = async (templateId, index) => {
@@ -1167,7 +1179,10 @@ const Extractor = () => {
       templateId = extractionState.selectedModel;
     }
     
-    if (!templateId) {
+          // Skip template validation for ocr-preview endpoint
+      const isTestEndpoint = true; // Since we're using ocr-preview
+    
+    if (!templateId && !isTestEndpoint) {
       showNotification("Veuillez sélectionner un modèle de facture avant d'extraire.", "error");
       return;
     }
@@ -1178,26 +1193,57 @@ const Extractor = () => {
     const blob = await res.blob();
     const formData = new FormData();
     formData.append("file", blob, `page_${idx}.png`);
-    formData.append("template_id", templateId);
+    
+    // Only add template_id if it exists and we're not using test endpoint
+    if (templateId) {
+  formData.append("template_id", templateId);
+}
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/extract-data`, {
+     
+      
+      const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
         method: "POST",
         body: formData,
       });
       const result = await response.json();
-      setExtractionState((prev) => {
-        const newExtracted = [...prev.extractedDataList];
-        newExtracted[idx] = result.data || {};
-        const newScores = [...(prev.confidenceScores || [])];
-        newScores[idx] = result.confidence_scores || {};
-        return {
-          ...prev,
-          extractedDataList: newExtracted,
-          confidenceScores: newScores,
-          isProcessing: false,
-        };
-      });
+      
+     
+      
+      
+     
+      
+      
+setExtractionState((prev) => {
+  const newExtracted = [...prev.extractedDataList];
+  let data = result.data || {};
+  // Map backend numFacture to frontend numeroFacture
+  if (data.numFacture && !data.numeroFacture) {
+    data.numeroFacture = data.numFacture;
+  }
+   data.fournisseur = prev.selectedModel || prev.extractedDataList[idx]?.fournisseur || "";
+  newExtracted[idx] = data;
+  newExtracted[idx] = data;
+  const newScores = [...(prev.confidenceScores || [])];
+  newScores[idx] = result.confidence_scores || {};
+
+  // Store bounding boxes for visualization if available
+  const newExtractionBoxes = [...(prev.extractionBoxes || [])];
+  if (result.debug_info && result.debug_info.positions && typeof result.debug_info.positions === 'object') {
+    newExtractionBoxes[idx] = result.debug_info.positions;
+ 
+  }
+
+  return {
+    ...prev,
+    extractedDataList: newExtracted,
+    confidenceScores: newScores,
+    extractionBoxes: newExtractionBoxes,
+    isProcessing: false,
+  };
+});
     } catch (error) {
+      console.error(`💥 Extraction error for page ${idx + 1}:`, error);
       setExtractionState((prev) => ({
         ...prev,
         isProcessing: false,
@@ -1205,18 +1251,7 @@ const Extractor = () => {
     }
   };
 
-  // Extraction automatique du premier fichier à l'arrivée sur la page d'extraction
-  useEffect(() => {
-    if (
-      currentStep === "extract" &&
-      extractionState.filePreviews.length > 0 &&
-      (!extractionState.extractedDataList[0] ||
-        Object.keys(extractionState.extractedDataList[0] || {}).length === 0)
-    ) {
-      extractCurrentPdf();
-    }
-    // eslint-disable-next-line
-  }, [currentStep]);
+  
 
   const [hoveredIndex, setHoveredIndex] = useState(null);
 
@@ -1261,6 +1296,66 @@ const Extractor = () => {
       body: formData,
     });
     return await response.json();
+  };
+
+  // Fonction pour lancer FoxPro
+  const launchFoxPro = async () => {
+    try {
+      // Récupérer les données corrigées depuis les champs de saisie
+      // Récupérer directement depuis les champs input
+      const fournisseurInput = document.querySelector('input[name="fournisseur"]');
+      const numeroFactureInput = document.querySelector('input[name="numeroFacture"]');
+      const tauxTVAInput = document.querySelector('input[name="tauxTVA"]');
+      const montantHTInput = document.querySelector('input[name="montantHT"]');
+      const montantTVAInput = document.querySelector('input[name="montantTVA"]');
+      const montantTTCInput = document.querySelector('input[name="montantTTC"]');
+      
+      // Utiliser les valeurs des champs input si disponibles, sinon les données originales
+      const currentData = extractionState.extractedDataList[extractionState.currentPdfIndex] || {};
+      
+      const correctedData = {
+        fournisseur: fournisseurInput ? fournisseurInput.value : (currentData.fournisseur || ''),
+        numeroFacture: numeroFactureInput ? numeroFactureInput.value : (currentData.numeroFacture || ''),
+        tauxTVA: tauxTVAInput ? tauxTVAInput.value : (currentData.tauxTVA || '0'),
+        montantHT: montantHTInput ? montantHTInput.value : (currentData.montantHT || '0'),
+        montantTVA: montantTVAInput ? montantTVAInput.value : (currentData.montantTVA || '0'),
+        montantTTC: montantTTCInput ? montantTTCInput.value : (currentData.montantTTC || '0')
+      };
+      
+      // D'abord sauvegarder les données corrigées
+      const saveResponse = await fetch('http://localhost:8000/save-corrected-data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(correctedData),
+      });
+      
+      const saveResult = await saveResponse.json();
+      if (!saveResult.success) {
+        alert('Erreur lors de la sauvegarde des données: ' + saveResult.message);
+        return;
+      }
+      
+      // Ensuite lancer FoxPro
+      const response = await fetch('http://localhost:8000/launch-foxpro', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      const result = await response.json();
+      
+      // if (result.success) {
+      //   alert('FoxPro lancé avec succès avec les données corrigées ! Le formulaire devrait s\'ouvrir.');
+      // } else {
+      //   alert('Erreur: ' + result.message);
+      // }
+    } catch (error) {
+      console.error('Erreur lors du lancement de FoxPro:', error);
+      alert('Erreur lors du lancement de FoxPro');
+    }
   };
 
   // Ajoute l'état pour stocker l'aperçu OCR par champ
@@ -1322,23 +1417,7 @@ const Extractor = () => {
     );
   };
 
-  // Ajoute ce useEffect pour afficher la modale dès l'arrivée sur l'étape d'extraction
-  useEffect(() => {
-    if (currentStep === "extract" && extractionState.filePreviews.length > 0) {
-      // Afficher la modale seulement si on est en mode "different"
-      if (extractionState.processingMode === "different") {
-        setPendingExtractIndex(0);
-        setShowModelSelectModal(true);
-        setModalSelectedTemplateId("");
-      } else if (extractionState.processingMode === "same" && extractionState.selectedModel) {
-        // En mode "same", extraire directement avec le modèle sélectionné
-        extractCurrentPdf(extractionState.selectedModel, 0);
-      }
-    }
-    // eslint-disable-next-line
-  }, [currentStep]);
 
-  // Ajoute l'état pour le mode dessin extraction
   const [extractDrawState, setExtractDrawState] = useState({
     isDrawing: false,
     fieldKey: null,
@@ -1451,29 +1530,69 @@ const Extractor = () => {
     };
   }, [extractDrawState.isDrawing, handleExtractCanvasMouseDown, handleExtractCanvasMouseMove, handleExtractCanvasMouseUp]);
 
-  // 3. Redessine le canvas d'extraction à chaque changement de rectangle ou d'image
-  useEffect(() => {
-    const canvas = extractCanvasRef.current;
+    // 3. Redessine le canvas d'extraction à chaque changement de rectangle ou d'image
+  const drawExtractionBoxes = useCallback(() => {
+    const canvas = extractionBoxesCanvasRef.current;
     const img = previewImageRef.current;
     if (!canvas || !img) return;
-    // Ajuste la taille du canvas à celle de l'image affichée
+
+    // Get the current extraction data for the page
+    const data = extractionState.extractedDataList[extractionState.currentPdfIndex];
+    if (!data) return;
+
+    // Set canvas size to match the displayed image
     canvas.width = img.clientWidth;
     canvas.height = img.clientHeight;
+
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    // Affiche le rectangle de sélection si en cours
-    if (extractDrawState.isDrawing && extractDrawState.rect) {
+
+    // Helper to draw a box
+    const drawBox = (box, color, label, labelPosition = 'left') => {
+      if (!box) return;
+      // Scale coordinates
+      const scaleX = img.clientWidth / img.naturalWidth;
+      const scaleY = img.clientHeight / img.naturalHeight;
+      const x = box.left * scaleX;
+      const y = box.top * scaleY;
+      const w = box.width * scaleX;
+      const h = box.height * scaleY;
+
       ctx.save();
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([4, 2]);
-      const { left, top, width, height } = extractDrawState.rect;
-      ctx.strokeRect(left, top, width, height);
-      ctx.fillStyle = 'rgba(251,191,36,0.15)';
-      ctx.fillRect(left, top, width, height);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 3;
+      ctx.setLineDash([]);
+      ctx.strokeRect(x, y, w, h);
+
+      // Draw label
+      ctx.fillStyle = color;
+      ctx.font = "bold 13px Arial";
+      
+      if (labelPosition === 'top') {
+        ctx.textAlign = "left";
+        ctx.fillText(label, x + 2, y - 5 < 10 ? y + 13 : y - 5);
+      } else { // left position
+        ctx.textAlign = "right";
+        const textY = y + (h / 2) + 4; // Center vertically with the box
+        ctx.fillText(label, x - 5, textY);
+      }
+      
       ctx.restore();
+    };
+    drawBox(data.boxNumFacture, "#6366f1", "N° Facture", 'top');
+    drawBox(data.boxHT, "#b91010ff", "HT", 'left');
+    drawBox(data.boxTVA, "#0b0ff5ff", "TVA", 'left');
+  }, [extractionState.extractedDataList, extractionState.currentPdfIndex]);
+
+  // Add useEffect to call drawExtractionBoxes when data changes
+  useEffect(() => {
+    if (extractionState.extractedDataList[extractionState.currentPdfIndex]) {
+      drawExtractionBoxes();
     }
-  }, [extractDrawState, extractionState.currentPdfIndex, extractionState.filePreviews]);
+  }, [extractionState.extractedDataList, extractionState.currentPdfIndex, drawExtractionBoxes]);
+
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 w-full">
@@ -1615,8 +1734,8 @@ const Extractor = () => {
                     <div className="mb-8">
                       <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
                         <Building2 className="w-6 h-6" />
-                        2. Ajout d'une facture{" "}
-                        {setupState.invoiceType === "achat" ? "Achat" : "Vente"}
+                        2. Ajout d'un fournisseur
+                       
                       </h2>
 
                       <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
@@ -1635,7 +1754,8 @@ const Extractor = () => {
                             <Plus className="w-6 h-6" />
                             <div className="text-center">
                               <div className="font-semibold text-lg">
-                                Paramétrer une nouvelle facture
+                                Paramétrer une nouvelle facture {" "}
+                                 {setupState.invoiceType === "achat" ? "d'achat" : "de vente"}
                               </div>
                             </div>
                             <ArrowRight className="w-6 h-6" />
@@ -1653,68 +1773,40 @@ const Extractor = () => {
                       </h2>
 
                       <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                        {/* Mode de traitement */}
-                        <div className="mb-6">
-                          <h3 className="text-white font-semibold mb-3">Mode de traitement :</h3>
-                          <div className="flex flex-col sm:flex-row gap-4">
-                            <label className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="radio"
-                                name="processingMode"
-                                value="different"
-                                checked={setupState.processingMode === "different"}
-                                onChange={(e) => setSetupState(prev => ({
-                                  ...prev,
-                                  processingMode: e.target.value,
-                                  selectedModel: "" // Reset selected model
-                                }))}
-                                className="w-4 h-4 text-blue-600 bg-white/20 border-white/30 focus:ring-blue-500"
-                              />
-                              <span className="text-white">Fichiers de modèles différents</span>
-                            </label>
-                            <label className="flex items-center gap-3 cursor-pointer">
-                              <input
-                                type="radio"
-                                name="processingMode"
-                                value="same"
-                                checked={setupState.processingMode === "same"}
-                                onChange={(e) => setSetupState(prev => ({
-                                  ...prev,
-                                  processingMode: e.target.value
-                                }))}
-                                className="w-4 h-4 text-blue-600 bg-white/20 border-white/30 focus:ring-blue-500"
-                              />
-                              <span className="text-white">Fichiers du même modèle</span>
-                            </label>
-                          </div>
-                        </div>
+                        {/* Hidden input to maintain processingMode state */}
+                        <input
+                          type="hidden"
+                          name="processingMode"
+                          value="same"
+                        />
 
-                        {/* Sélection du modèle pour le mode "same" */}
-                        {setupState.processingMode === "same" && (
-                          <div className="mb-6">
-                            <label className="block text-white font-medium mb-2">
-                              Sélectionnez le modèle à utiliser :
-                            </label>
-                            <select
-                              value={setupState.selectedModel}
-                              onChange={(e) => setSetupState(prev => ({
+                        {/* Sélection du modèle */}
+                        <div className="mb-6">
+                         
+                          <select
+                            value={setupState.selectedModel}
+                            onChange={(e) =>
+                              setSetupState((prev) => ({
                                 ...prev,
-                                selectedModel: e.target.value
-                              }))}
-                              className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                            >
-                              <option value="">Sélectionnez un modèle</option>
-                              {Object.keys(mappings).map(tpl => (
-                                <option key={tpl} value={tpl}>{tpl}</option>
-                              ))}
-                            </select>
-                            {setupState.processingMode === "same" && !setupState.selectedModel && (
-                              <p className="text-yellow-300 text-sm mt-1">
-                                ⚠️ Veuillez sélectionner un modèle pour continuer
-                              </p>
-                            )}
-                          </div>
-                        )}
+                                selectedModel: e.target.value,
+                              }))
+                            }
+                            className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                            required
+                          >
+                            <option value="">Sélectionnez un fournisseur</option>
+                            {Object.keys(mappings).map((tpl) => (
+                              <option key={tpl} value={tpl}>
+                                {tpl}
+                              </option>
+                            ))}
+                          </select>
+                          {!setupState.selectedModel && (
+                            <p className="text-yellow-300 text-sm mt-1">
+                              ⚠️ Veuillez sélectionner un modèle pour continuer
+                            </p>
+                          )}
+                        </div>
 
                         <div className="mb-6">
                           <input
@@ -1837,7 +1929,7 @@ const Extractor = () => {
                     Retour
                   </button>
                   {/* BOUTON DE TELECHARGEMENT DBF */}
-                  <button
+                  {/* <button
                     onClick={() => {
                       window.open(`${API_BASE_URL}/download-dbf`, "_blank");
                     }}
@@ -1845,7 +1937,7 @@ const Extractor = () => {
                   >
                     <Download className="w-4 h-4" />
                     Télécharger fichier FoxPro (.dbf)
-                  </button>
+                  </button> */}
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -1856,16 +1948,7 @@ const Extractor = () => {
                         Données Extraites
                       </h3>
 
-                      <div className="mb-4 p-3 bg-blue-500/20 rounded-xl">
-                        <div className="text-sm text-blue-100">
-                          Type:{" "}
-                          <span className="font-medium">
-                            {setupState.invoiceType === "achat"
-                              ? "Facture d'achat"
-                              : "Facture de vente"}
-                          </span>
-                        </div>
-                      </div>
+                      
 
                       {/* Invoice Selection Modal */}
                       {invoiceSelection.isOpen &&
@@ -1979,66 +2062,14 @@ const Extractor = () => {
                         document.body
                       )}
 
-                      <div className="mt-4">
-                        <h4 className="text-sm font-medium text-white mb-2">
-                          Données extraites:
-                        </h4>
-                      </div>
+                     
 
-                      {/* Indicateur de mode de traitement */}
-                      <div className="mb-4 p-3 bg-white/10 rounded-xl border border-white/20">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Settings className="w-4 h-4 text-blue-200" />
-                          <span className="text-sm font-medium text-blue-100">Mode de traitement</span>
-                        </div>
-                        <div className="text-xs text-white">
-                          {extractionState.processingMode === "same" ? (
-                            <>
-                              <span className="text-green-300">✓ Mode "Même modèle"</span>
-                              {extractionState.selectedModel && (
-                                <span className="block text-green-200 mt-1">
-                                  Modèle sélectionné : <b>{extractionState.selectedModel}</b>
-                                </span>
-                              )}
-                            </>
-                          ) : (
-                            <>
-                              <span className="text-yellow-300">⚠ Mode "Modèles différents"</span>
-                              <span className="block text-blue-200 mt-1">
-                                Sélectionnez un modèle pour chaque fichier
-                              </span>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Sélection du modèle seulement en mode "different" */}
-                      {extractionState.processingMode === "different" && (
-                        <div className="mb-4">
-                          <label className="block text-sm font-medium text-blue-100 mb-2">
-                            Modèle de facture (template) à utiliser pour l'extraction
-                          </label>
-                          <select
-                            value={selectedTemplateId}
-                            onChange={e => setSelectedTemplateId(e.target.value)}
-                            className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                          >
-                            <option value="">Sélectionnez un modèle</option>
-                            {Object.keys(mappings).map(tpl => (
-                              <option key={tpl} value={tpl}>{tpl}</option>
-                            ))}
-                          </select>
-                          {selectedTemplateId && (
-                            <div className="text-xs text-green-200 mt-1">Modèle utilisé : <b>{selectedTemplateId}</b></div>
-                          )}
-                        </div>
-                      )}
 
                       <button
                         onClick={extractAllPdfs}
                         disabled={
                           extractionState.isProcessing || 
-                          (extractionState.processingMode === "different" && !selectedTemplateId) ||
+                       
                           (extractionState.processingMode === "same" && !extractionState.selectedModel)
                         }
                         className="w-full mb-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-2"
@@ -2068,6 +2099,7 @@ const Extractor = () => {
                             <div className="flex gap-2 items-center">
                               <input
                                 type="text"
+                                name={field.key}
                                 value={filterValue(
                                   extractionState.extractedDataList[
                                     extractionState.currentPdfIndex
@@ -2079,16 +2111,16 @@ const Extractor = () => {
                                     ...prev,
                                     extractedDataList:
                                       prev.extractedDataList.map(
-                                      (data, index) =>
-                                        index === prev.currentPdfIndex
-                                          ? {
-                                              ...data,
-                                              [field.key]: e.target.value,
-                                            }
-                                          : data
-                                    ),
-                                  }))
-                                }
+                                    (data, index) =>
+                                      index === prev.currentPdfIndex
+                                        ? {
+                                            ...data,
+                                            [field.key]: e.target.value,
+                                          }
+                                        : data
+                                  ),
+                                }))
+                              }
                                 className="flex-1 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                                 placeholder={`${field.label} sera extrait automatiquement`}
                               />
@@ -2123,6 +2155,17 @@ const Extractor = () => {
                         <Save className="w-4 h-4" />
                         Enregistrer les factures
                       </button>
+                      
+                      <button
+                        onClick={launchFoxPro}
+                        disabled={
+                          extractionState.extractedDataList.length === 0
+                        }
+                        className="w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <Database className="w-4 h-4" />
+                        Enregistrer dans FoxPro
+                      </button>
                     </div>
                       </div>
                     </div>
@@ -2145,22 +2188,43 @@ const Extractor = () => {
                       </div>
 
                       {extractionState.filePreviews.length > 0 ? (
-                        <div className="space-y-4">
+                        <div className="relative">
                           {/* Document preview container with proper sizing */}
-                          <div className="bg-white/10 rounded-xl p-4 border border-white/10">
+                          <div className="bg-white/10 rounded-xl p-4 border border-white/10 relative">
                             <div className="w-full" style={{ height: "70vh" }}>
                               <div className="w-full h-full overflow-auto bg-white rounded-lg shadow-lg p-4">
                                 <div style={{ position: 'relative', width: '100%', height: 'auto' }}>
-                                  <img
-                                    ref={previewImageRef}
-                                    src={
-                                      extractionState.filePreviews[
-                                        extractionState.currentPdfIndex
-                                      ]
-                                    }
-                                    alt="Aperçu du document"
-                                    className="w-full h-auto object-contain"
+                                <img
+                                  ref={previewImageRef}
+                                  src={
+                                    extractionState.filePreviews[
+                                      extractionState.currentPdfIndex
+                                    ]
+                                  }
+                                  alt="Aperçu du document"
+                                  className="w-full h-auto object-contain"
                                     style={{ minWidth: "100%", height: "auto" }}
+                                    onLoad={() => {
+                                      // Image loaded successfully
+                                      setTimeout(() => {
+                                        if (extractionState.extractedDataList[extractionState.currentPdfIndex]) {
+                                          drawExtractionBoxes();
+                                        }
+                                      }, 100);
+                                    }}
+                                  />
+                                  {/* Canvas for extraction bounding boxes */}
+                                  <canvas
+                                    ref={extractionBoxesCanvasRef}
+                                  style={{
+                                      position: 'absolute',
+                                      left: 0,
+                                      top: 0,
+                                      width: '100%',
+                                      height: '100%',
+                                      pointerEvents: 'none',
+                                      zIndex: 10,
+                                    }}
                                   />
                                   {/* Canvas de dessin extraction superposé */}
                                   <canvas
@@ -2181,6 +2245,161 @@ const Extractor = () => {
                                   />
                                 </div>
                               </div>
+                              
+                              {/* Miniatures superposées sur l'image */}
+                              {extractionState.filePreviews.length > 1 && (
+                                <div className="absolute bottom-0 left-0 right-0 z-10 bg-transparent p-3">
+                                  <div className="flex items-center justify-between w-full">
+                                    <button
+                                      onClick={goToPrevPdf}
+                                      disabled={extractionState.currentPdfIndex === 0}
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-full shadow-lg"
+                                    >
+                                      <ChevronLeft className="w-5 h-5 text-white" />
+                                    </button>
+                                    
+                                    <div className="flex gap-1">
+                                      {extractionState.filePreviews.map((preview, index) => {
+                                        const fileName = extractionState.previewDimensions?.[index]?.fileName || "";
+                                        const extractionData = extractionState.extractedDataList[index];
+                                        const extractionOk = isExtractionComplete(extractionData);
+                                        const extractionAttempted = extractionData && Object.keys(extractionData).length > 1;
+                                        const showBadge = extractionAttempted && !extractionOk;
+                                        
+                                        return (
+                                          <div
+                                            key={index}
+                                            onClick={() => scrollToIndex(index)}
+                                            className={`relative cursor-pointer transition-all duration-300 group`}
+                                            onMouseEnter={() => setHoveredIndex(index)}
+                                            onMouseLeave={() => setHoveredIndex(null)}
+                                            style={{
+                                              zIndex: hoveredIndex === index ? 2 : 1,
+                                              width: hoveredIndex === index ? 300 : 60,
+                                              height: hoveredIndex === index ? 500 : 85,
+                                              boxShadow: hoveredIndex === index ? "0 12px 48px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.2)" : undefined,
+                                              transition: "box-shadow 0.3s ease-in-out",
+                                              transform: hoveredIndex === index ? "scale(1.1)" : "scale(1)",
+                                              borderWidth: hoveredIndex === index ? 4 : 2,
+                                              borderColor: hoveredIndex === index ? "#3b82f6" : "#ffffff40",
+                                            }}
+                                          >
+                                            <img
+                                              src={preview}
+                                              alt={`Page ${index + 1}`}
+                                              className="w-full h-full object-contain bg-white rounded"
+                                            />
+                                            
+                                            {/* Badge d'avertissement si extraction incomplète */}
+                                            {showBadge && (
+                                              <div className="absolute top-1 left-1 bg-red-600 text-white text-xs font-bold px-1 py-0.5 rounded shadow z-30">
+                                                ⚠️ Non paramétré
+                                              </div>
+                                            )}
+                                            
+                                            {/* Indicateur de page active */}
+                                            {index === extractionState.currentPdfIndex && (
+                                              <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
+                                            )}
+                                            
+                                            {/* Badge du nombre de champs extraits */}
+                                            {extractionState.extractedDataList[index] && (
+                                              <>
+                                                <div 
+                                                  className="absolute top-1 left-1 text-xs font-bold px-1 rounded"
+                                                  style={{
+                                                    backgroundColor: `rgba(${
+                                                      255 * (1 - Object.keys(extractionState.extractedDataList[index] || {}).length / 6)
+                                                    }, ${
+                                                      255 * (Object.keys(extractionState.extractedDataList[index] || {}).length / 6)
+                                                    }, 0, 0.9)`,
+                                                    color: "white",
+                                                    textShadow: "0 0 2px rgba(0,0,0,0.5)",
+                                                  }}
+                                                >
+                                                  {Object.keys(extractionState.extractedDataList[index] || {}).length}
+                                                </div>
+                                                
+                                                {/* Pourcentage de confiance */}
+                                                {extractionState.confidenceScores?.[index] && Object.keys(extractionState.confidenceScores[index] || {}).length > 0 && (
+                                                  <div 
+                                                    className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
+                                                    style={{
+                                                      backgroundColor: "rgba(0, 0, 0, 0.7)",
+                                                      color: "white",
+                                                      textShadow: "0 0 2px rgba(0,0,0,0.5)",
+                                                    }}
+                                                  >
+                                                    {Math.min(...Object.values(extractionState.confidenceScores[index] || {}).filter(score => typeof score === "number").map(score => Math.round(score * 100) / 100)).toFixed(2).replace("0.", "")}%
+                                                  </div>
+                                                )}
+                                              </>
+                                            )}
+                                            
+                                            {/* Bouton pour paramétrer si extraction incomplète */}
+                                            {showBadge && (
+                                              <button
+                                                onClick={async (e) => {
+                                                  e.stopPropagation();
+                                                  setCurrentStep("dataprep");
+                                                  setIsLoading(true);
+                                                  const res = await fetch(preview);
+                                                  const blob = await res.blob();
+                                                  const formData = new FormData();
+                                                  formData.append("file", blob, fileName || "page.png");
+                                                  try {
+                                                    const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
+                                                      method: "POST",
+                                                      body: formData,
+                                                    });
+                                                    const result = await response.json();
+                                                    if (result.success) {
+                                                      const imageToUse = result.unwarped_image || result.image;
+                                                      const widthToUse = result.unwarped_width || result.width;
+                                                      const heightToUse = result.unwarped_height || result.height;
+                                                      setDataPrepState((prev) => ({
+                                                        ...prev,
+                                                        uploadedImage: imageToUse,
+                                                        fileName: fileName,
+                                                        filePreview: imageToUse,
+                                                        imageDimensions: { width: widthToUse, height: heightToUse },
+                                                        ocrBoxes: result.boxes || [],
+                                                        fieldMappings: {},
+                                                        selectedBoxes: {},
+                                                      }));
+                                                    }
+                                                  } catch (error) {
+                                                    // Gestion d'erreur
+                                                  } finally {
+                                                    setIsLoading(false);
+                                                  }
+                                                }}
+                                                className="absolute bottom-1 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-xs font-bold px-2 py-0.5 rounded shadow z-30 hover:bg-yellow-600 transition-colors"
+                                              >
+                                                ⚙️ Paramétrer
+                                              </button>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                    
+                                    <button
+                                      onClick={goToNextPdf}
+                                      disabled={extractionState.currentPdfIndex === extractionState.filePreviews.length - 1}
+                                      className="p-2 bg-blue-600 hover:bg-blue-700 disabled:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors rounded-full shadow-lg"
+                                    >
+                                      <ChevronRight className="w-5 h-5 text-white" />
+                                    </button>
+                                  </div>
+                                  
+                                  <div className="text-center mt-2">
+                                    <span className="text-white text-xs">
+                                      {extractionState.currentPdfIndex + 1} / {extractionState.filePreviews.length}
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="mt-4 text-center">
@@ -2211,332 +2430,6 @@ const Extractor = () => {
                               )}
                             </div>
                           </div>
-
-                          {/* Navigation controls */}
-                          {extractionState.filePreviews.length > 1 && (
-                            <div className="bg-white/10 rounded-xl p-4 border border-white/10">
-                              <div className="flex items-center gap-3">
-                                <button
-                                  onClick={goToPrevPdf}
-                                  disabled={
-                                    extractionState.currentPdfIndex === 0
-                                  }
-                                  className="p-2 bg-white/20 rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-                                >
-                                  <ChevronLeft className="w-5 h-5 text-white" />
-                                </button>
-                                <div className="flex-1 overflow-x-auto">
-                                  <div className="flex gap-2 pb-2">
-                                    {extractionState.filePreviews.map(
-                                      (preview, index) => {
-                                        const fileName =
-                                          extractionState.previewDimensions?.[
-                                            index
-                                          ]?.fileName || "";
-                                        const extractionData =
-                                          extractionState.extractedDataList[
-                                            index
-                                          ];
-                                        const extractionOk =
-                                          isExtractionComplete(extractionData);
-                                        const showBadge =
-                                          extractionData &&
-                                          Object.keys(extractionData).length >
-                                            0 &&
-                                          !extractionOk;
-                                        // Log pour diagnostic
-                                        console.log(
-                                          "ExtractionData (page",
-                                          index + 1,
-                                          "):",
-                                          extractionData
-                                        );
-                                        return (
-                                        <div
-                                          key={index}
-                                            className={`relative group transition-all duration-300`}
-                                            onMouseEnter={() =>
-                                              setHoveredIndex(index)
-                                            }
-                                            onMouseLeave={() =>
-                                              setHoveredIndex(null)
-                                            }
-                                            style={{
-                                              zIndex:
-                                                hoveredIndex === index ? 2 : 1,
-                                            }}
-                                          >
-                                            <div
-                                              onClick={() => {
-                                                if (extractionState.isProcessing) {
-                                                  showNotification("Veuillez attendre la fin de l'extraction en cours.", "warning");
-                                                  return;
-                                                }
-                                                scrollToIndex(index);
-                                              }}
-                                              className={
-                                                `relative flex-shrink-0 cursor-pointer rounded-lg overflow-hidden border-2 transition-all duration-300 ` +
-                                                (index ===
-                                                extractionState.currentPdfIndex
-                                                  ? "border-blue-400 shadow-lg ring-2 ring-blue-400/50"
-                                                  : "border-white/30 hover:border-blue-400")
-                                              }
-                                              style={{
-                                                width:
-                                                  hoveredIndex === index
-                                                    ? 320
-                                                    : 64,
-                                                height:
-                                                  hoveredIndex === index
-                                                    ? 420
-                                                    : 90,
-                                                boxShadow:
-                                                  hoveredIndex === index
-                                                    ? "0 8px 32px rgba(0,0,0,0.25)"
-                                                    : undefined,
-                                                transform:
-                                                  hoveredIndex === index
-                                                    ? "scale(1.1)"
-                                                    : "scale(1)",
-                                                borderWidth:
-                                                  hoveredIndex === index
-                                                    ? 4
-                                                    : 2,
-                                                borderColor:
-                                                  hoveredIndex === index
-                                                    ? "#3b82f6"
-                                                    : undefined,
-                                              }}
-                                            >
-                                              <img
-                                                src={preview}
-                                                alt={`Page ${index + 1}`}
-                                                className="w-full h-full object-contain bg-white"
-                                              />
-                                              {/* Badge d'avertissement si extraction incomplète */}
-                                              {showBadge && (
-                                                <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded shadow z-30 flex items-center gap-1">
-                                                  <span>⚠️ Non paramétré</span>
-                                                </div>
-                                              )}
-                                              {index ===
-                                                extractionState.currentPdfIndex && (
-                                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-blue-400 rounded-full border border-white"></div>
-                                              )}
-                                              {extractionState
-                                                .extractedDataList[index] && (
-                                                <>
-                                                  <div 
-                                                    className="absolute top-1 left-1 text-xs font-bold px-1 rounded"
-                                                    style={{
-                                                      backgroundColor: `rgba(${
-                                                        255 *
-                                                        (1 -
-                                                          Object.keys(
-                                                            extractionState
-                                                              .extractedDataList[
-                                                              index
-                                                            ] || {}
-                                                          ).length /
-                                                            6)
-                                                      }, ${
-                                                        255 *
-                                                        (Object.keys(
-                                                          extractionState
-                                                            .extractedDataList[
-                                                            index
-                                                          ] || {}
-                                                        ).length /
-                                                          6)
-                                                      }, 0, 0.9)`,
-                                                      color: "white",
-                                                      textShadow:
-                                                        "0 0 2px rgba(0,0,0,0.5)",
-                                                    }}
-                                                  >
-                                                    {
-                                                      Object.keys(
-                                                        extractionState
-                                                          .extractedDataList[
-                                                          index
-                                                        ] || {}
-                                                      ).length
-                                                    }
-                                                  </div>
-                                                  {extractionState
-                                                    .confidenceScores?.[
-                                                    index
-                                                  ] &&
-                                                    Object.keys(
-                                                      extractionState
-                                                        .confidenceScores[
-                                                        index
-                                                      ] || {}
-                                                    ).length > 0 && (
-                                                    <div 
-                                                      className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
-                                                      style={{
-                                                          backgroundColor:
-                                                            "rgba(0, 0, 0, 0.7)",
-                                                          color: "white",
-                                                          textShadow:
-                                                            "0 0 2px rgba(0,0,0,0.5)",
-                                                      }}
-                                                    >
-                                                      {Math.min(
-                                                          ...Object.values(
-                                                            extractionState
-                                                              .confidenceScores[
-                                                              index
-                                                            ] || {}
-                                                          )
-                                                            .filter(
-                                                              (score) =>
-                                                                typeof score ===
-                                                                "number"
-                                                            )
-                                                            .map(
-                                                              (score) =>
-                                                                Math.round(
-                                                                  score * 100
-                                                                ) / 100
-                                                            )
-                                                        )
-                                                          .toFixed(2)
-                                                          .replace("0.", "")}
-                                                        %
-                                                    </div>
-                                                  )}
-                                                </>
-                                              )}
-                                              {/* Cancel button (X) - appears on hover */}
-                                              <button
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  removeFileFromExtraction(
-                                                    index
-                                                  );
-                                                }}
-                                                className={`absolute ${
-                                                  hoveredIndex === index
-                                                    ? "top-2 right-2 w-10 h-10"
-                                                    : "-top-2 -right-2 w-5 h-5"
-                                                } bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20 hover:bg-red-600`}
-                                                style={{
-                                                  fontSize:
-                                                    hoveredIndex === index
-                                                      ? 24
-                                                      : 14,
-                                                }}
-                                                title="Supprimer ce fichier"
-                                              >
-                                                <X
-                                                  className={
-                                                    hoveredIndex === index
-                                                      ? "w-6 h-6"
-                                                      : "w-3 h-3"
-                                                  }
-                                                />
-                                              </button>
-                                              {/* Bouton pour paramétrer si extraction incomplète */}
-                                              {showBadge && (
-                                                <button
-                                                  onClick={async (e) => {
-                                                    e.stopPropagation();
-                                                    setCurrentStep("dataprep");
-                                                    setIsLoading(true);
-                                                    // Envoie l'image base64 de la page affichée
-                                                    const res = await fetch(
-                                                      preview
-                                                    );
-                                                    const blob =
-                                                      await res.blob();
-                                                    const formData =
-                                                      new FormData();
-                                                    formData.append(
-                                                      "file",
-                                                      blob,
-                                                      fileName || "page.png"
-                                                    );
-                                                    try {
-                                                      const response =
-                                                        await fetch(
-                                                          `${API_BASE_URL}/upload-for-dataprep`,
-                                                          {
-                                                            method: "POST",
-                                                            body: formData,
-                                                          }
-                                                        );
-                                                      const result =
-                                                        await response.json();
-                                                      if (result.success) {
-                                                        const imageToUse =
-                                                          result.unwarped_image ||
-                                                          result.image;
-                                                        const widthToUse =
-                                                          result.unwarped_width ||
-                                                          result.width;
-                                                        const heightToUse =
-                                                          result.unwarped_height ||
-                                                          result.height;
-                                                        setDataPrepState(
-                                                          (prev) => ({
-                                                            ...prev,
-                                                            uploadedImage:
-                                                              imageToUse,
-                                                            fileName: fileName,
-                                                            filePreview:
-                                                              imageToUse,
-                                                            imageDimensions: {
-                                                              width: widthToUse,
-                                                              height:
-                                                                heightToUse,
-                                                            },
-                                                            ocrBoxes:
-                                                              result.boxes ||
-                                                              [],
-                                                            fieldMappings: {},
-                                                            selectedBoxes: {},
-                                                          })
-                                                        );
-                                                      }
-                                                    } catch (error) {
-                                                      // Optionnel : notification d'erreur
-                                                    } finally {
-                                                      setIsLoading(false);
-                                                    }
-                                                  }}
-                                                  className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-yellow-500 text-white text-xs font-bold px-3 py-1 rounded shadow z-30 hover:bg-yellow-600 transition-colors"
-                                                >
-                                                  Paramétrer ce fichier
-                                                </button>
-                                              )}
-                                              </div>
-                                            </div>
-                                        );
-                                      }
-                                    )}
-                                  </div>
-                                </div>
-                                <button
-                                  onClick={goToNextPdf}
-                                  disabled={
-                                    extractionState.currentPdfIndex ===
-                                    extractionState.filePreviews.length - 1
-                                  }
-                                  className="p-2 bg-white/20 rounded-lg hover:bg-white/30 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex-shrink-0"
-                                >
-                                  <ChevronRight className="w-5 h-5 text-white" />
-                                </button>
-                              </div>
-                              <div className="text-center mt-3">
-                                <span className="text-blue-200 text-sm">
-                                  {extractionState.currentPdfIndex + 1} /{" "}
-                                  {extractionState.filePreviews.length} pages
-                                </span>
-                              </div>
-                            </div>
-                          )}
                         </div>
                       ) : (
                         <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-white/30 rounded-xl">
@@ -2583,142 +2476,100 @@ const Extractor = () => {
                       <h3 className="text-lg font-semibold text-white mb-4">
                         Champs à mapper
                       </h3>
-                      {dataPrepState.isSelecting && (
-                        <div className="mb-4 p-3 bg-blue-500/20 border border-blue-400/30 rounded-xl">
-                          <p className="text-blue-100 text-sm font-medium">
-                            🎯 Mode sélection actif pour:{" "}
-                            <strong>{dataPrepState.selectedField}</strong>
-                          </p>
-                          <p className="text-blue-200 text-xs mt-1">
-                            Cliquez sur une boîte OCR rouge dans l'image
-                          </p>
-                          <button
-                            onClick={() =>
-                              setDataPrepState((prev) => ({
-                                ...prev,
-                                isSelecting: false,
-                                selectedField: null,
-                                ocrPreview: "Sélection annulée",
-                              }))
-                            }
-                            className="mt-2 px-3 py-1 bg-red-500/20 border border-red-400/30 text-red-100 rounded text-xs hover:bg-red-500/30 transition-colors"
-                          >
-                            Annuler la sélection
-                          </button>
-                        </div>
-                      )}
-
-                      {manualDrawState.isDrawing && (
-                        <div className="mb-4 p-3 bg-yellow-500/20 border border-yellow-400/30 rounded-xl">
-                          <p className="text-yellow-100 text-sm font-medium">
-                            ✏️ Mode dessin actif pour:{" "}
-                            <strong>{manualDrawState.fieldKey}</strong>
-                          </p>
-                          <p className="text-yellow-200 text-xs mt-1">
-                            Dessinez un rectangle sur la zone à extraire
-                          </p>
-                          <button
-                            onClick={() =>
-                              setManualDrawState({
-                                isDrawing: false,
-                                fieldKey: null,
-                                start: null,
-                                rect: null,
-                              })
-                            }
-                            className="mt-2 px-3 py-1 bg-red-500/20 border border-red-400/30 text-red-100 rounded text-xs hover:bg-red-500/30 transition-colors"
-                          >
-                            Annuler le dessin
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="space-y-3">
-                        {EXTRACTION_FIELDS.map((field) => {
-                          const rect = manualDrawState.isDrawing && manualDrawState.fieldKey === field.key && manualDrawState.rect ? manualDrawState.rect : null;
-                          return (
-                          <div
-                            key={field.key}
-                            className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 transition-all hover:bg-white/20"
-                          >
-                            <div className="flex items-center justify-between mb-2">
-                              <label className="text-sm font-medium text-blue-100">
-                                {field.label}
-                              </label>
-                              {dataPrepState.selectedBoxes[field.key] && (
-                                <div className="text-xs text-green-200 font-mono bg-green-500/20 px-2 py-1 rounded">
-                                  Mappé
-                                </div>
-                              )}
-                            </div>
-                            {dataPrepState.selectedBoxes[field.key] && (
-                              <div className="text-xs text-white bg-white/20 p-2 rounded mb-2 font-mono">
-                                "
-                                {filterValue(
-                                  dataPrepState.selectedBoxes[field.key].text,
-                                  field.key
-                                )}
-                                "
-                              </div>
-                            )}
-                              {/* Affiche le texte OCR extrait si disponible */}
-                              {ocrPreviewFields[field.key] && (
-                                <div className="text-xs text-green-200 mt-1">
-                                  <span className="font-bold">Texte extrait :</span> {ocrPreviewFields[field.key]}
-                                </div>
-                              )}
-                              {/* Affiche la taille de la zone en cours de sélection */}
-                              {rect && (
-                                <div className="text-xs text-blue-200 mt-1">
-                                  Zone sélectionnée : {Math.round(rect.width)}×{Math.round(rect.height)} px
-                                </div>
-                              )}
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => startFieldSelection(field.key)}
-                                disabled={
-                                  dataPrepState.isSelecting ||
-                                  !dataPrepState.uploadedImage ||
-                                  dataPrepState.ocrBoxes.length === 0
-                                }
-                                className={`flex-1 px-3 py-2 text-xs rounded-lg transition-colors ${
-                                  dataPrepState.selectedBoxes[field.key]
-                                    ? "bg-green-500/20 border border-green-400/30 text-green-100"
-                                    : "bg-blue-500/20 border border-blue-400/30 text-blue-100"
-                                } hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed`}
-                              >
-                                {dataPrepState.selectedBoxes[field.key]
-                                  ? "Changer"
-                                  : "Sélectionner"}
-                              </button>
-                              <button
-                                onClick={() => startManualDraw(field.key)}
-                                disabled={
-                                  manualDrawState.isDrawing ||
-                                  !dataPrepState.uploadedImage
-                                }
-                                className="flex-1 px-3 py-2 text-xs rounded-lg bg-yellow-500/20 border border-yellow-400/30 text-yellow-100 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                              >
-                                {dataPrepState.fieldMappings[field.key]?.manual
-                                  ? "Redessiner"
-                                  : "Dessiner"}
-                              </button>
-                            </div>
-                            {dataPrepState.fieldMappings[field.key]?.manual && (
-                              <div className="text-xs text-yellow-400 text-center mt-2 bg-yellow-500/20 py-1 rounded">
-                                [Manuel]
-                              </div>
-                            )}
-                          </div>
-                          );
-                        })}
+                  
+                      {/* Fournisseur textarea */}
+                      <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 mb-4">
+                        <label className="text-sm font-medium text-blue-100 mb-2 block">
+                          Fournisseur (saisie manuelle)
+                        </label>
+                        <textarea
+                          className="w-full px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                          rows={2}
+                          value={dataPrepState.fieldMappings.fournisseur?.manualValue || ""}
+                          onChange={e =>
+                            setDataPrepState(prev => ({
+                              ...prev,
+                              fieldMappings: {
+                                ...prev.fieldMappings,
+                                fournisseur: { manualValue: e.target.value, manual: true }
+                              }
+                            }))
+                          }
+                          placeholder="Entrez le nom du fournisseur"
+                        />
                       </div>
-
+                  
+                      {/* Numéro de Facture OCR/Draw */}
+                      <div className="bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20 transition-all hover:bg-white/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-sm font-medium text-blue-100">
+                            Numéro de Facture
+                          </label>
+                          {dataPrepState.selectedBoxes["numeroFacture"] && (
+                            <div className="text-xs text-green-200 font-mono bg-green-500/20 px-2 py-1 rounded">
+                              Mappé
+                            </div>
+                          )}
+                        </div>
+                        {dataPrepState.selectedBoxes["numeroFacture"] && (
+                          <div className="text-xs text-white bg-white/20 p-2 rounded mb-2 font-mono">
+                            "
+                            {filterValue(
+                              dataPrepState.selectedBoxes["numeroFacture"].text,
+                              "numeroFacture"
+                            )}
+                            "
+                          </div>
+                        )}
+                        {ocrPreviewFields["numeroFacture"] && (
+                          <div className="text-xs text-green-200 mt-1">
+                            <span className="font-bold">Texte extrait :</span> {ocrPreviewFields["numeroFacture"]}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => startFieldSelection("numeroFacture")}
+                            disabled={
+                              dataPrepState.isSelecting ||
+                              !dataPrepState.uploadedImage ||
+                              dataPrepState.ocrBoxes.length === 0
+                            }
+                            className={`flex-1 px-3 py-2 text-xs rounded-lg transition-colors ${
+                              dataPrepState.selectedBoxes["numeroFacture"]
+                                ? "bg-green-500/20 border border-green-400/30 text-green-100"
+                                : "bg-blue-500/20 border border-blue-400/30 text-blue-100"
+                            } hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed`}
+                          >
+                            {dataPrepState.selectedBoxes["numeroFacture"]
+                              ? "Changer"
+                              : "Sélectionner"}
+                          </button>
+                          <button
+                            onClick={() => startManualDraw("numeroFacture")}
+                            disabled={
+                              manualDrawState.isDrawing ||
+                              !dataPrepState.uploadedImage
+                            }
+                            className="flex-1 px-3 py-2 text-xs rounded-lg bg-yellow-500/20 border border-yellow-400/30 text-yellow-100 hover:opacity-80 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                          >
+                            {dataPrepState.fieldMappings["numeroFacture"]?.manual
+                              ? "Redessiner"
+                              : "Dessiner"}
+                          </button>
+                        </div>
+                        {dataPrepState.fieldMappings["numeroFacture"]?.manual && (
+                          <div className="text-xs text-yellow-400 text-center mt-2 bg-yellow-500/20 py-1 rounded">
+                            [Manuel]
+                          </div>
+                        )}
+                      </div>
+                  
                       <button
                         onClick={saveMappings}
                         disabled={
                           isLoading ||
-                          Object.keys(dataPrepState.selectedBoxes).length === 0
+                          (!dataPrepState.selectedBoxes["numeroFacture"] &&
+                            !dataPrepState.fieldMappings.fournisseur?.manualValue)
                         }
                         className="w-full mt-6 px-4 py-3 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold rounded-xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
                       >
@@ -2734,7 +2585,8 @@ const Extractor = () => {
                           </>
                         )}
                       </button>
-
+                  
+                      {/* Existing mappings unchanged */}
                       {Object.keys(mappings).length > 0 && (
                         <div className="mt-6 bg-white/10 backdrop-blur-md rounded-xl p-4 border border-white/20">
                           <h4 className="text-base font-semibold text-white mb-3">
@@ -2752,9 +2604,7 @@ const Extractor = () => {
                                     try {
                                       const response = await fetch(
                                         `${API_BASE_URL}/mappings/${key}`,
-                                        {
-                                          method: "DELETE",
-                                        }
+                                        { method: "DELETE" }
                                       );
                                       if (response.ok) {
                                         showNotification(

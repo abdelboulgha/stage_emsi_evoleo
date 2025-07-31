@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 2025-07-13 21:56:18,189 ERROR Form data requires "python-multipart" to be installed. 
 You can install "python-multipart" with: 
 
@@ -861,3 +862,20 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-07-31 01:21:58,469 INFO Database connection pool created successfully
 2025-07-31 02:08:04,960 INFO Database connection pool created successfully
 2025-07-31 11:53:33,050 INFO Database connection pool created successfully
+=======
+2025-07-30 21:33:40,475 INFO Database connection pool created successfully
+2025-07-30 21:44:07,615 INFO Database connection pool created successfully
+2025-07-30 21:45:26,051 INFO Database connection pool created successfully
+2025-07-30 21:48:14,454 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-07-30 21:48:14,454 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 21:48:14,455 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 21:50:00,477 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-07-30 21:50:00,477 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 21:50:00,478 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 21:50:42,706 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-07-30 21:50:42,706 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-07-30 21:50:42,707 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+>>>>>>> 4934eab0fb62b7989b1e1db19d862f8b23658217
+2025-07-31 12:16:55,882 INFO Database connection pool created successfully
+2025-07-31 15:54:45,856 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xe9' in position 4: ordinal not in range(128)
+2025-07-31 15:54:45,864 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
