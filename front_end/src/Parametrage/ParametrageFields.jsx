@@ -18,12 +18,18 @@ const ParametrageFields = ({
   setOcrPreviewFields,
 }) => {
   const FIELDS = [
-    { key: "fournisseur", label: "Fournisseur", type: "manual" },
-    { key: "numeroFacture", label: "Numéro de Facture", type: "ocr" },
-    { key: "tauxTVA", label: "Taux TVA", type: "ocr" },
-    { key: "montantHT", label: "Montant HT", type: "ocr" },
-    { key: "montantTVA", label: "Montant TVA", type: "ocr" },
-    { key: "montantTTC", label: "Montant TTC", type: "ocr" },
+    { 
+      key: "fournisseur", 
+      label: "Fournisseur", 
+      type: "manual",
+      description: "Saisissez le nom du fournisseur"
+    },
+    { 
+      key: "numFacture", 
+      label: "Numéro de Facture", 
+      type: "ocr",
+      description: "Sélectionnez le numéro sur le document"
+    },
   ];
 
   const handleFournisseurChange = (value) => {
@@ -50,24 +56,29 @@ const ParametrageFields = ({
               <label className="text-sm font-medium text-blue-100">
                 {field.label}
               </label>
-              <div className="flex gap-1">
+              <div className="flex flex-col gap-1 items-end">
                 {field.type === "ocr" && (
                   <>
                     <button
                       onClick={() => startFieldSelection(field.key)}
-                      className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+                      className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors w-full"
                     >
                       Sélectionner
                     </button>
                     <button
                       onClick={() => startManualDraw(field.key)}
-                      className="px-2 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors"
+                      className="px-2 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors w-full"
                     >
                       Dessiner
                     </button>
                   </>
                 )}
               </div>
+            </div>
+
+            {/* Field description */}
+            <div className="text-xs text-blue-200 mb-2">
+              {field.description}
             </div>
 
             {/* Fournisseur input field */}
@@ -79,6 +90,18 @@ const ParametrageFields = ({
                 placeholder="Saisissez le nom du fournisseur"
                 className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
               />
+            )}
+
+            {/* Display OCR extracted value for OCR fields */}
+            {field.type === "ocr" && dataPrepState.fieldMappings[field.key] && (
+              <div className="mt-2 px-3 py-2 bg-blue-600/20 text-blue-100 rounded text-xs font-medium">
+                <div className="flex justify-between items-center">
+                  <span>Valeur extraite:</span>
+                  <span className="font-semibold">
+                    {ocrPreviewFields[field.key] || "Aucune valeur extraite"}
+                  </span>
+                </div>
+              </div>
             )}
 
             {/* Status indicator */}
@@ -95,23 +118,6 @@ const ParametrageFields = ({
                 </div>
               )}
             </div>
-
-            {/* OCR Preview */}
-            {ocrPreviewFields[field.key] && (
-              <div className="mt-2 p-2 bg-blue-500/20 rounded text-xs text-blue-200">
-                <strong>OCR:</strong> {ocrPreviewFields[field.key]}
-              </div>
-            )}
-
-            {/* Coordinates display */}
-            {dataPrepState.fieldMappings[field.key] && field.key !== "fournisseur" && (
-              <div className="mt-2 p-2 bg-gray-500/20 rounded text-xs text-gray-300">
-                <div>L: {Math.round(dataPrepState.fieldMappings[field.key].left)}</div>
-                <div>T: {Math.round(dataPrepState.fieldMappings[field.key].top)}</div>
-                <div>W: {Math.round(dataPrepState.fieldMappings[field.key].width)}</div>
-                <div>H: {Math.round(dataPrepState.fieldMappings[field.key].height)}</div>
-              </div>
-            )}
           </div>
         ))}
       </div>
@@ -164,4 +170,4 @@ const ParametrageFields = ({
   );
 };
 
-export default ParametrageFields; 
+export default ParametrageFields;

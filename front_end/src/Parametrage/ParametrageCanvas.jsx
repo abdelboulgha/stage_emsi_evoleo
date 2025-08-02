@@ -1,4 +1,5 @@
 import React from "react";
+import { ZoomIn, ZoomOut, Upload } from "lucide-react";
 
 const ParametrageCanvas = ({
   dataPrepState,
@@ -10,16 +11,40 @@ const ParametrageCanvas = ({
   handleCanvasMouseMove,
   handleCanvasMouseUp,
   drawOcrBox,
+  handleDataPrepFileUpload,
+  handleZoomChange,
 }) => {
   return (
     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Zone de Mapping</h3>
-        {dataPrepState.uploadedImage && (
-          <div className="text-sm text-blue-200">
-            Zoom: {Math.round(dataPrepState.currentZoom * 100)}%
-          </div>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleDataPrepFileUpload}
+            className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+          >
+            <Upload className="w-4 h-4 mr-1" /> Nouveau fichier
+          </button>
+          {dataPrepState.uploadedImage && (
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-blue-200">
+                Zoom: {Math.round(dataPrepState.currentZoom * 100)}%
+              </span>
+              <button
+                onClick={() => handleZoomChange(0.8)}
+                className="px-2 py-1 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
+              >
+                <ZoomOut className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => handleZoomChange(1.25)}
+                className="px-2 py-1 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
+              >
+                <ZoomIn className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {dataPrepState.uploadedImage ? (
@@ -47,15 +72,6 @@ const ParametrageCanvas = ({
             />
           </div>
 
-          {/* Status indicator */}
-          <div className="absolute top-4 left-4 bg-black/70 text-white px-3 py-1 rounded-lg text-sm">
-            {dataPrepState.isSelecting
-              ? `Sélection: ${dataPrepState.selectedField}`
-              : manualDrawState.isDrawing
-              ? `Dessin: ${manualDrawState.fieldKey}`
-              : "Prêt"}
-          </div>
-
           {/* OCR Preview */}
           {dataPrepState.ocrPreview && (
             <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white p-3 rounded-lg text-sm">
@@ -77,4 +93,4 @@ const ParametrageCanvas = ({
   );
 };
 
-export default ParametrageCanvas; 
+export default ParametrageCanvas;

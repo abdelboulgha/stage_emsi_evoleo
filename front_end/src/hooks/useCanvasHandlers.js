@@ -67,7 +67,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
             fieldMappings: fieldMappingsUpdate,
             isSelecting: false,
             selectedField: null,
-            ocrPreview: `Boîte assignée à ${prev.selectedField}: "${clickedBox.text}"`,
+            ocrPreview: "", // Removed the "Boîte assignée à" message
           }));
 
           showNotification(
@@ -271,4 +271,4 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
     drawOcrBox,
     redrawCanvas,
   };
-}; 
+};

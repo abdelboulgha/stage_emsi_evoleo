@@ -886,3 +886,4 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-08-02 13:44:05,265 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
 2025-08-02 13:44:05,265 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
 2025-08-02 13:44:05,265 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-02 14:04:07,034 INFO Database connection pool created successfully

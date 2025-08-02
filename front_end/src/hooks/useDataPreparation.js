@@ -85,7 +85,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         ...prev,
         isSelecting: true,
         selectedField: fieldKey,
-        ocrPreview: `Mode sélection activé pour "${fieldKey}". Cliquez sur une boîte OCR rouge.`,
+       
       }));
 
       showNotification(`Sélectionnez une boîte OCR pour "${fieldKey}"`, "info");
@@ -99,7 +99,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
       ...prev,
       isSelecting: false,
       selectedField: null,
-      ocrPreview: `Mode dessin activé pour "${fieldKey}". Dessinez un rectangle.`,
+      
     }));
 
     showNotification(
