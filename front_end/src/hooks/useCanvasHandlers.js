@@ -67,7 +67,13 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
             fieldMappings: fieldMappingsUpdate,
             isSelecting: false,
             selectedField: null,
-            ocrPreview: "", // Removed the "Boîte assignée à" message
+            ocrPreview: `Boîte assignée à ${prev.selectedField}: "${clickedBox.text}"`,
+          }));
+
+          // Update ocrPreviewFields to show the text in the "Valeur extraite" field
+          setOcrPreviewFields(prev => ({
+            ...prev,
+            [dataPrepState.selectedField]: clickedBox.text
           }));
 
           showNotification(

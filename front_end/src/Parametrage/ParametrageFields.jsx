@@ -25,7 +25,7 @@ const ParametrageFields = ({
       description: "Saisissez le nom du fournisseur"
     },
     { 
-      key: "numFacture", 
+      key: "numeroFacture", 
       label: "Numéro de Facture", 
       type: "ocr",
       description: "Sélectionnez le numéro sur le document"

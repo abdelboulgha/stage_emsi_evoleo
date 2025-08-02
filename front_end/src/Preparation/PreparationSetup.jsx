@@ -139,14 +139,23 @@ const PreparationSetup = ({
                       }))
                     }
                     className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    }}
                     required
                   >
-                    <option value="">Sélectionnez un fournisseur</option>
-                    {Object.keys(mappings).map((tpl) => (
-                      <option key={tpl} value={tpl}>
-                        {tpl}
-                      </option>
-                    ))}
+                                         <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
+                       Sélectionnez un fournisseur
+                     </option>
+                     {Object.keys(mappings).map((tpl) => (
+                       <option 
+                         key={tpl} 
+                         value={tpl}
+                         style={{ color: 'black', backgroundColor: 'white' }}
+                       >
+                         {tpl}
+                       </option>
+                     ))}
                   </select>
                   {!setupState.selectedModel && (
                     <p className="text-yellow-300 text-sm mt-1">
