@@ -1,6 +1,6 @@
-Fournisseur: ee
-Numéro Facture: FACTURE ELECTRICITEN2025207462845
-Taux TVA: 18
-Montant HT: 194.86
-Montant TVA: 34.97
-Montant TTC: 229.83
+Fournisseur: Capi_0001rr
+Numéro Facture: IN2411-0001
+Taux TVA: 20
+Montant HT: 275
+Montant TVA: 55
+Montant TTC: 330
