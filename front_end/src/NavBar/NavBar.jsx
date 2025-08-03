@@ -4,6 +4,7 @@ import {
   Search,
   ZoomIn,
   ArrowRight,
+  RefreshCw,
 } from "lucide-react";
 
 const NavBar = ({ currentStep, setCurrentStep }) => {
@@ -16,7 +17,9 @@ const NavBar = ({ currentStep, setCurrentStep }) => {
               ? "Configuration Comptable"
               : currentStep === "extract"
               ? "Extraction de Factures"
-              : "Configuration des Mappings"}
+              : currentStep === "dataprep"
+              ? "Configuration des Mappings"
+              : "Mise à jour des Factures"}
           </h1>
         </div>
 
@@ -55,6 +58,18 @@ const NavBar = ({ currentStep, setCurrentStep }) => {
           >
             <ZoomIn className="w-4 h-4" />
             <span className="font-medium">3. Paramétrage</span>
+          </div>
+          <ArrowRight className="w-4 h-4 text-white/50" />
+          <div
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
+              currentStep === "miseajour"
+                ? "bg-white text-indigo-600"
+                : "text-white/70 hover:text-white"
+            }`}
+            onClick={() => setCurrentStep("miseajour")}
+          >
+            <RefreshCw className="w-4 h-4" />
+            <span className="font-medium">4. Mise à jour</span>
           </div>
         </div>
       </div>

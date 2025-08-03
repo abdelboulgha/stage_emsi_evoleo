@@ -18,12 +18,12 @@ import { useCanvasHandlers } from "../hooks/useCanvasHandlers";
 import { useExtraction } from "../hooks/useExtraction";
 import { useInvoiceSelection } from "../hooks/useInvoiceSelection";
 
-const ExtractorNew = () => {
+const ExtractorNew = ({ currentStep, setCurrentStep }) => {
   // États et refs
   const state = useExtractorState();
   const {
     manualDrawState, setManualDrawState,
-    currentStep, setCurrentStep,
+    // Remove local currentStep/setCurrentStep, use props instead
     mappings, setMappings,
     isLoading, setIsLoading,
     notifications, setNotifications,
@@ -163,10 +163,7 @@ const ExtractorNew = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 w-full">
-      <NavBar currentStep={currentStep} setCurrentStep={setCurrentStep} />
-      
       <Notifications notifications={notifications} />
-
       <main className="w-full px-4 py-6">
         {currentStep === "setup" && (
           <PreparationSetup
@@ -181,7 +178,6 @@ const ExtractorNew = () => {
             showNotification={showNotification}
           />
         )}
-
         {currentStep === "extract" && (
           <>
             <ExtractionMain
@@ -207,8 +203,6 @@ const ExtractorNew = () => {
               setIsLoading={setIsLoading}
               setDataPrepState={setDataPrepState}
             />
-            
-            {/* Invoice Selection Modal */}
             {invoiceSelection.isOpen && (
               <InvoiceSelectionModal
                 invoiceSelection={invoiceSelection}
@@ -219,8 +213,6 @@ const ExtractorNew = () => {
                 handleSaveInvoices={handleSaveInvoices}
               />
             )}
-
-            {/* Model Selection Modal */}
             {showModelSelectModal && createPortal(
               <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
                 <div className="bg-white rounded-2xl w-full max-w-md flex flex-col">
@@ -243,7 +235,6 @@ const ExtractorNew = () => {
                       onClick={async () => {
                         if (!modalSelectedTemplateId) return;
                         setShowModelSelectModal(false);
-                        // Lance l'extraction pour la page sélectionnée
                         await extractCurrentPdf(modalSelectedTemplateId, pendingExtractIndex);
                       }}
                       disabled={!modalSelectedTemplateId}
@@ -264,7 +255,6 @@ const ExtractorNew = () => {
             )}
           </>
         )}
-
         {currentStep === "dataprep" && (
           <ParametrageMain
             dataPrepState={dataPrepState}

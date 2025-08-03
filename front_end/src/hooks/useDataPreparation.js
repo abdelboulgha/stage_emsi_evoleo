@@ -10,9 +10,14 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
 
   const handleDataPrepFileUpload = useCallback(
     async (event) => {
-      const file = event.target.files[0];
-      if (!file) return;
-      
+      const files = event.target.files;
+      if (!files || files.length === 0) {
+        showNotification("Aucun fichier sélectionné", "error");
+        return;
+      }
+     
+      const file = files[0];
+
       setCurrentStep("dataprep");
       setIsLoading(true);
 
@@ -116,24 +121,13 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
 
     // Build the field_map to send
     const field_map = {};
-    // Only include fournisseur if filled
-    if (dataPrepState.fieldMappings.fournisseur?.manualValue) {
-      field_map.fournisseur = {
-        left: 0,
-        top: 0,
-        width: 0,
-        height: 0,
-        manual: true,
-        text: dataPrepState.fieldMappings.fournisseur.manualValue,
-      };
-    }
     // Only include numeroFacture if mapped
     if (dataPrepState.fieldMappings.numeroFacture) {
       field_map.numeroFacture = dataPrepState.fieldMappings.numeroFacture;
     }
 
-    if (!field_map.fournisseur && !field_map.numeroFacture) {
-      showNotification("Veuillez saisir le fournisseur ou mapper le numéro de facture", "error");
+    if (!field_map.numeroFacture) {
+      showNotification("Veuillez mapper le numéro de facture", "error");
       return;
     }
 
@@ -154,7 +148,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
       }
       let templateId = "untitled";
       if (dataPrepState.fieldMappings.fournisseur?.manualValue) {
-        templateId = dataPrepState.fieldMappings.fournisseur.manualValue
+        templateId = dataPrepState.fieldMappings.fournisseur.manualValue;
       }
       if (!templateId) templateId = "untitled";
 
@@ -221,4 +215,4 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
     ocrPreviewManual,
     getDefaultZoom,
   };
-}; 
+};

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { ZoomIn, ZoomOut, Upload } from "lucide-react";
 
 const ParametrageCanvas = ({
@@ -14,17 +14,36 @@ const ParametrageCanvas = ({
   handleDataPrepFileUpload,
   handleZoomChange,
 }) => {
+  // Ref for the hidden file input
+  const fileInputRef = useRef(null);
+
+  // Handler to trigger file input
+  const triggerFileInput = () => {
+    if (fileInputRef.current) fileInputRef.current.value = ""; // allow re-upload same file
+    fileInputRef.current?.click();
+  };
+
   return (
     <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white">Zone de Mapping</h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-6 justify-center w-full">
+          {/* Centered button with icon on left */}
           <button
-            onClick={handleDataPrepFileUpload}
-            className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+            type="button"
+            onClick={triggerFileInput}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
           >
-            <Upload className="w-4 h-4 mr-1" /> Nouveau fichier
+            <Upload className="w-4 h-4" />
+            Nouveau fichier
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*,application/pdf"
+            style={{ display: "none" }}
+            onChange={handleDataPrepFileUpload}
+          />
           {dataPrepState.uploadedImage && (
             <div className="flex items-center gap-2">
               <span className="text-sm text-blue-200">
