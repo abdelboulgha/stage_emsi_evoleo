@@ -131,11 +131,7 @@ const LoginForm = ({ onSwitchToRegister }) => {
           </p>
         </div>
 
-        <div className="auth-info">
-          <p><strong>Compte par défaut :</strong></p>
-          <p>Email: admin@evoleo.com</p>
-          <p>Mot de passe: admin123</p>
-        </div>
+        
       </div>
     </div>
   );

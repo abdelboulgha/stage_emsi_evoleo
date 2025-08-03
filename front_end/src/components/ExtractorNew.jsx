@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 // Import des composants modulaires
-import NavBar from "../NavBar/NavBar";
 import Notifications from "../NavBar/Notifications";
 import PreparationSetup from "../Preparation/PreparationSetup";
 import ExtractionMain from "../Extraction/ExtractionMain";
@@ -18,12 +17,14 @@ import { useCanvasHandlers } from "../hooks/useCanvasHandlers";
 import { useExtraction } from "../hooks/useExtraction";
 import { useInvoiceSelection } from "../hooks/useInvoiceSelection";
 
-const ExtractorNew = () => {
+// Import du CSS
+import './ExtractorNew.css';
+
+const ExtractorNew = ({ currentStep, setCurrentStep }) => {
   // États et refs
   const state = useExtractorState();
   const {
     manualDrawState, setManualDrawState,
-    currentStep, setCurrentStep,
     mappings, setMappings,
     isLoading, setIsLoading,
     notifications, setNotifications,
@@ -162,12 +163,10 @@ const ExtractorNew = () => {
   }, [handleCanvasMouseDown, handleCanvasMouseMove, handleCanvasMouseUp]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900 w-full">
-      <NavBar currentStep={currentStep} setCurrentStep={setCurrentStep} />
-      
+    <div className="extractor-container">
       <Notifications notifications={notifications} />
 
-      <main className="w-full px-4 py-6">
+      <div className="extractor-content">
         {currentStep === "setup" && (
           <PreparationSetup
             setupState={setupState}
@@ -289,7 +288,7 @@ const ExtractorNew = () => {
             setOcrPreviewFields={setOcrPreviewFields}
           />
         )}
-      </main>
+      </div>
     </div>
   );
 };

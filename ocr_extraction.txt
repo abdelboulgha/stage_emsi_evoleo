@@ -1,4 +1,4 @@
-Fournisseur: Capi_0001
+Fournisseur: Capi_0001fgd
 Numéro Facture: IN2411-0001
 Taux TVA: 20
 Montant HT: 275

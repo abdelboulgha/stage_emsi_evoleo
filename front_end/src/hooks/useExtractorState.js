@@ -8,7 +8,6 @@ export const useExtractorState = () => {
     rect: null,
   });
 
-  const [currentStep, setCurrentStep] = useState("setup");
   const [mappings, setMappings] = useState({});
   const [isLoading, setIsLoading] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -71,7 +70,6 @@ export const useExtractorState = () => {
   return {
     // États principaux
     manualDrawState, setManualDrawState,
-    currentStep, setCurrentStep,
     mappings, setMappings,
     isLoading, setIsLoading,
     notifications, setNotifications,

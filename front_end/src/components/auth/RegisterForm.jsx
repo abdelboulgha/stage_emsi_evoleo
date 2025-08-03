@@ -207,10 +207,7 @@ const RegisterForm = ({ onSwitchToLogin }) => {
           </p>
         </div>
 
-        <div className="auth-info">
-          <p><strong>Note :</strong> Par défaut, votre compte sera créé avec le rôle "comptable".</p>
-          <p>Un administrateur peut modifier votre rôle si nécessaire.</p>
-        </div>
+        
       </div>
     </div>
   );

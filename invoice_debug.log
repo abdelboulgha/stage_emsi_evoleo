@@ -943,3 +943,7 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-08-03 16:56:37,922 ERROR Erreur lors de la conversion PDF en images: Failed to open stream
 2025-08-03 16:56:37,922 ERROR Erreur lors de l'upload: Failed to open stream
 2025-08-03 17:06:29,282 INFO Database connection pool created successfully
+2025-08-03 19:47:38,670 INFO Database connection pool created successfully
+2025-08-03 20:00:13,670 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-08-03 20:00:13,670 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-03 20:00:13,670 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
