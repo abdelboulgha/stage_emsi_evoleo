@@ -2,21 +2,21 @@
   "success": true,
   "data": {},
   "corrected_data": {
-    "fournisseur": "Capi_0001fgd",
-    "numeroFacture": "IN2411-0001",
-    "tauxTVA": "20",
-    "montantHT": "275",
-    "montantTVA": "55",
-    "montantTTC": "330"
+    "fournisseur": "radema88T",
+    "numeroFacture": "2025207462845",
+    "tauxTVA": "18",
+    "montantHT": "194.86",
+    "montantTVA": "34.97",
+    "montantTTC": "229.83"
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-03 20:00:13.659285",
+  "timestamp": "2025-08-03 21:42:48.574392",
   "fields": {
-    "fournisseur": "Capi_0001fgd",
-    "numeroFacture": "IN2411-0001",
-    "tauxTVA": "20",
-    "montantHT": "275",
-    "montantTVA": "55",
-    "montantTTC": "330"
+    "fournisseur": "radema88T",
+    "numeroFacture": "2025207462845",
+    "tauxTVA": "18",
+    "montantHT": "194.86",
+    "montantTVA": "34.97",
+    "montantTTC": "229.83"
   }
 }

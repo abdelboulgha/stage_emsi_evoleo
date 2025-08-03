@@ -23,7 +23,7 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
           // Return the invoice data with proper types
           return {
             fournisseur,
-            numeroFacture,
+            numFacture: numeroFacture, // Map numeroFacture to numFacture for backend
             tauxTVA: parseFloat(tauxTVA) || 0,
             montantHT: parseFloat(montantHT) || 0,
             montantTVA: parseFloat(montantTVA) || 0,

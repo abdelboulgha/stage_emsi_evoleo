@@ -3,6 +3,7 @@ import { useAuth } from '../contexts/AuthContext';
 import AuthPage from './auth/AuthPage';
 import ExtractorNew from './ExtractorNew';
 import UserManagement from './auth/UserManagement';
+import MiseAJourPage from '../MiseAJour/MiseAJourPage';
 import StepNavigation from './StepNavigation';
 import './AppContent.css';
 
@@ -41,6 +42,8 @@ const AppContent = () => {
         return <ExtractorNew currentStep={currentStep} setCurrentStep={setCurrentStep} />;
       case 'users':
         return <UserManagement />;
+      case 'miseajour':
+        return <MiseAJourPage />;
       default:
         return <ExtractorNew currentStep={currentStep} setCurrentStep={setCurrentStep} />;
     }
@@ -55,12 +58,54 @@ const AppContent = () => {
           </div>
           
           <div className="header-center">
-            {currentView === 'extractor' && (
-              <StepNavigation currentStep={currentStep} setCurrentStep={setCurrentStep} />
-            )}
+            <div className="main-nav-buttons">
+              <button 
+                className={`main-nav-button ${currentView === 'extractor' && currentStep === 'setup' ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentView('extractor');
+                  setCurrentStep('setup');
+                }}
+              >
+                Préparation
+              </button>
+              <button 
+                className={`main-nav-button ${currentView === 'extractor' && currentStep === 'extract' ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentView('extractor');
+                  setCurrentStep('extract');
+                }}
+              >
+                Extraction
+              </button>
+              <button 
+                className={`main-nav-button ${currentView === 'extractor' && currentStep === 'dataprep' ? 'active' : ''}`}
+                onClick={() => {
+                  setCurrentView('extractor');
+                  setCurrentStep('dataprep');
+                }}
+              >
+                Paramétrage
+              </button>
+              <button 
+                className={`main-nav-button ${currentView === 'miseajour' ? 'active' : ''}`}
+                onClick={() => setCurrentView('miseajour')}
+              >
+                Mise à jour
+              </button>
+            </div>
           </div>
           
           <div className="header-right">
+            {isAdmin() && (
+              <div className="admin-nav-buttons">
+                <button 
+                  className={`nav-button ${currentView === 'users' ? 'active' : ''}`}
+                  onClick={() => setCurrentView('users')}
+                >
+                  Gestion Utilisateurs
+                </button>
+              </div>
+            )}
             <div className="user-info">
               <span className="user-name">{user.prenom} {user.nom}</span>
               <span className={`user-role ${user.role}`}>

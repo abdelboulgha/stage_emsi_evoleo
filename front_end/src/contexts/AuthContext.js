@@ -19,6 +19,7 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const initAuth = async () => {
       const storedToken = localStorage.getItem('token');
+      console.log("Token stocké trouvé:", storedToken ? "Oui" : "Non");
       if (storedToken) {
         try {
           // Vérifier si le token est valide
@@ -28,12 +29,16 @@ export const AuthProvider = ({ children }) => {
             }
           });
           
+          console.log("Réponse /auth/me:", response.status, response.statusText);
+          
           if (response.ok) {
             const userData = await response.json();
             setUser(userData);
             setToken(storedToken);
+            console.log("Token validé, utilisateur connecté:", userData.email);
           } else {
             // Token invalide, le supprimer
+            console.log("Token invalide, suppression...");
             localStorage.removeItem('token');
           }
         } catch (error) {

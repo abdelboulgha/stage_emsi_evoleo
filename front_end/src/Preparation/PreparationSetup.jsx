@@ -144,50 +144,51 @@ const PreparationSetup = ({
                     }}
                     required
                   >
-                                         <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
-                       Sélectionnez un fournisseur
-                     </option>
-                     {Object.keys(mappings).map((tpl) => (
-                       <option 
-                         key={tpl} 
-                         value={tpl}
-                         style={{ color: 'black', backgroundColor: 'white' }}
-                       >
-                         {tpl}
-                       </option>
-                     ))}
+
+                    <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
+                      Sélectionnez un fournisseur
+                    </option>
+                    {Object.keys(mappings).map((tpl) => (
+                      <option 
+                        key={tpl} 
+                        value={tpl}
+                        style={{ color: 'black', backgroundColor: 'white' }}
+                      >
+                        {tpl}
+                      </option>
+                    ))}
                   </select>
                   {!setupState.selectedModel && (
                     <p className="text-yellow-300 text-sm mt-1">
-                      ⚠️ Veuillez sélectionner un modèle pour continuer
+                      ⚠️ Veuillez sélectionner un fournisseur pour continuer
                     </p>
                   )}
                 </div>
 
-                <div className="mb-6">
-                  <input
-                    type="file"
-                    accept=".pdf,.png,.jpg,.jpeg"
-                    multiple
-                    onChange={handleSetupFileUpload}
-                    className="hidden"
-                    id="setup-file-input"
-                  />
-                  <label
-                    htmlFor="setup-file-input"
-                    className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:border-white/50 transition-colors bg-white/10"
-                  >
-                    <Upload className="w-12 h-12 text-blue-200 mb-4" />
-                    <span className="text-white font-medium text-lg mb-2">
-                      Glissez vos fichiers ici ou cliquez pour
-                      sélectionner
-                    </span>
-                    <span className="text-blue-200 text-sm">
-                      PDF, PNG, JPG acceptés • Plusieurs fichiers
-                      possible
-                    </span>
-                  </label>
-                </div>
+                {setupState.selectedModel && (
+                  <div className="mb-6">
+                    <input
+                      type="file"
+                      accept=".pdf,.png,.jpg,.jpeg"
+                      multiple
+                      onChange={handleSetupFileUpload}
+                      className="hidden"
+                      id="setup-file-input"
+                    />
+                    <label
+                      htmlFor="setup-file-input"
+                      className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:border-white/50 transition-colors bg-white/10"
+                    >
+                      <Upload className="w-12 h-12 text-blue-200 mb-4" />
+                      <span className="text-white font-medium text-lg mb-2">
+                        Glissez vos fichiers ici ou cliquez pour sélectionner
+                      </span>
+                      <span className="text-blue-200 text-sm">
+                        PDF, PNG, JPG acceptés • Plusieurs fichiers possible
+                      </span>
+                    </label>
+                  </div>
+                )}
 
                 {setupState.filePreviews.length > 0 && (
                   <div>

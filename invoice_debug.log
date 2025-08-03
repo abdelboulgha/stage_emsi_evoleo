@@ -891,6 +891,7 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-08-02 16:38:19,780 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
 2025-08-02 16:38:19,782 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
 2025-08-02 16:38:19,784 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+<<<<<<< HEAD
 2025-08-03 16:29:18,865 INFO Database connection pool created successfully
 2025-08-03 16:29:22,366 INFO Database connection pool created successfully
 2025-08-03 16:29:29,085 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
@@ -947,3 +948,178 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-08-03 20:00:13,670 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
 2025-08-03 20:00:13,670 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
 2025-08-03 20:00:13,670 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+=======
+2025-08-03 12:35:33,163 ERROR Error creating connection pool: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-03 12:35:33,163 WARNING Continuing without database connection pool
+2025-08-03 12:36:02,860 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:02,891 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:07,602 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:07,607 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:08,627 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:08,631 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:09,541 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:09,546 ERROR Error loading all mappings: Database connection pool not available
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 432, in get_mappings
+    connection = get_connection()
+                 ^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\main.py", line 117, in get_connection
+    raise Exception("Database connection pool not available")
+Exception: Database connection pool not available
+2025-08-03 12:36:27,429 INFO Database connection pool created successfully
+2025-08-03 13:45:40,505 INFO Database connection pool created successfully
+2025-08-03 15:00:50,015 INFO Database connection pool created successfully
+2025-08-03 15:02:01,802 ERROR Error listing factures: 1146 (42S02): Table 'evoleo.factures' doesn't exist
+2025-08-03 15:02:01,807 ERROR Error listing factures: 1146 (42S02): Table 'evoleo.factures' doesn't exist
+2025-08-03 15:02:56,231 INFO Database connection pool created successfully
+2025-08-03 15:03:11,815 INFO Database connection pool created successfully
+2025-08-03 15:04:23,475 ERROR Error listing factures: 1054 (42S22): Unknown column 'numeroFacture' in 'where clause'
+2025-08-03 15:04:23,481 ERROR Error listing factures: 1054 (42S22): Unknown column 'numeroFacture' in 'where clause'
+2025-08-03 15:05:02,845 INFO Database connection pool created successfully
+2025-08-03 15:06:40,722 INFO Database connection pool created successfully
+2025-08-03 15:07:17,906 INFO Database connection pool created successfully
+2025-08-03 15:11:33,423 INFO Database connection pool created successfully
+2025-08-03 15:12:44,156 INFO Database connection pool created successfully
+2025-08-03 15:16:43,856 INFO Database connection pool created successfully
+2025-08-03 15:18:36,216 INFO Database connection pool created successfully
+2025-08-03 15:21:30,527 INFO Database connection pool created successfully
+2025-08-03 15:22:53,542 INFO Database connection pool created successfully
+2025-08-03 15:24:05,182 INFO Database connection pool created successfully
+2025-08-03 15:25:34,759 INFO Database connection pool created successfully
+2025-08-03 15:27:50,836 INFO Database connection pool created successfully
+2025-08-03 15:28:30,589 INFO Database connection pool created successfully
+2025-08-03 15:32:50,775 INFO Database connection pool created successfully
+2025-08-03 15:33:18,206 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:33:24,819 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:33:28,937 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:33:40,753 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:33:47,711 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:33:54,543 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:34:00,599 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:34:08,948 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:34:47,494 INFO Database connection pool created successfully
+2025-08-03 15:36:20,627 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:36:26,895 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:36:37,668 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:36:47,270 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:37:02,875 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:37:16,840 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:37:32,096 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:37:38,417 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:37:44,978 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:38:18,888 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:39:00,412 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 15:41:48,076 INFO Database connection pool created successfully
+2025-08-03 16:12:33,038 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:13:26,643 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:15:51,636 INFO Database connection pool created successfully
+2025-08-03 16:17:38,252 INFO Database connection pool created successfully
+2025-08-03 16:19:35,474 INFO Database connection pool created successfully
+2025-08-03 16:20:20,336 INFO Database connection pool created successfully
+2025-08-03 16:20:46,805 INFO Database connection pool created successfully
+2025-08-03 16:24:21,933 INFO Database connection pool created successfully
+2025-08-03 16:24:59,609 INFO Database connection pool created successfully
+2025-08-03 16:37:11,916 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:37:15,625 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:37:36,773 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:37:38,940 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:39:48,653 INFO Database connection pool created successfully
+2025-08-03 16:45:38,310 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:49:27,570 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 16:52:45,085 INFO Database connection pool created successfully
+2025-08-03 17:03:03,896 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:03:12,862 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:05:08,697 INFO Database connection pool created successfully
+2025-08-03 17:06:14,744 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:06:54,361 INFO Database connection pool created successfully
+2025-08-03 17:07:31,427 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:08:00,033 INFO Database connection pool created successfully
+2025-08-03 17:08:51,820 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:11:49,919 INFO Database connection pool created successfully
+2025-08-03 17:15:28,184 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:16:00,579 INFO Database connection pool created successfully
+2025-08-03 17:16:33,497 INFO Database connection pool created successfully
+2025-08-03 17:30:44,443 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:33:53,099 INFO Database connection pool created successfully
+2025-08-03 17:35:05,335 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:35:47,740 INFO Database connection pool created successfully
+2025-08-03 17:45:25,862 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 17:46:09,029 INFO Database connection pool created successfully
+>>>>>>> 05a5d52986a15d1c7c24a1e1251fae0caaf4c8c8
+2025-08-03 20:56:41,988 INFO Database connection pool created successfully
+2025-08-03 21:02:18,138 INFO Database connection pool created successfully
+2025-08-03 21:08:48,792 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-08-03 21:08:48,792 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-03 21:08:48,792 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-03 21:13:13,328 ERROR Error listing factures: 1054 (42S22): Unknown column 'date_creation' in 'order clause'
+2025-08-03 21:13:13,337 ERROR Error listing factures: 1054 (42S22): Unknown column 'date_creation' in 'order clause'
+2025-08-03 21:13:29,613 ERROR Error listing factures: 1054 (42S22): Unknown column 'date_creation' in 'order clause'
+2025-08-03 21:13:29,618 ERROR Error listing factures: 1054 (42S22): Unknown column 'date_creation' in 'order clause'
+2025-08-03 21:14:56,481 INFO Database connection pool created successfully
+2025-08-03 21:15:53,581 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:36,035 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:37,666 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:38,414 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:41,190 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:42,385 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:43,059 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:43,391 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:43,605 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:20:50,061 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:35:30,304 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:35:50,933 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:36:28,949 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:36:41,812 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-03 21:37:28,205 ERROR Erreur de décodage JWT: Signature has expired.
+2025-08-03 21:42:48,585 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-08-03 21:42:48,585 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-03 21:42:48,585 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'

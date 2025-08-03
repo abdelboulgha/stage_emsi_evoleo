@@ -59,12 +59,84 @@
     flex: 2;
 }
 
+.main-nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.main-nav-button {
+    padding: 0.75rem 1.25rem;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    color: #4a5568;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    min-width: 100px;
+    text-align: center;
+}
+
+.main-nav-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #2d3748;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.main-nav-button.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transform: translateY(-1px);
+}
+
+.admin-nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
 .header-right {
     display: flex;
     align-items: center;
     gap: 1.5rem;
     flex: 1;
     justify-content: flex-end;
+}
+
+.nav-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.nav-button {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    color: #4a5568;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.nav-button:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: #2d3748;
+    transform: translateY(-1px);
+}
+
+.nav-button.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
 }
 
 .user-info {
@@ -296,6 +368,27 @@
         justify-content: center;
     }
 
+    .main-nav-buttons {
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .main-nav-button {
+        padding: 0.5rem 1rem;
+        font-size: 0.8rem;
+        min-width: 80px;
+    }
+
+    .nav-buttons {
+        gap: 0.25rem;
+    }
+
+    .nav-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+    }
+
     .user-info {
         align-items: center;
     }
@@ -316,6 +409,16 @@
 }
 
 @media (max-width: 480px) {
+    .main-nav-buttons {
+        gap: 0.25rem;
+    }
+
+    .main-nav-button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+        min-width: 70px;
+    }
+
     .header-right {
         flex-direction: column;
         gap: 0.5rem;

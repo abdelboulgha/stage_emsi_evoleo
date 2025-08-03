@@ -1,8 +1,8 @@
 import re
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Depends
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Depends, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, FileResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional, Dict, List, Any, Union
 import json
 import os
@@ -1556,14 +1556,232 @@ async def delete_mapping(template_id: str):
         if connection and connection.is_connected():
             connection.close()
 
-# Pydantic model for invoice data
+# Pydantic models for invoice data
 class InvoiceData(BaseModel):
     fournisseur: str
-    numeroFacture: str
+    numFacture: str
     tauxTVA: float
     montantHT: float
     montantTVA: float
     montantTTC: float
+    
+    class Config:
+        extra = 'ignore'  # Ignore les champs supplémentaires
+        validate_assignment = True
+    
+    @validator('tauxTVA', 'montantHT', 'montantTVA', 'montantTTC', pre=True)
+    def validate_numbers(cls, v):
+        if isinstance(v, str):
+            try:
+                return float(v.replace(',', '.'))
+            except ValueError:
+                raise ValueError(f"Impossible de convertir '{v}' en nombre")
+        return v
+
+class InvoiceUpdate(BaseModel):
+    fournisseur: Optional[str] = None
+    numFacture: Optional[str] = None
+    tauxTVA: Optional[float] = None
+    montantHT: Optional[float] = None
+    montantTVA: Optional[float] = None
+    montantTTC: Optional[float] = None
+    
+    # These fields will be ignored if present in the request
+    id: Optional[int] = None
+    date_creation: Optional[str] = None  # Changed from datetime to str for Pydantic v2 compatibility
+    
+    class Config:
+        from_attributes = True  # Replaces orm_mode in Pydantic v2
+        extra = 'ignore'  # Ignore extra fields
+
+class InvoiceResponse(InvoiceData):
+    id: int
+    date_creation: str
+    
+    class Config:
+        from_attributes = True
+
+# Factures endpoints
+@app.get("/factures")
+async def list_factures(
+    page: int = 1,
+    page_size: int = 10,
+    search: str = ""
+):
+    """
+    List all factures with pagination and search
+    """
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        # Build the base query
+        query = """
+            SELECT SQL_CALC_FOUND_ROWS *
+            FROM facture
+            WHERE %(search)s = '' 
+               OR fournisseur LIKE %(search_like)s 
+               OR numFacture LIKE %(search_like)s
+               OR tauxTVA LIKE %(search_like)s
+               OR montantHT LIKE %(search_like)s
+               OR montantTVA LIKE %(search_like)s
+               OR montantTTC LIKE %(search_like)s
+            ORDER BY id DESC
+            LIMIT %(offset)s, %(limit)s
+        """
+        
+        # Calculate pagination
+        offset = (page - 1) * page_size
+        
+        # Execute query
+        cursor.execute(
+            query,
+            {
+                'search': search,
+                'search_like': f'%{search}%',
+                'offset': offset,
+                'limit': page_size
+            }
+        )
+        
+        factures = cursor.fetchall()
+        
+        # Get total count
+        cursor.execute("SELECT FOUND_ROWS() AS total")
+        total = cursor.fetchone()['total']
+        total_pages = (total + page_size - 1) // page_size
+        
+        # Add a default date_creation field for compatibility
+        for facture in factures:
+            facture['date_creation'] = '2024-01-01T00:00:00'  # Default value
+        
+        return {
+            "factures": factures,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages
+        }
+        
+    except Exception as e:
+        logging.error(f"Error listing factures: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
+
+@app.put("/factures/{facture_id}", response_model=InvoiceResponse)
+async def update_facture(
+    facture_id: int,
+    invoice_update: InvoiceUpdate
+):
+    """
+    Update a facture by ID
+    """
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Check if facture exists
+        cursor.execute("SELECT * FROM facture WHERE id = %s", (facture_id,))
+        facture = cursor.fetchone()
+
+        if not facture:
+            raise HTTPException(status_code=404, detail="Facture not found")
+
+        # Prepare update data (exclude id and date_creation)
+        update_data = invoice_update.dict(exclude_unset=True)
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        # Build and execute update query
+        set_parts = []
+        params = {}
+        for field, value in update_data.items():
+            if field not in ['id', 'date_creation']:  # Skip these fields
+                param_name = f"{field}"
+                set_parts.append(f"{field} = %({param_name})s")
+                params[param_name] = value
+
+        set_clause = ", ".join(set_parts)
+        query = f"""
+            UPDATE facture
+            SET {set_clause}
+            WHERE id = %(id)s
+        """
+        params['id'] = facture_id
+
+        cursor.execute(query, params)
+        connection.commit()
+
+        # Get updated facture and return
+        cursor.execute("""
+            SELECT 
+                id,
+                fournisseur,
+                numFacture,
+                tauxTVA,
+                montantHT,
+                montantTVA,
+                montantTTC,
+                DATE_FORMAT(date_creation, '%%Y-%%m-%%dT%%H:%%i:%%s') as date_creation
+            FROM facture 
+            WHERE id = %s
+        """, (facture_id,))
+        updated_facture = cursor.fetchone()
+
+        if not updated_facture:
+            raise HTTPException(status_code=404, detail="Updated facture not found")
+
+        return updated_facture
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error updating facture: {str(e)}")
+ 
+        
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
+
+@app.delete("/factures/{facture_id}")
+async def delete_facture(facture_id: int):
+    """
+    Delete a facture by ID
+    """
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        # Check if facture exists
+        cursor.execute("SELECT id FROM facture WHERE id = %s", (facture_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Facture not found")
+        
+        # Delete facture
+        cursor.execute("DELETE FROM facture WHERE id = %s", (facture_id,))
+        connection.commit()
+        
+        return {"message": "Facture deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error deleting facture: {str(e)}")
+        
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
 
 # Fonction pour écrire dans un fichier DBF FoxPro
 
@@ -1656,7 +1874,7 @@ async def ajouter_facture(
         """
         values = (
             invoice.fournisseur,
-            invoice.numeroFacture,  # On garde numeroFacture dans le modèle mais on mappe vers numFacture en DB
+            invoice.numFacture,
             invoice.tauxTVA,
             invoice.montantHT,
             invoice.montantTVA,
@@ -1848,6 +2066,27 @@ async def launch_foxpro():
             "success": False,
             "message": f"Erreur lors du lancement de FoxPro: {str(e)}"
         }
+
+@app.post("/debug-facture")
+async def debug_facture(request: Request):
+    """
+    Endpoint de debug pour voir les données reçues
+    """
+    try:
+        body = await request.body()
+        json_data = await request.json()
+        
+        logging.info(f"Données reçues: {json_data}")
+        logging.info(f"Type des données: {type(json_data)}")
+        
+        return {
+            "received_data": json_data,
+            "body_as_string": body.decode('utf-8'),
+            "content_type": request.headers.get("content-type")
+        }
+    except Exception as e:
+        logging.error(f"Erreur dans debug: {str(e)}")
+        return {"error": str(e)}
 
 if __name__ == "__main__":
     import uvicorn
