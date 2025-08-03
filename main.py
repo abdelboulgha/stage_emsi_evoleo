@@ -25,6 +25,11 @@ import cv2
 import datetime
 import math
 
+# Import des modules d'authentification
+from auth_routes import router as auth_router
+from auth_database import init_database
+from auth_jwt import require_comptable_or_admin
+
 # Load environment variables
 load_dotenv()
 
@@ -92,6 +97,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Initialisation de la base de données d'authentification
+try:
+    init_database()
+    logging.info("Base de données d'authentification initialisée")
+except Exception as e:
+    logging.error(f"Erreur lors de l'initialisation de la base de données d'authentification: {e}")
+
+# Inclusion des routes d'authentification
+app.include_router(auth_router)
 
 # Modèles Pydantic
 class FieldCoordinates(BaseModel):
@@ -584,7 +599,10 @@ async def save_field_mapping(request: SaveMappingRequest):
         raise HTTPException(status_code=500, detail=error_msg)
 
 @app.post("/upload-for-dataprep")
-async def upload_for_dataprep(file: UploadFile = File(...)):
+async def upload_for_dataprep(
+    file: UploadFile = File(...),
+    current_user = Depends(require_comptable_or_admin)
+):
     """Upload d'un fichier pour DataPrep, retour de l'image en base64, des boîtes OCR détectées, et l'image unwarped si disponible"""
     try:
         file_content = await file.read()
@@ -767,7 +785,8 @@ def detect_ocr_boxes_from_image(img: Image.Image) -> List[Dict]:
 @app.post("/extract-data")
 async def extract_data(
     file: UploadFile = File(...),
-    template_id: str = Form(...)
+    template_id: str = Form(...),
+    current_user = Depends(require_comptable_or_admin)
 ):
     """
     Extraire les données d'un document avec ou sans template.
@@ -1617,7 +1636,10 @@ def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
 
 
 @app.post("/ajouter-facture")
-async def ajouter_facture(invoice: InvoiceData):
+async def ajouter_facture(
+    invoice: InvoiceData,
+    current_user = Depends(require_comptable_or_admin)
+):
     """
     Save invoice data to the database.
     """

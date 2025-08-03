@@ -2,7 +2,7 @@
   "success": true,
   "data": {},
   "corrected_data": {
-    "fournisseur": "TEST3",
+    "fournisseur": "Capi_0001",
     "numeroFacture": "IN2411-0001",
     "tauxTVA": "20",
     "montantHT": "275",
@@ -10,9 +10,9 @@
     "montantTTC": "330"
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-02 16:38:19.700791",
+  "timestamp": "2025-08-03 16:52:48.953283",
   "fields": {
-    "fournisseur": "TEST3",
+    "fournisseur": "Capi_0001",
     "numeroFacture": "IN2411-0001",
     "tauxTVA": "20",
     "montantHT": "275",

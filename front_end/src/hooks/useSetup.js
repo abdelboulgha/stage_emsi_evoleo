@@ -1,12 +1,18 @@
 import { useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useSetup = (setupState, setSetupState, setExtractionState, setCurrentStep, setIsLoading, showNotification) => {
+  const { token } = useAuth();
   const loadExistingMappings = useCallback(async (setMappings) => {
     try {
       setIsLoading(true);
-      const response = await fetch(`${API_BASE_URL}/mappings`);
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+      const response = await fetch(`${API_BASE_URL}/mappings`, { headers });
       const data = await response.json();
       if (data.status === "success") {
         setMappings(data.mappings);
@@ -16,7 +22,7 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading]);
+  }, [setIsLoading, token]);
 
   const handleSetupFileUpload = useCallback(async (event) => {
     const files = Array.from(event.target.files);
@@ -33,8 +39,14 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
         const formData = new FormData();
         formData.append("file", file);
 
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_BASE_URL}/upload-basic`, {
           method: "POST",
+          headers,
           body: formData,
         });
         const result = await response.json();
@@ -105,7 +117,7 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
     } finally {
       setIsLoading(false);
     }
-  }, [setupState, setSetupState, setIsLoading, showNotification]);
+  }, [setupState, setSetupState, setIsLoading, showNotification, token]);
 
   const validateSetupAndProceed = useCallback((state = null) => {
     if (state === null) {
@@ -177,7 +189,7 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
 
     setCurrentStep("extract");
     showNotification("Configuration validée, début de l'extraction", "success");
-  }, [setupState, setExtractionState, setCurrentStep, showNotification]);
+  }, [setupState, setExtractionState, setCurrentStep, showNotification, token]);
 
   const removeFile = useCallback((indexToRemove) => {
     setSetupState((prev) => ({

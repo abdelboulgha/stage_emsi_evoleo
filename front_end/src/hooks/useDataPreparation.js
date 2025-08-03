@@ -1,8 +1,10 @@
 import { useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoading, showNotification) => {
+  const { token } = useAuth();
   // Fonction utilitaire pour le zoom
   const getDefaultZoom = (imgWidth, containerWidth = 900) => {
     return Math.min(1, containerWidth / imgWidth);
@@ -20,8 +22,14 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         const formData = new FormData();
         formData.append("file", file);
 
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
           method: "POST",
+          headers,
           body: formData,
         });
 
@@ -61,7 +69,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         setIsLoading(false);
       }
     },
-    [setDataPrepState, setCurrentStep, setIsLoading, showNotification]
+    [setDataPrepState, setCurrentStep, setIsLoading, showNotification, token]
   );
 
   const handleZoomChange = useCallback((factor) => {
@@ -158,12 +166,17 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
       }
       if (!templateId) templateId = "untitled";
 
+      const headers = { 
+        "Content-Type": "application/json",
+        "X-Debug": "true",
+      };
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE_URL}/mappings`, {
         method: "POST",
-        headers: { 
-          "Content-Type": "application/json",
-          "X-Debug": "true",
-        },
+        headers,
         body: JSON.stringify({
           template_id: templateId,
           field_map,
@@ -190,7 +203,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, showNotification]);
+  }, [setIsLoading, showNotification, token]);
 
   const ocrPreviewManual = useCallback(async (coords, imageBase64, dataPrepState) => {
     let uploadedFileName = dataPrepState.uploadedImage?.name || dataPrepState.fileName || new Date().toISOString().slice(0, 10);
@@ -205,12 +218,18 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
     formData.append("image_data", imageBase64.split(',')[1]);
     formData.append("template_id", templateId);
 
+    const headers = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+
     const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
       method: "POST",
+      headers,
       body: formData,
     });
     return await response.json();
-  }, []);
+  }, [token]);
 
   return {
     handleDataPrepFileUpload,

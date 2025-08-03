@@ -1,8 +1,10 @@
 import { useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useExtraction = (extractionState, setExtractionState, showNotification) => {
+  const { token } = useAuth();
   const filterValue = useCallback((val, fieldKey) => {
     if (!val) return "";
     if (fieldKey === "fournisseur") return val;
@@ -78,8 +80,14 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       formData.append("template_id", templateIdToSend);
 
       try {
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
         const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
           method: "POST",
+          headers,
           body: formData,
         });
         const result = await response.json();
@@ -112,7 +120,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       }));
     }
     showNotification("Extraction terminée pour tous les fichiers", "success");
-  }, [extractionState, setExtractionState, showNotification]);
+  }, [extractionState, setExtractionState, showNotification, token]);
 
   const extractCurrentPdf = useCallback(async (templateId, index) => {
     // En mode "same", utiliser le modèle sélectionné si aucun templateId n'est fourni
@@ -141,8 +149,14 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     }
     
     try {
+      const headers = {};
+      if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+      }
+
       const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
         method: "POST",
+        headers,
         body: formData,
       });
       const result = await response.json();
@@ -181,7 +195,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         isProcessing: false,
       }));
     }
-  }, [extractionState, setExtractionState, showNotification]);
+  }, [extractionState, setExtractionState, showNotification, token]);
 
   const launchFoxPro = useCallback(async () => {
     try {

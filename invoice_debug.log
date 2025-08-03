@@ -891,3 +891,55 @@ AttributeError: 'FieldCoordinates' object has no attribute 'get'
 2025-08-02 16:38:19,780 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
 2025-08-02 16:38:19,782 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
 2025-08-02 16:38:19,784 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-03 16:29:18,865 INFO Database connection pool created successfully
+2025-08-03 16:29:22,366 INFO Database connection pool created successfully
+2025-08-03 16:29:29,085 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:29:29,085 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:29:32,128 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:29:32,128 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:29:41,249 ERROR Erreur lors de la création de l'utilisateur: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:29:41,249 ERROR Erreur lors de l'inscription: 
+2025-08-03 16:30:27,570 INFO Database connection pool created successfully
+2025-08-03 16:30:33,369 INFO Database connection pool created successfully
+2025-08-03 16:30:47,448 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:30:47,448 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:30:52,028 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:30:52,028 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:32:13,164 INFO Database connection pool created successfully
+2025-08-03 16:32:21,869 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:32:21,869 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:32:48,214 ERROR Erreur lors de la création de l'utilisateur: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:32:48,216 ERROR Erreur lors de l'inscription: 
+2025-08-03 16:33:18,820 INFO Database connection pool created successfully
+2025-08-03 16:34:17,793 INFO Database connection pool created successfully
+2025-08-03 16:34:25,490 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:34:25,490 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:34:59,546 INFO Database connection pool created successfully
+2025-08-03 16:35:07,637 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:35:07,637 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:35:23,106 ERROR Erreur lors de la création de l'utilisateur: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:35:23,106 ERROR Erreur lors de l'inscription: 
+2025-08-03 16:38:00,721 INFO Database connection pool created successfully
+2025-08-03 16:38:11,152 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:38:11,152 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:38:29,355 ERROR Erreur lors de la création de l'utilisateur: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:38:29,355 ERROR Erreur lors de l'inscription: 
+2025-08-03 16:39:10,559 INFO Database connection pool created successfully
+2025-08-03 16:39:27,357 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:39:27,363 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:42:07,145 INFO Database connection pool created successfully
+2025-08-03 16:42:15,189 ERROR Erreur lors de l'initialisation de la base de données: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:42:15,189 ERROR Erreur lors de l'initialisation de la base de données d'authentification: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:43:02,546 ERROR Erreur lors de la création de l'utilisateur: bcrypt: no backends available -- recommend you install one (e.g. 'pip install bcrypt')
+2025-08-03 16:43:02,549 ERROR Erreur lors de l'inscription: 
+2025-08-03 16:43:51,114 INFO Database connection pool created successfully
+2025-08-03 16:47:43,035 INFO Database connection pool created successfully
+2025-08-03 16:48:01,872 INFO Database connection pool created successfully
+2025-08-03 16:49:35,044 INFO Database connection pool created successfully
+2025-08-03 16:49:44,518 INFO Database connection pool created successfully
+2025-08-03 16:52:48,963 ERROR Erreur lors de l'écriture dans le fichier DBF: 'fournisseur'
+2025-08-03 16:52:48,963 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-03 16:52:48,963 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'factures.dbf'
+2025-08-03 16:56:37,922 ERROR Erreur lors de la conversion PDF en images: Failed to open stream
+2025-08-03 16:56:37,922 ERROR Erreur lors de l'upload: Failed to open stream
+2025-08-03 17:06:29,282 INFO Database connection pool created successfully

@@ -1,8 +1,10 @@
 import { useCallback } from 'react';
+import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoiceSelection, showNotification, filterValue) => {
+  const { token } = useAuth();
   const handleSaveInvoices = useCallback(async () => {
     try {
       setInvoiceSelection((prev) => ({ ...prev, isSaving: true }));
@@ -33,11 +35,16 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
       const results = [];
       for (const invoice of invoicesToSave) {
         try {
+          const headers = {
+            "Content-Type": "application/json",
+          };
+          if (token) {
+            headers['Authorization'] = `Bearer ${token}`;
+          }
+
           const response = await fetch(`${API_BASE_URL}/ajouter-facture`, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify(invoice),
           });
           
@@ -93,6 +100,7 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
     invoiceSelection.selectedInvoices,
     showNotification,
     filterValue,
+    token,
   ]);
 
   const toggleSelectAllInvoices = useCallback(

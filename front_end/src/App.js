@@ -1,12 +1,12 @@
-import logo from './logo.svg';
 import './App.css';
-import ExtractorNew from './components/ExtractorNew';
+import { AuthProvider } from './contexts/AuthContext';
+import AppContent from './components/AppContent';
 
 function App() {
   return (
-    <div className="App">
-      <ExtractorNew/>
-    </div>
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }
 
