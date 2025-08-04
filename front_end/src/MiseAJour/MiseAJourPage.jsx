@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
+import { Edit2, Trash2, CheckCircle } from "lucide-react";
 
 const FIELDS = [
   { key: "fournisseur", label: "Fournisseur" },
   { key: "numFacture", label: "Numéro de Facture" },
+  { key: "dateFacturation", label: "Date Facturation" },
   { key: "tauxTVA", label: "Taux TVA" },
   { key: "montantHT", label: "Montant HT" },
   { key: "montantTVA", label: "Montant TVA" },
@@ -143,9 +145,9 @@ const MiseAJourPage = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8">
-        <h2 className="text-2xl font-bold text-white mb-6">4. Mise à jour des factures</h2>
+    <div className="max-w-[90rem] mx-auto mt-9">
+      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-12 pt-16 pb-16" >
+       
         <input
           type="text"
           placeholder="Rechercher..."
@@ -180,15 +182,15 @@ const MiseAJourPage = () => {
                       />
                     </td>
                   ))}
-                  <td className="border border-white/30 px-2 py-1 flex gap-2">
-                    <button onClick={() => handleUpdate(facture.id)} className="bg-blue-500 text-white px-2 py-1 rounded">
-                      Update
+                  <td className="border border-white/30 px-2 py-1 flex gap-2 items-center justify-center">
+                    <button onClick={() => handleUpdate(facture.id)} className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full flex items-center justify-center" title="Mettre à jour">
+                      <Edit2 className="w-5 h-5" />
                     </button>
-                    <button onClick={() => handleDelete(facture.id)} className="bg-red-500 text-white px-2 py-1 rounded">
-                      Delete
+                    <button onClick={() => handleDelete(facture.id)} className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full flex items-center justify-center" title="Supprimer">
+                      <Trash2 className="w-5 h-5" />
                     </button>
-                    <button onClick={() => handleSelect(facture)} className="bg-green-500 text-white px-2 py-1 rounded">
-                      Select
+                    <button onClick={() => handleSelect(facture)} className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full flex items-center justify-center" title="Sélectionner">
+                      <CheckCircle className="w-5 h-5" />
                     </button>
                   </td>
                 </tr>

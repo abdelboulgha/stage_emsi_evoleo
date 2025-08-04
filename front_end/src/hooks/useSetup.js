@@ -1,9 +1,11 @@
 import { useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useSetup = (setupState, setSetupState, setExtractionState, setCurrentStep, setIsLoading, showNotification) => {
+  const navigate = useNavigate();
   const { token } = useAuth();
   const loadExistingMappings = useCallback(async (setMappings) => {
     try {
@@ -188,6 +190,7 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
       });
 
     setCurrentStep("extract");
+    navigate("/extract");
     showNotification("Configuration validée, début de l'extraction", "success");
   }, [setupState, setExtractionState, setCurrentStep, showNotification, token]);
 

@@ -25,6 +25,7 @@ const ParametrageMain = ({
   startManualDraw,
   saveMappings,
   showNotification,
+  getPagePreviews,
   canvasRef,
   imageRef,
   redrawCanvas,
@@ -56,19 +57,21 @@ const ParametrageMain = ({
 
           {/* Right - Canvas area */}
           <div>
-            <ParametrageCanvas
-              dataPrepState={dataPrepState}
-              manualDrawState={manualDrawState}
-              canvasRef={canvasRef}
-              imageRef={imageRef}
-              redrawCanvas={redrawCanvas}
-              handleCanvasMouseDown={handleCanvasMouseDown}
-              handleCanvasMouseMove={handleCanvasMouseMove}
-              handleCanvasMouseUp={handleCanvasMouseUp}
-              drawOcrBox={drawOcrBox}
-              handleDataPrepFileUpload={handleDataPrepFileUpload}
-              handleZoomChange={handleZoomChange}
-            />
+          <ParametrageCanvas
+  dataPrepState={dataPrepState}
+  manualDrawState={manualDrawState}
+  canvasRef={canvasRef}
+  imageRef={imageRef}
+  redrawCanvas={redrawCanvas}
+  handleCanvasMouseDown={handleCanvasMouseDown}
+  handleCanvasMouseMove={handleCanvasMouseMove}
+  handleCanvasMouseUp={handleCanvasMouseUp}
+  drawOcrBox={drawOcrBox}
+  handleDataPrepFileUpload={handleDataPrepFileUpload}
+  handleZoomChange={handleZoomChange}
+  showNotification={showNotification} 
+  getPagePreviews={getPagePreviews} 
+/>
           </div>
         </div>
       </div>

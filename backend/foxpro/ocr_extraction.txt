@@ -1,0 +1,6 @@
+Fournisseur: capi
+Numéro Facture: IN8411-0501
+Taux TVA: 4
+Montant HT: 7275
+Montant TVA: 255
+Montant TTC: 7530

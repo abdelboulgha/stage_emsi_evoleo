@@ -70,13 +70,13 @@ const ExtractionPreview = ({
       
       ctx.restore();
     };
-    
+    drawBox(data.boxDateFacturation, "#008000", "Date", 'left');
     drawBox(data.boxNumFacture, "#6366f1", "N° Facture", 'top');
     drawBox(data.boxHT, "#b91010ff", "HT", 'left');
     drawBox(data.boxTVA, "#0b0ff5ff", "TVA", 'left');
   }, [extractionState.extractedDataList, extractionState.currentPdfIndex]);
 
-  // Add useEffect to call drawExtractionBoxes when data changes
+
   useEffect(() => {
     if (extractionState.extractedDataList[extractionState.currentPdfIndex]) {
       drawExtractionBoxes();
@@ -101,7 +101,7 @@ const ExtractionPreview = ({
 
         {extractionState.filePreviews.length > 0 ? (
           <div className="relative">
-            {/* Document preview container with proper sizing */}
+            {/* Document preview container */}
             <div className="bg-white/10 rounded-xl p-4 border border-white/10 relative">
               <div className="w-full" style={{ height: "70vh" }}>
                 <div className="w-full h-full overflow-auto bg-white rounded-lg shadow-lg p-4">
@@ -117,7 +117,7 @@ const ExtractionPreview = ({
                       className="w-full h-auto object-contain"
                       style={{ minWidth: "100%", height: "auto" }}
                       onLoad={() => {
-                        // Image loaded successfully
+                       
                         setTimeout(() => {
                           if (extractionState.extractedDataList[extractionState.currentPdfIndex]) {
                             drawExtractionBoxes();
@@ -229,19 +229,6 @@ const ExtractionPreview = ({
                                     {Object.keys(extractionState.extractedDataList[index] || {}).length}
                                   </div>
                                   
-                                  {/* Pourcentage de confiance */}
-                                  {extractionState.confidenceScores?.[index] && Object.keys(extractionState.confidenceScores[index] || {}).length > 0 && (
-                                    <div 
-                                      className="absolute bottom-1 right-1 text-[10px] font-bold px-1 rounded"
-                                      style={{
-                                        backgroundColor: "rgba(0, 0, 0, 0.7)",
-                                        color: "white",
-                                        textShadow: "0 0 2px rgba(0,0,0,0.5)",
-                                      }}
-                                    >
-                                      {Math.min(...Object.values(extractionState.confidenceScores[index] || {}).filter(score => typeof score === "number").map(score => Math.round(score * 100) / 100)).toFixed(2).replace("0.", "")}%
-                                    </div>
-                                  )}
                                 </>
                               )}
                               

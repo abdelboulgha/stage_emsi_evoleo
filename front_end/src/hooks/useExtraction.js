@@ -9,6 +9,17 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     if (!val) return "";
     if (fieldKey === "fournisseur") return val;
     
+    // Clean and format dateFacturation field
+    if (fieldKey === 'dateFacturation') {
+      const dateMatch = val.toString().match(/\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})\b/);
+      if (dateMatch) {
+        const [_, day, month, year] = dateMatch;
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      return val;
+    }
+    
     // Pour numeroFacture, autoriser alphanumérique, tirets, slash et espaces
     if (fieldKey === "numeroFacture") {
       // Split by space or colon
@@ -48,6 +59,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     // Utilise les bonnes clés extraites par le backend
     const requiredFields = [
       "fournisseur",
+      "dateFacturation",
       "numeroFacture",
       "tauxTVA",
       "montantHT",

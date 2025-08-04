@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
+import React from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import LoginForm from './LoginForm';
 import RegisterForm from './RegisterForm';
 import './AuthPage.css';
 
-const AuthPage = () => {
-  const [isLogin, setIsLogin] = useState(true);
+const AuthPage = () => {  // view decided by URL
+      const location = useLocation();
+  const navigate = useNavigate();
 
-  const switchToRegister = () => {
-    setIsLogin(false);
-  };
+  // determine which sub-route we are on
+  const isLogin = location.pathname !== '/register';
 
-  const switchToLogin = () => {
-    setIsLogin(true);
-  };
+  const switchToRegister = () => navigate('/register');
+  const switchToLogin = () => navigate('/login');
 
   return (
     <div className="auth-page">

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import './AuthForms.css';
 
@@ -9,7 +10,8 @@ const LoginForm = ({ onSwitchToRegister }) => {
   });
   const [errors, setErrors] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-  const { login } = useAuth();
+    const { login } = useAuth();
+  const navigate = useNavigate();
 
   const validateForm = () => {
     const newErrors = {};
@@ -58,11 +60,17 @@ const LoginForm = ({ onSwitchToRegister }) => {
 
     const result = await login(formData.email, formData.password);
     
+        if (result.success) {
+      navigate('/prepare');
+      return;
+    }
+
+    // otherwise show error
     if (!result.success) {
       setErrors({ general: result.error });
     }
     
-    setIsLoading(false);
+        setIsLoading(false);
   };
 
   return (

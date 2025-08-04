@@ -50,6 +50,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
   const EXTRACTION_FIELDS = [
     { key: "fournisseur", label: "Fournisseur" },
     { key: "numeroFacture", label: "Numéro de Facture" },
+    { key: "dateFacturation", label: "Date Facturation" },
     { key: "tauxTVA", label: "Taux TVA" },
     { key: "montantHT", label: "Montant HT" },
     { key: "montantTVA", label: "Montant TVA" },
@@ -73,6 +74,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
     startManualDraw,
     saveMappings,
     ocrPreviewManual,
+    getPagePreviews,
   } = useDataPreparation(setDataPrepState, setCurrentStep, setIsLoading, showNotification);
 
   const {
@@ -103,15 +105,12 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
   const scrollToIndex = (index) => {
     setExtractionState((prev) => ({ ...prev, currentPdfIndex: index }));
     
-    // En mode "same", extraire automatiquement avec le modèle sélectionné
     if (extractionState.processingMode === "same" && extractionState.selectedModel) {
-      // Vérifier si l'extraction n'a pas déjà été faite pour cette page
       if (!extractionState.extractedDataList[index] || 
           Object.keys(extractionState.extractedDataList[index] || {}).length === 0) {
         extractCurrentPdf(extractionState.selectedModel, index);
       }
     } else {
-      // En mode "different", afficher la modale de sélection
       setPendingExtractIndex(index);
       setShowModelSelectModal(true);
       setModalSelectedTemplateId("");
@@ -178,6 +177,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
             validateSetupAndProceed={validateSetupAndProceed}
             removeFile={removeFile}
             showNotification={showNotification}
+            getPagePreviews={getPagePreviews}
           />
         )}
 
@@ -207,7 +207,6 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
               setDataPrepState={setDataPrepState}
             />
             
-            {/* Invoice Selection Modal */}
             {invoiceSelection.isOpen && (
               <InvoiceSelectionModal
                 invoiceSelection={invoiceSelection}
@@ -219,7 +218,6 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
               />
             )}
 
-            {/* Model Selection Modal */}
             {showModelSelectModal && createPortal(
               <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
                 <div className="bg-white rounded-2xl w-full max-w-md flex flex-col">
@@ -242,7 +240,6 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
                       onClick={async () => {
                         if (!modalSelectedTemplateId) return;
                         setShowModelSelectModal(false);
-                        // Lance l'extraction pour la page sélectionnée
                         await extractCurrentPdf(modalSelectedTemplateId, pendingExtractIndex);
                       }}
                       disabled={!modalSelectedTemplateId}
@@ -277,6 +274,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
             startManualDraw={startManualDraw}
             saveMappings={() => saveMappings(dataPrepState, () => loadExistingMappings(setMappings))}
             showNotification={showNotification}
+            getPagePreviews={getPagePreviews}
             canvasRef={canvasRef}
             imageRef={imageRef}
             redrawCanvas={() => redrawCanvas(canvasRef, imageRef)}
@@ -293,4 +291,4 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
   );
 };
 
-export default ExtractorNew; 
+export default ExtractorNew;

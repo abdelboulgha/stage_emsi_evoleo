@@ -15,6 +15,7 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
           // Apply filtering to each field using the filterValue function
           const fournisseur = filterValue(data.fournisseur, "fournisseur");
           const numeroFacture = filterValue(data.numeroFacture, "numeroFacture");
+          const dateFacturation = filterValue(data.dateFacturation, "dateFacturation") || new Date().toISOString().split('T')[0];
           const tauxTVA = filterValue(data.tauxTVA, "tauxTVA");
           const montantHT = filterValue(data.montantHT, "montantHT");
           const montantTVA = filterValue(data.montantTVA, "montantTVA");
@@ -24,6 +25,7 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
           return {
             fournisseur,
             numFacture: numeroFacture, // Map numeroFacture to numFacture for backend
+            dateFacturation,
             tauxTVA: parseFloat(tauxTVA) || 0,
             montantHT: parseFloat(montantHT) || 0,
             montantTVA: parseFloat(montantTVA) || 0,

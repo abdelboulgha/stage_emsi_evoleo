@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AuthPage from './auth/AuthPage';
 import ExtractorNew from './ExtractorNew';
@@ -7,10 +8,11 @@ import MiseAJourPage from '../MiseAJour/MiseAJourPage';
 import StepNavigation from './StepNavigation';
 import './AppContent.css';
 
-const AppContent = () => {
+const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
+  const navigate = useNavigate();
   const { user, loading, logout, isAdmin } = useAuth();
-  const [currentView, setCurrentView] = useState('extractor');
-  const [currentStep, setCurrentStep] = useState('setup');
+    const [currentView, setCurrentView] = useState(initialView);
+    const [currentStep, setCurrentStep] = useState(initialStep);
 
   // Réinitialiser currentStep à 'setup' à chaque nouvelle connexion
   useEffect(() => {
@@ -62,6 +64,7 @@ const AppContent = () => {
               <button 
                 className={`main-nav-button ${currentView === 'extractor' && currentStep === 'setup' ? 'active' : ''}`}
                 onClick={() => {
+                  navigate('/prepare');
                   setCurrentView('extractor');
                   setCurrentStep('setup');
                 }}
@@ -71,6 +74,7 @@ const AppContent = () => {
               <button 
                 className={`main-nav-button ${currentView === 'extractor' && currentStep === 'extract' ? 'active' : ''}`}
                 onClick={() => {
+                  navigate('/extract');
                   setCurrentView('extractor');
                   setCurrentStep('extract');
                 }}
@@ -80,6 +84,7 @@ const AppContent = () => {
               <button 
                 className={`main-nav-button ${currentView === 'extractor' && currentStep === 'dataprep' ? 'active' : ''}`}
                 onClick={() => {
+                  navigate('/parametre');
                   setCurrentView('extractor');
                   setCurrentStep('dataprep');
                 }}
@@ -88,7 +93,10 @@ const AppContent = () => {
               </button>
               <button 
                 className={`main-nav-button ${currentView === 'miseajour' ? 'active' : ''}`}
-                onClick={() => setCurrentView('miseajour')}
+                onClick={() => {
+                  navigate('/update');
+                  setCurrentView('miseajour');
+                }}
               >
                 Mise à jour
               </button>

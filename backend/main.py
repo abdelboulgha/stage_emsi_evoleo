@@ -1,0 +1,1954 @@
+# Standard library imports
+import json
+import logging
+import os
+import re
+from datetime import date, datetime
+from io import BytesIO
+from typing import Any, Dict, List, Optional, Union
+import math
+
+# Third-party imports
+import base64
+import dbf
+import mysql.connector
+import numpy as np
+import pymupdf as fitz
+from fastapi import (
+    Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+)
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse, Response
+from mysql.connector import Error, pooling
+from paddleocr import PaddleOCR
+from PIL import Image, ImageEnhance, ImageOps
+from pydantic import BaseModel, Field, field_validator
+from dotenv import load_dotenv
+
+# Authentication modules
+from auth.auth_routes import router as auth_router
+from auth.auth_database import init_database
+from auth.auth_jwt import require_comptable_or_admin
+
+# Load environment variables
+load_dotenv()
+
+# =======================
+# FastAPI Configuration
+# =======================
+app = FastAPI(title="Invoice Extractor API", version="1.0.0")
+
+# CORS Configuration
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Database configuration
+DB_CONFIG = {
+    "host": os.getenv("DB_HOST", "localhost"),
+    "user": os.getenv("DB_USER", "root"),
+    "password": os.getenv("DB_PASSWORD", ""),
+    "database": os.getenv("DB_NAME", "evoleo")
+}
+
+# Configure logging
+logging.basicConfig(
+    filename='invoice_debug.log',
+    level=logging.DEBUG,
+    format='%(asctime)s %(levelname)s %(message)s'
+)
+
+# Initialize authentication database
+try:
+    init_database()
+    logging.info("Authentication database initialized")
+except Exception as e:
+    logging.error(f"Error initializing authentication database: {e}")
+
+# Include authentication routes
+app.include_router(auth_router)
+
+# Create database connection pool
+connection_pool = None
+try:
+    connection_pool = mysql.connector.pooling.MySQLConnectionPool(
+        pool_name="evoleo_pool",
+        pool_size=5,
+        **DB_CONFIG
+    )
+    logging.info("Database connection pool created successfully")
+except Error as e:
+    logging.error(f"Error creating connection pool: {e}")
+    logging.warning("Continuing without database connection pool")
+except Exception as e:
+    logging.error(f"Unexpected error creating connection pool: {e}")
+    logging.warning("Continuing without database connection pool")
+
+# Initialize PaddleOCR with specified parameters
+ocr = PaddleOCR(
+    use_doc_orientation_classify=False,
+    use_doc_unwarping=False,
+    use_textline_orientation=False,
+    text_det_input_shape=[3, 1440, 1440],
+    text_detection_model_name="PP-OCRv5_mobile_det",
+    text_recognition_model_name="PP-OCRv5_mobile_rec",
+    precision="fp16",
+    enable_mkldnn=True,
+    text_det_unclip_ratio=1.3,
+    text_rec_score_thresh=0.5
+)
+
+# =======================
+# Pydantic Models
+# =======================
+class FieldCoordinates(BaseModel):
+    """Represents coordinates and dimensions of a field on a document."""
+    left: float
+    top: float
+    width: float
+    height: float
+    manual: Optional[bool] = False
+
+
+class FieldMapping(BaseModel):
+    """Mapping of field names to their coordinates."""
+    field_map: Dict[str, Optional[FieldCoordinates]]
+
+
+class ExtractionResult(BaseModel):
+    """Result of a document extraction process."""
+    success: bool
+    data: Dict[str, str]
+    message: str
+   
+
+# =======================
+# Database Utilities
+# =======================
+def get_connection():
+    """
+    Get a database connection from the connection pool.
+    
+    Returns:
+        A database connection object
+        
+    Raises:
+        Exception: If the connection pool is not available
+        Error: If there's an error getting a connection
+    """
+    if connection_pool is None:
+        raise Exception("Database connection pool not available")
+    try:
+        connection = connection_pool.get_connection()
+        return connection
+    except Error as e:
+        logging.error(f"Error getting connection from pool: {e}")
+        raise
+
+async def save_mapping_db(template_id: str, field_map: Dict[str, Any]) -> bool:
+    """Save field mappings to the database using field IDs, including the 'manual' flag"""
+    connection = None
+    cursor = None
+    try:
+        logging.info(f"Starting to save mapping for template_id: {template_id}")
+        logging.info(f"Field map received: {json.dumps(field_map, default=str)}")
+        
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        connection.start_transaction()
+        
+        # Ensure template exists
+        cursor.execute("INSERT IGNORE INTO Templates (id) VALUES (%s)", (template_id,))
+        logging.info(f"Ensured template {template_id} exists in database")
+        
+        # Get field name to ID mapping from database
+        cursor.execute("SELECT id, name FROM Field_Name")
+        field_name_to_id = {}
+        for row in cursor.fetchall():
+            field_name_to_id[row['name'].lower()] = row['id']
+        
+        logging.info(f"Field name to ID mapping: {field_name_to_id}")
+        
+        # Get existing field names from database for case-insensitive comparison
+        cursor.execute("SELECT name FROM Field_Name")
+        db_field_names = [row['name'].lower() for row in cursor.fetchall()]
+        
+        for field_name, coords in field_map.items():
+            if coords is None:
+                logging.warning(f"Skipping null coordinates for field: {field_name}")
+                continue
+            
+            # Convert field name to lowercase for case-insensitive comparison
+            field_name_lower = field_name.lower()
+            field_id = field_name_to_id.get(field_name_lower)
+            
+            if not field_id:
+                # Try to find a case-insensitive match
+                matching_name = next((name for name in db_field_names if name.lower() == field_name_lower), None)
+                if matching_name:
+                    field_id = field_name_to_id[matching_name]
+                    logging.info(f"Found case-insensitive match for field '{field_name}': '{matching_name}' (ID: {field_id})")
+            
+            if not field_id:
+                error_msg = f"Field name '{field_name}' not found in Field_Name table. Available fields: {list(field_name_to_id.keys())}"
+                logging.error(error_msg)
+                continue
+            
+            # Handle both Pydantic model and dictionary
+            if hasattr(coords, 'dict'):
+                coords = coords.dict()
+            
+            # Extract coordinates with proper type conversion and default values
+            left = float(coords.get('left', 0)) if coords.get('left') is not None else 0.0
+            top = float(coords.get('top', 0)) if coords.get('top') is not None else 0.0
+            width = float(coords.get('width', 0)) if coords.get('width') is not None else 0.0
+            height = float(coords.get('height', 0)) if coords.get('height') is not None else 0.0
+            manual = int(coords.get('manual', False))  # <-- Ajout gestion du champ manual
+            
+            logging.info(f"Processing field: {field_name} (ID: {field_id}) with coords: left={left}, top={top}, width={width}, height={height}, manual={manual}")
+            
+            try:
+                cursor.execute("""
+                    INSERT INTO Mappings 
+                    (template_id, field_id, `left`, `top`, `width`, `height`, `manual`)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    ON DUPLICATE KEY UPDATE
+                    `left` = VALUES(`left`),
+                    `top` = VALUES(`top`),
+                    `width` = VALUES(`width`),
+                    `height` = VALUES(`height`),
+                    `manual` = VALUES(`manual`)
+                """, (
+                    template_id,
+                    field_id,
+                    left,
+                    top,
+                    width,
+                    height,
+                    manual
+                ))
+                logging.info(f"Successfully processed field: {field_name}")
+                
+            except Exception as field_error:
+                error_msg = f"Error processing field {field_name}: {str(field_error)}"
+                logging.error(error_msg, exc_info=True)
+                raise Exception(error_msg) from field_error
+        
+        connection.commit()
+        logging.info("Successfully committed all field mappings to database")
+        return True
+        
+    except Exception as e:
+        error_msg = f"Error in save_mapping_db: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        if connection:
+            connection.rollback()
+            logging.info("Transaction rolled back due to error")
+        return False
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+async def load_mapping_db(template_id: str) -> Dict:
+    """Load field mappings from the database using field names, including the 'manual' flag"""
+    connection = None
+    cursor = None
+    try:
+        logging.info(f"Loading mappings for template_id: {template_id}")
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get field ID to name mapping
+        cursor.execute("SELECT id, name FROM Field_Name")
+        id_to_name = {row['id']: row['name'] for row in cursor.fetchall()}
+        logging.info(f"Loaded field name mapping: {id_to_name}")
+        
+        # Get all mappings for this template (inclut 'manual')
+        cursor.execute("""
+            SELECT field_id, `left`, `top`, `width`, `height`, `manual`
+            FROM Mappings 
+            WHERE template_id = %s
+        """, (template_id,))
+        
+        field_map = {}
+        rows = cursor.fetchall()
+        logging.info(f"Found {len(rows)} mappings in database")
+        
+        for row in rows:
+            field_id = row['field_id']
+            field_name = id_to_name.get(field_id)
+            if field_name:
+                try:
+                    field_map[field_name] = {
+                        'left': float(row['left']) if row['left'] is not None else 0.0,
+                        'top': float(row['top']) if row['top'] is not None else 0.0,
+                        'width': float(row['width']) if row['width'] is not None else 0.0,
+                        'height': float(row['height']) if row['height'] is not None else 0.0,
+                        'manual': bool(row.get('manual', 0))  # <-- Ajout du flag manual
+                    }
+                    logging.info(f"Loaded mapping for {field_name}: {field_map[field_name]}")
+                except (ValueError, TypeError) as e:
+                    logging.error(f"Error processing coordinates for field {field_name}: {e}")
+            else:
+                logging.warning(f"No name found for field_id: {field_id}")
+        
+        logging.info(f"Successfully loaded {len(field_map)} field mappings")
+        # Return in the expected format
+        return {
+            "status": "success",
+            "mappings": {
+                template_id: field_map
+            }
+        }
+        
+    except Exception as e:
+        error_msg = f"Error loading mapping from database: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        return {
+            "status": "error",
+            "message": error_msg,
+            "mappings": {}
+        }
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+
+
+
+
+
+def image_to_base64(img: Image.Image) -> str:
+    """Convertir une image PIL en base64"""
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    return f"data:image/png;base64,{img_str}"
+
+
+
+# Add a single variable for PDF rendering scale
+PDF_RENDER_SCALE = 2  # Change this value to affect all PDF image renderings
+
+def process_pdf_to_image(file_content: bytes) -> Image.Image:
+    """Convertir un PDF en image en utilisant PyMuPDF"""
+    try:
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        page = doc[0]
+        
+        # Utiliser la variable PDF_RENDER_SCALE
+        mat = fitz.Matrix(PDF_RENDER_SCALE, PDF_RENDER_SCALE)
+        pix = page.get_pixmap(matrix=mat)
+        
+        # Convertir en PIL Image
+        img_data = pix.tobytes("png")
+        img = Image.open(BytesIO(img_data))
+        
+        doc.close()
+        return img
+    except Exception as e:
+        logging.error(f"Erreur lors de la conversion PDF: {e}")
+        raise e
+
+def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
+    """Convertir un PDF en une liste d'images (une par page) en utilisant PyMuPDF"""
+    try:
+        doc = fitz.open(stream=file_content, filetype="pdf")
+        images = []
+        for page_num in range(doc.page_count):
+            page = doc[page_num]
+            pix = page.get_pixmap(matrix=fitz.Matrix(PDF_RENDER_SCALE, PDF_RENDER_SCALE))
+            img_data = pix.tobytes("png")
+            img = Image.open(BytesIO(img_data))
+            images.append(img)
+        doc.close()
+        return images
+    except Exception as e:
+        logging.error(f"Erreur lors de la conversion PDF en images: {e}")
+        raise e
+
+# Routes API
+class SaveMappingRequest(BaseModel):
+    template_id: str = "default"
+    field_map: Dict[str, Optional[FieldCoordinates]]
+
+
+#upload parametrage
+@app.post("/pdf-page-previews")
+async def get_pdf_page_previews(file: UploadFile = File(...)):
+    try:
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
+        
+        # Read PDF
+        content = await file.read()
+        pdf_document = fitz.open(stream=content, filetype="pdf")
+        pages = []
+
+        # Convert each page to an image
+        for page_num in range(pdf_document.page_count):
+            page = pdf_document.load_page(page_num)
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Increase resolution
+            img_bytes = pix.tobytes("png")
+            img_base64 = base64.b64encode(img_bytes).decode("utf-8")
+            pages.append({
+                "image": f"data:image/png;base64,{img_base64}",
+                "pageNumber": page_num + 1
+            })
+
+        pdf_document.close()
+        return {"success": True, "pages": pages}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la génération des aperçus: {str(e)}")
+        
+
+
+@app.post("/upload-for-dataprep")
+async def upload_for_dataprep(
+    file: UploadFile = File(...),
+    page_index: int = Form(0),  # Explicitly parse page_index as int from FormData
+    current_user = Depends(require_comptable_or_admin)
+):
+    """Upload d'un fichier pour DataPrep, retour de l'image en base64, des boîtes OCR détectées, et l'image unwarped si disponible pour la page spécifiée"""
+    try:
+        file_content = await file.read()
+        logging.info(f"Received file: {file.filename}, page_index: {page_index} (type: {type(page_index)})")
+        if file.filename.lower().endswith('.pdf'):
+            # Open PDF with PyMuPDF
+            pdf_document = fitz.open(stream=file_content, filetype="pdf")
+            logging.info(f"PDF page count: {pdf_document.page_count}")
+            if page_index >= pdf_document.page_count:
+                pdf_document.close()
+                raise HTTPException(status_code=400, detail=f"Index de page invalide: {page_index}")
+            if page_index < 0:
+                pdf_document.close()
+                raise HTTPException(status_code=400, detail="Index de page doit être positif")
+            
+            # Process only the specified page
+            page = pdf_document.load_page(page_index)
+            logging.info(f"Processing page: {page_index}")
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Increase resolution
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            pdf_document.close()
+            images = [img]
+        elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            if page_index != 0:
+                raise HTTPException(status_code=400, detail="L'index de page n'est valide que pour les fichiers PDF")
+            img = Image.open(BytesIO(file_content)).convert('RGB')
+            images = [img]
+        else:
+            raise HTTPException(status_code=400, detail="Type de fichier non supporté")
+
+        # Run OCR on the selected image
+        img_array = np.array(images[0])
+        result = ocr.predict(img_array)
+        logging.info(f"OCR result: {len(result)} items detected")
+        boxes = []
+        unwarped_base64 = None
+        unwarped_width = None
+        unwarped_height = None
+        for res in result:
+            rec_polys = res.get('rec_polys', [])
+            rec_texts = res.get('rec_texts', [])
+            rec_scores = res.get('rec_scores', [])
+            doc_pre_res = res.get('doc_preprocessor_res', {})
+            original_points = doc_pre_res.get('original_points') if isinstance(doc_pre_res, dict) else None
+            doc_img = None
+            for key in ['doc_img', 'output_img', 'rot_img']:
+                if key in doc_pre_res:
+                    doc_img = doc_pre_res[key]
+                    break
+            if doc_img is not None and unwarped_base64 is None:
+                pil_img = Image.fromarray(doc_img)
+                buffer = BytesIO()
+                pil_img.save(buffer, format='PNG')
+                unwarped_base64 = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode()}"
+                unwarped_width = pil_img.width
+                unwarped_height = pil_img.height
+            for i, (poly, text, score) in enumerate(zip(rec_polys, rec_texts, rec_scores)):
+                if score is None or not text.strip():
+                    continue
+                mapped_poly = original_points[i] if original_points and i < len(original_points) else poly
+                x_coords = [float(pt[0]) for pt in mapped_poly]
+                y_coords = [float(pt[1]) for pt in mapped_poly]
+                left = float(min(x_coords))
+                top = float(min(y_coords))
+                width = float(max(x_coords) - left)
+                height = float(max(y_coords) - top)
+                boxes.append({
+                    'id': int(i),
+                    'coords': {
+                        'left': left,
+                        'top': top,
+                        'width': width,
+                        'height': height
+                    },
+                    'text': str(text).strip(),
+                    'confidence': float(score)
+                })
+        response = {
+            "success": True,
+            "image": image_to_base64(images[0]) if images else None,
+            "width": images[0].width if images else None,
+            "height": images[0].height if images else None,
+            "boxes": boxes,
+            "box_count": len(boxes),
+            "unwarped_image": unwarped_base64,
+            "unwarped_width": unwarped_width,
+            "unwarped_height": unwarped_height,
+            "page_index": page_index
+        }
+        logging.info(f"Returning response: {response}")
+        return response
+    except Exception as e:
+        logging.error(f"Erreur lors de l'upload: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement: {str(e)}")
+@app.post("/pdf-page-previews")
+async def pdf_page_previews(
+    file: UploadFile = File(...),
+    current_user = Depends(require_comptable_or_admin)
+):
+    """Génère des aperçus en base64 pour toutes les pages d'un PDF"""
+    try:
+        if not file.filename.lower().endswith('.pdf'):
+            raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
+        
+        file_content = await file.read()
+        pdf_document = fitz.open(stream=file_content, filetype="pdf")
+        logging.info(f"Generating previews for PDF with {pdf_document.page_count} pages")
+        pages = []
+
+        for page_num in range(pdf_document.page_count):
+            page = pdf_document.load_page(page_num)
+            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+            img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            buffer = BytesIO()
+            img.save(buffer, format='PNG')
+            img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            pages.append({
+                "image": f"data:image/png;base64,{img_base64}",
+                "pageNumber": page_num + 1
+            })
+            logging.info(f"Generated preview for page {page_num + 1}")
+
+        pdf_document.close()
+        return {"success": True, "pages": pages}
+    except Exception as e:
+        logging.error(f"Erreur lors de la génération des aperçus: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors de la génération des aperçus: {str(e)}")
+
+#upload preparation
+@app.post("/upload-basic")
+async def upload_basic(file: UploadFile = File(...)):
+    """Upload d'un fichier pour preview rapide (pas d'OCR, juste image(s) base64, width, height)"""
+    try:
+        file_content = await file.read()
+        if file.filename.lower().endswith('.pdf'):
+            images = process_pdf_to_images(file_content)
+            if not images:
+                return {"success": False, "message": "No images extracted from PDF."}
+            return {
+                "success": True,
+                "image": image_to_base64(images[0]),
+                "width": images[0].width,
+                "height": images[0].height,
+                "images": [image_to_base64(img) for img in images],
+                "widths": [img.width for img in images],
+                "heights": [img.height for img in images]
+            }
+        elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            img = Image.open(BytesIO(file_content)).convert('RGB')
+            return {
+                "success": True,
+                "image": image_to_base64(img),
+                "width": img.width,
+                "height": img.height,
+                "images": [image_to_base64(img)],
+                "widths": [img.width],
+                "heights": [img.height]
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Type de fichier non supporté")
+    except Exception as e:
+        logging.error(f"Erreur lors de l'upload basic: {e}")
+        raise HTTPException(status_code=500, detail=f"Erreur lors du traitement: {str(e)}")
+
+
+def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float], corrected_data: Dict[str, str] = None):
+    """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
+    try:
+        # Utiliser les données corrigées si disponibles et non vides, sinon les données extraites
+        if corrected_data and any(corrected_data.values()):
+            data_to_use = corrected_data
+        else:
+            data_to_use = extracted_data
+        
+        # Nettoyer le taux TVA - extraire juste le nombre
+        taux_tva_raw = data_to_use.get("tauxTVA", "0")
+        taux_tva_clean = "0"
+        if taux_tva_raw:
+            # Chercher un nombre dans la chaîne (ex: "Total TVA 20%" -> "20")
+            import re
+            match = re.search(r'(\d+(?:[.,]\d+)?)', str(taux_tva_raw))
+            if match:
+                taux_tva_clean = match.group(1)
+        
+        # Créer un fichier JSON avec les données (corrigées ou extraites)
+        foxpro_data = {
+            "success": True,
+            "data": extracted_data,  # Garder les données originales pour référence
+            "corrected_data": corrected_data,  # Ajouter les données corrigées
+            "confidence_scores": confidence_scores,
+            "timestamp": str(datetime.datetime.now()),
+            "fields": {
+                "fournisseur": data_to_use.get("fournisseur", ""),
+                "dateFacturation": data_to_use.get("dateFacturation", ""),
+                "numeroFacture": data_to_use.get("numeroFacture", ""),
+                "tauxTVA": taux_tva_clean,
+                "montantHT": data_to_use.get("montantHT", "0"),
+                "montantTVA": data_to_use.get("montantTVA", "0"),
+                "montantTTC": data_to_use.get("montantTTC", "0")
+            }
+        }
+        
+        # Créer automatiquement le fichier JSON
+        with open('ocr_extraction.json', 'w', encoding='utf-8') as f:
+            json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
+        
+        # Créer automatiquement le fichier texte simple pour FoxPro
+        with open('ocr_extraction.txt', 'w', encoding='utf-8') as f:
+            f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
+            f.write(f"Numéro Facture: {data_to_use.get('numeroFacture', '')}\n")
+            f.write(f"Taux TVA: {taux_tva_clean}\n")
+            f.write(f"Montant HT: {data_to_use.get('montantHT', '0')}\n")
+            f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
+            f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
+        
+        logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement")
+        
+        # Créer aussi automatiquement le fichier DBF s'il n'existe pas
+        try:
+            write_invoice_to_dbf(extracted_data)
+            logging.info("Fichier factures.dbf créé/mis à jour automatiquement")
+        except Exception as dbf_error:
+            logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde pour FoxPro: {e}")
+
+
+# extract data function
+@app.post("/ocr-preview")
+async def ocr_preview(
+    file: UploadFile = File(...),
+    template_id: str = Form(None)
+):
+    try:
+        # Read and process the uploaded file
+        file_content = await file.read()
+        if file.filename and file.filename.lower().endswith('.pdf'):
+            images = process_pdf_to_images(file_content)
+            img = images[0] if images else None
+        elif file.filename and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            img = Image.open(BytesIO(file_content)).convert('RGB')
+        else:
+            raise HTTPException(status_code=400, detail="Type de fichier non supporté")
+        
+        if img is None:
+            raise HTTPException(status_code=400, detail="No image available for extraction.")
+            
+        img_array = np.array(img)
+        result = ocr.predict(img_array)
+        
+        # Collect detected boxes with confidence filtering
+        detected_boxes = []
+        for res in result:
+            rec_polys = res.get('rec_polys', [])
+            rec_texts = res.get('rec_texts', [])
+            rec_scores = res.get('rec_scores', [])
+            for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
+                if score is None or score < 0.75 or not text.strip():
+                    logging.info(f"Filtered out low confidence text: '{text}' (confidence: {score:.3f})")
+                    continue
+                
+                x_coords = [p[0] for p in poly]
+                y_coords = [p[1] for p in poly]
+                left = min(x_coords)
+                top = min(y_coords)
+                right = max(x_coords)
+                bottom = max(y_coords)
+                width = right - left
+                height = bottom - top
+                center_x = (left + right) / 2
+                center_y = (top + bottom) / 2
+                
+                detected_boxes.append({
+                    'left': float(left),
+                    'top': float(top),
+                    'width': float(width),
+                    'height': float(height),
+                    'text': text.strip(),
+                    'center_x': float(center_x),
+                    'center_y': float(center_y),
+                    'score': float(score)
+                })
+        
+        logging.info(f"Total detected boxes (after confidence filtering): {len(detected_boxes)}")
+        
+        # Helper functions
+        def extract_number(text):
+            import re
+            if re.search(r'[a-zA-Z]', text):
+                return None
+            cleaned = re.sub(r'[^\d.,-]', '', text)
+            if ',' in cleaned and '.' in cleaned:
+                if cleaned.rfind(',') > cleaned.rfind('.'):
+                    cleaned = cleaned.replace('.', '').replace(',', '.')
+                else:
+                    cleaned = cleaned.replace(',', '')
+            elif ',' in cleaned:
+                parts = cleaned.split(',')
+                if len(parts[-1]) == 2:
+                    cleaned = cleaned.replace(',', '.')
+                else:
+                    cleaned = cleaned.replace(',', '')
+            if cleaned.count('.') > 1:
+                parts = cleaned.split('.')
+                cleaned = ''.join(parts[:-1]) + '.' + parts[-1]
+            if not re.fullmatch(r'-?\d+(?:\.\d+)?', cleaned):
+                return None
+            try:
+                return float(cleaned)
+            except ValueError:
+                return None
+
+        def is_valid_ht_keyword(text):
+            if not text or not isinstance(text, str):
+                return False
+            text_upper = text.upper().strip()
+            patterns = [
+                r'^SOUS-TOTAL$',           
+                r'^HT\b',
+                r'^TOTAL\s+HT\b',
+                r'^TOTAL\s+HT\s*:',
+                r'^HORS\s+TAXES$',
+                r'^TOTAL\s+HORS\s*TAXES$',
+                r'^MONTANT\s+(TOTAL\s+)?HT\b',
+                r'^MONTANT\s+(TOTAL\s+)?HORS\s+TAXES\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?H\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?HORS\s+TAXE[S]?\b'
+            ]
+            for pattern in patterns:
+                if re.search(pattern, text_upper):
+                    return True
+            return False
+
+        def is_valid_tva_keyword(text):
+            if not text or not isinstance(text, str):
+                return False
+            text_upper = text.upper().strip()
+            patterns = [
+                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?V\.?A\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TVA\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+SUR\s+LA\s+VALEUR\s+AJOUT[ÉE]E\b',
+                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+AJOUT[ÉE]E\b',
+                r'^TVA\s*:',
+            ]
+            for pattern in patterns:
+                if re.search(pattern, text_upper):
+                    return True
+            return False
+
+        # --- HT extraction ---
+        ht_candidates = []
+        for i, box in enumerate(detected_boxes):
+            text = box['text']
+            is_ht = is_valid_ht_keyword(text)
+            if is_ht:
+                ht_x, ht_y = box['center_x'], box['center_y']
+                best_match = None
+                min_distance = float('inf')
+                for j in range(i + 1, min(i + 10, len(detected_boxes))):
+                    next_box = detected_boxes[j]
+                    next_text = next_box['text'].strip()
+                    if abs(next_box['center_y'] - ht_y) < 20:
+                        next_value = extract_number(next_text)
+                        if next_value is not None:
+                            distance = next_box['center_x'] - ht_x
+                            if 0 < distance < min_distance:
+                                best_match = {
+                                    'keyword_box': box,
+                                    'value_box': next_box,
+                                    'value': next_value,
+                                    'keyword_text': box['text'],
+                                    'value_text': next_text,
+                                    'distance': distance
+                                }
+                                min_distance = distance
+                if best_match:
+                    ht_candidates.append(best_match)
+        if not ht_candidates:
+            return {
+                "success": False,
+                "data": {},
+                "message": "Aucun mot-clé HT trouvé"
+            }
+        ht_candidates.sort(key=lambda x: x['distance'])
+        ht_selected = ht_candidates[0]
+        ht_extracted = ht_selected['value']
+
+        # --- TVA extraction ---
+        tva_candidates = []
+        for i, box in enumerate(detected_boxes):
+            if is_valid_tva_keyword(box['text']):
+                tva_x, tva_y = box['center_x'], box['center_y']
+                best_match = None
+                min_distance = float('inf')
+                for j in range(i + 1, min(i + 10, len(detected_boxes))):
+                    next_box = detected_boxes[j]
+                    next_text = next_box['text'].strip()
+                    if abs(next_box['center_y'] - tva_y) < 20:
+                        next_value = extract_number(next_text)
+                        if next_value is not None:
+                            distance = next_box['center_x'] - tva_x
+                            if 0 < distance < min_distance:
+                                best_match = {
+                                    'keyword_box': box,
+                                    'value_box': next_box,
+                                    'value': next_value,
+                                    'keyword_text': box['text'],
+                                    'value_text': next_text,
+                                    'distance': distance
+                                }
+                                min_distance = distance
+                if best_match:
+                    tva_candidates.append(best_match)
+        if not tva_candidates:
+            return {
+                "success": False,
+                "data": {},
+                "message": "Aucun mot-clé TVA trouvé"
+            }
+        tva_candidates.sort(key=lambda x: x['distance'])
+        tva_selected = tva_candidates[0]
+        tva_extracted = tva_selected['value']
+
+        # --- TTC & tauxTVA ---
+        ttc_extracted = round(ht_extracted + tva_extracted, 2)
+        if ht_extracted != 0:
+            raw_taux = (tva_extracted * 100) / ht_extracted
+            decimal_part = raw_taux - math.floor(raw_taux)
+            if decimal_part > 0.5:
+                taux_tva = math.ceil(raw_taux)
+            else:
+                taux_tva = math.floor(raw_taux)
+        else:
+            taux_tva = 0
+
+        # --- numFacture extraction using mapping ---
+        numfacture_value = None
+        numfacture_box = None
+        try:
+            connection = get_connection()
+            cursor = connection.cursor(dictionary=True)
+            # Get field_id for numFacture
+            cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
+            row = cursor.fetchone()
+            if row:
+                numfacture_field_id = row['id']
+                cursor.execute("""
+                    SELECT `left`, `top`, `width`, `height`
+                    FROM Mappings
+                    WHERE template_id = %s AND field_id = %s
+                    LIMIT 1
+                """, (template_id, numfacture_field_id))
+                mapping = cursor.fetchone()
+                if mapping:
+                    mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
+                    mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
+
+                    vertical_threshold = 30  # allowed vertical deviation
+                    best_match = None
+                    best_score = -1
+
+                    def is_valid_invoice_number(text):
+                        """Improved validation that accepts invoice patterns"""
+                        text = text.strip()
+                        # Must contain at least 4 consecutive digits
+                        if not re.search(r'\d{4,}', text):
+                            return False
+                        # Accepts common invoice formats with letters/numbers/symbols
+                        return bool(re.match(r'^[\w\s\-/°#]+$', text, re.UNICODE))
+
+                    def calculate_invoice_score(text):
+                        """Score based on digit count and invoice-like patterns"""
+                        # Count total digits
+                        digit_count = len(re.findall(r'\d', text))
+                        # Bonus for long consecutive digit sequences
+                        max_consecutive = max(len(m) for m in re.findall(r'\d+', text))
+                        # Bonus for common invoice patterns
+                        pattern_bonus = 2 if re.search(r'(n[°º]|no|num|ref|facture)\s*\d', text.lower()) else 0
+                        return digit_count + max_consecutive + pattern_bonus
+
+                    # Step 1: Find best candidate near mapped position
+                    for box in detected_boxes:
+                        text = box["text"].strip()
+                        if not is_valid_invoice_number(text):
+                            continue
+                        
+                        # Check vertical alignment
+                        if abs(box["center_y"] - mapped_cy) > vertical_threshold:
+                            continue
+                        
+                        # Calculate score
+                        score = calculate_invoice_score(text)
+                        
+                        # Adjust score by position (closer = better)
+                        dist_x = abs(box["center_x"] - mapped_cx)
+                        dist_y = abs(box["center_y"] - mapped_cy)
+                        position_factor = 1/(1 + dist_x + dist_y)  # 1 for perfect match
+                        score *= position_factor
+                        
+                        if score > best_score:
+                            best_score = score
+                            best_match = box
+
+                    # Step 2: Verify and store best match
+                    if best_match:
+                        numfacture_value = best_match["text"].strip()
+                        numfacture_box = {
+                            "left": best_match["left"],
+                            "top": best_match["top"],
+                            "width": best_match["width"],
+                            "height": best_match["height"],
+                        }
+
+                    # Step 3: Fallback - global search for best invoice number
+                    if not numfacture_value:
+                        global_best = None
+                        global_score = -1
+                        for box in detected_boxes:
+                            text = box["text"].strip()
+                            if not is_valid_invoice_number(text):
+                                continue
+                                
+                            score = calculate_invoice_score(text)
+                            if score > global_score:
+                                global_score = score
+                                global_best = box
+                        
+                        if global_best:
+                            numfacture_value = global_best["text"].strip()
+                            numfacture_box = {
+                                "left": global_best["left"],
+                                "top": global_best["top"],
+                                "width": global_best["width"],
+                                "height": global_best["height"],
+                            }
+
+            # --- Date Facturation extraction using mapping ---
+            datefacturation_value = None
+            datefacturation_box = None
+            cursor.execute("SELECT id FROM field_name WHERE name = 'datefacturation'")
+            row = cursor.fetchone()
+            if row:
+                date_field_id = row['id']
+                cursor.execute("""
+                    SELECT `left`, `top`, `width`, `height`
+                    FROM Mappings
+                    WHERE template_id = %s AND field_id = %s
+                    LIMIT 1
+                """, (template_id, date_field_id))
+                mapping = cursor.fetchone()
+                if mapping:
+                    mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
+                    mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
+
+                    vertical_threshold = 30  # allowed vertical deviation
+                    best_match = None
+                    best_score = -1
+
+                    def is_valid_date(text):
+                        """Validate date patterns"""
+                        text = text.strip()
+                        # Common date patterns: dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, etc.
+                        date_patterns = [
+                            r'\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b',  # dd-mm-yyyy, dd/mm/yyyy, dd.mm.yyyy
+                            r'\b\d{2,4}[-/.]\d{1,2}[-/.]\d{1,2}\b',  # yyyy-mm-dd, yyyy/mm/dd, etc.
+                            r'\b\d{1,2}\s+[a-zA-Z]+\s+\d{4}\b',     # 01 Jan 2023
+                        ]
+                        
+                        for pattern in date_patterns:
+                            if re.search(pattern, text, re.IGNORECASE):
+                                return True
+                        return False
+
+                    def parse_date(text):
+                        """Parse date from text with multiple formats"""
+                        from datetime import datetime
+                        
+                        # Common date formats to try
+                        date_formats = [
+                            '%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y',  # DD/MM/YYYY
+                            '%Y/%m/%d', '%Y-%m-%d', '%Y.%m.%d',  # YYYY/MM/DD
+                            '%d %b %Y', '%d %B %Y',              # 01 Jan 2023, 01 January 2023
+                            '%b %d, %Y', '%B %d, %Y',            # Jan 01, 2023, January 01, 2023
+                        ]
+                        
+                        for fmt in date_formats:
+                            try:
+                                return datetime.strptime(text, fmt).strftime('%d/%m/%Y')
+                            except ValueError:
+                                continue
+                        return text  # Return original if no format matched
+
+                    # Find best date candidate near mapped position
+                    for box in detected_boxes:
+                        text = box["text"].strip()
+                        if not is_valid_date(text):
+                            continue
+                            
+                        # Check vertical alignment
+                        if abs(box["center_y"] - mapped_cy) > vertical_threshold:
+                            continue
+                        
+                        # Calculate score based on position (closer = better)
+                        dist_x = abs(box["center_x"] - mapped_cx)
+                        dist_y = abs(box["center_y"] - mapped_cy)
+                        position_score = 1 / (1 + dist_x + dist_y)
+                        
+                        # Prefer longer text (more likely to be a full date)
+                        length_score = len(text) / 20  # Normalize to 0-1 range
+                        
+                        total_score = position_score * 0.7 + length_score * 0.3
+                        
+                        if total_score > best_score:
+                            best_score = total_score
+                            best_match = box
+
+                    # If found a good match, store it
+                    if best_match:
+                        date_text = best_match["text"].strip()
+                        datefacturation_value = parse_date(date_text)
+                        datefacturation_box = {
+                            "left": best_match["left"],
+                            "top": best_match["top"],
+                            "width": best_match["width"],
+                            "height": best_match["height"],
+                        }
+
+        except Exception as e:
+            logging.error(f"Error extracting numFacture: {e}", exc_info=True)
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection and connection.is_connected():
+                connection.close()
+                
+        # --- Prepare response ---
+        result_data = {
+            "montantHT": ht_extracted,
+            "montantTVA": tva_extracted,
+            "montantTTC": ttc_extracted,
+            "tauxTVA": round(taux_tva, 2),
+            "boxHT": {
+                "left": ht_selected['value_box']['left'],
+                "top": ht_selected['value_box']['top'],
+                "width": ht_selected['value_box']['width'],
+                "height": ht_selected['value_box']['height'],
+            },
+            "boxTVA": {
+                "left": tva_selected['value_box']['left'],
+                "top": tva_selected['value_box']['top'],
+                "width": tva_selected['value_box']['width'],
+                "height": tva_selected['value_box']['height'],
+            },
+            "numFacture": numfacture_value,
+            "boxNumFacture": numfacture_box,
+            "dateFacturation": datefacturation_value,
+            "boxDateFacturation": datefacturation_box,
+        }
+        return {
+            "success": True,
+            "data": result_data,
+            "message": "Extraction réussie"
+        }
+    except Exception as e:
+        logging.error(f"Error in extract_test: {str(e)}", exc_info=True)
+        return {
+            "success": False,
+            "data": {},
+            "message": f"Erreur lors de l'extraction: {str(e)}"
+        }
+
+
+        
+# mappings
+@app.post("/mappings")
+async def save_field_mapping(request: SaveMappingRequest):
+    try:
+        template_id = request.template_id
+        field_mapping = request.field_map
+        
+        logging.info(f"Received request to save mapping for template: {template_id}")
+        logging.debug(f"Field mapping data: {field_mapping}")
+        
+        # Convert FieldCoordinates objects to dictionaries
+        field_map = {}
+        for field_name, coords in field_mapping.items():
+            if coords is not None:
+                field_map[field_name] = coords.dict() if hasattr(coords, 'dict') else coords
+                logging.debug(f"Processed field {field_name}: {field_map[field_name]}")
+            else:
+                field_map[field_name] = None
+                logging.debug(f"Null coordinates for field: {field_name}")
+        
+        logging.info(f"Saving {len(field_map)} fields to database for template {template_id}")
+        
+        # Save to database
+        success = await save_mapping_db(template_id, field_map)
+        if not success:
+            error_msg = f"Failed to save mappings to database for template {template_id}"
+            logging.error(error_msg)
+            raise HTTPException(status_code=500, detail=error_msg)
+            
+        logging.info(f"Successfully saved mappings for template {template_id}")
+        return {
+            "status": "success", 
+            "message": f"Mappings saved for template {template_id}",
+            "template_id": template_id,
+            "fields_saved": len(field_map)
+        }
+        
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        error_msg = f"Unexpected error saving mapping: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+
+@app.get("/mappings")
+async def get_mappings():
+    """Récupérer tous les mappings groupés par template_id"""
+    connection = None
+    cursor = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Get all field mappings with template and field names
+        cursor.execute("""
+            SELECT 
+                m.template_id,
+                f.name as field_name,
+                m.`left`,
+                m.`top`,
+                m.`width`,
+                m.`height`
+            FROM Mappings m
+            JOIN Field_Name f ON m.field_id = f.id
+            ORDER BY m.template_id, f.name
+        """)
+
+        mappings = cursor.fetchall()
+        logging.info(f"Found {len(mappings)} total field mappings")
+
+        # Group by template_id
+        result = {}
+        for row in mappings:
+            template_id = row['template_id']
+            if template_id not in result:
+                result[template_id] = {}
+
+            result[template_id][row['field_name']] = {
+                'left': float(row['left']) if row['left'] is not None else 0.0,
+                'top': float(row['top']) if row['top'] is not None else 0.0,
+                'width': float(row['width']) if row['width'] is not None else 0.0,
+                'height': float(row['height']) if row['height'] is not None else 0.0,
+                'manual': False  # Default value
+            }
+
+        logging.info(f"Returning mappings for {len(result)} templates")
+        return {
+            "status": "success",
+            "mappings": result,
+            "count": len(mappings),
+            "template_count": len(result)
+        }
+
+    except Exception as e:
+        error_msg = f"Error loading all mappings: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        raise HTTPException(status_code=500, detail=error_msg)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+@app.get("/mappings/{template_id}")
+async def get_mapping(template_id: str):
+    """Récupérer le mapping pour un template spécifique"""
+    connection = None
+    cursor = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        # Get all field mappings for this template with field names
+        cursor.execute("""
+            SELECT m.field_id, f.name as field_name, m.`left`, m.`top`, m.`width`, m.`height`
+            FROM Mappings m
+            JOIN Field_Name f ON m.field_id = f.id
+            WHERE m.template_id = %s
+        """, (template_id,))
+        
+        mappings = cursor.fetchall()
+        logging.info(f"Found {len(mappings)} mappings for template {template_id}")
+        
+        if not mappings:
+            logging.warning(f"No mappings found for template {template_id}")
+            return {"template_id": template_id, "field_map": {}}
+        
+        # Convert to the expected format
+        field_map = {}
+        for row in mappings:
+            field_name = row['field_name']
+            field_map[field_name] = {
+                'left': float(row['left']) if row['left'] is not None else 0.0,
+                'top': float(row['top']) if row['top'] is not None else 0.0,
+                'width': float(row['width']) if row['width'] is not None else 0.0,
+                'height': float(row['height']) if row['height'] is not None else 0.0,
+                'manual': False  # Default value
+            }
+            logging.debug(f"Loaded mapping for {field_name}: {field_map[field_name]}")
+        
+        logging.info(f"Successfully loaded {len(field_map)} field mappings for template {template_id}")
+        return {
+            "template_id": template_id, 
+            "field_map": field_map,
+            "status": "success"
+        }
+        
+    except Exception as e:
+        error_msg = f"Error loading mapping for template {template_id}: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        raise HTTPException(status_code=500, detail=error_msg)
+    finally:
+        if cursor:
+            cursor.close()
+        if connection:
+            connection.close()
+
+
+@app.delete("/mappings/{template_id}")
+async def delete_mapping(template_id: str):
+    """Supprimer un template et tous ses mappings associés"""
+    connection = None
+    cursor = None
+    try:
+        logging.info(f"Attempting to delete template and its mappings: {template_id}")
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        # Start transaction
+        connection.start_transaction()
+        
+        # First, delete all mappings for this template
+        cursor.execute("DELETE FROM Mappings WHERE template_id = %s", (template_id,))
+        deleted_mappings = cursor.rowcount
+        
+        # Then delete the template itself
+        cursor.execute("DELETE FROM Templates WHERE id = %s", (template_id,))
+        deleted_templates = cursor.rowcount
+        
+        if deleted_templates == 0:
+            connection.rollback()
+            raise HTTPException(status_code=404, detail=f"Template '{template_id}' non trouvé")
+            
+        connection.commit()
+        logging.info(f"Successfully deleted template '{template_id}' and {deleted_mappings} mappings")
+        
+        return {
+            "success": True,
+            "message": f"Template '{template_id}' et ses {deleted_mappings} mappings ont été supprimés avec succès"
+        }
+        
+    except Error as e:
+        if connection:
+            connection.rollback()
+        error_msg = f"Erreur lors de la suppression du template {template_id}: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        raise HTTPException(status_code=500, detail=error_msg)
+        
+    finally:
+        if cursor:
+            cursor.close()
+        if connection and connection.is_connected():
+            connection.close()
+
+
+
+# Pydantic models for invoice data
+class InvoiceBase(BaseModel):
+    """Base model for invoice data with common fields and validations."""
+    fournisseur: str = Field(..., description="Supplier name")
+    numFacture: str = Field(..., description="Invoice number")
+    dateFacturation: date = Field(..., description="Invoice date (YYYY-MM-DD)")
+    tauxTVA: float = Field(..., ge=0, le=100, description="VAT rate (0-100)")
+    montantHT: float = Field(..., ge=0, description="Amount excluding tax")
+    montantTVA: float = Field(..., ge=0, description="Tax amount")
+    montantTTC: float = Field(..., ge=0, description="Total amount including tax")
+
+    @field_validator('dateFacturation', mode='before')
+    def parse_date(cls, v):
+        if isinstance(v, str):
+            try:
+                return datetime.strptime(v, '%Y-%m-%d').date()
+            except ValueError:
+                try:
+                    # Try with different date formats if needed
+                    return datetime.strptime(v, '%d/%m/%Y').date()
+                except ValueError as e:
+                    raise ValueError("Date must be in YYYY-MM-DD or DD/MM/YYYY format") from e
+        return v
+
+    @field_validator('tauxTVA', 'montantHT', 'montantTVA', 'montantTTC', mode='before')
+    def validate_numbers(cls, v):
+        if isinstance(v, str):
+            try:
+                return float(v.replace(',', '.'))
+            except ValueError as e:
+                raise ValueError(f"Could not convert '{v}' to number") from e
+        return v
+
+
+class InvoiceCreate(InvoiceBase):
+    """Model for creating a new invoice."""
+    pass
+
+
+class InvoiceUpdate(BaseModel):
+    """Model for updating an existing invoice."""
+    fournisseur: Optional[str] = Field(None, description="Supplier name")
+    numFacture: Optional[str] = Field(None, description="Invoice number")
+    dateFacturation: Optional[date] = Field(None, description="Invoice date (YYYY-MM-DD)")
+    tauxTVA: Optional[float] = Field(None, ge=0, le=100, description="VAT rate (0-100)")
+    montantHT: Optional[float] = Field(None, ge=0, description="Amount excluding tax")
+    montantTVA: Optional[float] = Field(None, ge=0, description="Tax amount")
+    montantTTC: Optional[float] = Field(None, ge=0, description="Total amount including tax")
+
+    @field_validator('dateFacturation', mode='before')
+    def parse_date(cls, v):
+        if isinstance(v, str):
+            try:
+                return datetime.strptime(v, '%Y-%m-%d').date()
+            except ValueError:
+                try:
+                    return datetime.strptime(v, '%d/%m/%Y').date()
+                except ValueError as e:
+                    raise ValueError("Date must be in YYYY-MM-DD or DD/MM/YYYY format") from e
+        return v
+
+    @field_validator('tauxTVA', 'montantHT', 'montantTVA', 'montantTTC', mode='before')
+    def validate_numbers(cls, v):
+        if v is None:
+            return v
+        if isinstance(v, str):
+            try:
+                return float(v.replace(',', '.'))
+            except ValueError as e:
+                raise ValueError(f"Could not convert '{v}' to number") from e
+        return v
+
+
+class InvoiceResponse(InvoiceBase):
+    """Response model for invoice data including database-generated fields."""
+    id: int
+    date_creation: datetime
+
+    class Config:
+        from_attributes = True
+
+# Factures endpoints
+# add
+@app.post("/ajouter-facture", response_model=InvoiceResponse)
+async def ajouter_facture(
+    invoice: InvoiceCreate,
+    current_user = Depends(require_comptable_or_admin)
+):
+    """
+    Save invoice data to the database.
+    
+    Args:
+        invoice: The invoice data to be saved
+        current_user: The currently authenticated user (from dependency)
+        
+    Returns:
+        dict: A dictionary containing success status, message, and invoice ID
+    """
+    connection = None
+    cursor = None
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        # Convert date to string format for database
+        date_str = invoice.dateFacturation.strftime('%Y-%m-%d')
+        
+        # Insert the invoice data
+        query = """
+        INSERT INTO Facture 
+        (fournisseur, numFacture, dateFacturation, tauxTVA, montantHT, montantTVA, montantTTC)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        """
+        values = (
+            invoice.fournisseur,
+            invoice.numFacture,
+            date_str,
+            invoice.tauxTVA,
+            invoice.montantHT,
+            invoice.montantTVA,
+            invoice.montantTTC
+        )
+        
+        cursor.execute(query, values)
+        connection.commit()
+        
+        # Get the inserted invoice
+        invoice_id = cursor.lastrowid
+        cursor.execute("SELECT * FROM Facture WHERE id = %s", (invoice_id,))
+        result = cursor.fetchone()
+        
+        # Convert to dictionary with column names if it's a tuple
+        if isinstance(result, tuple):
+            cursor.execute("SHOW COLUMNS FROM Facture")
+            columns = [col[0] for col in cursor.fetchall()]
+            result = dict(zip(columns, result))
+        
+        # Create response data with proper date serialization
+        invoice_data = invoice.model_dump()
+        # Convert date objects to ISO format strings
+        if 'dateFacturation' in invoice_data and invoice_data['dateFacturation'] is not None:
+            if hasattr(invoice_data['dateFacturation'], 'isoformat'):
+                invoice_data['dateFacturation'] = invoice_data['dateFacturation'].isoformat()
+            
+        response_data = {
+            "success": True,
+            "message": "Facture enregistrée avec succès",
+            "data": {
+                "id": result['id'],
+                "date_creation": (result.get('date_creation') or datetime.now()).isoformat(),
+                **invoice_data
+            }
+        }
+        
+        return JSONResponse(content=response_data)
+    except mysql.connector.IntegrityError as e:
+        if "unique_invoice" in str(e).lower() or "duplicate" in str(e).lower():
+            # Essayer de mettre à jour l'enregistrement existant
+            try:
+                update_query = """
+                UPDATE Facture 
+                SET dateFacturation = %s, tauxTVA = %s, montantHT = %s, montantTVA = %s, montantTTC = %s
+                WHERE fournisseur = %s AND numFacture = %s
+                """
+                update_values = (
+                    invoice.dateFacturation,
+                    invoice.tauxTVA,
+                    invoice.montantHT,
+                    invoice.montantTVA,
+                    invoice.montantTTC,
+                    invoice.fournisseur,
+                    invoice.numFacture
+                )
+                cursor.execute(update_query, update_values)
+                connection.commit()
+                
+                # Retrieve the (now updated) invoice to comply with the response model
+                cursor.execute("SELECT * FROM Facture WHERE fournisseur = %s AND numFacture = %s", (
+                    invoice.fournisseur,
+                    invoice.numFacture,
+                ))
+                updated = cursor.fetchone()
+                if isinstance(updated, tuple):
+                    cursor.execute("SHOW COLUMNS FROM Facture")
+                    cols = [col[0] for col in cursor.fetchall()]
+                    updated = dict(zip(cols, updated))
+
+                # Prepare invoice data with proper date serialization
+                invoice_data = invoice.model_dump()
+                if 'dateFacturation' in invoice_data and invoice_data['dateFacturation'] is not None:
+                    if hasattr(invoice_data['dateFacturation'], 'isoformat'):
+                        invoice_data['dateFacturation'] = invoice_data['dateFacturation'].isoformat()
+                
+                response_data = {
+                    "success": True,
+                    "message": "Facture mise à jour avec succès",
+                    "data": {
+                        "id": updated['id'],
+                        "date_creation": (updated.get('date_creation') or datetime.now()).isoformat(),
+                        **invoice_data
+                    }
+                }
+                return JSONResponse(content=response_data)
+            except Exception as update_error:
+                return {
+                    "success": False,
+                    "message": f"Erreur lors de la mise à jour: {str(update_error)}"
+                }
+        return {
+            "success": False,
+            "message": f"Erreur d'intégrité de la base de données: {str(e)}"
+        }
+    except Error as e:
+        logging.error(f"Error saving invoice: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors de l'enregistrement de la facture: {str(e)}"
+        }
+    finally:
+        if connection and connection.is_connected():
+            if cursor:
+                cursor.close()
+            connection.close()
+
+#get all
+@app.get("/factures")
+async def list_factures(
+    page: int = 1,
+    page_size: int = 10,
+    search: str = ""
+):
+    """
+    List all factures with pagination and search
+    """
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+        
+        # Build the base query
+        query = """
+            SELECT SQL_CALC_FOUND_ROWS *
+            FROM facture
+            WHERE %(search)s = '' 
+               OR fournisseur LIKE %(search_like)s 
+               OR numFacture LIKE %(search_like)s
+               OR dateFacturation LIKE %(search_like)s
+               OR tauxTVA LIKE %(search_like)s
+               OR montantHT LIKE %(search_like)s
+               OR montantTVA LIKE %(search_like)s
+               OR montantTTC LIKE %(search_like)s
+            ORDER BY id DESC
+            LIMIT %(offset)s, %(limit)s
+        """
+        
+        # Calculate pagination
+        offset = (page - 1) * page_size
+        
+        # Execute query
+        cursor.execute(
+            query,
+            {
+                'search': search,
+                'search_like': f'%{search}%',
+                'offset': offset,
+                'limit': page_size
+            }
+        )
+        
+        factures = cursor.fetchall()
+        
+        # Get total count
+        cursor.execute("SELECT FOUND_ROWS() AS total")
+        total = cursor.fetchone()['total']
+        total_pages = (total + page_size - 1) // page_size
+        
+        # Format dates and ensure all fields are present
+        for facture in factures:
+            # Add default date_creation if missing
+            if 'date_creation' not in facture:
+                facture['date_creation'] = '2024-01-01T00:00:00'
+            # Ensure dateFacturation is in the response, even if null
+            if 'dateFacturation' not in facture:
+                facture['dateFacturation'] = None
+        
+        return {
+            "factures": factures,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "total_pages": total_pages
+        }
+        
+    except Exception as e:
+        logging.error(f"Error listing factures: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
+
+@app.put("/factures/{facture_id}", response_model=InvoiceResponse)
+async def update_facture(
+    facture_id: int,
+    invoice_update: InvoiceUpdate
+):
+    """
+    Update a facture by ID
+    """
+    try:
+        connection = get_connection()
+        cursor = connection.cursor(dictionary=True)
+
+        # Check if facture exists
+        cursor.execute("SELECT * FROM facture WHERE id = %s", (facture_id,))
+        facture = cursor.fetchone()
+
+        if not facture:
+            raise HTTPException(status_code=404, detail="Facture not found")
+
+        # Prepare update data (exclude id and date_creation)
+        update_data = invoice_update.dict(exclude_unset=True)
+
+        if not update_data:
+            raise HTTPException(status_code=400, detail="No fields to update")
+
+        # Build and execute update query
+        set_parts = []
+        params = {}
+        for field, value in update_data.items():
+            if field not in ['id', 'date_creation']:  # Skip these fields
+                param_name = f"{field}"
+                set_parts.append(f"{field} = %({param_name})s")
+                params[param_name] = value
+
+        set_clause = ", ".join(set_parts)
+        query = f"""
+            UPDATE facture
+            SET {set_clause}
+            WHERE id = %(id)s
+        """
+        params['id'] = facture_id
+
+        cursor.execute(query, params)
+        connection.commit()
+
+        # Get updated facture and return
+        cursor.execute("""
+            SELECT 
+                id,
+                fournisseur,
+                numFacture,
+                tauxTVA,
+                montantHT,
+                montantTVA,
+                montantTTC,
+                DATE_FORMAT(date_creation, '%%Y-%%m-%%dT%%H:%%i:%%s') as date_creation
+            FROM facture 
+            WHERE id = %s
+        """, (facture_id,))
+        updated_facture = cursor.fetchone()
+
+        if not updated_facture:
+            raise HTTPException(status_code=404, detail="Updated facture not found")
+
+        return updated_facture
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error updating facture: {str(e)}")
+ 
+        
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
+
+
+#delete
+@app.delete("/factures/{facture_id}")
+async def delete_facture(facture_id: int):
+    """
+    Delete a facture by ID
+    """
+    try:
+        connection = get_connection()
+        cursor = connection.cursor()
+        
+        # Check if facture exists
+        cursor.execute("SELECT id FROM facture WHERE id = %s", (facture_id,))
+        if not cursor.fetchone():
+            raise HTTPException(status_code=404, detail="Facture not found")
+        
+        # Delete facture
+        cursor.execute("DELETE FROM facture WHERE id = %s", (facture_id,))
+        connection.commit()
+        
+        return {"message": "Facture deleted successfully"}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error deleting facture: {str(e)}")
+        
+        raise HTTPException(status_code=500, detail=str(e))
+    finally:
+        if 'cursor' in locals():
+            cursor.close()
+        if 'connection' in locals():
+            connection.close()
+
+#  FoxPro
+
+def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
+    """
+    Ajoute une facture dans un fichier DBF compatible FoxPro.
+    Si le fichier n'existe pas, il est créé automatiquement avec la bonne structure.
+    """
+    import os
+    
+    try:
+        # Vérifier si le fichier existe et n'est pas vide
+        if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
+            os.remove(dbf_path)
+            logging.info("Fichier DBF vide supprimé")
+        
+        # Créer le fichier DBF s'il n'existe pas
+        if not os.path.exists(dbf_path):
+            logging.info("Création automatique du fichier factures.dbf")
+            # Créer la table DBF avec une structure compatible FoxPro
+            table = dbf.Table(
+                dbf_path,
+                'fournissr C(30); numfact C(15); datefact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+            )
+            table.open(mode=dbf.READ_WRITE)
+            table.close()
+            logging.info("Fichier factures.dbf créé avec succès")
+        
+        # Ouvrir la table existante
+        table = dbf.Table(dbf_path)
+        table.open(mode=dbf.READ_WRITE)
+        
+        # Ajouter la facture
+        table.append((
+            invoice_data['fournisseur'],
+            invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
+            invoice_data['dateFacturation'],
+            float(invoice_data['tauxTVA']),
+            float(invoice_data['montantHT']),
+            float(invoice_data['montantTVA']),
+            float(invoice_data['montantTTC'])
+        ))
+        table.close()
+        
+        logging.info(f"Facture ajoutée au fichier DBF: {invoice_data.get('numeroFacture', 'N/A')}")
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de l'écriture dans le fichier DBF: {e}")
+        # En cas d'erreur, essayer de recréer le fichier
+        try:
+            # S'assurer que la table est correctement fermée avant suppression
+            try:
+                table.close()
+            except Exception:
+                pass
+            if os.path.exists(dbf_path):
+                os.remove(dbf_path)
+            # Recréer le fichier avec la même structure que celle utilisée pour l'append
+            table = dbf.Table(
+                dbf_path,
+                'fournissr C(30); numfact C(15); datefact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+            )
+            table.open(mode=dbf.READ_WRITE)
+            table.append((
+                invoice_data['fournisseur'],
+                invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
+                invoice_data['dateFacturation'],
+                float(invoice_data['tauxTVA']),
+                float(invoice_data['montantHT']),
+                float(invoice_data['montantTVA']),
+                float(invoice_data['montantTTC'])
+            ))
+            table.close()
+            logging.info("Fichier DBF recréé et facture ajoutée avec succès")
+        except Exception as retry_error:
+            logging.error(f"Erreur fatale lors de la création du fichier DBF: {retry_error}")
+            raise retry_error
+    finally:
+        if 'table' in locals():
+            try:
+                table.close()
+            except Exception:
+                pass
+
+
+
+@app.get("/download-dbf")
+async def download_dbf():
+    dbf_path = "factures.dbf"
+    if not os.path.exists(dbf_path):
+        raise HTTPException(status_code=404, detail="Fichier DBF non trouvé")
+    return FileResponse(
+        path=dbf_path,
+        filename="factures.dbf",
+        media_type="application/octet-stream"
+    )
+
+@app.post("/save-corrected-data")
+async def save_corrected_data(corrected_data: Dict[str, str]):
+    """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
+    try:
+        # Récupérer les données d'extraction originales
+        if not os.path.exists('ocr_extraction.json'):
+            return {
+                "success": False,
+                "message": "Aucune donnée d'extraction trouvée. Veuillez d'abord extraire une facture."
+            }
+        
+        # Lire les données originales
+        with open('ocr_extraction.json', 'r', encoding='utf-8') as f:
+            original_data = json.load(f)
+        
+        # Sauvegarder avec les données corrigées
+        save_extraction_for_foxpro(
+            extracted_data=original_data.get('data', {}),
+            confidence_scores=original_data.get('confidence_scores', {}),
+            corrected_data=corrected_data
+        )
+        
+        return {
+            "success": True,
+            "message": "Données corrigées sauvegardées pour FoxPro"
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde des données corrigées: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors de la sauvegarde: {str(e)}"
+        }
+
+@app.post("/launch-foxpro")
+async def launch_foxpro():
+    """Lancer FoxPro avec le formulaire de saisie"""
+    try:
+        import subprocess
+        import platform
+        
+        # Vérifier si le fichier d'extraction existe
+        if not os.path.exists('ocr_extraction.json'):
+            return {
+                "success": False,
+                "message": "Aucune donnée extraite trouvée. Veuillez d'abord extraire une facture via l'interface web."
+            }
+        
+        # Vérifier si le fichier DBF existe, sinon le créer
+        if not os.path.exists('factures.dbf'):
+            try:
+                # Créer un fichier DBF vide avec la bonne structure
+                table = dbf.Table(
+                    'factures.dbf',
+                    'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+                )
+                table.open(mode=dbf.READ_WRITE)
+                table.close()
+                logging.info("Fichier factures.dbf créé automatiquement")
+            except Exception as dbf_error:
+                logging.error(f"Erreur lors de la création automatique du fichier DBF: {dbf_error}")
+                return {
+                    "success": False,
+                    "message": f"Erreur lors de la création de la base de données: {str(dbf_error)}"
+                }
+        
+        # Chercher FoxPro automatiquement
+        foxpro_path = None
+        
+        # Emplacements courants
+        possible_paths = [
+            r"C:\Program Files (x86)\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Program Files\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Users\pc\Desktop\microsoft visual foxpro 9\microsoft visual foxpro 9\vfp9.exe"
+        ]
+        
+        # Chercher dans les emplacements courants
+        for path in possible_paths:
+            if os.path.exists(path):
+                foxpro_path = path
+                break
+        
+        # Si pas trouvé, chercher avec where
+        if not foxpro_path:
+            try:
+                import subprocess
+                result = subprocess.run(['where', 'vfp9.exe'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    foxpro_path = result.stdout.strip().split('\n')[0]
+            except:
+                pass
+        
+        if not foxpro_path or not os.path.exists(foxpro_path):
+            return {
+                "success": False,
+                "message": "FoxPro non trouvé. Vérifiez l'installation ou ajoutez-le au PATH."
+            }
+        
+        # Lancer FoxPro avec le formulaire
+        if platform.system() == "Windows":
+            subprocess.Popen([foxpro_path, "formulaire_foxpro_final.prg"], 
+                           cwd=os.getcwd(),
+                           shell=True)
+        else:
+            return {
+                "success": False,
+                "message": "Cette fonctionnalité n'est disponible que sur Windows."
+            }
+        
+        return {
+            "success": True,
+            "message": "FoxPro lancé avec succès. Le formulaire devrait s'ouvrir."
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors du lancement de FoxPro: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors du lancement de FoxPro: {str(e)}"
+        }
+
+
+
+if __name__ == "__main__":
+    import uvicorn
+    import signal
+    import sys
+    
+    def signal_handler(sig, frame):
+        print("\nShutting down server gracefully...")
+        sys.exit(0)
+    
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    try:
+        uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
+    except KeyboardInterrupt:
+        print("\nServer stopped by user")
+    except Exception as e:
+        print(f"Server error: {e}")
+        sys.exit(1)

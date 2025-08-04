@@ -1,6 +1,0 @@
-Fournisseur: radema88T
-Numéro Facture: 2025207462845
-Taux TVA: 18
-Montant HT: 194.86
-Montant TVA: 34.97
-Montant TTC: 229.83

@@ -66,8 +66,8 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
             },
             fieldMappings: fieldMappingsUpdate,
             isSelecting: false,
-            selectedField: null,
-            ocrPreview: `Boîte assignée à ${prev.selectedField}: "${clickedBox.text}"`,
+            selectedField: null
+           // ocrPreview: `Boîte assignée à ${prev.selectedField}: "${clickedBox.text}"`,
           }));
 
           // Update ocrPreviewFields to show the text in the "Valeur extraite" field

@@ -19,6 +19,7 @@ const ExtractionSidebar = ({
   setExtractDrawState,
   showNotification,
 }) => {
+ 
   return (
     <div className="lg:col-span-1">
       <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30 h-full">
@@ -51,58 +52,56 @@ const ExtractionSidebar = ({
         </button>
 
         <div className="space-y-3">
-          {EXTRACTION_FIELDS.map((field) => (
-            <div key={field.key}>
-              <label className="block text-sm font-medium text-blue-100 mb-1">
-                {field.label}
-              </label>
-              <div className="flex gap-2 items-center">
-                <input
-                  type="text"
-                  name={field.key}
-                  value={filterValue(
-                    extractionState.extractedDataList[
-                      extractionState.currentPdfIndex
-                    ]?.[field.key],
-                    field.key
-                  )}
-                  onChange={(e) =>
-                    setExtractionState((prev) => ({
-                      ...prev,
-                      extractedDataList:
-                        prev.extractedDataList.map(
-                      (data, index) =>
-                        index === prev.currentPdfIndex
-                          ? {
-                              ...data,
-                              [field.key]: e.target.value,
-                            }
-                          : data
-                    ),
-                  }))
-                }
-                  className="flex-1 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                  placeholder={`${field.label} sera extrait automatiquement`}
-                />
-                {/* Bouton d'icône pour activer/désactiver le mode dessin extraction */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (extractDrawState.isDrawing && extractDrawState.fieldKey === field.key) {
-                      setExtractDrawState({ isDrawing: false, fieldKey: null, start: null, rect: null });
-                    } else {
-                      setExtractDrawState({ isDrawing: true, fieldKey: field.key, start: null, rect: null });
-                      showNotification(`Mode dessin extraction activé pour \"${field.label}\". Dessinez un rectangle sur l'image.`, "info");
+          {EXTRACTION_FIELDS.map((field) => {
+            const rawValue = extractionState.extractedDataList[extractionState.currentPdfIndex]?.[field.key];
+            const displayValue =filterValue(rawValue, field.key);
+              
+            return (
+              <div key={field.key}>
+                <label className="block text-sm font-medium text-blue-100 mb-1">
+                  {field.label}
+                </label>
+                <div className="flex gap-2 items-center">
+                  <input
+                    type={field.key === 'dateFacturation' ? 'date' : 'text'}
+                    name={field.key}
+                    value={displayValue || ''}
+                    onChange={(e) =>
+                      setExtractionState((prev) => ({
+                        ...prev,
+                        extractedDataList: prev.extractedDataList.map(
+                          (data, index) =>
+                            index === prev.currentPdfIndex
+                              ? {
+                                  ...data,
+                                  [field.key]: e.target.value,
+                                }
+                              : data
+                        ),
+                      }))
                     }
-                  }}
-                  className={`p-2 rounded-full border-2 transition-colors duration-200 ${extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'border-yellow-400 bg-yellow-500/20 text-yellow-100' : 'border-white/30 bg-white/10 text-blue-100 hover:border-blue-400'}`}
-                  title={extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'Annuler le dessin' : 'Dessiner pour extraire'}
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </button>
+                    className="flex-1 px-3 py-2 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                    placeholder={`${field.label} sera extrait automatiquement`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (extractDrawState.isDrawing && extractDrawState.fieldKey === field.key) {
+                        setExtractDrawState({ isDrawing: false, fieldKey: null, start: null, rect: null });
+                      } else {
+                        setExtractDrawState({ isDrawing: true, fieldKey: field.key, start: null, rect: null });
+                        showNotification(`Mode dessin extraction activé pour "${field.label}". Dessinez un rectangle sur l'image.`, "info");
+                      }
+                    }}
+                    className={`p-2 rounded-full border-2 transition-colors duration-200 ${extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'border-yellow-400 bg-yellow-500/20 text-yellow-100' : 'border-white/30 bg-white/10 text-blue-100 hover:border-blue-400'}`}
+                    title={extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'Annuler le dessin' : 'Dessiner pour extraire'}
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
           
           <div className="flex flex-col gap-3 mb-4">
             <button
@@ -133,4 +132,4 @@ const ExtractionSidebar = ({
   );
 };
 
-export default ExtractionSidebar; 
+export default ExtractionSidebar;

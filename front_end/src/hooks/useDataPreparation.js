@@ -1,31 +1,81 @@
 import { useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoading, showNotification) => {
   const { token } = useAuth();
-  // Fonction utilitaire pour le zoom
+  const navigate = useNavigate();
+
   const getDefaultZoom = (imgWidth, containerWidth = 900) => {
     return Math.min(1, containerWidth / imgWidth);
   };
 
+  const getPagePreviews = useCallback(
+    async (file) => {
+      if (!file || file.type !== "application/pdf") {
+        throw new Error("Fichier invalide. Veuillez sélectionner un PDF.");
+      }
+
+      setIsLoading(true);
+      try {
+        const formData = new FormData();
+        formData.append("file", file);
+
+        const headers = {};
+        if (token) {
+          headers['Authorization'] = `Bearer ${token}`;
+        }
+
+        console.log("Fetching page previews from /pdf-page-previews"); // Debug
+        const response = await fetch(`${API_BASE_URL}/pdf-page-previews`, {
+          method: "POST",
+          headers,
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erreur serveur: ${response.status}`);
+        }
+
+        const result = await response.json();
+        console.log("Page previews response:", result); // Debug
+        if (result.success && result.pages) {
+          return result.pages.map((page, index) => ({
+            preview: page.image,
+            pageNumber: index + 1,
+          }));
+        } else {
+          throw new Error(result.message || "Erreur lors de la récupération des aperçus");
+        }
+      } catch (error) {
+        console.error("Erreur lors de la récupération des aperçus:", error);
+        throw error;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [token, setIsLoading]
+  );
+
   const handleDataPrepFileUpload = useCallback(
-    async (event) => {
+    async (event, pageIndex = 0) => {
       const files = event.target.files;
       if (!files || files.length === 0) {
         showNotification("Aucun fichier sélectionné", "error");
         return;
       }
-     
+
       const file = files[0];
 
-      setCurrentStep("dataprep");
       setIsLoading(true);
 
       try {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("page_index", pageIndex.toString());
+        console.log(`Sending page_index: ${pageIndex} for file: ${file.name}`); // Debug
 
         const headers = {};
         if (token) {
@@ -42,9 +92,9 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
           body: formData,
         });
 
-        console.log("Réponse reçue:", response.status, response.statusText);
-
+        console.log("Réponse reçue:", response.status, response.statusText); // Debug
         const result = await response.json();
+        console.log("Backend response:", result); // Debug
 
         if (result.success) {
           const imageToUse = result.unwarped_image || result.image;
@@ -62,10 +112,12 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
             selectedBoxes: {},
             fileName: file.name,
             fileType: file.type,
+            selectedPageIndex: pageIndex,
           }));
-
+          setCurrentStep("dataprep");
+          navigate("/parametre");
           showNotification(
-            `Image chargée avec succès (${widthToUse} × ${heightToUse} px) - ${
+            `Page ${pageIndex + 1} chargée avec succès (${widthToUse} × ${heightToUse} px) - ${
               result.box_count || (result.boxes ? result.boxes.length : 0)
             } boîtes OCR détectées`,
             "success"
@@ -75,7 +127,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         }
       } catch (error) {
         console.error("Erreur:", error);
-        showNotification("Erreur lors du chargement de l'image", "error");
+        showNotification(`Erreur lors du chargement de la page ${pageIndex + 1}: ${error.message}`, "error");
       } finally {
         setIsLoading(false);
       }
@@ -92,7 +144,6 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
 
   const startFieldSelection = useCallback(
     (fieldKey, setManualDrawState) => {
-      // Annuler le mode dessin si actif
       setManualDrawState({
         isDrawing: false,
         fieldKey: null,
@@ -104,7 +155,6 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         ...prev,
         isSelecting: true,
         selectedField: fieldKey,
-       
       }));
 
       showNotification(`Sélectionnez une boîte OCR pour "${fieldKey}"`, "info");
@@ -113,12 +163,10 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
   );
 
   const startManualDraw = useCallback((fieldKey) => {
-    // Annuler le mode sélection si actif
     setDataPrepState((prev) => ({
       ...prev,
       isSelecting: false,
       selectedField: null,
-      
     }));
 
     showNotification(
@@ -133,15 +181,15 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
       return;
     }
 
-    // Build the field_map to send
     const field_map = {};
-    // Only include numeroFacture if mapped
-    if (dataPrepState.fieldMappings.numeroFacture) {
-      field_map.numeroFacture = dataPrepState.fieldMappings.numeroFacture;
-    }
+    ['numeroFacture', 'dateFacturation'].forEach(field => {
+      if (dataPrepState.fieldMappings[field]) {
+        field_map[field] = dataPrepState.fieldMappings[field];
+      }
+    });
 
-    if (!field_map.numeroFacture) {
-      showNotification("Veuillez mapper le numéro de facture", "error");
+    if (!field_map.numeroFacture && !field_map.dateFacturation) {
+      showNotification("Veuillez mapper au moins le numéro de facture ou la date de facturation", "error");
       return;
     }
 
@@ -239,5 +287,6 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
     saveMappings,
     ocrPreviewManual,
     getDefaultZoom,
+    getPagePreviews,
   };
 };

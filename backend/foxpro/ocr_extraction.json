@@ -1,0 +1,23 @@
+{
+  "success": true,
+  "data": {},
+  "corrected_data": {
+    "fournisseur": "capi",
+    "numeroFacture": "IN8411-0501",
+    "tauxTVA": "4",
+    "montantHT": "7275",
+    "montantTVA": "255",
+    "montantTTC": "7530"
+  },
+  "confidence_scores": {},
+  "timestamp": "2025-08-04 16:53:06.727856",
+  "fields": {
+    "fournisseur": "capi",
+    "dateFacturation": "",
+    "numeroFacture": "IN8411-0501",
+    "tauxTVA": "4",
+    "montantHT": "7275",
+    "montantTVA": "255",
+    "montantTTC": "7530"
+  }
+}

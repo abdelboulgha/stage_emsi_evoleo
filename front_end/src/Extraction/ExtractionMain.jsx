@@ -38,14 +38,14 @@ const ExtractionMain = ({
   return (
     <div className="max-w-7xl mx-auto">
       <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6 relative">
-        <div className="flex justify-center mb-6">
-          <button
+       <div className="flex justify-center mb-6">
+          {/*<button
             onClick={backToSetup}
             className="px-4 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 z-10"
           >
             <ChevronLeft className="w-4 h-4" />
             Retour
-          </button>
+          </button>*/}
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

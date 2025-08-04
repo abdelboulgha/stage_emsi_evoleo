@@ -29,6 +29,12 @@ const ParametrageFields = ({
       label: "Numéro de Facture", 
       type: "ocr",
       description: "Sélectionnez le numéro sur le document"
+    },{ 
+      key: "dateFacturation", 
+      label: "Date de Facturation", 
+      type: "date",
+      description: "Sélectionnez la date sur le document",
+      format: "dd/MM/yyyy"  
     },
   ];
 
@@ -57,7 +63,7 @@ const ParametrageFields = ({
                 {field.label}
               </label>
               <div className="flex flex-col gap-1 items-end">
-                {field.type === "ocr" && (
+                {(field.type === "ocr" || field.type === "date") && (
                   <>
                     <button
                       onClick={() => startFieldSelection(field.key)}
@@ -92,8 +98,8 @@ const ParametrageFields = ({
               />
             )}
 
-            {/* Display OCR extracted value for OCR fields */}
-            {field.type === "ocr" && dataPrepState.fieldMappings[field.key] && (
+            {/* Display extracted value for OCR and date fields */}
+            {(field.type === "ocr" || field.type === "date") && dataPrepState.fieldMappings[field.key] && (
               <div className="mt-2 px-3 py-2 bg-blue-600/20 text-blue-100 rounded text-xs font-medium">
                 <div className="flex justify-between items-center">
                   <span>Valeur extraite:</span>

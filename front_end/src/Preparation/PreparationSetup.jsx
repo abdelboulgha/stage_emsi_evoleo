@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Upload,
   FileText,
@@ -11,6 +11,54 @@ import {
   CheckCircle,
   Loader2,
 } from "lucide-react";
+import { createPortal } from "react-dom";
+
+const PageSelectionModal = ({ isOpen, onClose, pages, onSelectPage }) => {
+  if (!isOpen) return null;
+
+  return createPortal(
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
+      <div className="bg-white rounded-2xl w-full max-w-4xl flex flex-col">
+        <div className="p-6 border-b">
+          <h3 className="text-xl font-semibold text-gray-800 mb-2">Sélectionnez une page</h3>
+          <p className="text-gray-600 text-sm mb-1">Choisissez une page pour configurer la facture.</p>
+        </div>
+        <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
+          {pages.map((page, index) => (
+            <div
+              key={index}
+              className="relative group cursor-pointer"
+              onClick={() => {
+                console.log(`Selected page index: ${index}`); // Debug: Log selected page index
+                onSelectPage(index);
+              }}
+            >
+              <div className="aspect-[3/4] rounded-lg overflow-hidden border border-gray-300 bg-white/10">
+                <img
+                  src={page.preview}
+                  alt={`Page ${index + 1}`}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+              <div className="mt-2 text-sm text-gray-800 text-center">
+                Page {index + 1}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="p-6 border-t">
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+          >
+            Annuler
+          </button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
 
 const PreparationSetup = ({
   setupState,
@@ -22,7 +70,45 @@ const PreparationSetup = ({
   validateSetupAndProceed,
   removeFile,
   showNotification,
+  getPagePreviews,
 }) => {
+  const [showPageModal, setShowPageModal] = useState(false);
+  const [pdfPages, setPdfPages] = useState([]);
+  const [pendingFile, setPendingFile] = useState(null);
+
+  const handleFileSelection = async (event) => {
+    const file = event.target.files[0];
+    if (!file || file.type !== "application/pdf") {
+      showNotification("Veuillez sélectionner un fichier PDF.", "error");
+      return;
+    }
+
+    try {
+      const pagePreviews = await getPagePreviews(file);
+      console.log("Page previews received:", pagePreviews); // Debug: Log previews
+      if (pagePreviews.length > 1) {
+        setPdfPages(pagePreviews);
+        setPendingFile(file);
+        setShowPageModal(true);
+      } else {
+        console.log("Single page PDF, processing directly with page_index 0"); // Debug
+        handleSingleDataPrepUpload({ target: { files: [file] } }, 0);
+      }
+    } catch (error) {
+      showNotification(`Erreur lors de la récupération des pages: ${error.message}`, "error");
+    }
+  };
+
+  const handlePageSelect = (pageIndex) => {
+    if (pendingFile) {
+      console.log(`Processing file with pageIndex: ${pageIndex}`); 
+      handleSingleDataPrepUpload({ target: { files: [pendingFile] } }, pageIndex);
+      setShowPageModal(false);
+      setPendingFile(null);
+      setPdfPages([]);
+    }
+  };
+
   return (
     <div className="max-w-6xl mx-auto">
       <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8">
@@ -91,7 +177,7 @@ const PreparationSetup = ({
                   <input
                     type="file"
                     accept=".pdf"
-                    onChange={handleSingleDataPrepUpload}
+                    onChange={handleFileSelection}
                     className="hidden"
                     id="single-dataprep-upload"
                   />
@@ -121,14 +207,11 @@ const PreparationSetup = ({
               </h2>
 
               <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                {/* Hidden input to maintain processingMode state */}
                 <input
                   type="hidden"
                   name="processingMode"
                   value="same"
                 />
-
-                {/* Sélection du modèle */}
                 <div className="mb-6">
                   <select
                     value={setupState.selectedModel}
@@ -144,7 +227,6 @@ const PreparationSetup = ({
                     }}
                     required
                   >
-
                     <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
                       Sélectionnez un fournisseur
                     </option>
@@ -245,7 +327,6 @@ const PreparationSetup = ({
                   onClick={() =>
                     validateSetupAndProceed({
                       ...setupState,
-                      // Ensure we're using the latest state values
                       invoiceType: setupState.invoiceType,
                       selectedFiles: setupState.selectedFiles,
                       filePreviews: setupState.filePreviews,
@@ -269,10 +350,17 @@ const PreparationSetup = ({
                 </button>
               </div>
             )}
+
+          <PageSelectionModal
+            isOpen={showPageModal}
+            onClose={() => setShowPageModal(false)}
+            pages={pdfPages}
+            onSelectPage={handlePageSelect}
+          />
         </div>
       </div>
     </div>
   );
 };
 
-export default PreparationSetup; 
+export default PreparationSetup;
