@@ -1,5 +1,30 @@
 import React, { useEffect, useState } from "react";
-import { Edit2, Trash2, CheckCircle } from "lucide-react";
+import { Edit2, Trash2, X, ChevronUp, ChevronDown } from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import fr from 'date-fns/locale/fr';
+registerLocale('fr', fr);
+
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
+const formatDateOnly = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 const FIELDS = [
   { key: "fournisseur", label: "Fournisseur" },
@@ -8,6 +33,7 @@ const FIELDS = [
   { key: "tauxTVA", label: "Taux TVA" },
   { key: "montantHT", label: "Montant HT" },
   { key: "montantTVA", label: "Montant TVA" },
+  { key: "date_creation", label: "Date D'ajout" },
   { key: "montantTTC", label: "Montant TTC" },
 ];
 
@@ -17,9 +43,10 @@ const MiseAJourPage = () => {
   const [factures, setFactures] = useState([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [editing, setEditing] = useState({});
-  const [selected, setSelected] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   useEffect(() => {
     fetchFactures();
@@ -35,6 +62,47 @@ const MiseAJourPage = () => {
     const data = await res.json();
     setFactures(data.factures);
     setTotalPages(data.total_pages);
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+
+    return [...data].sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+
+      // Handle date fields
+      if (sortConfig.key === 'dateFacturation' || sortConfig.key === 'date_creation') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      // Handle numeric fields
+      else if (['montantHT', 'montantTVA', 'montantTTC', 'tauxTVA'].includes(sortConfig.key)) {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      }
+      // Handle string fields
+      else {
+        aValue = String(aValue || '').toLowerCase();
+        bValue = String(bValue || '').toLowerCase();
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
   };
 
   const handleEdit = (id, field, value) => {
@@ -58,91 +126,75 @@ const MiseAJourPage = () => {
     return copy;
   };
 
-  const handleUpdate = async (id) => {
-    // Get the original facture data from the state
-    const originalFacture = factures.find(f => f.id === id);
-    if (!originalFacture) {
-      console.error(`Facture with ID ${id} not found in state.`);
-      return;
-    }
+  const handleDelete = async (id) => {
+    await fetch(`http://localhost:8000/factures/${id}`, { method: "DELETE" });
+    fetchFactures();
+  };
 
-    // Combine original data with any edits.
-    // If editing[id] is undefined (no edits made), it will be an empty object,
-    // so originalFacture's properties will be used.
-    const dataToProcess = { ...originalFacture, ...(editing[id] || {}) };
+  const openEditModal = (facture) => {
+    setEditing({ ...facture });
+    setIsModalOpen(true);
+  };
 
-    // Use numFacture directly, as this is what the backend expects and what the inputs use
-    const casted = {
-      ...dataToProcess,
-      numFacture: dataToProcess.numFacture,
-    };
-    const body = convertNumericFields(casted);
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditing(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditing(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleDateChange = (date, field) => {
+    setEditing(prev => ({
+      ...prev,
+      [field]: date
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!editing) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/factures/${id}`, {
+      const body = convertNumericFields({
+        ...editing,
+        // Format dateFacturation back to YYYY-MM-DD for the backend
+        dateFacturation: editing.dateFacturation ? new Date(editing.dateFacturation).toISOString().split('T')[0] : ''
+      });
+
+      const response = await fetch(`http://localhost:8000/factures/${editing.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body),
       });
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.detail || "Failed to update facture");
       }
-      setEditing((prev) => ({ ...prev, [id]: undefined }));
+
+      closeModal();
       fetchFactures();
     } catch (error) {
       console.error("Error updating facture:", error);
     }
   };
 
-  const handleDelete = async (id) => {
-    await fetch(`http://localhost:8000/factures/${id}`, { method: "DELETE" });
-    fetchFactures();
-  };
-
-  const handleSelect = (facture) => {
-    // Use facture directly since backend consistently uses numFacture
-    setSelected(facture);
-    setEditing({ [facture.id]: { ...facture } });
-  };
-
-  const handleGlobalUpdate = async () => {
-    if (!selected) return;
-
-    // Get the original facture data for the selected item
-    const originalFacture = factures.find(f => f.id === selected.id);
-    if (!originalFacture) {
-      console.error(`Selected facture with ID ${selected.id} not found in state.`);
-      return;
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <ChevronUp className="w-4 h-4 opacity-30" />;
     }
-
-    // Combine original data with any edits from the global form
-    const dataToProcess = { ...originalFacture, ...(editing[selected.id] || {}) };
-
-    // Use numFacture directly
-    const casted = {
-      ...dataToProcess,
-      numFacture: dataToProcess.numFacture,
-    };
-    const body = convertNumericFields(casted);
-
-    try {
-      const response = await fetch(`http://localhost:8000/factures/${selected.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to update facture globally");
-      }
-      setSelected(null);
-      setEditing({});
-      fetchFactures();
-    } catch (error) {
-      console.error("Error global updating facture:", error);
-    }
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="w-4 h-4" /> 
+      : <ChevronDown className="w-4 h-4" />;
   };
+
+  const sortedFactures = sortData(factures);
 
   return (
     <div className="max-w-[90rem] mx-auto mt-9">
@@ -156,73 +208,169 @@ const MiseAJourPage = () => {
             setSearch(e.target.value);
             setPage(1);
           }}
-          className="mb-4 px-4 py-2 border border-white/30 rounded w-full bg-white/20 text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+          className="mb-6 px-4 py-3 border border-white/30 rounded-lg w-full bg-white/20 text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
         />
-        <div className="overflow-x-auto">
-          <table className="w-full border mb-4 text-white">
+        
+        <div className="overflow-x-auto rounded-xl border border-white/20">
+          <table className="w-full text-white">
             <thead>
-              <tr>
+              <tr className="bg-white/10">
                 {FIELDS.map((f) => (
-                  <th key={f.key} className="border border-white/30 px-2 py-1 bg-white/10">
-                    {f.label}
+                  <th 
+                    key={f.key} 
+                    className="border-b border-white/20 px-4 py-4 text-left font-semibold cursor-pointer hover:bg-white/20 transition-colors duration-200"
+                    onClick={() => handleSort(f.key)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <span>{f.label}</span>
+                      <div className="flex flex-col">
+                        {getSortIcon(f.key)}
+                      </div>
+                    </div>
                   </th>
                 ))}
-                <th className="border border-white/30 px-2 py-1 bg-white/10">Actions</th>
+                <th className="border-b border-white/20 px-4 py-4 text-center font-semibold">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
-              {factures.map((facture) => (
-                <tr key={facture.id} className="hover:bg-blue-500/10">
+              {sortedFactures.map((facture, index) => (
+                <tr 
+                  key={facture.id} 
+                  className="hover:bg-white/10 cursor-pointer transition-colors duration-200 border-b border-white/10"
+                  onClick={() => openEditModal(facture)}
+                >
                   {FIELDS.map((f) => (
-                    <td key={f.key} className="border border-white/30 px-2 py-1">
-                      <input
-                        value={editing[facture.id]?.[f.key] ?? facture[f.key]}
-                        onChange={(e) => handleEdit(facture.id, f.key, e.target.value)}
-                        className="w-full px-1 py-1 border border-white/30 rounded bg-white/20 text-white"
-                      />
+                    <td key={f.key} className="px-4 py-4">
+                      <div className="px-2 py-1">
+                        {f.key === 'date_creation' 
+                          ? formatDateTime(facture[f.key])
+                          : f.key === 'dateFacturation'
+                            ? formatDateOnly(facture[f.key])
+                            : f.key === 'montantHT' || f.key === 'montantTVA' || f.key === 'montantTTC'
+                              ? `${facture[f.key]}`
+                              : f.key === 'tauxTVA'
+                                ? `${facture[f.key]}%`
+                                : facture[f.key]}
+                      </div>
                     </td>
                   ))}
-                  <td className="border border-white/30 px-2 py-1 flex gap-2 items-center justify-center">
-                    <button onClick={() => handleUpdate(facture.id)} className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full flex items-center justify-center" title="Mettre à jour">
-                      <Edit2 className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleDelete(facture.id)} className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full flex items-center justify-center" title="Supprimer">
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleSelect(facture)} className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full flex items-center justify-center" title="Sélectionner">
-                      <CheckCircle className="w-5 h-5" />
-                    </button>
+                  <td className="px-4 py-4">
+                    <div className="flex gap-2 items-center justify-center">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(facture);
+                        }} 
+                        className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105" 
+                        title="Modifier"
+                      >
+                        <Edit2 className="w-5 h-5" />
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDelete(facture.id);
+                        }} 
+                        className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-lg flex items-center justify-center transition-all duration-200 hover:scale-105" 
+                        title="Supprimer"
+                      >
+                        <Trash2 className="w-5 h-5" />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
-        <div className="flex justify-between items-center mb-4">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)} className="px-4 py-2 bg-gray-200/70 text-gray-800 rounded">
+        
+        <div className="flex justify-between items-center mt-6">
+          <button 
+            disabled={page === 1} 
+            onClick={() => setPage(page - 1)} 
+            className="px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Précédent
           </button>
-          <span className="text-white">Page {page} / {totalPages}</span>
-          <button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="px-4 py-2 bg-gray-200/70 text-gray-800 rounded">
+          <span className="text-white font-medium">Page {page} / {totalPages}</span>
+          <button 
+            disabled={page === totalPages} 
+            onClick={() => setPage(page + 1)} 
+            className="px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
             Suivant
           </button>
         </div>
-        {selected && (
-          <div className="bg-white/20 p-4 rounded-2xl shadow border border-white/30 mt-4">
-            <h3 className="text-lg font-bold text-white mb-2">Modifier la facture</h3>
-            {FIELDS.map((f) => (
-              <div key={f.key} className="mb-2">
-                <label className="block font-medium text-white mb-1">{f.label}</label>
-                <input
-                  value={editing[selected.id]?.[f.key] ?? selected[f.key]}
-                  onChange={(e) => handleEdit(selected.id, f.key, e.target.value)}
-                  className="w-full px-2 py-1 border border-white/30 rounded bg-white/20 text-white"
-                />
+        
+        {/* Edit Modal */}
+        {isModalOpen && editing && (
+          <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+            <div className="bg-white/20 backdrop-blur-lg border border-white/30 rounded-2xl p-8 w-full max-w-4xl max-h-[90vh] overflow-y-auto">
+              <div className="flex justify-between items-center mb-6">
+                <h3 className="text-2xl font-bold text-white">Modifier la facture</h3>
+                <button 
+                  onClick={closeModal}
+                  className="text-white hover:text-gray-300 transition-colors duration-200"
+                >
+                  <X className="w-8 h-8" />
+                </button>
               </div>
-            ))}
-            <button onClick={handleGlobalUpdate} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">
-              Appliquer les modifications
-            </button>
+              
+              <form onSubmit={handleSubmit}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                  {FIELDS.map((f) => (
+                    <div key={f.key} className="mb-4">
+                      <label className="block text-sm font-semibold text-white mb-2">
+                        {f.label}
+                      </label>
+                      
+                      {f.key === 'date_creation' ? (
+                        <div className="px-4 py-3 bg-white/10 rounded-lg text-white border border-white/20">
+                          {formatDateTime(editing[f.key])}
+                        </div>
+                      ) : f.key === 'dateFacturation' ? (
+                        <DatePicker
+                          selected={editing[f.key] ? new Date(editing[f.key]) : null}
+                          onChange={(date) => handleDateChange(date, f.key)}
+                          dateFormat="dd/MM/yyyy"
+                          locale="fr"
+                          className="w-full px-4 py-3 border border-white/30 rounded-lg bg-white/20 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                          placeholderText="Sélectionner une date"
+                        />
+                      ) : (
+                        <input
+                          type={f.key === 'montantHT' || f.key === 'montantTVA' || f.key === 'montantTTC' || f.key === 'tauxTVA' ? 'number' : 'text'}
+                          name={f.key}
+                          value={editing[f.key] || ''}
+                          onChange={handleInputChange}
+                          className="w-full px-4 py-3 border border-white/30 rounded-lg bg-white/20 text-white focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                          step={f.key === 'tauxTVA' ? '0.01' : '1'}
+                          placeholder={`Entrez ${f.label.toLowerCase()}`}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="flex justify-end space-x-4">
+                  <button
+                    type="button"
+                    onClick={closeModal}
+                    className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-all duration-200"
+                  >
+                    Annuler
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-200"
+                  >
+                    Appliquer les modifications
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
         )}
       </div>

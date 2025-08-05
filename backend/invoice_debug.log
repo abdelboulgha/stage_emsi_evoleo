@@ -195,3 +195,37 @@ NameError: name 'math' is not defined
 2025-08-05 17:35:51,435 INFO Base de données initialisée avec succès
 2025-08-05 17:35:51,435 INFO Authentication database initialized
 2025-08-05 17:35:51,450 INFO Database connection pool created successfully
+2025-08-05 17:36:51,370 INFO Base de données initialisée avec succès
+2025-08-05 17:36:51,371 INFO Authentication database initialized
+2025-08-05 17:36:51,387 INFO Database connection pool created successfully
+2025-08-05 17:37:15,625 ERROR Erreur lors de la sauvegarde pour FoxPro: type object 'datetime.datetime' has no attribute 'datetime'
+2025-08-05 17:58:07,454 INFO Base de données initialisée avec succès
+2025-08-05 17:58:07,454 INFO Authentication database initialized
+2025-08-05 17:58:07,469 INFO Database connection pool created successfully
+2025-08-05 17:58:28,154 INFO Base de données initialisée avec succès
+2025-08-05 17:58:28,155 INFO Authentication database initialized
+2025-08-05 17:58:28,168 INFO Database connection pool created successfully
+2025-08-05 17:59:32,640 INFO Base de données initialisée avec succès
+2025-08-05 17:59:32,640 INFO Authentication database initialized
+2025-08-05 17:59:32,655 INFO Database connection pool created successfully
+2025-08-05 17:59:54,657 INFO Base de données initialisée avec succès
+2025-08-05 17:59:54,657 INFO Authentication database initialized
+2025-08-05 17:59:54,672 INFO Database connection pool created successfully
+2025-08-05 18:17:52,334 ERROR Erreur de décodage JWT: Signature has expired.
+2025-08-05 18:22:07,159 INFO Base de données initialisée avec succès
+2025-08-05 18:22:07,160 INFO Authentication database initialized
+2025-08-05 18:22:07,173 INFO Database connection pool created successfully
+2025-08-05 18:23:04,595 INFO Base de données initialisée avec succès
+2025-08-05 18:23:04,595 INFO Authentication database initialized
+2025-08-05 18:23:04,608 INFO Database connection pool created successfully
+2025-08-05 18:24:27,554 INFO Base de données initialisée avec succès
+2025-08-05 18:24:27,554 INFO Authentication database initialized
+2025-08-05 18:24:27,567 INFO Database connection pool created successfully
+2025-08-05 18:26:40,136 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 18:54:18,121 ERROR Erreur de décodage JWT: Signature has expired.
+2025-08-05 18:56:15,168 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 18:56:32,085 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 18:57:01,162 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 18:57:08,326 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 18:57:13,242 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 19:03:30,784 ERROR Error updating facture: Not enough parameters for the SQL statement

@@ -102,14 +102,21 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
         "success"
       );
       
-      // For single file uploads, auto-validate
+      // For single file uploads, only auto-validate if it's a single page
       if (files.length === 1) {
-        validateSetupAndProceed({
-          ...setupState,
-          invoiceType: setupState.invoiceType,
-          selectedFiles: files,
-          filePreviews: previews,
-        });
+        const file = files[0];
+        const filePreview = previews[0];
+        
+        // Only auto-validate if it's a single page (either non-PDF or PDF with 1 page)
+        if (filePreview.totalPages === 1) {
+          validateSetupAndProceed({
+            ...setupState,
+            invoiceType: setupState.invoiceType,
+            selectedFiles: files,
+            filePreviews: previews,
+          });
+        }
+        // If it's a multi-page PDF, don't auto-validate - let user click "Valider" manually
       } 
       
       // Clear the file input to allow re-uploading the same file
