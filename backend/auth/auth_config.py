@@ -9,18 +9,13 @@ JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "your-secret-key-change-in-producti
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-# Configuration de la base de données
-# Utiliser SQLite pour simplifier les tests
+# Configuration de la base de données MySQL
 DB_CONFIG = {
     "host": "localhost",
     "user": "root",
     "password": "",
     "database": "evoleo"
 }
-
-# Configuration SQLite alternative
-USE_SQLITE = os.getenv("USE_SQLITE", "false").lower() == "true"
-SQLITE_DB_PATH = "auth.db"
 
 # Configuration des rôles
 ROLES = {

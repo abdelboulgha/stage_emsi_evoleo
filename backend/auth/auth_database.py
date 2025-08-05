@@ -1,9 +1,8 @@
-import sqlite3
 import logging
 from passlib.context import CryptContext
 from typing import Optional, List
 import os
-from .auth_config import DB_CONFIG, DEFAULT_ROLE, USE_SQLITE, SQLITE_DB_PATH
+from .auth_config import DB_CONFIG, DEFAULT_ROLE
 
 # Configuration du hachage des mots de passe
 import hashlib
@@ -34,52 +33,88 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     return verify_password_hash(plain_password, hashed_password)
 
 def get_connection():
-    """Obtient une connexion à la base de données"""
-    if USE_SQLITE:
-        return sqlite3.connect(SQLITE_DB_PATH)
-    else:
-        # Fallback vers MySQL si nécessaire
-        import mysql.connector
-        return mysql.connector.connect(**DB_CONFIG)
+    """Obtient une connexion à la base de données MySQL"""
+    import mysql.connector
+    return mysql.connector.connect(**DB_CONFIG)
 
 def init_database():
-    """Initialise la base de données avec la table des utilisateurs"""
+    """Initialise la base de données avec toutes les tables nécessaires"""
     try:
         conn = get_connection()
         cursor = conn.cursor()
         
-        if USE_SQLITE:
-            # Création de la table utilisateurs pour SQLite
-            create_table_query = """
-            CREATE TABLE IF NOT EXISTS utilisateurs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE NOT NULL,
-                nom TEXT NOT NULL,
-                prenom TEXT NOT NULL,
-                mot_de_passe_hash TEXT NOT NULL,
-                role TEXT DEFAULT 'comptable' CHECK (role IN ('admin', 'comptable')),
-                date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                actif INTEGER DEFAULT 1
-            );
-            """
-        else:
-            # Création de la table utilisateurs pour MySQL
-            create_table_query = """
-            CREATE TABLE IF NOT EXISTS utilisateurs (
-                id INT AUTO_INCREMENT PRIMARY KEY,
-                email VARCHAR(255) UNIQUE NOT NULL,
-                nom VARCHAR(50) NOT NULL,
-                prenom VARCHAR(50) NOT NULL,
-                mot_de_passe_hash VARCHAR(255) NOT NULL,
-                role ENUM('admin', 'comptable') DEFAULT 'comptable',
-                date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                actif BOOLEAN DEFAULT TRUE,
-                INDEX idx_email (email),
-                INDEX idx_role (role)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-            """
+        # Création de la table utilisateurs
+        create_utilisateurs_query = """
+        CREATE TABLE IF NOT EXISTS utilisateurs (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            email VARCHAR(255) UNIQUE NOT NULL,
+            nom VARCHAR(50) NOT NULL,
+            prenom VARCHAR(50) NOT NULL,
+            mot_de_passe_hash VARCHAR(255) NOT NULL,
+            role ENUM('admin', 'comptable') DEFAULT 'comptable',
+            date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            actif BOOLEAN DEFAULT TRUE,
+            INDEX idx_email (email),
+            INDEX idx_role (role)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """
         
-        cursor.execute(create_table_query)
+        # Création de la table field_name
+        create_field_name_query = """
+        CREATE TABLE IF NOT EXISTS field_name (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            name VARCHAR(50) NOT NULL,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """
+        
+        # Création de la table templates
+        create_templates_query = """
+        CREATE TABLE IF NOT EXISTS templates (
+            id VARCHAR(36) NOT NULL,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """
+        
+        # Création de la table mappings
+        create_mappings_query = """
+        CREATE TABLE IF NOT EXISTS mappings (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            template_id VARCHAR(36) NOT NULL,
+            field_id INT(11) NOT NULL,
+            `left` FLOAT NOT NULL,
+            top FLOAT NOT NULL,
+            width FLOAT NOT NULL,
+            height FLOAT NOT NULL,
+            manual BOOLEAN NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY (template_id) REFERENCES templates (id),
+            FOREIGN KEY (field_id) REFERENCES field_name (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """
+        
+        # Création de la table facture
+        create_facture_query = """
+        CREATE TABLE IF NOT EXISTS facture (
+            id INT(11) NOT NULL AUTO_INCREMENT,
+            fournisseur VARCHAR(255) NOT NULL,
+            numFacture VARCHAR(100) NOT NULL,
+            tauxTVA DECIMAL(15,2) NOT NULL,
+            montantHT DECIMAL(15,2) NOT NULL,
+            montantTVA DECIMAL(15,2) NOT NULL,
+            montantTTC DECIMAL(15,2) NOT NULL,
+            dateFacturation DATE NOT NULL,
+            date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+        """
+        
+        # Exécution des requêtes de création des tables
+        cursor.execute(create_utilisateurs_query)
+        cursor.execute(create_field_name_query)
+        cursor.execute(create_templates_query)
+        cursor.execute(create_mappings_query)
+        cursor.execute(create_facture_query)
         conn.commit()
         
         # Création d'un utilisateur admin par défaut si la table est vide
@@ -88,52 +123,50 @@ def init_database():
         
         if count == 0:
             admin_password = get_password_hash("admin123")
-            if USE_SQLITE:
-                insert_admin_query = """
-                INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role)
-                VALUES (?, ?, ?, ?, ?)
-                """
-                cursor.execute(insert_admin_query, ('admin@evoleo.com', 'Administrateur', 'Système', admin_password, 'admin'))
-            else:
-                insert_admin_query = """
-                INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role)
-                VALUES (%s, %s, %s, %s, %s)
-                """
-                cursor.execute(insert_admin_query, ('admin@evoleo.com', 'Administrateur', 'Système', admin_password, 'admin'))
-            
+            insert_admin_query = """
+            INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role)
+            VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(insert_admin_query, ('admin@evoleo.com', 'Administrateur', 'Système', admin_password, 'admin'))
             conn.commit()
             logging.info("Utilisateur admin par défaut créé")
         
+        # Insertion des données par défaut dans field_name si la table est vide
+        cursor.execute("SELECT COUNT(*) FROM field_name")
+        field_count = cursor.fetchone()[0]
+        
+        if field_count == 0:
+            insert_field_data = """
+            INSERT INTO field_name (id, name) VALUES
+            (1, 'fournisseur'),
+            (2, 'numeroFacture'),
+            (3, 'tauxTVA'),
+            (4, 'montantHT'),
+            (5, 'montantTVA'),
+            (6, 'montantTTC'),
+            (7, 'dateFacturation')
+            """
+            cursor.execute(insert_field_data)
+            conn.commit()
+            logging.info("Données par défaut insérées dans field_name")
+        
         cursor.close()
         conn.close()
-        logging.info("Base de données d'authentification initialisée avec succès")
+        logging.info("Base de données initialisée avec succès")
         
     except Exception as e:
         logging.error(f"Erreur lors de l'initialisation de la base de données: {e}")
         raise
 
-
-
 def get_user_by_email(email: str):
     """Récupère un utilisateur par son email"""
     try:
         conn = get_connection()
-        if USE_SQLITE:
-            cursor = conn.cursor()
-            cursor.row_factory = sqlite3.Row
-        else:
-            cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True)
         
-        if USE_SQLITE:
-            query = "SELECT * FROM utilisateurs WHERE email = ?"
-        else:
-            query = "SELECT * FROM utilisateurs WHERE email = %s"
-        
+        query = "SELECT * FROM utilisateurs WHERE email = %s"
         cursor.execute(query, (email,))
         user = cursor.fetchone()
-        
-        if USE_SQLITE and user:
-            user = dict(user)
         
         cursor.close()
         conn.close()
@@ -147,22 +180,11 @@ def get_user_by_id(user_id: int):
     """Récupère un utilisateur par son ID"""
     try:
         conn = get_connection()
-        if USE_SQLITE:
-            cursor = conn.cursor()
-            cursor.row_factory = sqlite3.Row
-        else:
-            cursor = conn.cursor(dictionary=True)
+        cursor = conn.cursor(dictionary=True)
         
-        if USE_SQLITE:
-            query = "SELECT * FROM utilisateurs WHERE id = ?"
-        else:
-            query = "SELECT * FROM utilisateurs WHERE id = %s"
-        
+        query = "SELECT * FROM utilisateurs WHERE id = %s"
         cursor.execute(query, (user_id,))
         user = cursor.fetchone()
-        
-        if USE_SQLITE and user:
-            user = dict(user)
         
         cursor.close()
         conn.close()
@@ -179,10 +201,7 @@ def create_user(email: str, nom: str = None, prenom: str = None, password: str =
         cursor = conn.cursor()
         
         # Vérifier si l'email existe déjà
-        if USE_SQLITE:
-            cursor.execute("SELECT id FROM utilisateurs WHERE email = ?", (email,))
-        else:
-            cursor.execute("SELECT id FROM utilisateurs WHERE email = %s", (email,))
+        cursor.execute("SELECT id FROM utilisateurs WHERE email = %s", (email,))
         
         if cursor.fetchone():
             cursor.close()
@@ -199,16 +218,10 @@ def create_user(email: str, nom: str = None, prenom: str = None, password: str =
         hashed_password = get_password_hash(password)
         
         # Insérer l'utilisateur
-        if USE_SQLITE:
-            insert_query = """
-            INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role)
-            VALUES (?, ?, ?, ?, ?)
-            """
-        else:
-            insert_query = """
-            INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role)
-            VALUES (%s, %s, %s, %s, %s)
-            """
+        insert_query = """
+        INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role)
+        VALUES (%s, %s, %s, %s, %s)
+        """
         
         cursor.execute(insert_query, (email, nom, prenom, hashed_password, role))
         user_id = cursor.lastrowid

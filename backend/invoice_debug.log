@@ -162,3 +162,36 @@ NameError: name 'math' is not defined
 2025-08-05 00:19:32,047 ERROR Erreur de décodage JWT: Signature has expired.
 2025-08-05 00:52:35,489 ERROR Erreur de décodage JWT: Signature has expired.
 2025-08-05 00:52:35,493 ERROR Erreur de décodage JWT: Signature has expired.
+2025-08-05 17:07:05,685 INFO Base de données d'authentification initialisée avec succès
+2025-08-05 17:07:05,686 INFO Authentication database initialized
+2025-08-05 17:07:05,710 INFO Database connection pool created successfully
+2025-08-05 17:21:08,509 INFO Base de données d'authentification initialisée avec succès
+2025-08-05 17:21:08,509 INFO Authentication database initialized
+2025-08-05 17:21:08,522 INFO Database connection pool created successfully
+2025-08-05 17:22:04,924 INFO Base de données d'authentification initialisée avec succès
+2025-08-05 17:22:04,925 INFO Authentication database initialized
+2025-08-05 17:22:04,940 INFO Database connection pool created successfully
+2025-08-05 17:30:22,440 INFO Base de données initialisée avec succès
+2025-08-05 17:30:22,440 INFO Authentication database initialized
+2025-08-05 17:30:22,455 INFO Database connection pool created successfully
+2025-08-05 17:30:37,992 INFO Base de données initialisée avec succès
+2025-08-05 17:30:37,992 INFO Authentication database initialized
+2025-08-05 17:30:38,004 INFO Database connection pool created successfully
+2025-08-05 17:30:54,796 INFO Base de données initialisée avec succès
+2025-08-05 17:30:54,796 INFO Authentication database initialized
+2025-08-05 17:30:54,809 INFO Database connection pool created successfully
+2025-08-05 17:34:14,235 INFO Base de données initialisée avec succès
+2025-08-05 17:34:14,235 INFO Authentication database initialized
+2025-08-05 17:34:14,252 INFO Database connection pool created successfully
+2025-08-05 17:34:34,070 INFO Base de données initialisée avec succès
+2025-08-05 17:34:34,070 INFO Authentication database initialized
+2025-08-05 17:34:34,084 INFO Database connection pool created successfully
+2025-08-05 17:35:07,124 INFO Base de données initialisée avec succès
+2025-08-05 17:35:07,124 INFO Authentication database initialized
+2025-08-05 17:35:07,147 INFO Database connection pool created successfully
+2025-08-05 17:35:22,656 INFO Base de données initialisée avec succès
+2025-08-05 17:35:22,656 INFO Authentication database initialized
+2025-08-05 17:35:22,669 INFO Database connection pool created successfully
+2025-08-05 17:35:51,435 INFO Base de données initialisée avec succès
+2025-08-05 17:35:51,435 INFO Authentication database initialized
+2025-08-05 17:35:51,450 INFO Database connection pool created successfully

@@ -621,12 +621,17 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
             }
         }
         
-        # Créer automatiquement le fichier JSON
-        with open('ocr_extraction.json', 'w', encoding='utf-8') as f:
+        # Créer automatiquement le fichier JSON dans le dossier foxpro
+        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+        os.makedirs(foxpro_dir, exist_ok=True)
+        
+        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
+        with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
         
         # Créer automatiquement le fichier texte simple pour FoxPro
-        with open('ocr_extraction.txt', 'w', encoding='utf-8') as f:
+        txt_path = os.path.join(foxpro_dir, 'ocr_extraction.txt')
+        with open(txt_path, 'w', encoding='utf-8') as f:
             f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
             f.write(f"Numéro Facture: {data_to_use.get('numeroFacture', '')}\n")
             f.write(f"Taux TVA: {taux_tva_clean}\n")
@@ -634,7 +639,7 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
             f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
             f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
         
-        logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement")
+        logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement dans le dossier foxpro")
         
         # Créer aussi automatiquement le fichier DBF s'il n'existe pas
         try:
@@ -1717,12 +1722,18 @@ async def delete_facture(facture_id: int):
 
 #  FoxPro
 
-def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
+def write_invoice_to_dbf(invoice_data, dbf_path=None):
     """
     Ajoute une facture dans un fichier DBF compatible FoxPro.
     Si le fichier n'existe pas, il est créé automatiquement avec la bonne structure.
     """
     import os
+    
+    # Utiliser le chemin par défaut dans le dossier foxpro
+    if dbf_path is None:
+        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+        os.makedirs(foxpro_dir, exist_ok=True)
+        dbf_path = os.path.join(foxpro_dir, 'factures.dbf')
     
     try:
         # Vérifier si le fichier existe et n'est pas vide
@@ -1777,6 +1788,7 @@ def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
                 'fournissr C(30); numfact C(15); datefact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
             )
             table.open(mode=dbf.READ_WRITE)
+            table.close()
             table.append((
                 invoice_data['fournisseur'],
                 invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
@@ -1802,7 +1814,8 @@ def write_invoice_to_dbf(invoice_data, dbf_path='factures.dbf'):
 
 @app.get("/download-dbf")
 async def download_dbf():
-    dbf_path = "factures.dbf"
+    foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+    dbf_path = os.path.join(foxpro_dir, "factures.dbf")
     if not os.path.exists(dbf_path):
         raise HTTPException(status_code=404, detail="Fichier DBF non trouvé")
     return FileResponse(
@@ -1815,15 +1828,18 @@ async def download_dbf():
 async def save_corrected_data(corrected_data: Dict[str, str]):
     """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
     try:
-        # Récupérer les données d'extraction originales
-        if not os.path.exists('ocr_extraction.json'):
+        # Récupérer les données d'extraction originales depuis le dossier foxpro
+        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
+        
+        if not os.path.exists(json_path):
             return {
                 "success": False,
                 "message": "Aucune donnée d'extraction trouvée. Veuillez d'abord extraire une facture."
             }
         
         # Lire les données originales
-        with open('ocr_extraction.json', 'r', encoding='utf-8') as f:
+        with open(json_path, 'r', encoding='utf-8') as f:
             original_data = json.load(f)
         
         # Sauvegarder avec les données corrigées
@@ -1852,19 +1868,23 @@ async def launch_foxpro():
         import subprocess
         import platform
         
-        # Vérifier si le fichier d'extraction existe
-        if not os.path.exists('ocr_extraction.json'):
+        # Vérifier si le fichier d'extraction existe dans le dossier foxpro
+        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
+        
+        if not os.path.exists(json_path):
             return {
                 "success": False,
                 "message": "Aucune donnée extraite trouvée. Veuillez d'abord extraire une facture via l'interface web."
             }
         
         # Vérifier si le fichier DBF existe, sinon le créer
-        if not os.path.exists('factures.dbf'):
+        dbf_path = os.path.join(foxpro_dir, 'factures.dbf')
+        if not os.path.exists(dbf_path):
             try:
                 # Créer un fichier DBF vide avec la bonne structure
                 table = dbf.Table(
-                    'factures.dbf',
+                    dbf_path,
                     'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
                 )
                 table.open(mode=dbf.READ_WRITE)
@@ -1909,10 +1929,11 @@ async def launch_foxpro():
                 "message": "FoxPro non trouvé. Vérifiez l'installation ou ajoutez-le au PATH."
             }
         
-        # Lancer FoxPro avec le formulaire
+        # Lancer FoxPro avec le formulaire depuis le dossier foxpro
         if platform.system() == "Windows":
-            subprocess.Popen([foxpro_path, "formulaire_foxpro_final.prg"], 
-                           cwd=os.getcwd(),
+            prg_path = os.path.join(foxpro_dir, "formulaire_foxpro_final.prg")
+            subprocess.Popen([foxpro_path, prg_path], 
+                           cwd=foxpro_dir,
                            shell=True)
         else:
             return {
