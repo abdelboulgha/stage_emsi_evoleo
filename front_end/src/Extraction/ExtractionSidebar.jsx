@@ -31,7 +31,7 @@ const ExtractionSidebar = ({
           onClick={extractAllPdfs}
           disabled={
             extractionState.isProcessing || 
-            (extractionState.processingMode === "same" && !extractionState.selectedModel)
+            (extractionState.processingMode === "same" && !extractionState.selectedModelId)
           }
           className="w-full mb-4 px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-2"
         >
@@ -44,8 +44,8 @@ const ExtractionSidebar = ({
             <>
               <Search className="w-5 h-5" />
               Extraire toutes les pages
-              {extractionState.processingMode === "same" && extractionState.selectedModel && (
-                <span className="text-xs opacity-75"> (Modèle: {extractionState.selectedModel})</span>
+              {extractionState.processingMode === "same" && extractionState.selectedModelName && (
+                <span className="text-xs opacity-75"> (Modèle: {extractionState.selectedModelName})</span>
               )}
             </>
           )}

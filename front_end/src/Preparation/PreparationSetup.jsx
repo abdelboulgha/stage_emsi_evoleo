@@ -29,7 +29,7 @@ const PageSelectionModal = ({ isOpen, onClose, pages, onSelectPage }) => {
               key={index}
               className="relative group cursor-pointer"
               onClick={() => {
-                console.log(`Selected page index: ${index}`); // Debug: Log selected page index
+              
                 onSelectPage(index);
               }}
             >
@@ -85,13 +85,13 @@ const PreparationSetup = ({
 
     try {
       const pagePreviews = await getPagePreviews(file);
-      console.log("Page previews received:", pagePreviews); // Debug: Log previews
+     
       if (pagePreviews.length > 1) {
         setPdfPages(pagePreviews);
         setPendingFile(file);
         setShowPageModal(true);
       } else {
-        console.log("Single page PDF, processing directly with page_index 0"); // Debug
+        
         handleSingleDataPrepUpload({ target: { files: [file] } }, 0);
       }
     } catch (error) {
@@ -101,7 +101,7 @@ const PreparationSetup = ({
 
   const handlePageSelect = (pageIndex) => {
     if (pendingFile) {
-      console.log(`Processing file with pageIndex: ${pageIndex}`); 
+     
       handleSingleDataPrepUpload({ target: { files: [pendingFile] } }, pageIndex);
       setShowPageModal(false);
       setPendingFile(null);
@@ -199,78 +199,83 @@ const PreparationSetup = ({
             </div>
           )}
 
-          {setupState.invoiceType && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <FileText className="w-6 h-6" />
-                3. Documents à traiter
-              </h2>
+              {setupState.invoiceType && (
+                <div className="mb-8">
+                  <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
+                    <FileText className="w-6 h-6" />
+                    3. Documents à traiter
+                  </h2>
 
-              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                <input
-                  type="hidden"
-                  name="processingMode"
-                  value="same"
-                />
-                <div className="mb-6">
-                <select
-                    value={setupState.selectedModel}
-                    onChange={(e) =>
-                      setSetupState((prev) => ({
-                        ...prev,
-                        selectedModel: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    }}
-                    required
-                  >
-                    <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
-                      Sélectionnez un fournisseur
-                    </option>
-                    {Object.entries(mappings).map(([id, templateData]) => (
-                      <option 
-                        key={id} 
-                        value={id} 
-                        style={{ color: 'black', backgroundColor: 'white' }}
-                      >
-                        {templateData.template_name}  
-                      </option>
-                    ))}
-                  </select>
-                  {!setupState.selectedModel && (
-                    <p className="text-yellow-300 text-sm mt-1">
-                      ⚠️ Veuillez sélectionner un fournisseur pour continuer
-                    </p>
-                  )}
-                </div>
-
-                {setupState.selectedModel && (
-                  <div className="mb-6">
+                  <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
                     <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      multiple
-                      onChange={handleSetupFileUpload}
-                      className="hidden"
-                      id="setup-file-input"
+                      type="hidden"
+                      name="processingMode"
+                      value="same"
                     />
-                    <label
-                      htmlFor="setup-file-input"
-                      className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:border-white/50 transition-colors bg-white/10"
-                    >
-                      <Upload className="w-12 h-12 text-blue-200 mb-4" />
-                      <span className="text-white font-medium text-lg mb-2">
-                        Glissez vos fichiers ici ou cliquez pour sélectionner
-                      </span>
-                      <span className="text-blue-200 text-sm">
-                        PDF, PNG, JPG acceptés • Plusieurs fichiers possible
-                      </span>
-                    </label>
-                  </div>
-                )}
+                    <div className="mb-6">
+                      <select
+                        value={setupState.selectedModel?.id || ""}
+                        onChange={(e) => {
+                       
+                          const selectedId = e.target.value;
+                          const selectedName = mappings[selectedId]?.template_name;
+                          setSetupState(prev => ({
+                            ...prev,
+                            selectedModel: selectedId ? {
+                              id: selectedId,
+                              name: selectedName
+                            } : ''
+                          }));
+                        }}
+                        className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.2)' }}
+                        required
+                      >
+                        <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
+                          Sélectionnez un fournisseur
+                        </option>
+                        {Object.entries(mappings).map(([id, templateData]) => (
+                          <option
+                            key={id}
+                            value={id}
+                            style={{ color: 'black', backgroundColor: 'white' }}
+                          >
+                            {templateData.template_name}
+                          </option>
+                        ))}
+                      </select>
+                      {!setupState.selectedModel?.id && (
+                        <p className="text-yellow-300 text-sm mt-1">
+                          ⚠️ Veuillez sélectionner un fournisseur pour continuer
+                        </p>
+                      )}
+                    </div>
+
+                    {setupState.selectedModel?.id && (
+                      <div className="mb-6">
+                        <input
+                          type="file"
+                          accept=".pdf,.png,.jpg,.jpeg"
+                          multiple
+                          onChange={handleSetupFileUpload}
+                          className="hidden"
+                          id="setup-file-input"
+                        />
+                        <label
+                          htmlFor="setup-file-input"
+                          className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:border-white/50 transition-colors bg-white/10"
+                        >
+                          <Upload className="w-12 h-12 text-blue-200 mb-4" />
+                          <span className="text-white font-medium text-lg mb-2">
+                            Glissez vos fichiers ici ou cliquez pour sélectionner
+                          </span>
+                          <span className="text-blue-200 text-sm">
+                            PDF, PNG, JPG acceptés • Plusieurs fichiers possible
+                          </span>
+                        </label>
+                      </div>
+                    )}
+    
 
                 {setupState.filePreviews.length > 0 && (
                   <div>

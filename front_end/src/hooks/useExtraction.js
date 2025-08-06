@@ -88,8 +88,11 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       const formData = new FormData();
       formData.append("file", blob, `page_${i}.png`);
 
-      const templateIdToSend = extractionState.selectedModel;
-      formData.append("template_id", templateIdToSend);
+      const templateIdToSend = extractionState.selectedModelId;
+      if (templateIdToSend) {
+        formData.append("template_id", templateIdToSend);
+      }
+      
 
       try {
         const headers = {};
@@ -103,6 +106,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
           body: formData,
         });
         const result = await response.json();
+      
         let data = result.data || {};
         if (data.numFacture && !data.numeroFacture) {
           data.numeroFacture = data.numFacture;
@@ -136,8 +140,8 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
 
   const extractCurrentPdf = useCallback(async (templateId, index) => {
     // En mode "same", utiliser le modèle sélectionné si aucun templateId n'est fourni
-    if (!templateId && extractionState.processingMode === "same" && extractionState.selectedModel) {
-      templateId = extractionState.selectedModel;
+    if (!templateId && extractionState.processingMode === "same" && extractionState.selectedModelId) {
+      templateId = extractionState.selectedModelId;
     }
     
     // Skip template validation for ocr-preview endpoint
@@ -156,6 +160,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     formData.append("file", blob, `page_${idx}.png`);
     
     // Only add template_id if it exists and we're not using test endpoint
+   
     if (templateId) {
       formData.append("template_id", templateId);
     }

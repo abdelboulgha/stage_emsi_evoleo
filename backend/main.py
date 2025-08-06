@@ -1073,6 +1073,8 @@ async def ocr_preview(
             "boxNumFacture": numfacture_box,
             "dateFacturation": datefacturation_value,
             "boxDateFacturation": datefacturation_box,
+            "template_id": template_id
+           
         }
         return {
             "success": True,

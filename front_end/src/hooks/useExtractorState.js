@@ -16,8 +16,8 @@ export const useExtractorState = () => {
     invoiceType: "achat",
     selectedFiles: [],
     filePreviews: [],
-    processingMode: "same", // "different" ou "same"
-    selectedModel: "", // Pour le mode "same"
+    processingMode: "same", 
+    selectedModel: { id: "", name: "" }
   });
 
   const [extractionState, setExtractionState] = useState({
