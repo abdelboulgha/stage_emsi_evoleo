@@ -53,15 +53,43 @@ const MiseAJourPage = () => {
   }, [page, search]);
 
   const fetchFactures = async () => {
-    const params = new URLSearchParams({
-      page,
-      page_size: PAGE_SIZE,
-      search,
-    });
-    const res = await fetch(`http://localhost:8000/factures?${params}`);
-    const data = await res.json();
-    setFactures(data.factures);
-    setTotalPages(data.total_pages);
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      const params = new URLSearchParams({
+        page,
+        page_size: PAGE_SIZE,
+        search,
+      });
+
+      const res = await fetch(`http://localhost:8000/factures?${params}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) {
+          console.error('Authentication failed - please log in again');
+          // Optionally redirect to login
+          // window.location.href = '/login';
+        }
+        throw new Error('Failed to fetch factures');
+      }
+
+      const data = await res.json();
+      setFactures(data.factures || []);
+      setTotalPages(data.total_pages || 1);
+    } catch (error) {
+      console.error('Error fetching factures:', error);
+      setFactures([]);
+      setTotalPages(1);
+    }
   };
 
   const handleSort = (key) => {
@@ -127,8 +155,28 @@ const MiseAJourPage = () => {
   };
 
   const handleDelete = async (id) => {
-    await fetch(`http://localhost:8000/factures/${id}`, { method: "DELETE" });
-    fetchFactures();
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
+      const response = await fetch(`http://localhost:8000/factures/${id}`, {
+        method: "DELETE",
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete facture');
+      }
+
+      fetchFactures();
+    } catch (error) {
+      console.error('Error deleting facture:', error);
+    }
   };
 
   const openEditModal = (facture) => {
@@ -161,6 +209,12 @@ const MiseAJourPage = () => {
     if (!editing) return;
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.error('No authentication token found');
+        return;
+      }
+
       const body = convertNumericFields({
         ...editing,
         // Format dateFacturation back to YYYY-MM-DD for the backend
@@ -169,7 +223,10 @@ const MiseAJourPage = () => {
 
       const response = await fetch(`http://localhost:8000/factures/${editing.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(body),
       });
 
@@ -179,9 +236,12 @@ const MiseAJourPage = () => {
       }
 
       closeModal();
-      fetchFactures();
     } catch (error) {
       console.error("Error updating facture:", error);
+      // Show error to user if needed
+    } finally {
+      // Always refresh the facture list, whether the update succeeded or failed
+      fetchFactures();
     }
   };
 

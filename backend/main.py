@@ -147,47 +147,106 @@ def get_connection():
         logging.error(f"Error getting connection from pool: {e}")
         raise
 
-async def save_mapping_db(template_id: str, field_map: Dict[str, Any], current_user_id: int = None) -> bool:
-    """Save field mappings to the database with user ownership check"""
+async def save_mapping_db(template_name: str, field_map: Dict[str, Any], current_user_id: int = None) -> bool:
+    """
+    Save field mappings to the database with user ownership check
+    
+    Args:
+        template_name: The name of the template to save mappings for
+        field_map: Dictionary of field names to their coordinate data
+        current_user_id: User ID who is creating/updating the template
+        
+    Returns:
+        bool: True if save was successful, False otherwise
+    """
     connection = None
     cursor = None
     try:
-        logging.info(f"Starting to save mapping for template_id: {template_id}")
+        if not current_user_id:
+            raise ValueError("User ID is required to save template mappings")
+            
+        logging.info(f"Starting to save mapping for template: {template_name}")
+        logging.debug(f"Field map data: {field_map}")
         
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
         
-        # Verify template ownership if user ID is provided
-        if current_user_id:
-            cursor.execute("""
-                SELECT id FROM Templates 
-                WHERE id = %s AND created_by = %s
-            """, (template_id, current_user_id))
-            if not cursor.fetchone():
-                raise ValueError("Template not found or not owned by user")
-        
-        # Rest of your existing function remains the same...
         connection.start_transaction()
         
-        # Ensure template exists (modified version)
-        if not current_user_id:  # Only for legacy cases
-            cursor.execute("INSERT IGNORE INTO Templates (id) VALUES (%s)", (template_id,))
+        # 1. Check if template with this name already exists for this user
+        cursor.execute("""
+            SELECT id FROM templates 
+            WHERE name = %s AND created_by = %s
+            LIMIT 1
+        """, (template_name, current_user_id))
+        template = cursor.fetchone()
         
-        # ... keep all your existing field processing logic ...
+        # 2. If template exists, get its ID, otherwise create new template
+        if template:
+            template_id = template['id']
+            logging.info(f"Found existing template ID {template_id} for name '{template_name}'")
+        else:
+            # Create new template
+            cursor.execute("""
+                INSERT INTO templates (name, created_by)
+                VALUES (%s, %s)
+            """, (template_name, current_user_id))
+            template_id = cursor.lastrowid
+            logging.info(f"Created new template ID {template_id} with name '{template_name}'")
+        
+        if not template_id:
+            raise ValueError(f"Failed to get or create template ID for '{template_name}'")
+        
+        # 3. Delete existing mappings for this template
+        cursor.execute("""
+            DELETE FROM mappings 
+            WHERE template_id = %s
+        """, (template_id,))
+        
+        # 4. Insert new mappings
+        for field_name, coords in field_map.items():
+            if coords is not None:
+                # First, get the field_id for this field_name
+                cursor.execute("""
+                    SELECT id FROM field_name WHERE name = %s
+                """, (field_name,))
+                field = cursor.fetchone()
+                
+                if field:
+                    field_id = field['id']
+                    cursor.execute("""
+                        INSERT INTO mappings 
+                        (template_id, field_id, `left`, `top`, width, height, manual, created_by)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        template_id,
+                        field_id,
+                        coords.get('left'),
+                        coords.get('top'),
+                        coords.get('width'),
+                        coords.get('height'),
+                        coords.get('manual', False),
+                        current_user_id
+                    ))
+                else:
+                    logging.warning(f"Field name '{field_name}' not found in field_name table")
         
         connection.commit()
+        logging.info(f"Successfully saved {len(field_map)} fields for template '{template_name}' (ID: {template_id})")
         return True
         
     except Exception as e:
         if connection:
             connection.rollback()
-        logging.error(f"Database error: {str(e)}", exc_info=True)
+        logging.error(f"Error saving mapping for template {template_name}: {str(e)}", exc_info=True)
+        logging.error(f"Error saving mapping for template {template_id}: {str(e)}", exc_info=True)
         return False
     finally:
         if cursor:
             cursor.close()
         if connection:
             connection.close()
+
 async def load_mapping_db(template_id: str) -> Dict:
     """Load field mappings from the database using field names, including the 'manual' flag"""
     connection = None
@@ -1022,51 +1081,55 @@ async def ocr_preview(
         }
     except Exception as e:
         logging.error(f"Error in extract_test: {str(e)}", exc_info=True)
-        return {
+        return { 
             "success": False,
             "data": {},
             "message": f"Erreur lors de l'extraction: {str(e)}"
         }
 
-
-        
-# mappings
 @app.post("/mappings")
-async def save_field_mapping(request: SaveMappingRequest):
+async def save_field_mapping(
+    request: SaveMappingRequest,
+    current_user = Depends(require_comptable_or_admin)
+):
+    """
+    Save field mappings for a template
+    
+    Args:
+        request: SaveMappingRequest containing template_id and field_map
+        current_user: Authenticated user from JWT token
+        
+    Returns:
+        JSON response with success/error status
+    """
     try:
-        template_id = request.template_id
-        field_mapping = request.field_map
-        
-        logging.info(f"Received request to save mapping for template: {template_id}")
-        logging.debug(f"Field mapping data: {field_mapping}")
-        
-        # Convert FieldCoordinates objects to dictionaries
+        # Convert Pydantic model to dict and handle FieldCoordinates objects
         field_map = {}
-        for field_name, coords in field_mapping.items():
+        for field_name, coords in request.field_map.items():
             if coords is not None:
-                field_map[field_name] = coords.dict() if hasattr(coords, 'dict') else coords
-                logging.debug(f"Processed field {field_name}: {field_map[field_name]}")
-            else:
-                field_map[field_name] = None
-                logging.debug(f"Null coordinates for field: {field_name}")
+                if isinstance(coords, dict):
+                    field_map[field_name] = coords
+                else:
+                    field_map[field_name] = coords.dict()
         
-        logging.info(f"Saving {len(field_map)} fields to database for template {template_id}")
+        logging.info(f"Saving mapping for template: {request.template_id}")
+        logging.debug(f"Field map: {field_map}")
         
-        # Save to database
-        success = await save_mapping_db(template_id, field_map)
-        if not success:
-            error_msg = f"Failed to save mappings to database for template {template_id}"
-            logging.error(error_msg)
-            raise HTTPException(status_code=500, detail=error_msg)
-            
-        logging.info(f"Successfully saved mappings for template {template_id}")
-        return {
-            "status": "success", 
-            "message": f"Mappings saved for template {template_id}",
-            "template_id": template_id,
-            "fields_saved": len(field_map)
-        }
+        success = await save_mapping_db(
+            template_name=request.template_id,  # template_id is actually the template name
+            field_map=field_map,
+            current_user_id=current_user['id']
+        )
         
+        if success:
+            return {
+                "success": True,
+                "message": "Mapping saved successfully",
+                "template_id": request.template_id,
+                "fields_saved": list(field_map.keys())
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save mapping")
     except HTTPException:
         raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
@@ -1286,11 +1349,11 @@ async def ajouter_facture(
         # Convert date to string format for database
         date_str = invoice.dateFacturation.strftime('%Y-%m-%d')
         
-        # Insert the invoice data
+        # Insert the invoice data with created_by
         query = """
         INSERT INTO Facture 
-        (fournisseur, numFacture, dateFacturation, tauxTVA, montantHT, montantTVA, montantTTC)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        (fournisseur, numFacture, dateFacturation, tauxTVA, montantHT, montantTVA, montantTTC, created_by)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         values = (
             invoice.fournisseur,
@@ -1299,7 +1362,8 @@ async def ajouter_facture(
             invoice.tauxTVA,
             invoice.montantHT,
             invoice.montantTVA,
-            invoice.montantTTC
+            invoice.montantTTC,
+            current_user['id']  # Add current user ID as created_by
         )
         
         cursor.execute(query, values)
@@ -1408,27 +1472,29 @@ async def ajouter_facture(
 async def list_factures(
     page: int = 1,
     page_size: int = 10,
-    search: str = ""
+    search: str = "",
+    current_user = Depends(require_comptable_or_admin)
 ):
     """
-    List all factures with pagination and search
+    List factures for the current user with pagination and search
     """
     try:
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
         
-        # Build the base query
+        # Build the base query with user filter
         query = """
             SELECT SQL_CALC_FOUND_ROWS *
             FROM facture
-            WHERE %(search)s = '' 
-               OR fournisseur LIKE %(search_like)s 
-               OR numFacture LIKE %(search_like)s
-               OR dateFacturation LIKE %(search_like)s
-               OR tauxTVA LIKE %(search_like)s
-               OR montantHT LIKE %(search_like)s
-               OR montantTVA LIKE %(search_like)s
-               OR montantTTC LIKE %(search_like)s
+            WHERE created_by = %(user_id)s
+              AND (%(search)s = '' 
+                  OR fournisseur LIKE %(search_like)s 
+                  OR numFacture LIKE %(search_like)s
+                  OR dateFacturation LIKE %(search_like)s
+                  OR tauxTVA LIKE %(search_like)s
+                  OR montantHT LIKE %(search_like)s
+                  OR montantTVA LIKE %(search_like)s
+                  OR montantTTC LIKE %(search_like)s)
             ORDER BY id DESC
             LIMIT %(offset)s, %(limit)s
         """
@@ -1436,10 +1502,11 @@ async def list_factures(
         # Calculate pagination
         offset = (page - 1) * page_size
         
-        # Execute query
+        # Execute query with user_id
         cursor.execute(
             query,
             {
+                'user_id': current_user['id'],
                 'search': search,
                 'search_like': f'%{search}%',
                 'offset': offset,
@@ -1480,24 +1547,33 @@ async def list_factures(
         if 'connection' in locals():
             connection.close()
 
+
+#update
 @app.put("/factures/{facture_id}", response_model=InvoiceResponse)
 async def update_facture(
     facture_id: int,
-    invoice_update: InvoiceUpdate
+    invoice_update: InvoiceUpdate,
+    current_user = Depends(require_comptable_or_admin)
 ):
     """
-    Update a facture by ID
+    Update a facture by ID. Users can only update their own factures.
     """
     try:
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Check if facture exists
-        cursor.execute("SELECT * FROM facture WHERE id = %s", (facture_id,))
+        # Check if facture exists and is owned by the current user
+        cursor.execute(
+            "SELECT * FROM facture WHERE id = %s AND created_by = %s",
+            (facture_id, current_user['id'])
+        )
         facture = cursor.fetchone()
 
         if not facture:
-            raise HTTPException(status_code=404, detail="Facture not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Facture not found or you don't have permission to update it"
+            )
 
         # Prepare update data (exclude id and date_creation)
         update_data = invoice_update.dict(exclude_unset=True)
