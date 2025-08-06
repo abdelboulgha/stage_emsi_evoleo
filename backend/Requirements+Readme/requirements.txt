@@ -1,17 +1,31 @@
-fastapi==0.104.1
-uvicorn==0.24.0
-pydantic==2.5.0
-paddlepaddle==2.5.2
-paddleocr==2.7.0.3
-pymupdf==1.23.8
-Pillow==10.1.0
+# Core web framework
+fastapi>=0.104.1
+uvicorn>=0.24.0
+python-multipart>=0.0.6
 
-numpy==1.24.3
-python-multipart==0.0.6
-mysql-connector-python==8.2.0
-dbf==0.99.3
+# Data validation
+pydantic>=2.5.0
+email-validator>=2.1.0
 
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
-email-validator==2.1.0
+# Database
+mysql-connector-python>=8.2.0
+dbf>=0.99.3
+
+# PDF and Image Processing
+pymupdf>=1.23.8
+Pillow>=10.1.0
+
+# OCR
+paddlepaddle
+paddleocr
+
+# Data processing
+numpy>=1.24.3
+
+# Authentication and Security
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+python-dotenv>=1.0.0
+
+# Development tools
+python-dotenv>=1.0.0
