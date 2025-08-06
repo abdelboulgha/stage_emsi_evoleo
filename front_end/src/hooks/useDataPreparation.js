@@ -1,11 +1,9 @@
 import { useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoading, showNotification) => {
-  const { token } = useAuth();
   const navigate = useNavigate();
 
   const getDefaultZoom = (imgWidth, containerWidth = 900) => {

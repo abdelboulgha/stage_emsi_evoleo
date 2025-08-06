@@ -71,8 +71,10 @@ def init_database():
         # Création de la table templates
         create_templates_query = """
         CREATE TABLE IF NOT EXISTS templates (
-            id VARCHAR(36) NOT NULL,
-            PRIMARY KEY (id)
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            name VARCHAR(255) NOT NULL,
+            created_by INT(11) NOT NULL,
+            FOREIGN KEY (created_by) REFERENCES utilisateurs(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """
         
@@ -80,16 +82,18 @@ def init_database():
         create_mappings_query = """
         CREATE TABLE IF NOT EXISTS mappings (
             id INT(11) NOT NULL AUTO_INCREMENT,
-            template_id VARCHAR(36) NOT NULL,
+            template_id INT NOT NULL,
             field_id INT(11) NOT NULL,
             `left` FLOAT NOT NULL,
             top FLOAT NOT NULL,
             width FLOAT NOT NULL,
             height FLOAT NOT NULL,
             manual BOOLEAN NOT NULL,
+            created_by INT(11) NOT NULL,
             PRIMARY KEY (id),
-            FOREIGN KEY (template_id) REFERENCES templates (id),
-            FOREIGN KEY (field_id) REFERENCES field_name (id)
+            FOREIGN KEY (template_id) REFERENCES templates(id),
+            FOREIGN KEY (field_id) REFERENCES field_name(id),
+            FOREIGN KEY (created_by) REFERENCES utilisateurs(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """
         
@@ -105,7 +109,9 @@ def init_database():
             montantTTC DECIMAL(15,2) NOT NULL,
             dateFacturation DATE NOT NULL,
             date_creation TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id)
+            created_by INT(11) NOT NULL,
+            PRIMARY KEY (id),
+            FOREIGN KEY (created_by) REFERENCES utilisateurs(id)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """
         

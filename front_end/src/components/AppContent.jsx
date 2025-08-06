@@ -14,12 +14,43 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
     const [currentView, setCurrentView] = useState(initialView);
     const [currentStep, setCurrentStep] = useState(initialStep);
 
-  // Réinitialiser currentStep à 'setup' à chaque nouvelle connexion
+  // Map URL paths to steps
+  const pathToStep = {
+    '/prepare': 'setup',
+    '/extract': 'extract',
+    '/parametre': 'dataprep'
+  };
+
+  // Update state when URL changes
+  const updateStateFromUrl = () => {
+    const path = window.location.pathname;
+    const stepFromUrl = pathToStep[path];
+    
+    if (stepFromUrl) {
+      setCurrentStep(stepFromUrl);
+      setCurrentView('extractor');
+    } else if (path === '/update') {
+      setCurrentView('miseajour');
+    } else if (path === '/') {
+      // Default to prepare if root path
+      navigate('/prepare');
+      setCurrentStep('setup');
+      setCurrentView('extractor');
+    }
+  };
+
+  // Set initial state when component mounts or user changes
   useEffect(() => {
     if (user) {
-      setCurrentStep('setup');
+      updateStateFromUrl();
     }
   }, [user]);
+  
+  // Listen for browser back/forward navigation
+  useEffect(() => {
+    window.addEventListener('popstate', updateStateFromUrl);
+    return () => window.removeEventListener('popstate', updateStateFromUrl);
+  }, []);
 
   if (loading) {
     return (

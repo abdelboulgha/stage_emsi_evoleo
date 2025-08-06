@@ -1,6 +1,32 @@
 import React, { useEffect, useState } from "react";
-import { Edit2, Trash2, CheckCircle, Search } from "lucide-react";
+import { Edit2, Trash2, CheckCircle, Search, X, ChevronUp, ChevronDown } from "lucide-react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { registerLocale } from "react-datepicker";
+import fr from 'date-fns/locale/fr';
 import "./MiseAJourPage.css";
+
+registerLocale('fr', fr);
+
+const formatDateTime = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+};
+
+const formatDateOnly = (dateString) => {
+  if (!dateString) return '';
+  const date = new Date(dateString);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}/${month}/${year}`;
+};
 
 const FIELDS = [
   { key: "fournisseur", label: "Fournisseur" },
@@ -9,6 +35,7 @@ const FIELDS = [
   { key: "tauxTVA", label: "Taux TVA" },
   { key: "montantHT", label: "Montant HT" },
   { key: "montantTVA", label: "Montant TVA" },
+  { key: "date_creation", label: "Date D'ajout" },
   { key: "montantTTC", label: "Montant TTC" },
 ];
 
@@ -18,9 +45,10 @@ const MiseAJourPage = () => {
   const [factures, setFactures] = useState([]);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const [editing, setEditing] = useState({});
-  const [selected, setSelected] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
   useEffect(() => {
     fetchFactures();
@@ -38,12 +66,55 @@ const MiseAJourPage = () => {
       });
       if (res.ok) {
         const data = await res.json();
-        setFactures(data.factures);
-        setTotalPages(data.total_pages);
+        setFactures(data.factures || []);
+        setTotalPages(data.total_pages || 1);
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des factures:", error);
+      setFactures([]);
+      setTotalPages(1);
     }
+  };
+
+  const handleSort = (key) => {
+    let direction = 'asc';
+    if (sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const sortData = (data) => {
+    if (!sortConfig.key) return data;
+
+    return [...data].sort((a, b) => {
+      let aValue = a[sortConfig.key];
+      let bValue = b[sortConfig.key];
+
+      // Handle date fields
+      if (sortConfig.key === 'dateFacturation' || sortConfig.key === 'date_creation') {
+        aValue = new Date(aValue);
+        bValue = new Date(bValue);
+      }
+      // Handle numeric fields
+      else if (['montantHT', 'montantTVA', 'montantTTC', 'tauxTVA'].includes(sortConfig.key)) {
+        aValue = parseFloat(aValue) || 0;
+        bValue = parseFloat(bValue) || 0;
+      }
+      // Handle string fields
+      else {
+        aValue = String(aValue || '').toLowerCase();
+        bValue = String(bValue || '').toLowerCase();
+      }
+
+      if (aValue < bValue) {
+        return sortConfig.direction === 'asc' ? -1 : 1;
+      }
+      if (aValue > bValue) {
+        return sortConfig.direction === 'asc' ? 1 : -1;
+      }
+      return 0;
+    });
   };
 
   const handleEdit = (id, field, value) => {
@@ -105,51 +176,75 @@ const MiseAJourPage = () => {
     }
   };
 
-  const handleSelect = (facture) => {
-    setSelected(facture);
-    setEditing((prev) => ({
+  const openEditModal = (facture) => {
+    setEditing({ ...facture });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditing(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditing(prev => ({
       ...prev,
-      [facture.id]: {
-        fournisseur: facture.fournisseur,
-        numFacture: facture.numFacture,
-        dateFacturation: facture.dateFacturation,
-        tauxTVA: facture.tauxTVA,
-        montantHT: facture.montantHT,
-        montantTVA: facture.montantTVA,
-        montantTTC: facture.montantTTC,
-      },
+      [name]: value
     }));
   };
 
-  const handleGlobalUpdate = async () => {
-    if (!selected) return;
+  const handleDateChange = (date, field) => {
+    setEditing(prev => ({
+      ...prev,
+      [field]: date
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!editing) return;
 
     try {
-      const updatedData = editing[selected.id];
-      if (!updatedData) return;
-
-      const response = await fetch(`http://localhost:8000/factures/${selected.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include', // Ajout des cookies
-        body: JSON.stringify(updatedData),
+      const body = convertNumericFields({
+        ...editing,
+        // Format dateFacturation back to YYYY-MM-DD for the backend
+        dateFacturation: editing.dateFacturation ? new Date(editing.dateFacturation).toISOString().split('T')[0] : ''
       });
 
-      if (response.ok) {
-        setEditing((prev) => {
-          const newEditing = { ...prev };
-          delete newEditing[selected.id];
-          return newEditing;
-        });
-        setSelected(null);
-        fetchFactures();
+      const response = await fetch(`http://localhost:8000/factures/${editing.id}`, {
+        method: "PUT",
+        headers: { 
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include', // Ajout des cookies
+        body: JSON.stringify(body),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || "Failed to update facture");
       }
+
+      closeModal();
     } catch (error) {
-      console.error("Erreur lors de la mise à jour globale:", error);
+      console.error("Error updating facture:", error);
+    } finally {
+      // Always refresh the facture list, whether the update succeeded or failed
+      fetchFactures();
     }
   };
+
+  const getSortIcon = (key) => {
+    if (sortConfig.key !== key) {
+      return <ChevronUp className="miseajour-sort-icon inactive" />;
+    }
+    return sortConfig.direction === 'asc' 
+      ? <ChevronUp className="miseajour-sort-icon" /> 
+      : <ChevronDown className="miseajour-sort-icon" />;
+  };
+
+  const sortedFactures = sortData(factures);
 
   return (
     <div className="miseajour-container">
@@ -184,47 +279,65 @@ const MiseAJourPage = () => {
                 <thead>
                   <tr>
                     {FIELDS.map((f) => (
-                      <th key={f.key} className="miseajour-table-header">
-                        {f.label}
+                      <th 
+                        key={f.key} 
+                        className="miseajour-table-header"
+                        onClick={() => handleSort(f.key)}
+                      >
+                        <div className="miseajour-header-content">
+                          <span>{f.label}</span>
+                          <div className="miseajour-sort-icons">
+                            {getSortIcon(f.key)}
+                          </div>
+                        </div>
                       </th>
                     ))}
                     <th className="miseajour-table-header">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {factures.map((facture) => (
-                    <tr key={facture.id} className="miseajour-table-row">
+                  {sortedFactures.map((facture) => (
+                    <tr 
+                      key={facture.id} 
+                      className="miseajour-table-row"
+                      onClick={() => openEditModal(facture)}
+                    >
                       {FIELDS.map((f) => (
                         <td key={f.key} className="miseajour-table-cell">
-                          <input
-                            value={editing[facture.id]?.[f.key] ?? facture[f.key]}
-                            onChange={(e) => handleEdit(facture.id, f.key, e.target.value)}
-                            className="miseajour-table-input"
-                          />
+                          <div className="miseajour-cell-content">
+                            {f.key === 'date_creation' 
+                              ? formatDateTime(facture[f.key])
+                              : f.key === 'dateFacturation'
+                                ? formatDateOnly(facture[f.key])
+                                : f.key === 'montantHT' || f.key === 'montantTVA' || f.key === 'montantTTC'
+                                  ? `${facture[f.key]}`
+                                  : f.key === 'tauxTVA'
+                                    ? `${facture[f.key]}%`
+                                    : facture[f.key]}
+                          </div>
                         </td>
                       ))}
                       <td className="miseajour-table-cell">
                         <div className="miseajour-actions">
                           <button 
-                            onClick={() => handleUpdate(facture.id)} 
-                            className="miseajour-action-button update"
-                            title="Mettre à jour"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openEditModal(facture);
+                            }} 
+                            className="miseajour-action-button edit"
+                            title="Modifier"
                           >
                             <Edit2 className="miseajour-action-icon" />
                           </button>
                           <button 
-                            onClick={() => handleDelete(facture.id)} 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDelete(facture.id);
+                            }} 
                             className="miseajour-action-button delete"
                             title="Supprimer"
                           >
                             <Trash2 className="miseajour-action-icon" />
-                          </button>
-                          <button 
-                            onClick={() => handleSelect(facture)} 
-                            className="miseajour-action-button select"
-                            title="Sélectionner"
-                          >
-                            <CheckCircle className="miseajour-action-icon" />
                           </button>
                         </div>
                       </td>
@@ -252,34 +365,78 @@ const MiseAJourPage = () => {
               Suivant
             </button>
           </div>
+        </div>
+      </div>
 
-          {selected && (
-            <div className="miseajour-edit-section">
-              <div className="miseajour-edit-container">
-                <h3 className="miseajour-edit-title">Modifier la facture</h3>
-                <div className="miseajour-edit-fields">
-                  {FIELDS.map((f) => (
-                    <div key={f.key} className="miseajour-edit-field">
-                      <label className="miseajour-edit-label">{f.label}</label>
-                      <input
-                        value={editing[selected.id]?.[f.key] ?? selected[f.key]}
-                        onChange={(e) => handleEdit(selected.id, f.key, e.target.value)}
-                        className="miseajour-edit-input"
+      {/* Edit Modal */}
+      {isModalOpen && editing && (
+        <div className="miseajour-modal-overlay">
+          <div className="miseajour-modal">
+            <div className="miseajour-modal-header">
+              <h3 className="miseajour-modal-title">Modifier la facture</h3>
+              <button 
+                onClick={closeModal}
+                className="miseajour-modal-close"
+              >
+                <X className="miseajour-modal-close-icon" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="miseajour-modal-form">
+              <div className="miseajour-modal-fields">
+                {FIELDS.map((f) => (
+                  <div key={f.key} className="miseajour-modal-field">
+                    <label className="miseajour-modal-label">
+                      {f.label}
+                    </label>
+                    
+                    {f.key === 'date_creation' ? (
+                      <div className="miseajour-modal-readonly">
+                        {formatDateTime(editing[f.key])}
+                      </div>
+                    ) : f.key === 'dateFacturation' ? (
+                      <DatePicker
+                        selected={editing[f.key] ? new Date(editing[f.key]) : null}
+                        onChange={(date) => handleDateChange(date, f.key)}
+                        dateFormat="dd/MM/yyyy"
+                        locale="fr"
+                        className="miseajour-modal-input"
+                        placeholderText="Sélectionner une date"
                       />
-                    </div>
-                  ))}
-                </div>
-                <button 
-                  onClick={handleGlobalUpdate} 
-                  className="miseajour-edit-button"
+                    ) : (
+                      <input
+                        type={f.key === 'montantHT' || f.key === 'montantTVA' || f.key === 'montantTTC' || f.key === 'tauxTVA' ? 'number' : 'text'}
+                        name={f.key}
+                        value={editing[f.key] || ''}
+                        onChange={handleInputChange}
+                        className="miseajour-modal-input"
+                        step={f.key === 'tauxTVA' ? '0.01' : '1'}
+                        placeholder={`Entrez ${f.label.toLowerCase()}`}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+              
+              <div className="miseajour-modal-actions">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="miseajour-modal-button cancel"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="miseajour-modal-button submit"
                 >
                   Appliquer les modifications
                 </button>
               </div>
-            </div>
-          )}
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

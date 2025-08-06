@@ -150,111 +150,104 @@ def get_connection():
         logging.error(f"Error getting connection from pool: {e}")
         raise
 
-async def save_mapping_db(template_id: str, field_map: Dict[str, Any]) -> bool:
-    """Save field mappings to the database using field IDs, including the 'manual' flag"""
+async def save_mapping_db(template_name: str, field_map: Dict[str, Any], current_user_id: int = None) -> bool:
+    """
+    Save field mappings to the database with user ownership check
+    
+    Args:
+        template_name: The name of the template to save mappings for
+        field_map: Dictionary of field names to their coordinate data
+        current_user_id: User ID who is creating/updating the template
+        
+    Returns:
+        bool: True if save was successful, False otherwise
+    """
     connection = None
     cursor = None
     try:
-        logging.info(f"Starting to save mapping for template_id: {template_id}")
-        logging.info(f"Field map received: {json.dumps(field_map, default=str)}")
+        if not current_user_id:
+            raise ValueError("User ID is required to save template mappings")
+            
+        logging.info(f"Starting to save mapping for template: {template_name}")
+        logging.debug(f"Field map data: {field_map}")
         
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
         
         connection.start_transaction()
         
-        # Ensure template exists
-        cursor.execute("INSERT IGNORE INTO Templates (id) VALUES (%s)", (template_id,))
-        logging.info(f"Ensured template {template_id} exists in database")
+        # 1. Check if template with this name already exists for this user
+        cursor.execute("""
+            SELECT id FROM templates 
+            WHERE name = %s AND created_by = %s
+            LIMIT 1
+        """, (template_name, current_user_id))
+        template = cursor.fetchone()
         
-        # Get field name to ID mapping from database
-        cursor.execute("SELECT id, name FROM Field_Name")
-        field_name_to_id = {}
-        for row in cursor.fetchall():
-            field_name_to_id[row['name'].lower()] = row['id']
+        # 2. If template exists, get its ID, otherwise create new template
+        if template:
+            template_id = template['id']
+            logging.info(f"Found existing template ID {template_id} for name '{template_name}'")
+        else:
+            # Create new template
+            cursor.execute("""
+                INSERT INTO templates (name, created_by)
+                VALUES (%s, %s)
+            """, (template_name, current_user_id))
+            template_id = cursor.lastrowid
+            logging.info(f"Created new template ID {template_id} with name '{template_name}'")
         
-        logging.info(f"Field name to ID mapping: {field_name_to_id}")
+        if not template_id:
+            raise ValueError(f"Failed to get or create template ID for '{template_name}'")
         
-        # Get existing field names from database for case-insensitive comparison
-        cursor.execute("SELECT name FROM Field_Name")
-        db_field_names = [row['name'].lower() for row in cursor.fetchall()]
+        # 3. Delete existing mappings for this template
+        cursor.execute("""
+            DELETE FROM mappings 
+            WHERE template_id = %s
+        """, (template_id,))
         
+        # 4. Insert new mappings
         for field_name, coords in field_map.items():
-            if coords is None:
-                logging.warning(f"Skipping null coordinates for field: {field_name}")
-                continue
-            
-            # Convert field name to lowercase for case-insensitive comparison
-            field_name_lower = field_name.lower()
-            field_id = field_name_to_id.get(field_name_lower)
-            
-            if not field_id:
-                # Try to find a case-insensitive match
-                matching_name = next((name for name in db_field_names if name.lower() == field_name_lower), None)
-                if matching_name:
-                    field_id = field_name_to_id[matching_name]
-                    logging.info(f"Found case-insensitive match for field '{field_name}': '{matching_name}' (ID: {field_id})")
-            
-            if not field_id:
-                error_msg = f"Field name '{field_name}' not found in Field_Name table. Available fields: {list(field_name_to_id.keys())}"
-                logging.error(error_msg)
-                continue
-            
-            # Handle both Pydantic model and dictionary
-            if hasattr(coords, 'dict'):
-                coords = coords.dict()
-            
-            # Extract coordinates with proper type conversion and default values
-            left = float(coords.get('left', 0)) if coords.get('left') is not None else 0.0
-            top = float(coords.get('top', 0)) if coords.get('top') is not None else 0.0
-            width = float(coords.get('width', 0)) if coords.get('width') is not None else 0.0
-            height = float(coords.get('height', 0)) if coords.get('height') is not None else 0.0
-            manual = int(coords.get('manual', False))  # <-- Ajout gestion du champ manual
-            
-            logging.info(f"Processing field: {field_name} (ID: {field_id}) with coords: left={left}, top={top}, width={width}, height={height}, manual={manual}")
-            
-            try:
+            if coords is not None:
+                # First, get the field_id for this field_name
                 cursor.execute("""
-                    INSERT INTO Mappings 
-                    (template_id, field_id, `left`, `top`, `width`, `height`, `manual`)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    ON DUPLICATE KEY UPDATE
-                    `left` = VALUES(`left`),
-                    `top` = VALUES(`top`),
-                    `width` = VALUES(`width`),
-                    `height` = VALUES(`height`),
-                    `manual` = VALUES(`manual`)
-                """, (
-                    template_id,
-                    field_id,
-                    left,
-                    top,
-                    width,
-                    height,
-                    manual
-                ))
-                logging.info(f"Successfully processed field: {field_name}")
+                    SELECT id FROM field_name WHERE name = %s
+                """, (field_name,))
+                field = cursor.fetchone()
                 
-            except Exception as field_error:
-                error_msg = f"Error processing field {field_name}: {str(field_error)}"
-                logging.error(error_msg, exc_info=True)
-                raise Exception(error_msg) from field_error
+                if field:
+                    field_id = field['id']
+                    cursor.execute("""
+                        INSERT INTO mappings 
+                        (template_id, field_id, `left`, `top`, width, height, manual, created_by)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    """, (
+                        template_id,
+                        field_id,
+                        coords.get('left'),
+                        coords.get('top'),
+                        coords.get('width'),
+                        coords.get('height'),
+                        coords.get('manual', False),
+                        current_user_id
+                    ))
+                else:
+                    logging.warning(f"Field name '{field_name}' not found in field_name table")
         
         connection.commit()
-        logging.info("Successfully committed all field mappings to database")
+        logging.info(f"Successfully saved {len(field_map)} fields for template '{template_name}' (ID: {template_id})")
         return True
         
     except Exception as e:
-        error_msg = f"Error in save_mapping_db: {str(e)}"
-        logging.error(error_msg, exc_info=True)
         if connection:
             connection.rollback()
-            logging.info("Transaction rolled back due to error")
+        logging.error(f"Error saving mapping for template {template_name}: {str(e)}", exc_info=True)
+        logging.error(f"Error saving mapping for template {template_id}: {str(e)}", exc_info=True)
         return False
     finally:
         if cursor:
             cursor.close()
-        if connection and connection.is_connected():
+        if connection:
             connection.close()
 
 async def load_mapping_db(template_id: str) -> Dict:
@@ -1083,6 +1076,8 @@ async def ocr_preview(
             "boxNumFacture": numfacture_box,
             "dateFacturation": datefacturation_value,
             "boxDateFacturation": datefacturation_box,
+            "template_id": template_id
+           
         }
         return {
             "success": True,
@@ -1091,51 +1086,55 @@ async def ocr_preview(
         }
     except Exception as e:
         logging.error(f"Error in extract_test: {str(e)}", exc_info=True)
-        return {
+        return { 
             "success": False,
             "data": {},
             "message": f"Erreur lors de l'extraction: {str(e)}"
         }
 
-
-        
-# mappings
 @app.post("/mappings")
-async def save_field_mapping(request: SaveMappingRequest):
+async def save_field_mapping(
+    request: SaveMappingRequest,
+    current_user = Depends(require_comptable_or_admin)
+):
+    """
+    Save field mappings for a template
+    
+    Args:
+        request: SaveMappingRequest containing template_id and field_map
+        current_user: Authenticated user from JWT token
+        
+    Returns:
+        JSON response with success/error status
+    """
     try:
-        template_id = request.template_id
-        field_mapping = request.field_map
-        
-        logging.info(f"Received request to save mapping for template: {template_id}")
-        logging.debug(f"Field mapping data: {field_mapping}")
-        
-        # Convert FieldCoordinates objects to dictionaries
+        # Convert Pydantic model to dict and handle FieldCoordinates objects
         field_map = {}
-        for field_name, coords in field_mapping.items():
+        for field_name, coords in request.field_map.items():
             if coords is not None:
-                field_map[field_name] = coords.dict() if hasattr(coords, 'dict') else coords
-                logging.debug(f"Processed field {field_name}: {field_map[field_name]}")
-            else:
-                field_map[field_name] = None
-                logging.debug(f"Null coordinates for field: {field_name}")
+                if isinstance(coords, dict):
+                    field_map[field_name] = coords
+                else:
+                    field_map[field_name] = coords.dict()
         
-        logging.info(f"Saving {len(field_map)} fields to database for template {template_id}")
+        logging.info(f"Saving mapping for template: {request.template_id}")
+        logging.debug(f"Field map: {field_map}")
         
-        # Save to database
-        success = await save_mapping_db(template_id, field_map)
-        if not success:
-            error_msg = f"Failed to save mappings to database for template {template_id}"
-            logging.error(error_msg)
-            raise HTTPException(status_code=500, detail=error_msg)
-            
-        logging.info(f"Successfully saved mappings for template {template_id}")
-        return {
-            "status": "success", 
-            "message": f"Mappings saved for template {template_id}",
-            "template_id": template_id,
-            "fields_saved": len(field_map)
-        }
+        success = await save_mapping_db(
+            template_name=request.template_id,  # template_id is actually the template name
+            field_map=field_map,
+            current_user_id=current_user['id']
+        )
         
+        if success:
+            return {
+                "success": True,
+                "message": "Mapping saved successfully",
+                "template_id": request.template_id,
+                "fields_saved": list(field_map.keys())
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save mapping")
     except HTTPException:
         raise  # Re-raise HTTP exceptions as-is
     except Exception as e:
@@ -1144,20 +1143,20 @@ async def save_field_mapping(request: SaveMappingRequest):
         raise HTTPException(status_code=500, detail=error_msg)
 
 
-
 @app.get("/mappings")
-async def get_mappings():
-    """Récupérer tous les mappings groupés par template_id"""
+async def get_mappings(current_user = Depends(require_comptable_or_admin)):
+    """Récupérer seulement les mappings créés par l'utilisateur actuel"""
     connection = None
     cursor = None
     try:
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Get all field mappings with template and field names
+        # Get only mappings created by current user
         cursor.execute("""
             SELECT 
                 m.template_id,
+                t.name as template_name,
                 f.name as field_name,
                 m.`left`,
                 m.`top`,
@@ -1165,99 +1164,40 @@ async def get_mappings():
                 m.`height`
             FROM Mappings m
             JOIN Field_Name f ON m.field_id = f.id
-            ORDER BY m.template_id, f.name
-        """)
+            JOIN Templates t ON m.template_id = t.id
+            WHERE t.created_by = %s  # Filter by creator
+            ORDER BY t.name, f.name
+        """, (current_user['id'],))  # Pass current user ID
 
         mappings = cursor.fetchall()
-        logging.info(f"Found {len(mappings)} total field mappings")
-
-        # Group by template_id
+        
+        # Group by template_id with template names
         result = {}
         for row in mappings:
             template_id = row['template_id']
             if template_id not in result:
-                result[template_id] = {}
+                result[template_id] = {
+                    'template_name': row['template_name'],
+                    'fields': {}
+                }
 
-            result[template_id][row['field_name']] = {
-                'left': float(row['left']) if row['left'] is not None else 0.0,
-                'top': float(row['top']) if row['top'] is not None else 0.0,
-                'width': float(row['width']) if row['width'] is not None else 0.0,
-                'height': float(row['height']) if row['height'] is not None else 0.0,
-                'manual': False  # Default value
+            result[template_id]['fields'][row['field_name']] = {
+                'left': float(row['left']),
+                'top': float(row['top']),
+                'width': float(row['width']),
+                'height': float(row['height']),
+                'manual': False
             }
 
-        logging.info(f"Returning mappings for {len(result)} templates")
         return {
             "status": "success",
             "mappings": result,
             "count": len(mappings),
             "template_count": len(result)
         }
-
-    except Exception as e:
-        error_msg = f"Error loading all mappings: {str(e)}"
-        logging.error(error_msg, exc_info=True)
-        raise HTTPException(status_code=500, detail=error_msg)
     finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
-@app.get("/mappings/{template_id}")
-async def get_mapping(template_id: str):
-    """Récupérer le mapping pour un template spécifique"""
-    connection = None
-    cursor = None
-    try:
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        # Get all field mappings for this template with field names
-        cursor.execute("""
-            SELECT m.field_id, f.name as field_name, m.`left`, m.`top`, m.`width`, m.`height`
-            FROM Mappings m
-            JOIN Field_Name f ON m.field_id = f.id
-            WHERE m.template_id = %s
-        """, (template_id,))
-        
-        mappings = cursor.fetchall()
-        logging.info(f"Found {len(mappings)} mappings for template {template_id}")
-        
-        if not mappings:
-            logging.warning(f"No mappings found for template {template_id}")
-            return {"template_id": template_id, "field_map": {}}
-        
-        # Convert to the expected format
-        field_map = {}
-        for row in mappings:
-            field_name = row['field_name']
-            field_map[field_name] = {
-                'left': float(row['left']) if row['left'] is not None else 0.0,
-                'top': float(row['top']) if row['top'] is not None else 0.0,
-                'width': float(row['width']) if row['width'] is not None else 0.0,
-                'height': float(row['height']) if row['height'] is not None else 0.0,
-                'manual': False  # Default value
-            }
-            logging.debug(f"Loaded mapping for {field_name}: {field_map[field_name]}")
-        
-        logging.info(f"Successfully loaded {len(field_map)} field mappings for template {template_id}")
-        return {
-            "template_id": template_id, 
-            "field_map": field_map,
-            "status": "success"
-        }
-        
-    except Exception as e:
-        error_msg = f"Error loading mapping for template {template_id}: {str(e)}"
-        logging.error(error_msg, exc_info=True)
-        raise HTTPException(status_code=500, detail=error_msg)
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
+        if cursor: cursor.close()
+        if connection: connection.close()
 
 @app.delete("/mappings/{template_id}")
 async def delete_mapping(template_id: str):
@@ -1414,11 +1354,11 @@ async def ajouter_facture(
         # Convert date to string format for database
         date_str = invoice.dateFacturation.strftime('%Y-%m-%d')
         
-        # Insert the invoice data
+        # Insert the invoice data with created_by
         query = """
         INSERT INTO Facture 
-        (fournisseur, numFacture, dateFacturation, tauxTVA, montantHT, montantTVA, montantTTC)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        (fournisseur, numFacture, dateFacturation, tauxTVA, montantHT, montantTVA, montantTTC, created_by)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
         """
         values = (
             invoice.fournisseur,
@@ -1427,7 +1367,8 @@ async def ajouter_facture(
             invoice.tauxTVA,
             invoice.montantHT,
             invoice.montantTVA,
-            invoice.montantTTC
+            invoice.montantTTC,
+            current_user['id']  # Add current user ID as created_by
         )
         
         cursor.execute(query, values)
@@ -1536,27 +1477,29 @@ async def ajouter_facture(
 async def list_factures(
     page: int = 1,
     page_size: int = 10,
-    search: str = ""
+    search: str = "",
+    current_user = Depends(require_comptable_or_admin)
 ):
     """
-    List all factures with pagination and search
+    List factures for the current user with pagination and search
     """
     try:
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
         
-        # Build the base query
+        # Build the base query with user filter
         query = """
             SELECT SQL_CALC_FOUND_ROWS *
             FROM facture
-            WHERE %(search)s = '' 
-               OR fournisseur LIKE %(search_like)s 
-               OR numFacture LIKE %(search_like)s
-               OR dateFacturation LIKE %(search_like)s
-               OR tauxTVA LIKE %(search_like)s
-               OR montantHT LIKE %(search_like)s
-               OR montantTVA LIKE %(search_like)s
-               OR montantTTC LIKE %(search_like)s
+            WHERE created_by = %(user_id)s
+              AND (%(search)s = '' 
+                  OR fournisseur LIKE %(search_like)s 
+                  OR numFacture LIKE %(search_like)s
+                  OR dateFacturation LIKE %(search_like)s
+                  OR tauxTVA LIKE %(search_like)s
+                  OR montantHT LIKE %(search_like)s
+                  OR montantTVA LIKE %(search_like)s
+                  OR montantTTC LIKE %(search_like)s)
             ORDER BY id DESC
             LIMIT %(offset)s, %(limit)s
         """
@@ -1564,10 +1507,11 @@ async def list_factures(
         # Calculate pagination
         offset = (page - 1) * page_size
         
-        # Execute query
+        # Execute query with user_id
         cursor.execute(
             query,
             {
+                'user_id': current_user['id'],
                 'search': search,
                 'search_like': f'%{search}%',
                 'offset': offset,
@@ -1608,24 +1552,33 @@ async def list_factures(
         if 'connection' in locals():
             connection.close()
 
+
+#update
 @app.put("/factures/{facture_id}", response_model=InvoiceResponse)
 async def update_facture(
     facture_id: int,
-    invoice_update: InvoiceUpdate
+    invoice_update: InvoiceUpdate,
+    current_user = Depends(require_comptable_or_admin)
 ):
     """
-    Update a facture by ID
+    Update a facture by ID. Users can only update their own factures.
     """
     try:
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
 
-        # Check if facture exists
-        cursor.execute("SELECT * FROM facture WHERE id = %s", (facture_id,))
+        # Check if facture exists and is owned by the current user
+        cursor.execute(
+            "SELECT * FROM facture WHERE id = %s AND created_by = %s",
+            (facture_id, current_user['id'])
+        )
         facture = cursor.fetchone()
 
         if not facture:
-            raise HTTPException(status_code=404, detail="Facture not found")
+            raise HTTPException(
+                status_code=404,
+                detail="Facture not found or you don't have permission to update it"
+            )
 
         # Prepare update data (exclude id and date_creation)
         update_data = invoice_update.dict(exclude_unset=True)

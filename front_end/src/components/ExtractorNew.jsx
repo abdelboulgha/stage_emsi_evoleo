@@ -64,7 +64,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
     handleSetupFileUpload, 
     validateSetupAndProceed, 
     removeFile, 
-    backToSetup 
+    backToSetup,
   } = useSetup(setupState, setSetupState, setExtractionState, setCurrentStep, setIsLoading, showNotification);
   
   const {

@@ -176,11 +176,42 @@
     border-bottom: 2px solid var(--gray-200);
     text-transform: uppercase;
     letter-spacing: 0.05em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.miseajour-table-header:hover {
+    background: var(--gray-200);
+}
+
+.miseajour-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.miseajour-sort-icons {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.miseajour-sort-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--primary-color);
+    transition: all 0.3s ease;
+}
+
+.miseajour-sort-icon.inactive {
+    color: var(--gray-400);
+    opacity: 0.5;
 }
 
 .miseajour-table-row {
     transition: all 0.3s ease;
     border-bottom: 1px solid var(--gray-100);
+    cursor: pointer;
 }
 
 .miseajour-table-row:hover {
@@ -192,6 +223,15 @@
 .miseajour-table-cell {
     padding: var(--spacing-md) var(--spacing-lg);
     vertical-align: middle;
+}
+
+.miseajour-cell-content {
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--border-radius-sm);
+    background: var(--gray-50);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--gray-700);
 }
 
 .miseajour-table-input {
@@ -237,6 +277,20 @@
     cursor: pointer;
     transition: all 0.3s ease;
     box-shadow: var(--shadow-sm);
+}
+
+.miseajour-action-button.edit {
+    background: var(--primary-gradient);
+    color: var(--white);
+}
+
+.miseajour-action-button.edit:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-action-button.edit:active {
+    transform: translateY(0);
 }
 
 .miseajour-action-button.update {
@@ -332,6 +386,184 @@
     font-size: 0.875rem;
     font-weight: 600;
     color: var(--gray-700);
+}
+
+/* Modal */
+.miseajour-modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: var(--spacing-md);
+}
+
+.miseajour-modal {
+    background: var(--white);
+    border-radius: var(--border-radius-2xl);
+    border: 2px solid var(--gray-200);
+    box-shadow: var(--shadow-2xl);
+    padding: var(--spacing-2xl);
+    width: 100%;
+    max-width: 800px;
+    max-height: 90vh;
+    overflow-y: auto;
+    position: relative;
+    overflow: hidden;
+}
+
+.miseajour-modal::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+}
+
+.miseajour-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--spacing-xl);
+    padding-bottom: var(--spacing-lg);
+    border-bottom: 2px solid var(--gray-100);
+}
+
+.miseajour-modal-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    letter-spacing: -0.025em;
+}
+
+.miseajour-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 50%;
+    background: var(--gray-100);
+    color: var(--gray-600);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.miseajour-modal-close:hover {
+    background: var(--error-color);
+    color: var(--white);
+    transform: scale(1.1);
+}
+
+.miseajour-modal-close-icon {
+    width: 20px;
+    height: 20px;
+}
+
+.miseajour-modal-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xl);
+}
+
+.miseajour-modal-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+}
+
+.miseajour-modal-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.miseajour-modal-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.miseajour-modal-input {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius-lg);
+    background: var(--white);
+    color: var(--gray-900);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.miseajour-modal-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1), var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.miseajour-modal-input:hover {
+    border-color: var(--gray-400);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-modal-readonly {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    background: var(--gray-50);
+    color: var(--gray-600);
+    font-size: 0.875rem;
+    font-weight: 500;
+}
+
+.miseajour-modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--spacing-md);
+    padding-top: var(--spacing-lg);
+    border-top: 2px solid var(--gray-100);
+}
+
+.miseajour-modal-button {
+    padding: var(--spacing-md) var(--spacing-xl);
+    border: none;
+    border-radius: var(--border-radius-lg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.miseajour-modal-button.cancel {
+    background: var(--gray-500);
+    color: var(--white);
+}
+
+.miseajour-modal-button.cancel:hover {
+    background: var(--gray-600);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-modal-button.submit {
+    background: var(--primary-gradient);
+    color: var(--white);
+}
+
+.miseajour-modal-button.submit:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
 }
 
 /* Edit Section */
@@ -467,7 +699,8 @@
         font-size: 2.25rem;
     }
 
-    .miseajour-edit-fields {
+    .miseajour-edit-fields,
+    .miseajour-modal-fields {
         grid-template-columns: 1fr;
     }
 }
@@ -512,8 +745,13 @@
         gap: var(--spacing-md);
     }
 
-    .miseajour-edit-container {
+    .miseajour-edit-container,
+    .miseajour-modal {
         padding: var(--spacing-lg);
+    }
+
+    .miseajour-modal-actions {
+        flex-direction: column;
     }
 }
 
@@ -554,11 +792,13 @@
         height: 14px;
     }
 
-    .miseajour-edit-container {
+    .miseajour-edit-container,
+    .miseajour-modal {
         padding: var(--spacing-md);
     }
 
-    .miseajour-edit-button {
+    .miseajour-edit-button,
+    .miseajour-modal-button {
         padding: var(--spacing-md);
         font-size: 0.875rem;
     }

@@ -32,7 +32,7 @@ const PageSelectionModal = ({ isOpen, onClose, pages, onSelectPage }) => {
               key={index}
               className="preparation-modal-page-item"
               onClick={() => {
-                console.log(`Selected page index: ${index}`); // Debug: Log selected page index
+              
                 onSelectPage(index);
               }}
             >
@@ -88,13 +88,13 @@ const PreparationSetup = ({
 
     try {
       const pagePreviews = await getPagePreviews(file);
-      console.log("Page previews received:", pagePreviews); // Debug: Log previews
+     
       if (pagePreviews.length > 1) {
         setPdfPages(pagePreviews);
         setPendingFile(file);
         setShowPageModal(true);
       } else {
-        console.log("Single page PDF, processing directly with page_index 0"); // Debug
+        
         handleSingleDataPrepUpload({ target: { files: [file] } }, 0);
       }
     } catch (error) {
@@ -104,7 +104,7 @@ const PreparationSetup = ({
 
   const handlePageSelect = (pageIndex) => {
     if (pendingFile) {
-      console.log(`Processing file with pageIndex: ${pageIndex}`); 
+     
       handleSingleDataPrepUpload({ target: { files: [pendingFile] } }, pageIndex);
       setShowPageModal(false);
       setPendingFile(null);
@@ -238,25 +238,30 @@ const PreparationSetup = ({
             <div className="preparation-step-content">
               <div className="preparation-select-container">
                 <select
-                  value={setupState.selectedModel}
-                  onChange={(e) =>
-                    setSetupState((prev) => ({
+                  value={setupState.selectedModel?.id || ""}
+                  onChange={(e) => {
+                    const selectedId = e.target.value;
+                    const selectedName = mappings[selectedId]?.template_name;
+                    setSetupState(prev => ({
                       ...prev,
-                      selectedModel: e.target.value,
-                    }))
-                  }
+                      selectedModel: selectedId ? {
+                        id: selectedId,
+                        name: selectedName
+                      } : ''
+                    }));
+                  }}
                   className="preparation-select"
                   required
                 >
                   <option value="">Sélectionnez un fournisseur</option>
-                  {Object.keys(mappings).map((tpl) => (
-                    <option key={tpl} value={tpl}>
-                      {tpl}
+                  {Object.entries(mappings).map(([id, templateData]) => (
+                    <option key={id} value={id}>
+                      {templateData.template_name}
                     </option>
                   ))}
                 </select>
                 
-                {!setupState.selectedModel && (
+                {!setupState.selectedModel?.id && (
                   <div className="preparation-warning">
                     <AlertTriangle className="w-5 h-5" />
                     <span>Veuillez sélectionner un fournisseur pour continuer</span>
@@ -268,7 +273,7 @@ const PreparationSetup = ({
         )}
 
         {/* Étape 4: Upload des documents */}
-        {setupState.invoiceType && setupState.selectedModel && (
+        {setupState.invoiceType && setupState.selectedModel?.id && (
           <div className="preparation-step">
             <div className="preparation-step-header">
               <div className="preparation-step-icon">4</div>

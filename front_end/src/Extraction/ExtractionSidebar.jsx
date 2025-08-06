@@ -31,7 +31,7 @@ const ExtractionSidebar = ({
           onClick={extractAllPdfs}
           disabled={
             extractionState.isProcessing || 
-            (extractionState.processingMode === "same" && !extractionState.selectedModel)
+            (extractionState.processingMode === "same" && !extractionState.selectedModelId)
           }
           className="extraction-extract-button"
         >
@@ -44,8 +44,8 @@ const ExtractionSidebar = ({
             <>
               <Search className="extraction-button-icon" />
               Extraire toutes les pages
-              {extractionState.processingMode === "same" && extractionState.selectedModel && (
-                <span className="extraction-model-info"> (Modèle: {extractionState.selectedModel})</span>
+              {extractionState.processingMode === "same" && extractionState.selectedModelName && (
+                <span className="extraction-model-info"> (Modèle: {extractionState.selectedModelName})</span>
               )}
             </>
           )}

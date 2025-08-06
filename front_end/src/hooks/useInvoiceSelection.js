@@ -1,56 +1,104 @@
 import { useCallback } from 'react';
-import { useAuth } from '../contexts/AuthContext';
 
 const API_BASE_URL = "http://localhost:8000";
 
 export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoiceSelection, showNotification, filterValue) => {
-  const { token } = useAuth();
   const handleSaveInvoices = useCallback(async () => {
     try {
       setInvoiceSelection((prev) => ({ ...prev, isSaving: true }));
       
       const invoicesToSave = extractionState.extractedDataList
         .filter((_, index) => invoiceSelection.selectedInvoices.includes(index))
-        .map((data) => {
+        .map((data, index) => {
+          console.log(`Processing invoice ${index + 1}:`, data); // Debug log
+          
           // Apply filtering to each field using the filterValue function
           const fournisseur = filterValue(data.fournisseur, "fournisseur");
           const numeroFacture = filterValue(data.numeroFacture, "numeroFacture");
-          const dateFacturation = filterValue(data.dateFacturation, "dateFacturation") || new Date().toISOString().split('T')[0];
+          const dateFacturation = filterValue(data.dateFacturation, "dateFacturation");
           const tauxTVA = filterValue(data.tauxTVA, "tauxTVA");
           const montantHT = filterValue(data.montantHT, "montantHT");
           const montantTVA = filterValue(data.montantTVA, "montantTVA");
           const montantTTC = filterValue(data.montantTTC, "montantTTC");
 
-          // Return the invoice data with proper types
-          return {
+          console.log(`Filtered values for invoice ${index + 1}:`, {
             fournisseur,
-            numFacture: numeroFacture, // Map numeroFacture to numFacture for backend
+            numeroFacture,
             dateFacturation,
+            tauxTVA,
+            montantHT,
+            montantTVA,
+            montantTTC
+          }); // Debug log
+
+          // Ensure all required fields are present and properly formatted
+          const invoice = {
+            fournisseur: fournisseur || "Fournisseur inconnu",
+            numFacture: numeroFacture || "N/A", // Map numeroFacture to numFacture for backend
+            dateFacturation: dateFacturation || new Date().toISOString().split('T')[0],
             tauxTVA: parseFloat(tauxTVA) || 0,
             montantHT: parseFloat(montantHT) || 0,
             montantTVA: parseFloat(montantTVA) || 0,
             montantTTC: parseFloat(montantTTC) || 0,
           };
+
+          console.log(`Formatted invoice ${index + 1}:`, invoice); // Debug log
+
+          // Validate required fields
+          if (!invoice.fournisseur || invoice.fournisseur.trim() === "" || invoice.fournisseur === "Fournisseur inconnu") {
+            throw new Error(`Invoice ${index + 1}: Le fournisseur est requis`);
+          }
+          if (!invoice.numFacture || invoice.numFacture.trim() === "" || invoice.numFacture === "N/A") {
+            throw new Error(`Invoice ${index + 1}: Le numéro de facture est requis`);
+          }
+          if (!invoice.dateFacturation) {
+            throw new Error(`Invoice ${index + 1}: La date de facturation est requise`);
+          }
+
+          // Ensure numeric values are valid
+          if (isNaN(invoice.tauxTVA) || invoice.tauxTVA < 0) {
+            invoice.tauxTVA = 0;
+          }
+          if (isNaN(invoice.montantHT) || invoice.montantHT < 0) {
+            invoice.montantHT = 0;
+          }
+          if (isNaN(invoice.montantTVA) || invoice.montantTVA < 0) {
+            invoice.montantTVA = 0;
+          }
+          if (isNaN(invoice.montantTTC) || invoice.montantTTC < 0) {
+            invoice.montantTTC = 0;
+          }
+
+          return invoice;
         });
+
+      console.log("All invoices to save:", invoicesToSave); // Debug log
 
       // Save each invoice one by one
       const results = [];
       for (const invoice of invoicesToSave) {
         try {
-          const headers = {
-            "Content-Type": "application/json",
-          };
-          if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-          }
+          console.log("Sending invoice data:", invoice); // Debug log
 
           const response = await fetch(`${API_BASE_URL}/ajouter-facture`, {
             method: "POST",
-            headers,
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: 'include', // Ajout des cookies
             body: JSON.stringify(invoice),
           });
           
+          console.log("Response status:", response.status); // Debug log
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Backend error:", errorData); // Debug log
+            throw new Error(errorData.detail || `Erreur ${response.status}: ${response.statusText}`);
+          }
+          
           const result = await response.json();
+          console.log("Success response:", result); // Debug log
           results.push({ success: result.success, message: result.message });
           
           if (!result.success) {
@@ -72,7 +120,7 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
         );
       } else if (successCount === 0) {
         showNotification(
-          `Erreur lors de l'enregistrement des factures`,
+          `Erreur lors de l'enregistrement des factures: ${results[0]?.message || "Erreur inconnue"}`,
           "error"
         );
       } else {
@@ -102,7 +150,6 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
     invoiceSelection.selectedInvoices,
     showNotification,
     filterValue,
-    token,
   ]);
 
   const toggleSelectAllInvoices = useCallback(
