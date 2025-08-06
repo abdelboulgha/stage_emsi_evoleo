@@ -10,46 +10,49 @@ import {
   X,
   CheckCircle,
   Loader2,
+  DollarSign,
+  AlertTriangle,
 } from "lucide-react";
 import { createPortal } from "react-dom";
+import "./PreparationSetup.css";
 
 const PageSelectionModal = ({ isOpen, onClose, pages, onSelectPage }) => {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white rounded-2xl w-full max-w-4xl flex flex-col">
-        <div className="p-6 border-b">
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Sélectionnez une page</h3>
-          <p className="text-gray-600 text-sm mb-1">Choisissez une page pour configurer la facture.</p>
+    <div className="preparation-modal-overlay">
+      <div className="preparation-modal">
+        <div className="preparation-modal-header">
+          <h3 className="preparation-modal-title">Sélectionnez une page</h3>
+          <p className="preparation-modal-subtitle">Choisissez une page pour configurer la facture.</p>
         </div>
-        <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
+        <div className="preparation-modal-content">
           {pages.map((page, index) => (
             <div
               key={index}
-              className="relative group cursor-pointer"
+              className="preparation-modal-page-item"
               onClick={() => {
                 console.log(`Selected page index: ${index}`); // Debug: Log selected page index
                 onSelectPage(index);
               }}
             >
-              <div className="aspect-[3/4] rounded-lg overflow-hidden border border-gray-300 bg-white/10">
+              <div className="preparation-modal-page-preview">
                 <img
                   src={page.preview}
                   alt={`Page ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  className="preparation-modal-page-image"
                 />
               </div>
-              <div className="mt-2 text-sm text-gray-800 text-center">
+              <div className="preparation-modal-page-label">
                 Page {index + 1}
               </div>
             </div>
           ))}
         </div>
-        <div className="p-6 border-t">
+        <div className="preparation-modal-footer">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            className="preparation-modal-button"
           >
             Annuler
           </button>
@@ -110,15 +113,29 @@ const PreparationSetup = ({
   };
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-8">
-        <div className="max-w-4xl mx-auto">
-          <div className="mb-8">
-            <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-              <Receipt className="w-6 h-6" />
-              1. Type de facture
-            </h2>
-            <div className="grid md:grid-cols-2 gap-4">
+    <div className="preparation-setup">
+      <div className="preparation-setup-header">
+        <h1 className="preparation-setup-title">Configuration de l'Extraction</h1>
+        <p className="preparation-setup-subtitle">
+          Configurez votre extraction de factures en quelques étapes simples
+        </p>
+      </div>
+
+      <div className="preparation-steps">
+        {/* Étape 1: Type de facture */}
+        <div className="preparation-step">
+          <div className="preparation-step-header">
+            <div className="preparation-step-icon">1</div>
+            <div>
+              <h3 className="preparation-step-title">Type de facture</h3>
+              <p className="preparation-step-description">
+                Sélectionnez le type de facture à traiter
+              </p>
+            </div>
+          </div>
+          
+          <div className="preparation-step-content">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <button
                 onClick={() =>
                   setSetupState((prev) => ({
@@ -126,17 +143,15 @@ const PreparationSetup = ({
                     invoiceType: "achat",
                   }))
                 }
-                className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
-                  setupState.invoiceType === "achat"
-                    ? "border-blue-400 bg-blue-500/20 text-white shadow-lg scale-105"
-                    : "border-white/30 bg-white/10 text-blue-100 hover:border-white/50"
+                className={`preparation-type-card ${
+                  setupState.invoiceType === "achat" ? "active" : ""
                 }`}
               >
-                <ShoppingCart className="w-12 h-12 mx-auto mb-3" />
-                <h3 className="text-xl font-semibold mb-2">
-                  Facture d'Achat
-                </h3>
-                <p className="text-sm opacity-80">
+                <div className="preparation-type-icon">
+                  <ShoppingCart className="w-8 h-8" />
+                </div>
+                <h4 className="preparation-type-title">Facture d'Achat</h4>
+                <p className="preparation-type-description">
                   Factures reçues de vos fournisseurs
                 </p>
               </button>
@@ -148,217 +163,232 @@ const PreparationSetup = ({
                     invoiceType: "vente",
                   }))
                 }
-                className={`p-6 rounded-2xl border-2 transition-all duration-300 ${
-                  setupState.invoiceType === "vente"
-                    ? "border-green-400 bg-green-500/20 text-white shadow-lg scale-105"
-                    : "border-white/30 bg-white/10 text-blue-100 hover:border-white/50"
+                className={`preparation-type-card ${
+                  setupState.invoiceType === "vente" ? "active" : ""
                 }`}
               >
-                <Receipt className="w-12 h-12 mx-auto mb-3" />
-                <h3 className="text-xl font-semibold mb-2">
-                  Facture de Vente
-                </h3>
-                <p className="text-sm opacity-80">
+                <div className="preparation-type-icon">
+                  <DollarSign className="w-8 h-8" />
+                </div>
+                <h4 className="preparation-type-title">Facture de Vente</h4>
+                <p className="preparation-type-description">
                   Factures émises vers vos clients
                 </p>
               </button>
             </div>
           </div>
+        </div>
 
-          {setupState.invoiceType && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <Building2 className="w-6 h-6" />
-                2. Ajout d'un fournisseur
-              </h2>
-
-              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-                <div className="space-y-4">
-                  <input
-                    type="file"
-                    accept=".pdf"
-                    onChange={handleFileSelection}
-                    className="hidden"
-                    id="single-dataprep-upload"
-                  />
-                  <label
-                    htmlFor="single-dataprep-upload"
-                    className="w-full p-6 border-2 border-dashed border-blue-400/50 rounded-xl text-blue-200 hover:border-blue-400 hover:text-white hover:bg-blue-500/10 transition-all flex items-center justify-center gap-3 bg-blue-500/5 cursor-pointer"
-                  >
-                    <Plus className="w-6 h-6" />
-                    <div className="text-center">
-                      <div className="font-semibold text-lg">
-                        Paramétrer une nouvelle facture{" "}
-                        {setupState.invoiceType === "achat" ? "d'achat" : "de vente"}
-                      </div>
-                    </div>
-                    <ArrowRight className="w-6 h-6" />
-                  </label>
-                </div>
+        {/* Étape 2: Configuration du fournisseur */}
+        {setupState.invoiceType && (
+          <div className="preparation-step">
+            <div className="preparation-step-header">
+              <div className="preparation-step-icon">2</div>
+              <div>
+                <h3 className="preparation-step-title">Configuration</h3>
+                <p className="preparation-step-description">
+                  Paramétrez votre modèle de facture
+                </p>
               </div>
             </div>
-          )}
-
-          {setupState.invoiceType && (
-            <div className="mb-8">
-              <h2 className="text-2xl font-bold text-white mb-4 flex items-center gap-2">
-                <FileText className="w-6 h-6" />
-                3. Documents à traiter
-              </h2>
-
-              <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
+            
+            <div className="preparation-step-content">
+              <div className="preparation-upload-area">
                 <input
-                  type="hidden"
-                  name="processingMode"
-                  value="same"
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleFileSelection}
+                  className="hidden"
+                  id="single-dataprep-upload"
                 />
-                <div className="mb-6">
-                  <select
-                    value={setupState.selectedModel}
-                    onChange={(e) =>
-                      setSetupState((prev) => ({
-                        ...prev,
-                        selectedModel: e.target.value,
-                      }))
-                    }
-                    className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                    }}
-                    required
-                  >
-                    <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
-                      Sélectionnez un fournisseur
-                    </option>
-                    {Object.keys(mappings).map((tpl) => (
-                      <option 
-                        key={tpl} 
-                        value={tpl}
-                        style={{ color: 'black', backgroundColor: 'white' }}
-                      >
-                        {tpl}
-                      </option>
-                    ))}
-                  </select>
-                  {!setupState.selectedModel && (
-                    <p className="text-yellow-300 text-sm mt-1">
-                      ⚠️ Veuillez sélectionner un fournisseur pour continuer
-                    </p>
-                  )}
-                </div>
+                <label
+                  htmlFor="single-dataprep-upload"
+                  className="preparation-upload-label"
+                >
+                  <div className="preparation-upload-icon">
+                    <Plus className="w-8 h-8" />
+                  </div>
+                  <div className="preparation-upload-text">
+                    Paramétrer une nouvelle facture{" "}
+                    {setupState.invoiceType === "achat" ? "d'achat" : "de vente"}
+                  </div>
+                  <div className="preparation-upload-subtext">
+                    Cliquez pour sélectionner un fichier PDF de référence
+                  </div>
+                  <ArrowRight className="w-6 h-6 text-gray-400" />
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
 
-                {setupState.selectedModel && (
-                  <div className="mb-6">
-                    <input
-                      type="file"
-                      accept=".pdf,.png,.jpg,.jpeg"
-                      multiple
-                      onChange={handleSetupFileUpload}
-                      className="hidden"
-                      id="setup-file-input"
-                    />
-                    <label
-                      htmlFor="setup-file-input"
-                      className="flex flex-col items-center justify-center w-full p-8 border-2 border-dashed border-white/30 rounded-xl cursor-pointer hover:border-white/50 transition-colors bg-white/10"
-                    >
-                      <Upload className="w-12 h-12 text-blue-200 mb-4" />
-                      <span className="text-white font-medium text-lg mb-2">
-                        Glissez vos fichiers ici ou cliquez pour sélectionner
-                      </span>
-                      <span className="text-blue-200 text-sm">
-                        PDF, PNG, JPG acceptés • Plusieurs fichiers possible
-                      </span>
-                    </label>
+        {/* Étape 3: Sélection du fournisseur */}
+        {setupState.invoiceType && (
+          <div className="preparation-step">
+            <div className="preparation-step-header">
+              <div className="preparation-step-icon">3</div>
+              <div>
+                <h3 className="preparation-step-title">Fournisseur</h3>
+                <p className="preparation-step-description">
+                  Sélectionnez le fournisseur configuré
+                </p>
+              </div>
+            </div>
+            
+            <div className="preparation-step-content">
+              <div className="preparation-select-container">
+                <select
+                  value={setupState.selectedModel}
+                  onChange={(e) =>
+                    setSetupState((prev) => ({
+                      ...prev,
+                      selectedModel: e.target.value,
+                    }))
+                  }
+                  className="preparation-select"
+                  required
+                >
+                  <option value="">Sélectionnez un fournisseur</option>
+                  {Object.keys(mappings).map((tpl) => (
+                    <option key={tpl} value={tpl}>
+                      {tpl}
+                    </option>
+                  ))}
+                </select>
+                
+                {!setupState.selectedModel && (
+                  <div className="preparation-warning">
+                    <AlertTriangle className="w-5 h-5" />
+                    <span>Veuillez sélectionner un fournisseur pour continuer</span>
                   </div>
                 )}
+              </div>
+            </div>
+          </div>
+        )}
 
-                {setupState.filePreviews.length > 0 && (
-                  <div>
-                    <h4 className="text-white font-medium mb-3">
-                      Fichiers sélectionnés (
-                      {setupState.filePreviews.length} page(s))
-                    </h4>
-                    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                      {setupState.filePreviews.map((preview) => (
-                        <div
-                          key={preview.id}
-                          className="relative group"
-                        >
-                          <div className="aspect-[3/4] rounded-lg overflow-hidden border border-white/30 bg-white/10">
-                            <img
-                              src={preview.preview}
-                              alt={`${preview.fileName} - Page ${preview.pageNumber}`}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
+        {/* Étape 4: Upload des documents */}
+        {setupState.invoiceType && setupState.selectedModel && (
+          <div className="preparation-step">
+            <div className="preparation-step-header">
+              <div className="preparation-step-icon">4</div>
+              <div>
+                <h3 className="preparation-step-title">Documents à traiter</h3>
+                <p className="preparation-step-description">
+                  Uploadez vos factures à extraire
+                </p>
+              </div>
+            </div>
+            
+            <div className="preparation-step-content">
+              <div className="preparation-upload-area">
+                <input
+                  type="file"
+                  accept=".pdf,.png,.jpg,.jpeg"
+                  multiple
+                  onChange={handleSetupFileUpload}
+                  className="hidden"
+                  id="setup-file-input"
+                />
+                <label
+                  htmlFor="setup-file-input"
+                  className="preparation-upload-label"
+                >
+                  <div className="preparation-upload-icon">
+                    <Upload className="w-8 h-8" />
+                  </div>
+                  <div className="preparation-upload-text">
+                    Glissez vos fichiers ici ou cliquez pour sélectionner
+                  </div>
+                  <div className="preparation-upload-subtext">
+                    PDF, PNG, JPG acceptés • Plusieurs fichiers possible
+                  </div>
+                </label>
+              </div>
+
+              {setupState.filePreviews.length > 0 && (
+                <div className="preparation-file-list">
+                  <h4 className="preparation-file-list-title">
+                    Fichiers sélectionnés ({setupState.filePreviews.length} page(s))
+                  </h4>
+                  <div className="preparation-file-grid">
+                    {setupState.filePreviews.map((preview) => (
+                      <div key={preview.id} className="preparation-file-item">
+                        <div className="preparation-file-preview">
+                          <img
+                            src={preview.preview}
+                            alt={`${preview.fileName} - Page ${preview.pageNumber}`}
+                            className="preparation-file-image"
+                          />
                           <button
                             onClick={() => {
-                              const index =
-                                setupState.filePreviews.findIndex(
-                                  (p) => p.id === preview.id
-                                );
+                              const index = setupState.filePreviews.findIndex(
+                                (p) => p.id === preview.id
+                              );
                               if (index !== -1) removeFile(index);
                             }}
-                            className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="preparation-file-remove"
                           >
                             <X className="w-4 h-4" />
                           </button>
-                          <div
-                            className="mt-2 text-xs text-blue-200 text-center truncate px-1"
-                            title={preview.fileName}
-                          >
-                            {preview.fileName}
-                            {preview.totalPages > 1 &&
-                              ` (${preview.pageNumber}/${preview.totalPages})`}
-                          </div>
                         </div>
-                      ))}
-                    </div>
+                        <div className="preparation-file-info">
+                          <span className="preparation-file-name">
+                            {preview.fileName}
+                          </span>
+                          {preview.totalPages > 1 && (
+                            <span className="preparation-file-pages">
+                              Page {preview.pageNumber}/{preview.totalPages}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          )}
-
-          {setupState.invoiceType &&
-            setupState.filePreviews.length > 0 && (
-              <div className="text-center">
-                <button
-                  onClick={() =>
-                    validateSetupAndProceed({
-                      ...setupState,
-                      invoiceType: setupState.invoiceType,
-                      selectedFiles: setupState.selectedFiles,
-                      filePreviews: setupState.filePreviews,
-                    })
-                  }
-                  disabled={isLoading}
-                  className="px-8 py-4 bg-gradient-to-r from-green-500 to-blue-600 text-white font-semibold text-lg rounded-2xl hover:from-green-600 hover:to-blue-700 disabled:opacity-50 transition-all duration-300 flex items-center justify-center gap-3 mx-auto shadow-lg"
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="w-6 h-6 animate-spin" />
-                      Préparation...
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle className="w-6 h-6" />
-                      Valider
-                      <ArrowRight className="w-6 h-6" />
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
-
-          <PageSelectionModal
-            isOpen={showPageModal}
-            onClose={() => setShowPageModal(false)}
-            pages={pdfPages}
-            onSelectPage={handlePageSelect}
-          />
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Bouton de validation */}
+      {setupState.invoiceType && setupState.filePreviews.length > 0 && (
+        <div className="preparation-actions">
+          <button
+            onClick={() =>
+              validateSetupAndProceed({
+                ...setupState,
+                invoiceType: setupState.invoiceType,
+                selectedFiles: setupState.selectedFiles,
+                filePreviews: setupState.filePreviews,
+              })
+            }
+            disabled={isLoading}
+            className="preparation-action-button primary"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Préparation...
+              </>
+            ) : (
+              <>
+                <CheckCircle className="w-5 h-5" />
+                Valider et continuer
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
+          </button>
+        </div>
+      )}
+
+      <PageSelectionModal
+        isOpen={showPageModal}
+        onClose={() => setShowPageModal(false)}
+        pages={pdfPages}
+        onSelectPage={handlePageSelect}
+      />
     </div>
   );
 };

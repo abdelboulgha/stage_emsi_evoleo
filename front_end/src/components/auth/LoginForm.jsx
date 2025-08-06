@@ -74,72 +74,77 @@ const LoginForm = ({ onSwitchToRegister }) => {
   };
 
   return (
-    <div className="auth-form-container">
-      <div className="auth-form-card">
-        <h2>Connexion</h2>
-        <p className="auth-subtitle">Connectez-vous à votre compte</p>
+    <div className="auth-form-card">
+      <div className="auth-form-header">
+        <h2 className="auth-form-title">Connexion</h2>
+        <p className="auth-form-subtitle">Connectez-vous à votre compte professionnel</p>
+      </div>
+      
+      <form onSubmit={handleSubmit} className="auth-form">
+        {errors.general && (
+          <div className="auth-error">
+            <div className="auth-error-title">Erreur de connexion</div>
+            <div className="auth-error-text">{errors.general}</div>
+          </div>
+        )}
         
-        <form onSubmit={handleSubmit} className="auth-form">
-          {errors.general && (
-            <div className="error-message general-error">
-              {errors.general}
+        <div className="form-group">
+          <label htmlFor="email" className="form-label">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className={`form-input ${errors.email ? 'error' : ''}`}
+            placeholder="votre@email.com"
+            disabled={isLoading}
+          />
+          {errors.email && (
+            <div className="error-message">
+              ⚠ {errors.email}
             </div>
           )}
-          
-          <div className="form-group">
-            <label htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              className={errors.email ? 'error' : ''}
-              placeholder="votre@email.com"
-              disabled={isLoading}
-            />
-            {errors.email && <span className="error-text">{errors.email}</span>}
-          </div>
-
-          <div className="form-group">
-            <label htmlFor="password">Mot de passe</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className={errors.password ? 'error' : ''}
-              placeholder="Votre mot de passe"
-              disabled={isLoading}
-            />
-            {errors.password && <span className="error-text">{errors.password}</span>}
-          </div>
-
-          <button 
-            type="submit" 
-            className="auth-button primary"
-            disabled={isLoading}
-          >
-            {isLoading ? 'Connexion...' : 'Se connecter'}
-          </button>
-        </form>
-
-        <div className="auth-switch">
-          <p>
-            Pas encore de compte ?{' '}
-            <button 
-              type="button" 
-              className="link-button"
-              onClick={onSwitchToRegister}
-              disabled={isLoading}
-            >
-              Créer un compte
-            </button>
-          </p>
         </div>
-
         
+        <div className="form-group">
+          <label htmlFor="password" className="form-label">Mot de passe</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className={`form-input ${errors.password ? 'error' : ''}`}
+            placeholder="Votre mot de passe"
+            disabled={isLoading}
+          />
+          {errors.password && (
+            <div className="error-message">
+              ⚠ {errors.password}
+            </div>
+          )}
+        </div>
+        
+        <button
+          type="submit"
+          className="auth-button"
+          disabled={isLoading}
+        >
+          {isLoading ? 'Connexion...' : 'Se connecter'}
+        </button>
+      </form>
+      
+      <div className="auth-switch">
+        <p className="auth-switch-text">Pas encore de compte ?</p>
+        <button
+          type="button"
+          onClick={onSwitchToRegister}
+          className="auth-switch-link"
+          disabled={isLoading}
+        >
+          Créer un compte
+        </button>
       </div>
     </div>
   );

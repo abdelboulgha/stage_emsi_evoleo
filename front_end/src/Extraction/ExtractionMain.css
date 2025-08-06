@@ -1,0 +1,770 @@
+/* Extraction Main Container */
+.extraction-container {
+    min-height: 100vh;
+    width: 100%;
+    background: var(--white);
+    position: relative;
+    padding: var(--spacing-xl);
+}
+
+.extraction-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 20% 80%, rgba(0, 0, 0, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 0, 0, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.extraction-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.extraction-header {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+    padding-bottom: var(--spacing-xl);
+    border-bottom: 2px solid var(--gray-100);
+    position: relative;
+}
+
+.extraction-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: var(--primary-gradient);
+    border-radius: 1px;
+}
+
+.extraction-title {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: -0.025em;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.extraction-subtitle {
+    color: var(--gray-600);
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.extraction-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: var(--spacing-2xl);
+    align-items: start;
+}
+
+/* Extraction Sidebar */
+.extraction-sidebar {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.extraction-sidebar:hover {
+    box-shadow: var(--shadow-xl);
+    border-color: var(--gray-300);
+}
+
+.extraction-sidebar-container {
+    padding: var(--spacing-2xl);
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+.extraction-sidebar-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+}
+
+.extraction-sidebar-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-xl);
+    letter-spacing: -0.025em;
+}
+
+/* Extract Button */
+.extraction-extract-button {
+    width: 100%;
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: var(--primary-gradient);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius-xl);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.extraction-extract-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.extraction-extract-button:hover::before {
+    transform: translateX(100%);
+}
+
+.extraction-extract-button:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.extraction-extract-button:active {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.extraction-extract-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.extraction-extract-button:disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.extraction-button-icon {
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+}
+
+.extraction-model-info {
+    font-size: 0.75rem;
+    opacity: 0.75;
+}
+
+/* Fields List */
+.extraction-fields-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.extraction-field-item {
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    padding: var(--spacing-lg);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.extraction-field-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--primary-gradient);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.extraction-field-item:hover {
+    border-color: var(--gray-300);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.extraction-field-item:hover::before {
+    transform: scaleX(1);
+}
+
+.extraction-field-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-sm);
+}
+
+.extraction-field-input-group {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+.extraction-input-field {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius-lg);
+    background: var(--white);
+    color: var(--gray-900);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.extraction-input-field::placeholder {
+    color: var(--gray-500);
+}
+
+.extraction-input-field:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1), var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.extraction-input-field:hover {
+    border-color: var(--gray-400);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Draw Button */
+.extraction-draw-button {
+    padding: var(--spacing-sm);
+    border: 2px solid var(--gray-300);
+    border-radius: 50%;
+    background: var(--white);
+    color: var(--gray-700);
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.extraction-draw-button:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-lighter);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.extraction-draw-button.active {
+    border-color: var(--warning-color);
+    background: var(--warning-lighter);
+    color: var(--warning-color);
+    box-shadow: var(--shadow-md);
+}
+
+.extraction-draw-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Actions */
+.extraction-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-xl);
+    border-top: 2px solid var(--gray-100);
+    position: relative;
+}
+
+.extraction-actions::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: var(--primary-gradient);
+    border-radius: 1px;
+}
+
+.extraction-action-button {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: none;
+    border-radius: var(--border-radius-lg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    box-shadow: var(--shadow-md);
+}
+
+.extraction-action-button.save {
+    background: var(--success-gradient);
+    color: var(--white);
+}
+
+.extraction-action-button.save:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.extraction-action-button.save:active {
+    transform: translateY(0);
+}
+
+.extraction-action-button.foxpro {
+    background: var(--warning-gradient);
+    color: var(--white);
+}
+
+.extraction-action-button.foxpro:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.extraction-action-button.foxpro:active {
+    transform: translateY(0);
+}
+
+.extraction-action-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.extraction-action-button:disabled:hover {
+    transform: none;
+    box-shadow: var(--shadow-sm);
+}
+
+.extraction-action-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Extraction Preview */
+.extraction-preview {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.extraction-preview:hover {
+    box-shadow: var(--shadow-xl);
+    border-color: var(--gray-300);
+}
+
+.extraction-preview-container {
+    padding: var(--spacing-2xl);
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.extraction-preview-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+}
+
+.extraction-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--spacing-xl);
+}
+
+.extraction-preview-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    letter-spacing: -0.025em;
+}
+
+.extraction-preview-icon {
+    width: 20px;
+    height: 20px;
+    color: var(--primary-color);
+}
+
+.extraction-preview-counter {
+    font-size: 0.875rem;
+    color: var(--gray-600);
+    font-weight: 600;
+}
+
+/* Navigation */
+.extraction-navigation {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+}
+
+.extraction-nav-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--primary-gradient);
+    color: var(--white);
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-md);
+}
+
+.extraction-nav-button:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.extraction-nav-button:active {
+    transform: translateY(0);
+}
+
+.extraction-nav-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    background: var(--gray-400);
+}
+
+.extraction-nav-icon {
+    width: 20px;
+    height: 20px;
+}
+
+/* Preview Area */
+.extraction-preview-area {
+    min-height: 500px;
+    position: relative;
+    margin-bottom: var(--spacing-xl);
+}
+
+.extraction-preview-content {
+    position: relative;
+    background: var(--gray-50);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-xl);
+    padding: var(--spacing-xl);
+    overflow: hidden;
+}
+
+.extraction-preview-image {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-md);
+}
+
+.extraction-boxes-canvas {
+    position: absolute;
+    top: var(--spacing-xl);
+    left: var(--spacing-xl);
+    right: var(--spacing-xl);
+    bottom: var(--spacing-xl);
+    pointer-events: none;
+    z-index: 10;
+}
+
+/* Empty State */
+.extraction-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    background: var(--gray-50);
+    border: 3px dashed var(--gray-300);
+    border-radius: var(--border-radius-xl);
+    transition: all 0.3s ease;
+}
+
+.extraction-empty-state:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-lighter);
+}
+
+.extraction-empty-content {
+    text-align: center;
+    padding: var(--spacing-2xl);
+}
+
+.extraction-empty-icon {
+    width: 64px;
+    height: 64px;
+    color: var(--gray-400);
+    margin-bottom: var(--spacing-lg);
+}
+
+.extraction-empty-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-700);
+    margin-bottom: var(--spacing-md);
+}
+
+.extraction-empty-description {
+    color: var(--gray-600);
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Thumbnails */
+.extraction-thumbnails {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-xl);
+    border-top: 2px solid var(--gray-100);
+    position: relative;
+}
+
+.extraction-thumbnails::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: var(--primary-gradient);
+    border-radius: 1px;
+}
+
+.extraction-thumbnails-container {
+    display: flex;
+    gap: var(--spacing-md);
+    overflow-x: auto;
+    padding: var(--spacing-sm);
+}
+
+.extraction-thumbnail {
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+
+.extraction-thumbnail:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--primary-color);
+}
+
+.extraction-thumbnail.active {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-md);
+}
+
+.extraction-thumbnail.hovered {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-xl);
+}
+
+.extraction-thumbnail-image {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+    background: var(--white);
+}
+
+.extraction-thumbnail-label {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.7);
+    color: var(--white);
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: var(--spacing-xs);
+    text-align: center;
+}
+
+/* Animations */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+    .extraction-grid {
+        grid-template-columns: 350px 1fr;
+        gap: var(--spacing-xl);
+    }
+}
+
+@media (max-width: 1024px) {
+    .extraction-container {
+        padding: var(--spacing-lg);
+    }
+
+    .extraction-title {
+        font-size: 2.25rem;
+    }
+
+    .extraction-grid {
+        grid-template-columns: 1fr;
+        gap: var(--spacing-xl);
+    }
+
+    .extraction-sidebar-container {
+        padding: var(--spacing-xl);
+    }
+
+    .extraction-preview-container {
+        padding: var(--spacing-xl);
+    }
+}
+
+@media (max-width: 768px) {
+    .extraction-container {
+        padding: var(--spacing-md);
+    }
+
+    .extraction-title {
+        font-size: 2rem;
+    }
+
+    .extraction-subtitle {
+        font-size: 1.125rem;
+    }
+
+    .extraction-sidebar-container {
+        padding: var(--spacing-lg);
+    }
+
+    .extraction-field-input-group {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .extraction-draw-button {
+        align-self: flex-end;
+        margin-top: var(--spacing-sm);
+    }
+
+    .extraction-preview-container {
+        padding: var(--spacing-lg);
+    }
+
+    .extraction-navigation {
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .extraction-thumbnails-container {
+        justify-content: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .extraction-container {
+        padding: var(--spacing-sm);
+    }
+
+    .extraction-title {
+        font-size: 1.75rem;
+    }
+
+    .extraction-sidebar-container {
+        padding: var(--spacing-md);
+    }
+
+    .extraction-field-item {
+        padding: var(--spacing-md);
+    }
+
+    .extraction-preview-container {
+        padding: var(--spacing-md);
+    }
+
+    .extraction-extract-button {
+        padding: var(--spacing-md);
+        font-size: 0.875rem;
+    }
+
+    .extraction-action-button {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: 0.75rem;
+    }
+}

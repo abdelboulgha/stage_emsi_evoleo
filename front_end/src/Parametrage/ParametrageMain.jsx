@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import ParametrageCanvas from "./ParametrageCanvas";
 import ParametrageFields from "./ParametrageFields";
+import "./ParametrageMain.css";
 
 const ParametrageMain = ({
   dataPrepState,
@@ -37,11 +38,18 @@ const ParametrageMain = ({
   setOcrPreviewFields,
 }) => {
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6">
-        <div className="grid grid-cols-[25%,70%] gap-6">
+    <div className="parametrage-container">
+      <div className="parametrage-content">
+        <div className="parametrage-header">
+          <h1 className="parametrage-title">Paramétrage des Champs</h1>
+          <p className="parametrage-subtitle">
+            Configurez les zones d'extraction pour vos factures
+          </p>
+        </div>
+
+        <div className="parametrage-grid">
           {/* Left sidebar - Field mappings */}
-          <div>
+          <div className="parametrage-section">
             <ParametrageFields
               dataPrepState={dataPrepState}
               setDataPrepState={setDataPrepState}
@@ -56,22 +64,22 @@ const ParametrageMain = ({
           </div>
 
           {/* Right - Canvas area */}
-          <div>
-          <ParametrageCanvas
-  dataPrepState={dataPrepState}
-  manualDrawState={manualDrawState}
-  canvasRef={canvasRef}
-  imageRef={imageRef}
-  redrawCanvas={redrawCanvas}
-  handleCanvasMouseDown={handleCanvasMouseDown}
-  handleCanvasMouseMove={handleCanvasMouseMove}
-  handleCanvasMouseUp={handleCanvasMouseUp}
-  drawOcrBox={drawOcrBox}
-  handleDataPrepFileUpload={handleDataPrepFileUpload}
-  handleZoomChange={handleZoomChange}
-  showNotification={showNotification} 
-  getPagePreviews={getPagePreviews} 
-/>
+          <div className="parametrage-section">
+            <ParametrageCanvas
+              dataPrepState={dataPrepState}
+              manualDrawState={manualDrawState}
+              canvasRef={canvasRef}
+              imageRef={imageRef}
+              redrawCanvas={redrawCanvas}
+              handleCanvasMouseDown={handleCanvasMouseDown}
+              handleCanvasMouseMove={handleCanvasMouseMove}
+              handleCanvasMouseUp={handleCanvasMouseUp}
+              drawOcrBox={drawOcrBox}
+              handleDataPrepFileUpload={handleDataPrepFileUpload}
+              handleZoomChange={handleZoomChange}
+              showNotification={showNotification} 
+              getPagePreviews={getPagePreviews} 
+            />
           </div>
         </div>
       </div>

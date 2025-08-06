@@ -23,15 +23,10 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         const formData = new FormData();
         formData.append("file", file);
 
-        const headers = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-        }
-
         console.log("Fetching page previews from /pdf-page-previews"); // Debug
         const response = await fetch(`${API_BASE_URL}/pdf-page-previews`, {
           method: "POST",
-          headers,
+          credentials: 'include', // Ajout des cookies
           body: formData,
         });
 
@@ -56,7 +51,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         setIsLoading(false);
       }
     },
-    [token, setIsLoading]
+    [setIsLoading]
   );
 
   const handleDataPrepFileUpload = useCallback(
@@ -77,18 +72,10 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         formData.append("page_index", pageIndex.toString());
         console.log(`Sending page_index: ${pageIndex} for file: ${file.name}`); // Debug
 
-        const headers = {};
-        if (token) {
-          headers['Authorization'] = `Bearer ${token}`;
-          console.log("Token présent:", token.substring(0, 20) + "...");
-        } else {
-          console.log("Aucun token trouvé");
-        }
-
         console.log("Envoi de la requête vers:", `${API_BASE_URL}/upload-for-dataprep`);
         const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
           method: "POST",
-          headers,
+          credentials: 'include', // Ajout des cookies
           body: formData,
         });
 
@@ -132,7 +119,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         setIsLoading(false);
       }
     },
-    [setDataPrepState, setCurrentStep, setIsLoading, showNotification, token]
+    [setDataPrepState, setCurrentStep, setIsLoading, showNotification]
   );
 
   const handleZoomChange = useCallback((factor) => {
@@ -214,17 +201,13 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
       }
       if (!templateId) templateId = "untitled";
 
-      const headers = { 
-        "Content-Type": "application/json",
-        "X-Debug": "true",
-      };
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
       const response = await fetch(`${API_BASE_URL}/mappings`, {
         method: "POST",
-        headers,
+        headers: { 
+          "Content-Type": "application/json",
+          "X-Debug": "true",
+        },
+        credentials: 'include', // Ajout des cookies
         body: JSON.stringify({
           template_id: templateId,
           field_map,
@@ -251,7 +234,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
     } finally {
       setIsLoading(false);
     }
-  }, [setIsLoading, showNotification, token]);
+  }, [setIsLoading, showNotification]);
 
   const ocrPreviewManual = useCallback(async (coords, imageBase64, dataPrepState) => {
     let uploadedFileName = dataPrepState.uploadedImage?.name || dataPrepState.fileName || new Date().toISOString().slice(0, 10);
@@ -266,18 +249,13 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
     formData.append("image_data", imageBase64.split(',')[1]);
     formData.append("template_id", templateId);
 
-    const headers = {};
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     const response = await fetch(`${API_BASE_URL}/ocr-preview`, {
       method: "POST",
-      headers,
+      credentials: 'include', // Ajout des cookies
       body: formData,
     });
     return await response.json();
-  }, [token]);
+  }, []);
 
   return {
     handleDataPrepFileUpload,

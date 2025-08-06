@@ -16,13 +16,27 @@ const AuthPage = () => {  // view decided by URL
 
   return (
     <div className="auth-page">
-      <div className="auth-background">
-        <div className="auth-content">
-          <div className="auth-header">
-            <h1>Evoléo - Extraction de Factures</h1>
-            <p>Système d'extraction automatique de données de factures</p>
+      <div className="auth-container">
+        <div className="auth-logo">
+          <h1>Evoléo</h1>
+          <p>Extraction de Factures Professionnelle</p>
+          <div className="auth-features">
+            <div className="auth-feature">
+              <div className="auth-feature-icon">✓</div>
+              <div className="auth-feature-text">Extraction automatique des données</div>
+            </div>
+            <div className="auth-feature">
+              <div className="auth-feature-icon">✓</div>
+              <div className="auth-feature-text">Interface professionnelle comptable</div>
+            </div>
+            <div className="auth-feature">
+              <div className="auth-feature-icon">✓</div>
+              <div className="auth-feature-text">Sécurité et fiabilité garanties</div>
+            </div>
           </div>
-          
+        </div>
+        
+        <div className="auth-form-section">
           {isLogin ? (
             <LoginForm onSwitchToRegister={switchToRegister} />
           ) : (

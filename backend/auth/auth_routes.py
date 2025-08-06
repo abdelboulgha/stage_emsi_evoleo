@@ -1,18 +1,18 @@
-from fastapi import APIRouter, HTTPException, status, Depends
+from fastapi import APIRouter, HTTPException, status, Depends, Response, Request
 from fastapi.security import HTTPBearer
 from datetime import timedelta
 from typing import List
 import logging
 
-from .auth_models import UserCreate, UserLogin, Token, UserResponse, PasswordChange, UserUpdate
+from .auth_models import UserCreate, UserLogin, Token, UserResponse, PasswordChange, UserUpdate, AuthResponse
 from .auth_database import create_user, authenticate_user, get_all_users, update_user, get_user_by_id, verify_password, get_password_hash
-from .auth_jwt import create_access_token, get_current_user, require_admin, require_comptable_or_admin
+from .auth_jwt import create_access_token, get_current_user, require_admin, require_comptable_or_admin, set_auth_cookie, clear_auth_cookie
 from .auth_config import ACCESS_TOKEN_EXPIRE_MINUTES
 
 router = APIRouter(prefix="/auth", tags=["authentification"])
 
-@router.post("/register", response_model=Token)
-async def register(user_data: UserCreate):
+@router.post("/register", response_model=AuthResponse)
+async def register(user_data: UserCreate, response: Response):
     """Inscription d'un nouvel utilisateur"""
     try:
         # Créer l'utilisateur
@@ -37,6 +37,9 @@ async def register(user_data: UserCreate):
             expires_delta=access_token_expires
         )
         
+        # Définir le cookie HttpOnly
+        set_auth_cookie(response, access_token, ACCESS_TOKEN_EXPIRE_MINUTES)
+        
         # Préparer la réponse utilisateur
         user_response = UserResponse(
             id=user["id"],
@@ -48,9 +51,8 @@ async def register(user_data: UserCreate):
             actif=user["actif"]
         )
         
-        return Token(
-            access_token=access_token,
-            token_type="bearer",
+        return AuthResponse(
+            message="Inscription réussie",
             user=user_response
         )
         
@@ -61,8 +63,8 @@ async def register(user_data: UserCreate):
             detail="Erreur interne du serveur"
         )
 
-@router.post("/login", response_model=Token)
-async def login(user_credentials: UserLogin):
+@router.post("/login", response_model=AuthResponse)
+async def login(user_credentials: UserLogin, response: Response):
     """Connexion d'un utilisateur"""
     try:
         # Authentifier l'utilisateur
@@ -82,6 +84,9 @@ async def login(user_credentials: UserLogin):
             expires_delta=access_token_expires
         )
         
+        # Définir le cookie HttpOnly
+        set_auth_cookie(response, access_token, ACCESS_TOKEN_EXPIRE_MINUTES)
+        
         # Préparer la réponse utilisateur
         user_response = UserResponse(
             id=user["id"],
@@ -93,9 +98,8 @@ async def login(user_credentials: UserLogin):
             actif=user["actif"]
         )
         
-        return Token(
-            access_token=access_token,
-            token_type="bearer",
+        return AuthResponse(
+            message="Connexion réussie",
             user=user_response
         )
         
@@ -103,6 +107,22 @@ async def login(user_credentials: UserLogin):
         raise
     except Exception as e:
         logging.error(f"Erreur lors de la connexion: {e}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Erreur interne du serveur"
+        )
+
+@router.post("/logout")
+async def logout(response: Response):
+    """Déconnexion de l'utilisateur"""
+    try:
+        # Supprimer le cookie d'authentification
+        clear_auth_cookie(response)
+        
+        return {"message": "Déconnexion réussie"}
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la déconnexion: {e}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erreur interne du serveur"

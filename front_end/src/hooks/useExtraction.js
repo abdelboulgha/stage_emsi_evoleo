@@ -5,6 +5,7 @@ const API_BASE_URL = "http://localhost:8000";
 
 export const useExtraction = (extractionState, setExtractionState, showNotification) => {
   const { token } = useAuth();
+
   const filterValue = useCallback((val, fieldKey) => {
     if (!val) return "";
     if (fieldKey === "fournisseur") return val;
@@ -101,6 +102,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
           method: "POST",
           headers,
           body: formData,
+          credentials: 'include',
         });
         const result = await response.json();
         let data = result.data || {};
@@ -170,6 +172,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         method: "POST",
         headers,
         body: formData,
+        credentials: 'include',
       });
       const result = await response.json();
       
@@ -238,6 +241,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Ajout des cookies
         body: JSON.stringify(correctedData),
       });
       
@@ -253,6 +257,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Ajout des cookies
       });
       
       const result = await response.json();

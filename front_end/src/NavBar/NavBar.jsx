@@ -6,13 +6,14 @@ import {
   ArrowRight,
   RefreshCw,
 } from "lucide-react";
+import "./NavBar.css";
 
 const NavBar = ({ currentStep, setCurrentStep }) => {
   return (
-    <header className="relative bg-white/10 backdrop-blur-lg border-b border-white/20 py-2 w-full">
-      <div className="px-6 py-2 w-full">
-        <div className="text-center mb-2">
-          <h1 className="text-3xl font-bold text-white mb-2">
+    <header className="navbar-header">
+      <div className="navbar-container">
+        <div className="navbar-title-section">
+          <h1 className="navbar-title">
             {currentStep === "setup"
               ? "Configuration Comptable"
               : currentStep === "extract"
@@ -23,53 +24,54 @@ const NavBar = ({ currentStep, setCurrentStep }) => {
           </h1>
         </div>
 
-        <div className="flex justify-center items-center gap-4">
+        <div className="navbar-steps">
           <div
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-              currentStep === "setup"
-                ? "bg-white text-indigo-600"
-                : "text-white/70 hover:text-white"
-            }`}
+            className={`navbar-step ${currentStep === "setup" ? "active" : ""}`}
             onClick={() => setCurrentStep("setup")}
           >
-            <Settings className="w-4 h-4" />
-            <span className="font-medium">1. Préparation</span>
+            <Settings className="navbar-step-icon" />
+            <span className="navbar-step-text">1. Préparation</span>
           </div>
-          <ArrowRight className="w-4 h-4 text-white/50" />
+          <ArrowRight className="navbar-arrow" />
           <div
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-              currentStep === "extract"
-                ? "bg-white text-indigo-600"
-                : "text-white/70 hover:text-white"
-            }`}
+            className={`navbar-step ${currentStep === "extract" ? "active" : ""}`}
             onClick={() => setCurrentStep("extract")}
           >
-            <Search className="w-4 h-4" />
-            <span className="font-medium">2. Extraction</span>
+            <Search className="navbar-step-icon" />
+            <span className="navbar-step-text">2. Extraction</span>
           </div>
-          <ArrowRight className="w-4 h-4 text-white/50" />
+          <ArrowRight className="navbar-arrow" />
           <div
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-              currentStep === "dataprep"
-                ? "bg-white text-indigo-600"
-                : "text-white/70 hover:text-white"
-            }`}
+            className={`navbar-step ${currentStep === "dataprep" ? "active" : ""}`}
             onClick={() => setCurrentStep("dataprep")}
           >
-            <ZoomIn className="w-4 h-4" />
-            <span className="font-medium">3. Paramétrage</span>
+            <ZoomIn className="navbar-step-icon" />
+            <span className="navbar-step-text">3. Paramétrage</span>
           </div>
-          <ArrowRight className="w-4 h-4 text-white/50" />
+          <ArrowRight className="navbar-arrow" />
           <div
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl cursor-pointer transition-all ${
-              currentStep === "miseajour"
-                ? "bg-white text-indigo-600"
-                : "text-white/70 hover:text-white"
-            }`}
+            className={`navbar-step ${currentStep === "miseajour" ? "active" : ""}`}
             onClick={() => setCurrentStep("miseajour")}
           >
-            <RefreshCw className="w-4 h-4" />
-            <span className="font-medium">4. Mise à jour</span>
+            <RefreshCw className="navbar-step-icon" />
+            <span 
+              className="navbar-step-text"
+              style={{
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                wordWrap: 'normal',
+                wordBreak: 'keep-all',
+                hyphens: 'none',
+                maxWidth: '120px',
+                display: 'inline-block',
+                lineHeight: '1.2',
+                fontSize: '0.875rem',
+                fontWeight: '600'
+              }}
+            >
+              4. Mise&nbsp;à&nbsp;jour
+            </span>
           </div>
         </div>
       </div>

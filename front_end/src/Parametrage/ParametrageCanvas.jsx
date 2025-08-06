@@ -2,44 +2,43 @@ import React, { useRef, useState } from "react";
 import { ZoomIn, ZoomOut, Upload } from "lucide-react";
 import { createPortal } from "react-dom";
 
-
 const PageSelectionModal = ({ isOpen, onClose, pages, onSelectPage }) => {
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
-      <div className="bg-white rounded-2xl w-full max-w-4xl flex flex-col">
-        <div className="p-6 border-b">
-          <h3 className="text-xl font-semibold text-gray-800 mb-2">Sélectionnez une page</h3>
-          <p className="text-gray-600 text-sm mb-1">Choisissez une page pour configurer la facture.</p>
+    <div className="parametrage-modal-overlay">
+      <div className="parametrage-modal">
+        <div className="parametrage-modal-header">
+          <h3 className="parametrage-modal-title">Sélectionnez une page</h3>
+          <p className="parametrage-modal-subtitle">Choisissez une page pour configurer la facture.</p>
         </div>
-        <div className="p-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 max-h-[60vh] overflow-y-auto">
+        <div className="parametrage-modal-content">
           {pages.map((page, index) => (
             <div
               key={index}
-              className="relative group cursor-pointer"
+              className="parametrage-modal-page-item"
               onClick={() => {
                 console.log(`Selected page index: ${index}`); 
                 onSelectPage(index);
               }}
             >
-              <div className="aspect-[3/4] rounded-lg overflow-hidden border border-gray-300 bg-white/10">
+              <div className="parametrage-modal-page-preview">
                 <img
                   src={page.preview}
                   alt={`Page ${index + 1}`}
-                  className="w-full h-full object-cover"
+                  className="parametrage-modal-page-image"
                 />
               </div>
-              <div className="mt-2 text-sm text-gray-800 text-center">
+              <div className="parametrage-modal-page-label">
                 Page {index + 1}
               </div>
             </div>
           ))}
         </div>
-        <div className="p-6 border-t">
+        <div className="parametrage-modal-footer">
           <button
             onClick={onClose}
-            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            className="parametrage-modal-button"
           >
             Annuler
           </button>
@@ -62,8 +61,8 @@ const ParametrageCanvas = ({
   drawOcrBox,
   handleDataPrepFileUpload,
   handleZoomChange,
-  getPagePreviews, // Add getPagePreviews prop
-  showNotification, // Add showNotification prop
+  getPagePreviews,
+  showNotification,
 }) => {
   const fileInputRef = useRef(null);
   const [showPageModal, setShowPageModal] = useState(false);
@@ -99,17 +98,14 @@ const ParametrageCanvas = ({
       } catch (error) {
         showNotification(`Erreur lors de la récupération des pages: ${error.message}`, "error");
       }
-    } else if (file.type.startsWith("image/")) {
-      handleDataPrepFileUpload({ target: { files: [file] } }, 0);
     } else {
-      showNotification("Type de fichier non supporté. Veuillez sélectionner un PDF ou une image.", "error");
+      handleDataPrepFileUpload(event);
     }
   };
 
-  // Handler for page selection
   const handlePageSelect = (pageIndex) => {
     if (pendingFile) {
-      console.log(`Processing file with pageIndex: ${pageIndex}`); // Debug
+      console.log(`Processing file with pageIndex: ${pageIndex}`); 
       handleDataPrepFileUpload({ target: { files: [pendingFile] } }, pageIndex);
       setShowPageModal(false);
       setPendingFile(null);
@@ -118,60 +114,55 @@ const ParametrageCanvas = ({
   };
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white">Zone de Mapping</h3>
-        <div className="flex items-center gap-6 justify-center w-full">
+    <div className="parametrage-canvas-container">
+      {/* Canvas controls */}
+      <div className="parametrage-canvas-controls">
+        <div className="parametrage-canvas-actions">
           <button
-            type="button"
             onClick={triggerFileInput}
-            className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors"
+            className="parametrage-upload-button"
           >
-            <Upload className="w-4 h-4" />
-            Nouveau fichier
+            <Upload className="parametrage-upload-icon" />
+            ↑ Nouveau fichier
           </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,application/pdf"
-            style={{ display: "none" }}
-            onChange={handleFileSelection} // Updated to handleFileSelection
-          />
-          {dataPrepState.uploadedImage && (
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-blue-200">
-                Zoom: {Math.round(dataPrepState.currentZoom * 100)}%
-              </span>
-              <button
-                onClick={() => handleZoomChange(0.8)}
-                className="px-2 py-1 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
-              >
-                <ZoomOut className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleZoomChange(1.25)}
-                className="px-2 py-1 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors flex items-center justify-center gap-1"
-              >
-                <ZoomIn className="w-4 h-4" />
-              </button>
-            </div>
-          )}
+        </div>
+        
+        <div className="parametrage-zoom-controls">
+          <span className="parametrage-zoom-text">Zoom: {Math.round(dataPrepState.zoom * 100)}%</span>
+          <button
+            onClick={() => handleZoomChange(dataPrepState.zoom - 0.1)}
+            disabled={dataPrepState.zoom <= 0.3}
+            className="parametrage-zoom-button"
+          >
+            <ZoomOut className="parametrage-zoom-icon" />
+          </button>
+          <button
+            onClick={() => handleZoomChange(dataPrepState.zoom + 0.1)}
+            disabled={dataPrepState.zoom >= 2}
+            className="parametrage-zoom-button"
+          >
+            <ZoomIn className="parametrage-zoom-icon" />
+          </button>
         </div>
       </div>
 
-      {dataPrepState.uploadedImage ? (
-        <div className="relative bg-white rounded-xl overflow-hidden shadow-lg">
-          <div className="overflow-auto" style={{ maxHeight: "70vh" }}>
+      {/* Canvas area */}
+      <div className="parametrage-canvas-area">
+        {!dataPrepState.uploadedImage ? (
+          <div className="parametrage-upload-zone">
+            <div className="parametrage-upload-content">
+              <Upload className="parametrage-upload-large-icon" />
+              <h3 className="parametrage-upload-title">Aucun document sélectionné</h3>
+              <p className="parametrage-upload-description">
+                Cliquez sur "Nouveau fichier" pour commencer la configuration
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="parametrage-canvas-wrapper">
             <canvas
               ref={canvasRef}
-              className="block"
-              style={{
-                cursor: dataPrepState.isSelecting
-                  ? "crosshair"
-                  : manualDrawState.isDrawing
-                  ? "crosshair"
-                  : "default",
-              }}
+              className="parametrage-canvas"
               onMouseDown={handleCanvasMouseDown}
               onMouseMove={handleCanvasMouseMove}
               onMouseUp={handleCanvasMouseUp}
@@ -179,28 +170,24 @@ const ParametrageCanvas = ({
             <img
               ref={imageRef}
               src={dataPrepState.uploadedImage}
-              alt="Document à paramétrer"
-              className="hidden"
+              alt="Document"
+              className="parametrage-canvas-image"
+              style={{ display: "none" }}
             />
           </div>
+        )}
+      </div>
 
-          {dataPrepState.ocrPreview && (
-            <div className="absolute bottom-4 left-4 right-4 bg-black/70 text-white p-3 rounded-lg text-sm">
-              {dataPrepState.ocrPreview}
-            </div>
-          )}
-        </div>
-      ) : (
-        <div className="text-center py-12">
-          <div className="text-white/50 text-lg mb-2">
-            Aucune image chargée
-          </div>
-          <div className="text-white/30 text-sm">
-            Chargez une image pour commencer le paramétrage
-          </div>
-        </div>
-      )}
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.png,.jpg,.jpeg"
+        onChange={handleFileSelection}
+        className="parametrage-hidden-input"
+      />
 
+      {/* Page selection modal */}
       <PageSelectionModal
         isOpen={showPageModal}
         onClose={() => setShowPageModal(false)}

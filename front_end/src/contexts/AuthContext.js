@@ -12,39 +12,31 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [token, setToken] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Vérifier le token au chargement de l'application
+  // Vérifier l'authentification au chargement de l'application
   useEffect(() => {
     const initAuth = async () => {
-      const storedToken = localStorage.getItem('token');
-      console.log("Token stocké trouvé:", storedToken ? "Oui" : "Non");
-      if (storedToken) {
-        try {
-          // Vérifier si le token est valide
-          const response = await fetch('http://localhost:8000/auth/me', {
-            headers: {
-              'Authorization': `Bearer ${storedToken}`
-            }
-          });
-          
-          console.log("Réponse /auth/me:", response.status, response.statusText);
-          
-          if (response.ok) {
-            const userData = await response.json();
-            setUser(userData);
-            setToken(storedToken);
-            console.log("Token validé, utilisateur connecté:", userData.email);
-          } else {
-            // Token invalide, le supprimer
-            console.log("Token invalide, suppression...");
-            localStorage.removeItem('token');
-          }
-        } catch (error) {
-          console.error('Erreur lors de la vérification du token:', error);
-          localStorage.removeItem('token');
+      try {
+        // Vérifier si l'utilisateur est authentifié via les cookies
+        const response = await fetch('http://localhost:8000/auth/me', {
+          credentials: 'include', // Inclure les cookies dans la requête
+        });
+        
+        console.log("Réponse /auth/me:", response.status, response.statusText);
+        
+        if (response.ok) {
+          const userData = await response.json();
+          setUser(userData);
+          console.log("Utilisateur connecté:", userData.email);
+        } else {
+          // Pas d'authentification valide
+          console.log("Aucune authentification valide trouvée");
+          setUser(null);
         }
+      } catch (error) {
+        console.error('Erreur lors de la vérification de l\'authentification:', error);
+        setUser(null);
       }
       setLoading(false);
     };
@@ -59,6 +51,7 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Inclure les cookies dans la requête
         body: JSON.stringify({ email, password }),
       });
 
@@ -69,8 +62,6 @@ export const AuthProvider = ({ children }) => {
 
       const data = await response.json();
       setUser(data.user);
-      setToken(data.access_token);
-      localStorage.setItem('token', data.access_token);
       
       return { success: true };
     } catch (error) {
@@ -85,6 +76,7 @@ export const AuthProvider = ({ children }) => {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Inclure les cookies dans la requête
         body: JSON.stringify(userData),
       });
 
@@ -95,8 +87,6 @@ export const AuthProvider = ({ children }) => {
 
       const data = await response.json();
       setUser(data.user);
-      setToken(data.access_token);
-      localStorage.setItem('token', data.access_token);
       
       return { success: true };
     } catch (error) {
@@ -104,10 +94,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem('token');
+  const logout = async () => {
+    try {
+      // Appeler l'endpoint de déconnexion pour supprimer le cookie
+      await fetch('http://localhost:8000/auth/logout', {
+        method: 'POST',
+        credentials: 'include', // Inclure les cookies dans la requête
+      });
+    } catch (error) {
+      console.error('Erreur lors de la déconnexion:', error);
+    } finally {
+      // Toujours nettoyer l'état local
+      setUser(null);
+    }
   };
 
   const changePassword = async (currentPassword, newPassword) => {
@@ -116,8 +115,8 @@ export const AuthProvider = ({ children }) => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
         },
+        credentials: 'include', // Inclure les cookies dans la requête
         body: JSON.stringify({
           current_password: currentPassword,
           new_password: newPassword,
@@ -145,7 +144,6 @@ export const AuthProvider = ({ children }) => {
 
   const value = {
     user,
-    token,
     loading,
     login,
     register,

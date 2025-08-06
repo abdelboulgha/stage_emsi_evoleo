@@ -195,3 +195,19 @@ NameError: name 'math' is not defined
 2025-08-05 17:35:51,435 INFO Base de données initialisée avec succès
 2025-08-05 17:35:51,435 INFO Authentication database initialized
 2025-08-05 17:35:51,450 INFO Database connection pool created successfully
+2025-08-05 18:05:13,003 INFO Base de données initialisée avec succès
+2025-08-05 18:05:13,003 INFO Authentication database initialized
+2025-08-05 18:05:13,016 INFO Database connection pool created successfully
+2025-08-05 19:30:32,499 ERROR Erreur de décodage JWT: Signature has expired.
+2025-08-05 19:32:12,385 ERROR Erreur de décodage JWT: Signature has expired.
+2025-08-05 19:42:41,183 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 20:05:43,412 ERROR Error updating facture: Not enough parameters for the SQL statement
+2025-08-05 20:15:46,044 INFO Base de données initialisée avec succès
+2025-08-05 20:15:46,044 INFO Authentication database initialized
+2025-08-05 20:15:46,062 INFO Database connection pool created successfully
+2025-08-05 20:21:15,367 INFO Base de données initialisée avec succès
+2025-08-05 20:21:15,367 INFO Authentication database initialized
+2025-08-05 20:21:15,401 INFO Database connection pool created successfully
+2025-08-05 20:25:48,715 INFO Base de données initialisée avec succès
+2025-08-05 20:25:48,715 INFO Authentication database initialized
+2025-08-05 20:25:48,728 INFO Database connection pool created successfully

@@ -1,0 +1,565 @@
+/* MiseAJour Main Container */
+.miseajour-container {
+    min-height: 100vh;
+    width: 100%;
+    background: var(--white);
+    position: relative;
+    padding: var(--spacing-xl);
+}
+
+.miseajour-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image:
+        radial-gradient(circle at 20% 80%, rgba(0, 0, 0, 0.03) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(0, 0, 0, 0.03) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+.miseajour-content {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.miseajour-header {
+    text-align: center;
+    margin-bottom: var(--spacing-2xl);
+    padding-bottom: var(--spacing-xl);
+    border-bottom: 2px solid var(--gray-100);
+    position: relative;
+}
+
+.miseajour-header::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: var(--primary-gradient);
+    border-radius: 1px;
+}
+
+.miseajour-title {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-md);
+    letter-spacing: -0.025em;
+    background: var(--primary-gradient);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.miseajour-subtitle {
+    color: var(--gray-600);
+    font-size: 1.25rem;
+    font-weight: 500;
+    line-height: 1.6;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.miseajour-main {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    overflow: hidden;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.miseajour-main:hover {
+    box-shadow: var(--shadow-xl);
+    border-color: var(--gray-300);
+}
+
+.miseajour-main::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+}
+
+/* Search Section */
+.miseajour-search-section {
+    padding: var(--spacing-xl);
+    background: var(--gray-50);
+    border-bottom: 1px solid var(--gray-200);
+}
+
+.miseajour-search-container {
+    position: relative;
+    max-width: 500px;
+    margin: 0 auto;
+}
+
+.miseajour-search-icon {
+    position: absolute;
+    left: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--gray-500);
+    z-index: 2;
+}
+
+.miseajour-search-input {
+    width: 100%;
+    padding: var(--spacing-md) var(--spacing-lg) var(--spacing-md) calc(var(--spacing-lg) + 20px);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius-lg);
+    background: var(--white);
+    color: var(--gray-900);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.miseajour-search-input::placeholder {
+    color: var(--gray-500);
+}
+
+.miseajour-search-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1), var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.miseajour-search-input:hover {
+    border-color: var(--gray-400);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+/* Table Section */
+.miseajour-table-section {
+    padding: var(--spacing-xl);
+    overflow-x: auto;
+}
+
+.miseajour-table-container {
+    border-radius: var(--border-radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--white);
+}
+
+.miseajour-table-header {
+    background: var(--gray-100);
+    color: var(--gray-900);
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-align: left;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 2px solid var(--gray-200);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.miseajour-table-row {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid var(--gray-100);
+}
+
+.miseajour-table-row:hover {
+    background: var(--primary-lighter);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.miseajour-table-cell {
+    padding: var(--spacing-md) var(--spacing-lg);
+    vertical-align: middle;
+}
+
+.miseajour-table-input {
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2px solid var(--gray-200);
+    border-radius: var(--border-radius-md);
+    background: var(--white);
+    color: var(--gray-900);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.miseajour-table-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+    transform: translateY(-1px);
+}
+
+.miseajour-table-input:hover {
+    border-color: var(--gray-300);
+    transform: translateY(-1px);
+}
+
+/* Actions */
+.miseajour-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    justify-content: center;
+}
+
+.miseajour-action-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.miseajour-action-button.update {
+    background: var(--primary-gradient);
+    color: var(--white);
+}
+
+.miseajour-action-button.update:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-action-button.update:active {
+    transform: translateY(0);
+}
+
+.miseajour-action-button.delete {
+    background: var(--error-gradient);
+    color: var(--white);
+}
+
+.miseajour-action-button.delete:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-action-button.delete:active {
+    transform: translateY(0);
+}
+
+.miseajour-action-button.select {
+    background: var(--success-gradient);
+    color: var(--white);
+}
+
+.miseajour-action-button.select:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-action-button.select:active {
+    transform: translateY(0);
+}
+
+.miseajour-action-icon {
+    width: 16px;
+    height: 16px;
+}
+
+/* Pagination */
+.miseajour-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-xl);
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+}
+
+.miseajour-pagination-button {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius-lg);
+    background: var(--white);
+    color: var(--gray-700);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.miseajour-pagination-button:hover:not(:disabled) {
+    border-color: var(--primary-color);
+    background: var(--primary-lighter);
+    color: var(--primary-color);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-pagination-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.miseajour-pagination-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    background: var(--gray-200);
+    color: var(--gray-500);
+}
+
+.miseajour-pagination-info {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+}
+
+/* Edit Section */
+.miseajour-edit-section {
+    padding: var(--spacing-xl);
+    background: var(--gray-50);
+    border-top: 1px solid var(--gray-200);
+}
+
+.miseajour-edit-container {
+    background: var(--white);
+    border-radius: var(--border-radius-xl);
+    border: 2px solid var(--gray-200);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-2xl);
+    position: relative;
+    overflow: hidden;
+}
+
+.miseajour-edit-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-gradient);
+}
+
+.miseajour-edit-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gray-900);
+    margin-bottom: var(--spacing-xl);
+    letter-spacing: -0.025em;
+}
+
+.miseajour-edit-fields {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.miseajour-edit-field {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.miseajour-edit-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.miseajour-edit-input {
+    padding: var(--spacing-md) var(--spacing-lg);
+    border: 2px solid var(--gray-300);
+    border-radius: var(--border-radius-lg);
+    background: var(--white);
+    color: var(--gray-900);
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-sm);
+}
+
+.miseajour-edit-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.1), var(--shadow-md);
+    transform: translateY(-1px);
+}
+
+.miseajour-edit-input:hover {
+    border-color: var(--gray-400);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.miseajour-edit-button {
+    width: 100%;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: var(--primary-gradient);
+    color: var(--white);
+    border: none;
+    border-radius: var(--border-radius-xl);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.miseajour-edit-button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+}
+
+.miseajour-edit-button:hover::before {
+    transform: translateX(100%);
+}
+
+.miseajour-edit-button:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+}
+
+.miseajour-edit-button:active {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+    .miseajour-container {
+        padding: var(--spacing-lg);
+    }
+
+    .miseajour-title {
+        font-size: 2.25rem;
+    }
+
+    .miseajour-edit-fields {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .miseajour-container {
+        padding: var(--spacing-md);
+    }
+
+    .miseajour-title {
+        font-size: 2rem;
+    }
+
+    .miseajour-subtitle {
+        font-size: 1.125rem;
+    }
+
+    .miseajour-search-section,
+    .miseajour-table-section,
+    .miseajour-pagination,
+    .miseajour-edit-section {
+        padding: var(--spacing-lg);
+    }
+
+    .miseajour-table-header,
+    .miseajour-table-cell {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+
+    .miseajour-actions {
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .miseajour-action-button {
+        width: 32px;
+        height: 32px;
+    }
+
+    .miseajour-pagination {
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .miseajour-edit-container {
+        padding: var(--spacing-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .miseajour-container {
+        padding: var(--spacing-sm);
+    }
+
+    .miseajour-title {
+        font-size: 1.75rem;
+    }
+
+    .miseajour-search-section,
+    .miseajour-table-section,
+    .miseajour-pagination,
+    .miseajour-edit-section {
+        padding: var(--spacing-md);
+    }
+
+    .miseajour-table-header,
+    .miseajour-table-cell {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.75rem;
+    }
+
+    .miseajour-table-input {
+        padding: var(--spacing-xs) var(--spacing-sm);
+        font-size: 0.75rem;
+    }
+
+    .miseajour-action-button {
+        width: 28px;
+        height: 28px;
+    }
+
+    .miseajour-action-icon {
+        width: 14px;
+        height: 14px;
+    }
+
+    .miseajour-edit-container {
+        padding: var(--spacing-md);
+    }
+
+    .miseajour-edit-button {
+        padding: var(--spacing-md);
+        font-size: 0.875rem;
+    }
+}

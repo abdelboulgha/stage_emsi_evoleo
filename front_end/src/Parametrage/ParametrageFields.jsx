@@ -28,12 +28,12 @@ const ParametrageFields = ({
       key: "numeroFacture", 
       label: "Numéro de Facture", 
       type: "ocr",
-      description: "Sélectionnez le numéro sur le document"
+      description: ""
     },{ 
       key: "dateFacturation", 
       label: "Date de Facturation", 
       type: "date",
-      description: "Sélectionnez la date sur le document",
+      description: "",
       format: "dd/MM/yyyy"  
     },
   ];
@@ -52,28 +52,28 @@ const ParametrageFields = ({
   };
 
   return (
-    <div className="bg-white/20 backdrop-blur-md rounded-2xl p-6 border border-white/30">
-      <h3 className="text-lg font-semibold text-white mb-4">Champs à mapper</h3>
+    <div className="parametrage-fields-container">
+      <h3 className="parametrage-fields-title">Champs à mapper</h3>
 
-      <div className="space-y-4">
+      <div className="parametrage-fields-list">
         {FIELDS.map((field) => (
-          <div key={field.key} className="bg-white/10 rounded-lg p-3">
-            <div className="flex items-center justify-between mb-2">
-              <label className="text-sm font-medium text-blue-100">
+          <div key={field.key} className="parametrage-field-item">
+            <div className="parametrage-field-header">
+              <label className="parametrage-field-label">
                 {field.label}
               </label>
-              <div className="flex flex-col gap-1 items-end">
+              <div className="parametrage-field-actions">
                 {(field.type === "ocr" || field.type === "date") && (
                   <>
                     <button
                       onClick={() => startFieldSelection(field.key)}
-                      className="px-2 py-1 bg-blue-600 text-white text-xs rounded hover:bg-blue-700 transition-colors w-full"
+                      className="parametrage-action-button select"
                     >
                       Sélectionner
                     </button>
                     <button
                       onClick={() => startManualDraw(field.key)}
-                      className="px-2 py-1 bg-yellow-600 text-white text-xs rounded hover:bg-yellow-700 transition-colors w-full"
+                      className="parametrage-action-button draw"
                     >
                       Dessiner
                     </button>
@@ -83,7 +83,7 @@ const ParametrageFields = ({
             </div>
 
             {/* Field description */}
-            <div className="text-xs text-blue-200 mb-2">
+            <div className="parametrage-field-description">
               {field.description}
             </div>
 
@@ -94,16 +94,16 @@ const ParametrageFields = ({
                 value={dataPrepState.fieldMappings.fournisseur?.manualValue || ""}
                 onChange={(e) => handleFournisseurChange(e.target.value)}
                 placeholder="Saisissez le nom du fournisseur"
-                className="w-full px-3 py-2 bg-white/20 border border-white/30 rounded-lg text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                className="parametrage-input-field"
               />
             )}
 
             {/* Display extracted value for OCR and date fields */}
             {(field.type === "ocr" || field.type === "date") && dataPrepState.fieldMappings[field.key] && (
-              <div className="mt-2 px-3 py-2 bg-blue-600/20 text-blue-100 rounded text-xs font-medium">
-                <div className="flex justify-between items-center">
+              <div className="parametrage-extracted-value">
+                <div className="parametrage-extracted-content">
                   <span>Valeur extraite:</span>
-                  <span className="font-semibold">
+                  <span className="parametrage-extracted-text">
                     {ocrPreviewFields[field.key] || "Aucune valeur extraite"}
                   </span>
                 </div>
@@ -111,15 +111,15 @@ const ParametrageFields = ({
             )}
 
             {/* Status indicator */}
-            <div className="mt-2 flex items-center gap-2">
+            <div className="parametrage-field-status">
               {dataPrepState.fieldMappings[field.key] ? (
-                <div className="flex items-center gap-1 text-green-400 text-xs">
-                  <CheckCircle className="w-3 h-3" />
+                <div className="parametrage-status mapped">
+                  <CheckCircle className="parametrage-status-icon" />
                   <span>Mappé</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1 text-yellow-400 text-xs">
-                  <AlertCircle className="w-3 h-3" />
+                <div className="parametrage-status unmapped">
+                  <AlertCircle className="parametrage-status-icon" />
                   <span>Non mappé</span>
                 </div>
               )}
@@ -129,20 +129,20 @@ const ParametrageFields = ({
       </div>
 
       {/* Save button */}
-      <div className="mt-6">
+      <div className="parametrage-save-section">
         <button
           onClick={saveMappings}
           disabled={isLoading || !dataPrepState.uploadedImage}
-          className="w-full px-4 py-3 bg-green-600 text-white font-semibold rounded-xl hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 flex items-center justify-center gap-2"
+          className="parametrage-save-button"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <Loader2 className="parametrage-save-icon" />
               Sauvegarde...
             </>
           ) : (
             <>
-              <Save className="w-5 h-5" />
+              <Save className="parametrage-save-icon" />
               Sauvegarder les mappings
             </>
           )}
@@ -150,8 +150,8 @@ const ParametrageFields = ({
       </div>
 
       {/* Progress indicator */}
-      <div className="mt-4">
-        <div className="flex justify-between text-xs text-blue-200 mb-1">
+      <div className="parametrage-progress-section">
+        <div className="parametrage-progress-header">
           <span>Progression</span>
           <span>
             {Object.keys(dataPrepState.fieldMappings).filter(key => 
@@ -160,9 +160,9 @@ const ParametrageFields = ({
             ).length} / {FIELDS.length}
           </span>
         </div>
-        <div className="w-full bg-white/20 rounded-full h-2">
+        <div className="parametrage-progress-bar">
           <div
-            className="bg-green-500 h-2 rounded-full transition-all duration-300"
+            className="parametrage-progress-fill"
             style={{
               width: `${(Object.keys(dataPrepState.fieldMappings).filter(key => 
                 dataPrepState.fieldMappings[key] && 

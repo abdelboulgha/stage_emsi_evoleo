@@ -29,6 +29,7 @@ from dotenv import load_dotenv
 from auth.auth_routes import router as auth_router
 from auth.auth_database import init_database
 from auth.auth_jwt import require_comptable_or_admin
+from auth.auth_config import CORS_ORIGINS, CORS_ALLOW_CREDENTIALS
 
 # Load environment variables
 load_dotenv()
@@ -41,8 +42,8 @@ app = FastAPI(title="Invoice Extractor API", version="1.0.0")
 # CORS Configuration
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=CORS_ALLOW_CREDENTIALS,
     allow_methods=["*"],
     allow_headers=["*"],
 )

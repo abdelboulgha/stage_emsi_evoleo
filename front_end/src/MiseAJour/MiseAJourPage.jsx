@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
-import { Edit2, Trash2, CheckCircle } from "lucide-react";
+import { Edit2, Trash2, CheckCircle, Search } from "lucide-react";
+import "./MiseAJourPage.css";
 
 const FIELDS = [
   { key: "fournisseur", label: "Fournisseur" },
-  { key: "numFacture", label: "Numéro de Facture" },
-  { key: "dateFacturation", label: "Date Facturation" },
+  { key: "numFacture", label: "Numéro de facture" },
+  { key: "dateFacturation", label: "Date de facturation" },
   { key: "tauxTVA", label: "Taux TVA" },
   { key: "montantHT", label: "Montant HT" },
   { key: "montantTVA", label: "Montant TVA" },
@@ -26,24 +27,29 @@ const MiseAJourPage = () => {
   }, [page, search]);
 
   const fetchFactures = async () => {
-    const params = new URLSearchParams({
-      page,
-      page_size: PAGE_SIZE,
-      search,
-    });
-    const res = await fetch(`http://localhost:8000/factures?${params}`);
-    const data = await res.json();
-    setFactures(data.factures);
-    setTotalPages(data.total_pages);
+    try {
+      const params = new URLSearchParams({
+        page: page.toString(),
+        page_size: "10",
+        search: search,
+      });
+      const res = await fetch(`http://localhost:8000/factures?${params}`, {
+        credentials: 'include', // Ajout des cookies
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setFactures(data.factures);
+        setTotalPages(data.total_pages);
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération des factures:", error);
+    }
   };
 
   const handleEdit = (id, field, value) => {
     setEditing((prev) => ({
       ...prev,
-      [id]: {
-        ...prev[id],
-        [field]: value,
-      },
+      [id]: { ...prev[id], [field]: value },
     }));
   };
 
@@ -59,172 +65,220 @@ const MiseAJourPage = () => {
   };
 
   const handleUpdate = async (id) => {
-    // Get the original facture data from the state
-    const originalFacture = factures.find(f => f.id === id);
-    if (!originalFacture) {
-      console.error(`Facture with ID ${id} not found in state.`);
-      return;
-    }
-
-    // Combine original data with any edits.
-    // If editing[id] is undefined (no edits made), it will be an empty object,
-    // so originalFacture's properties will be used.
-    const dataToProcess = { ...originalFacture, ...(editing[id] || {}) };
-
-    // Use numFacture directly, as this is what the backend expects and what the inputs use
-    const casted = {
-      ...dataToProcess,
-      numFacture: dataToProcess.numFacture,
-    };
-    const body = convertNumericFields(casted);
-
     try {
+      const updatedData = editing[id];
+      if (!updatedData) return;
+
       const response = await fetch(`http://localhost:8000/factures/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include', // Ajout des cookies
+        body: JSON.stringify(updatedData),
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to update facture");
+
+      if (response.ok) {
+        setEditing((prev) => {
+          const newEditing = { ...prev };
+          delete newEditing[id];
+          return newEditing;
+        });
+        fetchFactures();
       }
-      setEditing((prev) => ({ ...prev, [id]: undefined }));
-      fetchFactures();
     } catch (error) {
-      console.error("Error updating facture:", error);
+      console.error("Erreur lors de la mise à jour:", error);
     }
   };
 
   const handleDelete = async (id) => {
-    await fetch(`http://localhost:8000/factures/${id}`, { method: "DELETE" });
-    fetchFactures();
+    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette facture ?")) {
+      try {
+        await fetch(`http://localhost:8000/factures/${id}`, { 
+          method: "DELETE",
+          credentials: 'include', // Ajout des cookies
+        });
+        fetchFactures();
+      } catch (error) {
+        console.error("Erreur lors de la suppression:", error);
+      }
+    }
   };
 
   const handleSelect = (facture) => {
-    // Use facture directly since backend consistently uses numFacture
     setSelected(facture);
-    setEditing({ [facture.id]: { ...facture } });
+    setEditing((prev) => ({
+      ...prev,
+      [facture.id]: {
+        fournisseur: facture.fournisseur,
+        numFacture: facture.numFacture,
+        dateFacturation: facture.dateFacturation,
+        tauxTVA: facture.tauxTVA,
+        montantHT: facture.montantHT,
+        montantTVA: facture.montantTVA,
+        montantTTC: facture.montantTTC,
+      },
+    }));
   };
 
   const handleGlobalUpdate = async () => {
     if (!selected) return;
 
-    // Get the original facture data for the selected item
-    const originalFacture = factures.find(f => f.id === selected.id);
-    if (!originalFacture) {
-      console.error(`Selected facture with ID ${selected.id} not found in state.`);
-      return;
-    }
-
-    // Combine original data with any edits from the global form
-    const dataToProcess = { ...originalFacture, ...(editing[selected.id] || {}) };
-
-    // Use numFacture directly
-    const casted = {
-      ...dataToProcess,
-      numFacture: dataToProcess.numFacture,
-    };
-    const body = convertNumericFields(casted);
-
     try {
+      const updatedData = editing[selected.id];
+      if (!updatedData) return;
+
       const response = await fetch(`http://localhost:8000/factures/${selected.id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: 'include', // Ajout des cookies
+        body: JSON.stringify(updatedData),
       });
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to update facture globally");
+
+      if (response.ok) {
+        setEditing((prev) => {
+          const newEditing = { ...prev };
+          delete newEditing[selected.id];
+          return newEditing;
+        });
+        setSelected(null);
+        fetchFactures();
       }
-      setSelected(null);
-      setEditing({});
-      fetchFactures();
     } catch (error) {
-      console.error("Error global updating facture:", error);
+      console.error("Erreur lors de la mise à jour globale:", error);
     }
   };
 
   return (
-    <div className="max-w-[90rem] mx-auto mt-9">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-12 pt-16 pb-16" >
-       
-        <input
-          type="text"
-          placeholder="Rechercher..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="mb-4 px-4 py-2 border border-white/30 rounded w-full bg-white/20 text-white placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-        />
-        <div className="overflow-x-auto">
-          <table className="w-full border mb-4 text-white">
-            <thead>
-              <tr>
-                {FIELDS.map((f) => (
-                  <th key={f.key} className="border border-white/30 px-2 py-1 bg-white/10">
-                    {f.label}
-                  </th>
-                ))}
-                <th className="border border-white/30 px-2 py-1 bg-white/10">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {factures.map((facture) => (
-                <tr key={facture.id} className="hover:bg-blue-500/10">
-                  {FIELDS.map((f) => (
-                    <td key={f.key} className="border border-white/30 px-2 py-1">
-                      <input
-                        value={editing[facture.id]?.[f.key] ?? facture[f.key]}
-                        onChange={(e) => handleEdit(facture.id, f.key, e.target.value)}
-                        className="w-full px-1 py-1 border border-white/30 rounded bg-white/20 text-white"
-                      />
-                    </td>
+    <div className="miseajour-container">
+      <div className="miseajour-content">
+        <div className="miseajour-header">
+          <h1 className="miseajour-title">Mise à jour</h1>
+          <p className="miseajour-subtitle">
+            Gérez et modifiez vos factures extraites
+          </p>
+        </div>
+
+        <div className="miseajour-main">
+          <div className="miseajour-search-section">
+            <div className="miseajour-search-container">
+              <Search className="miseajour-search-icon" />
+              <input
+                type="text"
+                placeholder="Rechercher..."
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                className="miseajour-search-input"
+              />
+            </div>
+          </div>
+
+          <div className="miseajour-table-section">
+            <div className="miseajour-table-container">
+              <table className="miseajour-table">
+                <thead>
+                  <tr>
+                    {FIELDS.map((f) => (
+                      <th key={f.key} className="miseajour-table-header">
+                        {f.label}
+                      </th>
+                    ))}
+                    <th className="miseajour-table-header">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {factures.map((facture) => (
+                    <tr key={facture.id} className="miseajour-table-row">
+                      {FIELDS.map((f) => (
+                        <td key={f.key} className="miseajour-table-cell">
+                          <input
+                            value={editing[facture.id]?.[f.key] ?? facture[f.key]}
+                            onChange={(e) => handleEdit(facture.id, f.key, e.target.value)}
+                            className="miseajour-table-input"
+                          />
+                        </td>
+                      ))}
+                      <td className="miseajour-table-cell">
+                        <div className="miseajour-actions">
+                          <button 
+                            onClick={() => handleUpdate(facture.id)} 
+                            className="miseajour-action-button update"
+                            title="Mettre à jour"
+                          >
+                            <Edit2 className="miseajour-action-icon" />
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(facture.id)} 
+                            className="miseajour-action-button delete"
+                            title="Supprimer"
+                          >
+                            <Trash2 className="miseajour-action-icon" />
+                          </button>
+                          <button 
+                            onClick={() => handleSelect(facture)} 
+                            className="miseajour-action-button select"
+                            title="Sélectionner"
+                          >
+                            <CheckCircle className="miseajour-action-icon" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
                   ))}
-                  <td className="border border-white/30 px-2 py-1 flex gap-2 items-center justify-center">
-                    <button onClick={() => handleUpdate(facture.id)} className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-full flex items-center justify-center" title="Mettre à jour">
-                      <Edit2 className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleDelete(facture.id)} className="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full flex items-center justify-center" title="Supprimer">
-                      <Trash2 className="w-5 h-5" />
-                    </button>
-                    <button onClick={() => handleSelect(facture)} className="bg-green-500 hover:bg-green-600 text-white p-2 rounded-full flex items-center justify-center" title="Sélectionner">
-                      <CheckCircle className="w-5 h-5" />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex justify-between items-center mb-4">
-          <button disabled={page === 1} onClick={() => setPage(page - 1)} className="px-4 py-2 bg-gray-200/70 text-gray-800 rounded">
-            Précédent
-          </button>
-          <span className="text-white">Page {page} / {totalPages}</span>
-          <button disabled={page === totalPages} onClick={() => setPage(page + 1)} className="px-4 py-2 bg-gray-200/70 text-gray-800 rounded">
-            Suivant
-          </button>
-        </div>
-        {selected && (
-          <div className="bg-white/20 p-4 rounded-2xl shadow border border-white/30 mt-4">
-            <h3 className="text-lg font-bold text-white mb-2">Modifier la facture</h3>
-            {FIELDS.map((f) => (
-              <div key={f.key} className="mb-2">
-                <label className="block font-medium text-white mb-1">{f.label}</label>
-                <input
-                  value={editing[selected.id]?.[f.key] ?? selected[f.key]}
-                  onChange={(e) => handleEdit(selected.id, f.key, e.target.value)}
-                  className="w-full px-2 py-1 border border-white/30 rounded bg-white/20 text-white"
-                />
-              </div>
-            ))}
-            <button onClick={handleGlobalUpdate} className="mt-4 px-4 py-2 bg-blue-600 text-white rounded">
-              Appliquer les modifications
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div className="miseajour-pagination">
+            <button 
+              disabled={page === 1} 
+              onClick={() => setPage(page - 1)} 
+              className="miseajour-pagination-button prev"
+            >
+              Précédent
+            </button>
+            <span className="miseajour-pagination-info">Page {page} / {totalPages}</span>
+            <button 
+              disabled={page === totalPages} 
+              onClick={() => setPage(page + 1)} 
+              className="miseajour-pagination-button next"
+            >
+              Suivant
             </button>
           </div>
-        )}
+
+          {selected && (
+            <div className="miseajour-edit-section">
+              <div className="miseajour-edit-container">
+                <h3 className="miseajour-edit-title">Modifier la facture</h3>
+                <div className="miseajour-edit-fields">
+                  {FIELDS.map((f) => (
+                    <div key={f.key} className="miseajour-edit-field">
+                      <label className="miseajour-edit-label">{f.label}</label>
+                      <input
+                        value={editing[selected.id]?.[f.key] ?? selected[f.key]}
+                        onChange={(e) => handleEdit(selected.id, f.key, e.target.value)}
+                        className="miseajour-edit-input"
+                      />
+                    </div>
+                  ))}
+                </div>
+                <button 
+                  onClick={handleGlobalUpdate} 
+                  className="miseajour-edit-button"
+                >
+                  Appliquer les modifications
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

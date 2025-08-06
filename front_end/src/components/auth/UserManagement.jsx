@@ -19,9 +19,7 @@ const UserManagement = () => {
   const fetchUsers = async () => {
     try {
       const response = await fetch('http://localhost:8000/auth/users', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include', // Ajout des cookies
       });
 
       if (!response.ok) {
@@ -53,8 +51,8 @@ const UserManagement = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
+        credentials: 'include', // Ajout des cookies
         body: JSON.stringify(editForm)
       });
 
@@ -80,9 +78,7 @@ const UserManagement = () => {
     try {
       const response = await fetch(`http://localhost:8000/auth/users/${userId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
+        credentials: 'include', // Ajout des cookies
       });
 
       if (!response.ok) {

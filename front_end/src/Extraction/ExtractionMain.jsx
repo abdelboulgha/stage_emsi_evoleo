@@ -11,6 +11,7 @@ import {
 import ExtractionSidebar from "./ExtractionSidebar";
 import ExtractionPreview from "./ExtractionPreview";
 import InvoiceSelectionModal from "./InvoiceSelectionModal";
+import "./ExtractionMain.css";
 
 const ExtractionMain = ({
   extractionState,
@@ -36,19 +37,16 @@ const ExtractionMain = ({
   setDataPrepState,
 }) => {
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-3xl p-6 relative">
-       <div className="flex justify-center mb-6">
-          {/*<button
-            onClick={backToSetup}
-            className="px-4 py-2 bg-white/20 text-white rounded-xl hover:bg-white/30 transition-colors flex items-center gap-2 z-10"
-          >
-            <ChevronLeft className="w-4 h-4" />
-            Retour
-          </button>*/}
+    <div className="extraction-container">
+      <div className="extraction-content">
+        <div className="extraction-header">
+          <h1 className="extraction-title">Extraction de Données</h1>
+          <p className="extraction-subtitle">
+            Analysez et extrayez automatiquement les informations de vos factures
+          </p>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="extraction-grid">
           {/* Sidebar with extracted data */}
           <ExtractionSidebar
             extractionState={extractionState}
