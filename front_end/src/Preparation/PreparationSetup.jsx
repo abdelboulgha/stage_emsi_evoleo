@@ -213,7 +213,7 @@ const PreparationSetup = ({
                   value="same"
                 />
                 <div className="mb-6">
-                  <select
+                <select
                     value={setupState.selectedModel}
                     onChange={(e) =>
                       setSetupState((prev) => ({
@@ -230,13 +230,13 @@ const PreparationSetup = ({
                     <option value="" style={{ color: 'black', backgroundColor: 'white' }}>
                       Sélectionnez un fournisseur
                     </option>
-                    {Object.keys(mappings).map((tpl) => (
+                    {Object.entries(mappings).map(([id, templateData]) => (
                       <option 
-                        key={tpl} 
-                        value={tpl}
+                        key={id} 
+                        value={id} 
                         style={{ color: 'black', backgroundColor: 'white' }}
                       >
-                        {tpl}
+                        {templateData.template_name}  
                       </option>
                     ))}
                   </select>
