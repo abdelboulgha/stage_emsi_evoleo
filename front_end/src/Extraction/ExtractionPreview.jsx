@@ -1,9 +1,5 @@
 import React, { useRef, useEffect, useCallback } from "react";
-import {
-  Eye,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
+import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 const ExtractionPreview = ({
   extractionState,
@@ -31,19 +27,37 @@ const ExtractionPreview = ({
     const data = extractionState.extractedDataList[extractionState.currentPdfIndex];
     if (!data) return;
 
-    // Set canvas size to match the displayed image
-    canvas.width = img.clientWidth;
-    canvas.height = img.clientHeight;
-
+    // Set canvas size to match the image's display size
+    const container = img.parentElement;
+    canvas.style.width = `${img.offsetWidth}px`;
+    canvas.style.height = `${img.offsetHeight}px`;
+    
+    // Set the canvas resolution to match the display
+    const scale = window.devicePixelRatio || 1;
+    canvas.width = img.offsetWidth * scale;
+    canvas.height = img.offsetHeight * scale;
+    
     const ctx = canvas.getContext('2d');
+    ctx.scale(scale, scale);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // Helper to draw a box
     const drawBox = (box, color, label, labelPosition = 'left') => {
       if (!box) return;
-      // Scale coordinates
-      const scaleX = img.clientWidth / img.naturalWidth;
-      const scaleY = img.clientHeight / img.naturalHeight;
+      
+      // Get the actual dimensions of the displayed image
+      const displayWidth = img.offsetWidth;
+      const displayHeight = img.offsetHeight;
+      
+      // Use the image's natural dimensions for scaling
+      const naturalWidth = img.naturalWidth;
+      const naturalHeight = img.naturalHeight;
+      
+      // Calculate scale factors based on natural dimensions
+      const scaleX = displayWidth / naturalWidth;
+      const scaleY = displayHeight / naturalHeight;
+      
+      // Scale the box coordinates from unwrapped image to displayed size
       const x = box.left * scaleX;
       const y = box.top * scaleY;
       const w = box.width * scaleX;
@@ -70,10 +84,16 @@ const ExtractionPreview = ({
       
       ctx.restore();
     };
-    drawBox(data.boxDateFacturation, "#008000", "Date", 'left');
-    drawBox(data.boxNumFacture, "#6366f1", "N° Facture", 'top');
-    drawBox(data.boxHT, "#b91010ff", "HT", 'left');
-    drawBox(data.boxTVA, "#0b0ff5ff", "TVA", 'left');
+
+    // Draw each box
+    const drawBoxes = () => {
+      if (data.boxDateFacturation) drawBox(data.boxDateFacturation, '#008000', 'Date', 'left');
+      if (data.boxNumFacture) drawBox(data.boxNumFacture, '#6366f1', 'N° Facture', 'top');
+      if (data.boxHT) drawBox(data.boxHT, '#b91010ff', 'HT', 'left');
+      if (data.boxTVA) drawBox(data.boxTVA, '#0b0ff5ff', 'TVA', 'left');
+    };
+
+    drawBoxes();
   }, [extractionState.extractedDataList, extractionState.currentPdfIndex]);
 
 
@@ -101,98 +121,92 @@ const ExtractionPreview = ({
 
   return (
     <div className="extraction-preview">
-      <div className="extraction-preview-container">
-        <div className="extraction-preview-header">
-          <h3 className="extraction-preview-title">
-            <Eye className="extraction-preview-icon" />
-            Aperçu des Documents
-          </h3>
-          {extractionState.filePreviews && extractionState.filePreviews.length > 0 && (
-            <div className="extraction-preview-counter">
-              {extractionState.currentPdfIndex + 1} /{" "}
-              {extractionState.filePreviews.length}
-            </div>
-          )}
-        </div>
-
-        {/* Navigation controls */}
-        {extractionState.filePreviews && extractionState.filePreviews.length > 1 && (
-          <div className="extraction-navigation">
-            <button
-              onClick={goToPrevPdf}
-              disabled={extractionState.currentPdfIndex === 0}
-              className="extraction-nav-button prev"
-            >
-              <ChevronLeft className="extraction-nav-icon" />
-            </button>
-            <button
-              onClick={goToNextPdf}
-              disabled={extractionState.currentPdfIndex === extractionState.filePreviews.length - 1}
-              className="extraction-nav-button next"
-            >
-              <ChevronRight className="extraction-nav-icon" />
-            </button>
+      <div className="extraction-preview-header">
+        <h3 className="extraction-preview-title">Aperçu des Documents</h3>
+        {extractionState.filePreviews && extractionState.filePreviews.length > 0 && (
+          <div className="extraction-preview-counter">
+            {extractionState.currentPdfIndex + 1} / {extractionState.filePreviews.length}
           </div>
         )}
+      </div>
 
-        {/* Document preview area */}
-        <div className="extraction-preview-area">
-          {currentFilePreview ? (
-            <div className="extraction-preview-content">
+      {/* Document preview area */}
+      <div className="extraction-preview-area">
+        {currentFilePreview ? (
+          <div className="extraction-preview-content">
+            <div className="extraction-preview-image-container">
               <img
                 ref={previewImageRef}
                 src={currentFilePreview}
                 alt={`Document ${extractionState.currentPdfIndex + 1}`}
                 className="extraction-preview-image"
                 onLoad={drawExtractionBoxes}
+                style={{
+                  display: 'block',
+                  width: '100%',
+                  height: 'auto'
+                }}
               />
               <canvas
                 ref={extractionBoxesCanvasRef}
                 className="extraction-boxes-canvas"
+                style={{
+                  position: 'absolute',
+                  top: 0,
+                  left: 0
+                }}
               />
             </div>
-          ) : (
-            <div className="extraction-empty-state">
-              <div className="extraction-empty-content">
-                <Eye className="extraction-empty-icon" />
-                <h3 className="extraction-empty-title">Aucun document à afficher</h3>
-                <p className="extraction-empty-description">
-                  Commencez par extraire des données pour voir l'aperçu
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Thumbnail navigation */}
-        {extractionState.filePreviews && extractionState.filePreviews.length > 1 && (
-          <div className="extraction-thumbnails">
-            <div className="extraction-thumbnails-container">
-              {extractionState.filePreviews.map((preview, index) => {
-                const previewSrc = typeof preview === 'string' ? preview : preview.preview;
-                return (
-                  <div
-                    key={index}
-                    className={`extraction-thumbnail ${index === extractionState.currentPdfIndex ? 'active' : ''} ${index === hoveredIndex ? 'hovered' : ''}`}
-                    onClick={() => scrollToIndex(index)}
-                    onMouseEnter={() => setHoveredIndex(index)}
-                    onMouseLeave={() => setHoveredIndex(null)}
-                  >
-                    <img
-                      src={previewSrc}
-                      alt={`Page ${index + 1}`}
-                      className="extraction-thumbnail-image"
-                    />
-                    <div className="extraction-thumbnail-label">
-                      Page {index + 1}
-                    </div>
-                  </div>
-                );
-              })}
+          </div>
+        ) : (
+          <div className="extraction-empty-state">
+            <div className="extraction-empty-content">
+              <Eye className="extraction-empty-icon" />
+              <h3 className="extraction-empty-title">Aucun document à afficher</h3>
+              <p className="extraction-empty-description">
+                Commencez par extraire des données pour voir l'aperçu
+              </p>
             </div>
           </div>
         )}
       </div>
+
+      {/* Navigation controls */}
+      {extractionState.filePreviews && extractionState.filePreviews.length > 1 && (
+        <div className="extraction-navigation">
+          <button
+            onClick={goToPrevPdf}
+            disabled={extractionState.currentPdfIndex === 0}
+            className="extraction-nav-button"
+            title="Document précédent"
+          >
+            <ChevronLeft className="extraction-nav-icon" />
+          </button>
+          <div className="extraction-thumbnails-container">
+            {extractionState.filePreviews.map((preview, index) => {
+              const previewSrc = typeof preview === 'string' ? preview : preview.preview;
+              return (
+                <div
+                  key={index}
+                  className={`extraction-thumbnail ${extractionState.currentPdfIndex === index ? 'active' : ''}`}
+                  onClick={() => scrollToIndex(index)}
+                  title={`Document ${index + 1}`}
+                >
+                  <img src={previewSrc} alt={`Thumbnail ${index + 1}`} />
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={goToNextPdf}
+            disabled={extractionState.currentPdfIndex === extractionState.filePreviews.length - 1}
+            className="extraction-nav-button"
+            title="Document suivant"
+          >
+            <ChevronRight className="extraction-nav-icon" />
+          </button>
+        </div>
+      )}
     </div>
   );
 };

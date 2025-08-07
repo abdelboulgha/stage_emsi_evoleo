@@ -410,7 +410,7 @@ async def get_pdf_page_previews(file: UploadFile = File(...)):
 @app.post("/upload-for-dataprep")
 async def upload_for_dataprep(
     file: UploadFile = File(...),
-    page_index: int = Form(0),  # Explicitly parse page_index as int from FormData
+    page_index: int = Form(0),  
     current_user = Depends(require_comptable_or_admin)
 ):
     """Upload d'un fichier pour DataPrep, retour de l'image en base64, des boîtes OCR détectées, et l'image unwarped si disponible pour la page spécifiée"""
@@ -507,6 +507,8 @@ async def upload_for_dataprep(
     except Exception as e:
         logging.error(f"Erreur lors de l'upload: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du traitement: {str(e)}")
+
+
 @app.post("/pdf-page-previews")
 async def pdf_page_previews(
     file: UploadFile = File(...),

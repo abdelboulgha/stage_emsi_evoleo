@@ -216,10 +216,14 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (imageRef.current && imageRef.current.complete) {
-      const scaledWidth =
-        dataPrepState.imageDimensions.width * dataPrepState.currentZoom;
-      const scaledHeight =
-        dataPrepState.imageDimensions.height * dataPrepState.currentZoom;
+ 
+      
+      
+      const scaledWidth = dataPrepState.imageDimensions.width * dataPrepState.currentZoom;
+      const scaledHeight = dataPrepState.imageDimensions.height * dataPrepState.currentZoom;
+      
+
+      
       canvas.width = scaledWidth;
       canvas.height = scaledHeight;
       ctx.drawImage(imageRef.current, 0, 0, scaledWidth, scaledHeight);

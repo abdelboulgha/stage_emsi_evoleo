@@ -71,12 +71,7 @@ const ParametrageFields = ({
                     >
                       Sélectionner
                     </button>
-                    <button
-                      onClick={() => startManualDraw(field.key)}
-                      className="parametrage-action-button draw"
-                    >
-                      Dessiner
-                    </button>
+                 
                   </>
                 )}
               </div>

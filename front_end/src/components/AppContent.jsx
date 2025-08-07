@@ -129,7 +129,7 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
                   setCurrentView('miseajour');
                 }}
               >
-                Mise à jour
+                <span style={{whiteSpace: 'nowrap'}}>Mise à jour</span>
               </button>
             </div>
           </div>
@@ -146,7 +146,9 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
               </div>
             )}
             <div className="user-info">
-              <span className="user-name">{user.prenom} {user.nom}</span>
+              <span className="user-name" style={{whiteSpace: 'nowrap'}}>
+                {user.prenom} {user.nom}
+              </span>
               <span className={`user-role ${user.role}`}>
                 {user.role === 'admin' ? 'Administrateur' : 'Comptable'}
               </span>

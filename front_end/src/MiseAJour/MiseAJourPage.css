@@ -24,8 +24,9 @@
 .miseajour-content {
     position: relative;
     z-index: 1;
-    max-width: 1400px;
+    max-width: 1800px;
     margin: 0 auto;
+    width: 95%;
 }
 
 .miseajour-header {
@@ -158,12 +159,18 @@
     border-radius: var(--border-radius-lg);
     overflow: hidden;
     box-shadow: var(--shadow-md);
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
 }
 
 .miseajour-table {
     width: 100%;
-    border-collapse: collapse;
-    background: var(--white);
+    border-collapse: separate;
+    border-spacing: 0;
+    min-width: 1400px;
+    table-layout: fixed;
 }
 
 .miseajour-table-header {

@@ -218,46 +218,8 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
               />
             )}
 
-            {showModelSelectModal && createPortal(
-              <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-[9999] p-4">
-                <div className="bg-white rounded-2xl w-full max-w-md flex flex-col">
-                  <div className="p-6 border-b">
-                    <h3 className="text-xl font-semibold text-gray-800 mb-2">Sélectionnez un modèle</h3>
-                    <p className="text-gray-600 text-sm mb-1">Choisissez le modèle à utiliser pour l'extraction de cette page.</p>
-                  </div>
-                  <div className="p-6 flex flex-col gap-4">
-                    <select
-                      value={modalSelectedTemplateId}
-                      onChange={e => setModalSelectedTemplateId(e.target.value)}
-                      className="w-full px-4 py-3 bg-white/20 backdrop-blur-md border border-white/30 rounded-xl text-gray-800 placeholder-blue-200 focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                    >
-                      <option value="">Sélectionnez un modèle</option>
-                      {Object.keys(mappings).map(tpl => (
-                        <option key={tpl} value={tpl}>{tpl}</option>
-                      ))}
-                    </select>
-                    <button
-                      onClick={async () => {
-                        if (!modalSelectedTemplateId) return;
-                        setShowModelSelectModal(false);
-                        await extractCurrentPdf(modalSelectedTemplateId, pendingExtractIndex);
-                      }}
-                      disabled={!modalSelectedTemplateId}
-                      className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      Extraire
-                    </button>
-                    <button
-                      onClick={() => setShowModelSelectModal(false)}
-                      className="w-full px-4 py-2 mt-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
-                    >
-                      Annuler
-                    </button>
-                  </div>
-                </div>
-              </div>,
-              document.body
-            )}
+            
+           
           </>
         )}
 

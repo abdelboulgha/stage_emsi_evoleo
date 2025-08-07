@@ -8,3 +8,24 @@
 2025-08-06 15:49:21,709 INFO Authentication database initialized
 2025-08-06 15:49:21,725 INFO Database connection pool created successfully
 2025-08-06 15:52:51,928 ERROR Erreur lors de la sauvegarde pour FoxPro: type object 'datetime.datetime' has no attribute 'datetime'
+2025-08-06 21:18:19,285 INFO Base de données initialisée avec succès
+2025-08-06 21:18:19,285 INFO Authentication database initialized
+2025-08-06 21:18:19,304 INFO Database connection pool created successfully
+2025-08-06 21:32:48,452 ERROR Erreur lors de la récupération de l'utilisateur: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-06 21:32:49,391 ERROR Erreur lors de la récupération de l'utilisateur: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-06 23:10:47,162 ERROR Erreur lors de l'initialisation de la base de données: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-06 23:10:47,163 ERROR Error initializing authentication database: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-06 23:10:51,259 ERROR Error creating connection pool: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-06 23:10:51,259 WARNING Continuing without database connection pool
+2025-08-06 23:16:08,714 INFO Base de données initialisée avec succès
+2025-08-06 23:16:08,715 INFO Authentication database initialized
+2025-08-06 23:16:08,740 INFO Database connection pool created successfully
+2025-08-07 00:37:42,495 INFO Base de données initialisée avec succès
+2025-08-07 00:37:42,495 INFO Authentication database initialized
+2025-08-07 00:37:42,531 INFO Database connection pool created successfully
+2025-08-07 00:41:28,958 INFO Base de données initialisée avec succès
+2025-08-07 00:41:28,958 INFO Authentication database initialized
+2025-08-07 00:41:28,974 INFO Database connection pool created successfully
+2025-08-07 01:43:30,864 INFO Base de données initialisée avec succès
+2025-08-07 01:43:30,864 INFO Authentication database initialized
+2025-08-07 01:43:30,878 INFO Database connection pool created successfully

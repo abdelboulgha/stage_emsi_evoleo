@@ -42,7 +42,7 @@ const ExtractionSidebar = ({
             </>
           ) : (
             <>
-              <Search className="extraction-button-icon" />
+              <Search className="extraction-button-icon no-animation" />
               Extraire toutes les pages
               {extractionState.processingMode === "same" && extractionState.selectedModelName && (
                 <span className="extraction-model-info"> (Modèle: {extractionState.selectedModelName})</span>
@@ -83,7 +83,7 @@ const ExtractionSidebar = ({
                     className="extraction-input-field"
                     placeholder={`${field.label} sera extrait automatiquement`}
                   />
-                  <button
+                 {/*  <button
                     type="button"
                     onClick={() => {
                       if (extractDrawState.isDrawing && extractDrawState.fieldKey === field.key) {
@@ -97,7 +97,7 @@ const ExtractionSidebar = ({
                     title={extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'Annuler le dessin' : 'Dessiner pour extraire'}
                   >
                     <ZoomIn className="extraction-draw-icon" />
-                  </button>
+                  </button>*/}
                 </div>
               </div>
             );

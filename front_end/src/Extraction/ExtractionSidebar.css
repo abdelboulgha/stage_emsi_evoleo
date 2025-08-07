@@ -157,6 +157,11 @@
     position: relative;
 }
 
+/* Disable animations */
+.extraction-button-icon.no-animation {
+  animation: none !important;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .extraction-sidebar {

@@ -21,7 +21,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         const formData = new FormData();
         formData.append("file", file);
 
-        console.log("Fetching page previews from /pdf-page-previews"); // Debug
+        
         const response = await fetch(`${API_BASE_URL}/pdf-page-previews`, {
           method: "POST",
           credentials: 'include', // Ajout des cookies
@@ -33,7 +33,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         }
 
         const result = await response.json();
-        console.log("Page previews response:", result); // Debug
+       
         if (result.success && result.pages) {
           return result.pages.map((page, index) => ({
             preview: page.image,
@@ -68,20 +68,23 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         const formData = new FormData();
         formData.append("file", file);
         formData.append("page_index", pageIndex.toString());
-        console.log(`Sending page_index: ${pageIndex} for file: ${file.name}`); // Debug
+        
 
-        console.log("Envoi de la requête vers:", `${API_BASE_URL}/upload-for-dataprep`);
+    
         const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
           method: "POST",
           credentials: 'include', // Ajout des cookies
           body: formData,
         });
 
-        console.log("Réponse reçue:", response.status, response.statusText); // Debug
+        
         const result = await response.json();
-        console.log("Backend response:", result); // Debug
+       
 
         if (result.success) {
+        
+          
+        
           const imageToUse = result.unwarped_image || result.image;
           const widthToUse = result.unwarped_width || result.width;
           const heightToUse = result.unwarped_height || result.height;
@@ -90,7 +93,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
             ...prev,
             uploadedImage: imageToUse,
             imageDimensions: { width: widthToUse, height: heightToUse },
-            currentZoom: getDefaultZoom(widthToUse, 900) * 0.8,
+            currentZoom: 1.0, // Set default zoom to 100%
             fieldMappings: {},
             selectionHistory: [],
             ocrBoxes: result.boxes || [],

@@ -35,8 +35,8 @@ const FIELDS = [
   { key: "tauxTVA", label: "Taux TVA" },
   { key: "montantHT", label: "Montant HT" },
   { key: "montantTVA", label: "Montant TVA" },
-  { key: "date_creation", label: "Date D'ajout" },
   { key: "montantTTC", label: "Montant TTC" },
+  { key: "date_creation", label: "Date D'ajout" },
 ];
 
 const PAGE_SIZE = 10;

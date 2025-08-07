@@ -402,7 +402,7 @@
 .parametrage-save-icon {
     width: 20px;
     height: 20px;
-    animation: spin 1s linear infinite;
+   
 }
 
 /* Progress Section */
@@ -554,6 +554,11 @@
 .parametrage-canvas-area {
     min-height: 600px;
     position: relative;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 20px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .parametrage-upload-zone {
@@ -598,6 +603,10 @@
 }
 
 .parametrage-canvas-wrapper {
+    margin: 0 auto;
+    position: relative;
+    transform-origin: top left;
+    transition: transform 0.1s ease;
     position: relative;
     overflow: auto;
     max-height: 70vh;
