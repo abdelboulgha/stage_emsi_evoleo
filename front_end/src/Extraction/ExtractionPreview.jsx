@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useCallback } from "react";
+import React, { useRef, useEffect, useCallback, useState } from "react";
 import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
 
 const ExtractionPreview = ({
@@ -17,6 +17,8 @@ const ExtractionPreview = ({
   const previewImageRef = useRef(null);
   const extractCanvasRef = useRef(null);
   const extractionBoxesCanvasRef = useRef(null);
+  const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
+  const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
 
   const drawExtractionBoxes = useCallback(() => {
     const canvas = extractionBoxesCanvasRef.current;
@@ -171,6 +173,25 @@ const ExtractionPreview = ({
         )}
       </div>
 
+      {/* Preview overlay */}
+      {hoveredThumbnail !== null && (
+        <div 
+          className="thumbnail-preview"
+          style={{
+            left: `${previewPosition.x}px`,
+            top: `${previewPosition.y}px`,
+          }}
+        >
+          <img 
+            src={typeof extractionState.filePreviews[hoveredThumbnail] === 'string' 
+              ? extractionState.filePreviews[hoveredThumbnail] 
+              : extractionState.filePreviews[hoveredThumbnail]?.preview} 
+            alt={`Preview ${hoveredThumbnail + 1}`} 
+            className="preview-image"
+          />
+        </div>
+      )}
+
       {/* Navigation controls */}
       {extractionState.filePreviews && extractionState.filePreviews.length > 1 && (
         <div className="extraction-navigation">
@@ -192,7 +213,23 @@ const ExtractionPreview = ({
                   onClick={() => scrollToIndex(index)}
                   title={`Document ${index + 1}`}
                 >
-                  <img src={previewSrc} alt={`Thumbnail ${index + 1}`} />
+                  <div 
+                    className="thumbnail-container"
+                    onMouseEnter={() => setHoveredThumbnail(index)}
+                    onMouseMove={(e) => {
+                      setPreviewPosition({
+                        x: e.clientX - 150, // Center horizontally
+                        y: e.clientY - 600  // Position preview so bottom is at cursor
+                      });
+                    }}
+                    onMouseLeave={() => setHoveredThumbnail(null)}
+                  >
+                    <img 
+                      src={previewSrc} 
+                      alt={`Thumbnail ${index + 1}`} 
+                      className="thumbnail-image"
+                    />
+                  </div>
                 </div>
               );
             })}
