@@ -16,9 +16,7 @@ pymupdf>=1.23.8
 Pillow>=10.1.0
 
 # OCR
-
-paddleocr
-paddlepaddle
+pytesseract>=0.3.10
 
 # Data processing
 numpy>=1.24.3

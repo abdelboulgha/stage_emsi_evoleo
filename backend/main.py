@@ -20,10 +20,14 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from mysql.connector import Error, pooling
-from paddleocr import PaddleOCR
+import pytesseract
+from pytesseract import Output
 from PIL import Image, ImageEnhance, ImageOps
 from pydantic import BaseModel, Field, field_validator
 from dotenv import load_dotenv
+
+# Tesseract OCR configuration
+TESSERACT_CONFIG = '--psm 1 '
 
 # Authentication modules
 from auth.auth_routes import router as auth_router
@@ -89,19 +93,8 @@ except Exception as e:
     logging.error(f"Unexpected error creating connection pool: {e}")
     logging.warning("Continuing without database connection pool")
 
-# Initialize PaddleOCR with specified parameters
-ocr = PaddleOCR(
-    use_doc_orientation_classify=False,
-    use_doc_unwarping=False,
-    use_textline_orientation=False,
-    text_det_input_shape=[3, 1440, 1440],
-    text_detection_model_name="PP-OCRv5_mobile_det",
-    text_recognition_model_name="PP-OCRv5_mobile_rec",
-    precision="fp16",
-    enable_mkldnn=True,
-    text_det_unclip_ratio=1.3,
-    text_rec_score_thresh=0.5
-)
+# Configure Tesseract parameters
+TESSERACT_CONFIG = '--psm 4 --oem 3 -l fra'
 
 # =======================
 # Pydantic Models
@@ -443,53 +436,42 @@ async def upload_for_dataprep(
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
 
-        # Run OCR on the selected image
-        img_array = np.array(images[0])
-        result = ocr.predict(img_array)
-        logging.info(f"OCR result: {len(result)} items detected")
+        # Run Tesseract OCR on the selected image
+        img = images[0]
+        
+        # Convert to grayscale for better OCR results
+        img_gray = img.convert('L')
+        
+        # Use Tesseract to get data including bounding boxes
+        data = pytesseract.image_to_data(img_gray, output_type='dict', config=TESSERACT_CONFIG)
+        
         boxes = []
         unwarped_base64 = None
         unwarped_width = None
         unwarped_height = None
-        for res in result:
-            rec_polys = res.get('rec_polys', [])
-            rec_texts = res.get('rec_texts', [])
-            rec_scores = res.get('rec_scores', [])
-            doc_pre_res = res.get('doc_preprocessor_res', {})
-            original_points = doc_pre_res.get('original_points') if isinstance(doc_pre_res, dict) else None
-            doc_img = None
-            for key in ['doc_img', 'output_img', 'rot_img']:
-                if key in doc_pre_res:
-                    doc_img = doc_pre_res[key]
-                    break
-            if doc_img is not None and unwarped_base64 is None:
-                pil_img = Image.fromarray(doc_img)
-                buffer = BytesIO()
-                pil_img.save(buffer, format='PNG')
-                unwarped_base64 = f"data:image/png;base64,{base64.b64encode(buffer.getvalue()).decode()}"
-                unwarped_width = pil_img.width
-                unwarped_height = pil_img.height
-            for i, (poly, text, score) in enumerate(zip(rec_polys, rec_texts, rec_scores)):
-                if score is None or not text.strip():
-                    continue
-                mapped_poly = original_points[i] if original_points and i < len(original_points) else poly
-                x_coords = [float(pt[0]) for pt in mapped_poly]
-                y_coords = [float(pt[1]) for pt in mapped_poly]
-                left = float(min(x_coords))
-                top = float(min(y_coords))
-                width = float(max(x_coords) - left)
-                height = float(max(y_coords) - top)
-                boxes.append({
-                    'id': int(i),
-                    'coords': {
-                        'left': left,
-                        'top': top,
-                        'width': width,
-                        'height': height
-                    },
-                    'text': str(text).strip(),
-                    'confidence': float(score)
-                })
+        
+        # Process each detected text block
+        for i in range(len(data['text'])):
+            # Skip empty text or low confidence detections
+            if not data['text'][i].strip() or int(data['conf'][i]) < 30:
+                continue
+                
+            # Get bounding box coordinates
+            x, y, w, h = data['left'][i], data['top'][i], data['width'][i], data['height'][i]
+            
+            boxes.append({
+                'id': i,
+                'coords': {
+                    'left': float(x),
+                    'top': float(y),
+                    'width': float(w),
+                    'height': float(h)
+                },
+                'text': data['text'][i].strip(),
+                'confidence': float(data['conf'][i]) / 100.0  # Convert to 0-1 range
+            })
+        
+        logging.info(f"Tesseract OCR detected {len(boxes)} text elements")
         response = {
             "success": True,
             "image": image_to_base64(images[0]) if images else None,
@@ -668,41 +650,41 @@ async def ocr_preview(
         if img is None:
             raise HTTPException(status_code=400, detail="No image available for extraction.")
             
-        img_array = np.array(img)
-        result = ocr.predict(img_array)
+        # Convert to grayscale for better OCR results
+        img_gray = img.convert('L')
         
-        # Collect detected boxes with confidence filtering
+        # Use Tesseract to get data including bounding boxes
+        data = pytesseract.image_to_data(img_gray, output_type='dict', config=TESSERACT_CONFIG)
+        
+        # Process detected text boxes
         detected_boxes = []
-        for res in result:
-            rec_polys = res.get('rec_polys', [])
-            rec_texts = res.get('rec_texts', [])
-            rec_scores = res.get('rec_scores', [])
-            for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
-                if score is None or score < 0.75 or not text.strip():
-                    logging.info(f"Filtered out low confidence text: '{text}' (confidence: {score:.3f})")
-                    continue
+        for i in range(len(data['text'])):
+            # Skip empty text or low confidence detections
+            if not data['text'][i].strip() or int(data['conf'][i]) < 30:
+                continue
                 
-                x_coords = [p[0] for p in poly]
-                y_coords = [p[1] for p in poly]
-                left = min(x_coords)
-                top = min(y_coords)
-                right = max(x_coords)
-                bottom = max(y_coords)
-                width = right - left
-                height = bottom - top
-                center_x = (left + right) / 2
-                center_y = (top + bottom) / 2
-                
-                detected_boxes.append({
-                    'left': float(left),
-                    'top': float(top),
-                    'width': float(width),
-                    'height': float(height),
-                    'text': text.strip(),
-                    'center_x': float(center_x),
-                    'center_y': float(center_y),
-                    'score': float(score)
-                })
+            # Get bounding box coordinates
+            left = data['left'][i]
+            top = data['top'][i]
+            width = data['width'][i]
+            height = data['height'][i]
+            right = left + width
+            bottom = top + height
+            center_x = (left + right) / 2
+            center_y = (top + bottom) / 2
+            
+            detected_boxes.append({
+                'left': float(left),
+                'top': float(top),
+                'width': float(width),
+                'height': float(height),
+                'text': data['text'][i].strip(),
+                'center_x': float(center_x),
+                'center_y': float(center_y),
+                'score': float(data['conf'][i]) / 100.0  # Convert to 0-1 range
+            })
+            
+        logging.info(f"Tesseract OCR detected {len(detected_boxes)} text elements")
         
         logging.info(f"Total detected boxes (after confidence filtering): {len(detected_boxes)}")
         
@@ -819,6 +801,10 @@ async def ocr_preview(
                     next_box = detected_boxes[j]
                     next_text = next_box['text'].strip()
                     if abs(next_box['center_y'] - tva_y) < 20:
+                        # Skip values containing %
+                        if '%' in next_text:
+                            continue
+                            
                         next_value = extract_number(next_text)
                         if next_value is not None:
                             distance = next_box['center_x'] - tva_x

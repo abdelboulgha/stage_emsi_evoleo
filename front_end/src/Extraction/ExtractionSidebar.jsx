@@ -44,9 +44,7 @@ const ExtractionSidebar = ({
             <>
               <Search className="extraction-button-icon no-animation" />
               Extraire toutes les pages
-              {extractionState.processingMode === "same" && extractionState.selectedModelName && (
-                <span className="extraction-model-info"> (Modèle: {extractionState.selectedModelName})</span>
-              )}
+             
             </>
           )}
         </button>
