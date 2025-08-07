@@ -3,58 +3,48 @@ import { useCallback } from 'react';
 const API_BASE_URL = "http://localhost:8000";
 
 export const useExtraction = (extractionState, setExtractionState, showNotification) => {
-  const filterValue = useCallback((value, fieldKey) => {
-    if (!value) return '';
+  const filterValue = useCallback((val, fieldKey) => {
+    if (!val) return "";
+    if (fieldKey === "fournisseur") return val;
     
-    // Handle different field types
-    switch (fieldKey) {
-      case 'dateFacturation':
-        // Ensure date is in YYYY-MM-DD format
-        if (typeof value === 'string') {
-          try {
-            // Try to parse the date and format it properly
-            const date = new Date(value);
-            if (!isNaN(date.getTime())) {
-              return date.toISOString().split('T')[0];
-            }
-            // If direct parsing fails, try common date formats
-            const dateMatch = value.match(/(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})/);
-            if (dateMatch) {
-              const [_, day, month, year] = dateMatch;
-              const fullYear = year.length === 2 ? `20${year}` : year;
-              return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-            }
-          } catch (e) {
-            console.error('Date parsing error:', e);
-          }
-        }
-        return value;
-      case 'montantHT':
-      case 'montantTVA':
-      case 'montantTTC':
-      case 'tauxTVA':
-        // Ensure numeric values - remove any non-numeric characters except . and ,
-        if (typeof value === 'string') {
-          const cleanValue = value.replace(/[^\d.,]/g, '').replace(',', '.');
-          const num = parseFloat(cleanValue);
-          return isNaN(num) ? '0' : num.toString();
-        }
-        return value;
-      case 'numeroFacture':
-        // Clean invoice number - keep alphanumeric, spaces, and common separators
-        if (typeof value === 'string') {
-          return value.replace(/[^\w\s\-\.\/]/g, '').trim();
-        }
-        return value;
-      case 'fournisseur':
-        // Keep supplier name as is, just trim whitespace
-        if (typeof value === 'string') {
-          return value.trim();
-        }
-        return value;
-      default:
-        return value.toString();
+    // Clean and format dateFacturation field
+    if (fieldKey === 'dateFacturation') {
+      const dateMatch = val.toString().match(/\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})\b/);
+      if (dateMatch) {
+        const [_, day, month, year] = dateMatch;
+        const fullYear = year.length === 2 ? `20${year}` : year;
+        return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      }
+      return val;
     }
+    
+    // For numeroFacture, allow alphanumeric, dashes, slashes and spaces
+    if (fieldKey === "numeroFacture") {
+      // Split by space or colon
+      const parts = val.toString().split(/[\s:]+/);
+      // Find the first part containing a digit
+      let candidate = parts.find(p => /\d/.test(p)) || val.toString();
+      // Find the index of the first digit
+      const firstDigit = candidate.search(/\d/);
+      // If there are more than 4 letters before the first digit, remove them
+      if (firstDigit > 4) {
+        candidate = candidate.slice(firstDigit);
+      }
+      return candidate;
+    }
+    
+    // For numeric fields, keep decimal points and commas
+    if (["tauxTVA", "montantHT", "montantTVA", "montantTTC"].includes(fieldKey)) {
+      // Match numbers with optional decimal part (using either . or , as decimal separator)
+      const matches = val.toString().match(/[0-9]+[.,]?[0-9]*/g);
+      if (!matches) return "0";
+      // Replace comma with dot for proper decimal parsing
+      return matches.join("").replace(",", ".");
+    }
+    
+    // For other fields, keep only numbers and specific symbols
+    const matches = val.toString().match(/[0-9.,;:/\\-]+/g);
+    return matches ? matches.join("") : "";
   }, []);
 
   const hasMapping = useCallback((fieldKey) => {
@@ -263,6 +253,6 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     extractCurrentPdf,
     saveCorrectedData,
     launchFoxPro,
-    saveAllCorrectedDataAndLaunchFoxPro, // Ajouté pour garantir la sauvegarde avant FoxPro
+    saveAllCorrectedDataAndLaunchFoxPro, 
   };
 }; 

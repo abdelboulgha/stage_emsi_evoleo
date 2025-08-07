@@ -185,6 +185,12 @@
 .extraction-button-icon {
     width: 20px;
     height: 20px;
+    animation: spin 1s linear infinite;
+}
+.extraction-button-icon-no-animation {
+    width: 20px;
+    height: 20px;
+    
 }
 
 .extraction-model-info {

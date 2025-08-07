@@ -45,7 +45,7 @@ const ExtractionSidebar = ({
             </>
           ) : (
             <>
-              <Search className="extraction-button-icon no-animation" />
+              <Search className="extraction-button-icon-no-animation" />
               Extraire toutes les pages
             
             </>
