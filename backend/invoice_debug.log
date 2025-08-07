@@ -118,3 +118,6 @@
 2025-08-07 14:01:08,106 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
 2025-08-07 14:01:08,141 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
 2025-08-07 14:01:08,141 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 15:01:55,324 INFO Base de données initialisée avec succès
+2025-08-07 15:01:55,325 INFO Authentication database initialized
+2025-08-07 15:01:55,349 INFO Database connection pool created successfully
