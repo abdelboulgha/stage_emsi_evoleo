@@ -2,22 +2,44 @@
   "success": true,
   "data": {},
   "corrected_data": {
-    "fournisseur": "capi",
-    "numeroFacture": "IN8411-0501",
-    "tauxTVA": "4",
-    "montantHT": "7275",
-    "montantTVA": "255",
-    "montantTTC": "7530"
+    "montantHT": 194.86,
+    "montantTVA": 34.97,
+    "montantTTC": 229.83,
+    "tauxTVA": 18,
+    "boxHT": {
+      "left": 1068,
+      "top": 819,
+      "width": 62,
+      "height": 22
+    },
+    "boxTVA": {
+      "left": 1075,
+      "top": 838,
+      "width": 55,
+      "height": 25
+    },
+    "numFacture": "FACTURE ELECTRICITEN°2025207462845",
+    "boxNumFacture": {
+      "left": 175,
+      "top": 105,
+      "width": 544,
+      "height": 31
+    },
+    "dateFacturation": "2025-08-05",
+    "boxDateFacturation": null,
+    "template_id": "5",
+    "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
+    "fournisseur": "ca"
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-04 16:53:06.727856",
+  "timestamp": "2025-08-07 14:01:08.091763",
   "fields": {
-    "fournisseur": "capi",
-    "dateFacturation": "",
-    "numeroFacture": "IN8411-0501",
-    "tauxTVA": "4",
-    "montantHT": "7275",
-    "montantTVA": "255",
-    "montantTTC": "7530"
+    "fournisseur": "ca",
+    "dateFacturation": "2025-08-05",
+    "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
+    "tauxTVA": "18",
+    "montantHT": 194.86,
+    "montantTVA": 34.97,
+    "montantTTC": 229.83
   }
 }

@@ -201,7 +201,6 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
   const saveCorrectedData = useCallback(async (index) => {
     const data = extractionState.extractedDataList[index];
     if (!data) return;
-    
     try {
       const response = await fetch(`${API_BASE_URL}/save-corrected-data`, {
         method: "POST",
@@ -209,13 +208,8 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
           "Content-Type": "application/json",
         },
         credentials: 'include',
-        body: JSON.stringify({
-          index,
-          data,
-          confidence_scores: extractionState.confidenceScores[index] || {},
-        }),
+        body: JSON.stringify(data), // Correction ici : on envoie directement les champs édités
       });
-      
       const result = await response.json();
       if (result.success) {
         showNotification("Données corrigées sauvegardées", "success");
@@ -253,6 +247,14 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     }
   }, [extractionState.extractedDataList, showNotification]);
 
+  // Nouvelle fonction pour sauvegarder toutes les données corrigées avant d'envoyer à FoxPro
+  const saveAllCorrectedDataAndLaunchFoxPro = useCallback(async () => {
+    for (let i = 0; i < extractionState.extractedDataList.length; i++) {
+      await saveCorrectedData(i);
+    }
+    await launchFoxPro();
+  }, [extractionState.extractedDataList, saveCorrectedData, launchFoxPro]);
+
   return {
     filterValue,
     hasMapping,
@@ -261,5 +263,6 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     extractCurrentPdf,
     saveCorrectedData,
     launchFoxPro,
+    saveAllCorrectedDataAndLaunchFoxPro, // Ajouté pour garantir la sauvegarde avant FoxPro
   };
 }; 

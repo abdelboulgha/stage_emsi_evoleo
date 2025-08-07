@@ -583,51 +583,75 @@ async def upload_basic(file: UploadFile = File(...)):
 def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float], corrected_data: Dict[str, str] = None):
     """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
     try:
-        # Utiliser les données corrigées si disponibles et non vides, sinon les données extraites
-        if corrected_data and any(corrected_data.values()):
+        print(f"=== DEBUG save_extraction_for_foxpro ===")
+        print(f"extracted_data reçu: {extracted_data}")
+        print(f"corrected_data reçu: {corrected_data}")
+        print(f"confidence_scores reçu: {confidence_scores}")
+        
+        # Utiliser les données corrigées si disponibles, sinon les données extraites
+        # Note: corrected_data peut contenir des chaînes vides, ce qui est valide
+        if corrected_data is not None:
             data_to_use = corrected_data
+            print(f"Utilisation des données corrigées: {data_to_use}")
         else:
             data_to_use = extracted_data
+            print(f"Utilisation des données extraites: {data_to_use}")
+        
+        # Gérer les différents noms de champs possibles
+        numero_facture = data_to_use.get("numeroFacture") or data_to_use.get("numFacture", "")
+        print(f"Numéro facture trouvé: {numero_facture}")
         
         # Nettoyer le taux TVA - extraire juste le nombre
         taux_tva_raw = data_to_use.get("tauxTVA", "0")
         taux_tva_clean = "0"
         if taux_tva_raw:
             # Chercher un nombre dans la chaîne (ex: "Total TVA 20%" -> "20")
-            import re
             match = re.search(r'(\d+(?:[.,]\d+)?)', str(taux_tva_raw))
             if match:
                 taux_tva_clean = match.group(1)
         
+        print(f"Taux TVA nettoyé: {taux_tva_clean}")
+        
         # Créer un fichier JSON avec les données (corrigées ou extraites)
+        print("Début construction foxpro_data...")
+        print(f"extracted_data: {extracted_data}")
+        print(f"confidence_scores: {confidence_scores}")
+        print(f"datetime.now(): {datetime.now()}")
+        
         foxpro_data = {
             "success": True,
-            "data": extracted_data,  # Garder les données originales pour référence
+            "data": extracted_data if extracted_data else {},  # Garder les données originales pour référence
             "corrected_data": corrected_data,  # Ajouter les données corrigées
-            "confidence_scores": confidence_scores,
-            "timestamp": str(datetime.datetime.now()),
+            "confidence_scores": confidence_scores if confidence_scores else {},
+            "timestamp": str(datetime.now()),
             "fields": {
                 "fournisseur": data_to_use.get("fournisseur", ""),
                 "dateFacturation": data_to_use.get("dateFacturation", ""),
-                "numeroFacture": data_to_use.get("numeroFacture", ""),
+                "numeroFacture": numero_facture,
                 "tauxTVA": taux_tva_clean,
                 "montantHT": data_to_use.get("montantHT", "0"),
                 "montantTVA": data_to_use.get("montantTVA", "0"),
                 "montantTTC": data_to_use.get("montantTTC", "0")
             }
         }
+        print("foxpro_data construit avec succès")
         
         # Créer automatiquement le fichier JSON dans le dossier foxpro
         foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
         os.makedirs(foxpro_dir, exist_ok=True)
         
         json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
+        print(f"Écriture du fichier JSON: {json_path}")
+        print(f"Contenu foxpro_data: {foxpro_data}")
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
         
         # Créer automatiquement le fichier texte simple pour FoxPro
         txt_path = os.path.join(foxpro_dir, 'ocr_extraction.txt')
+        print(f"Écriture du fichier TXT: {txt_path}")
+        print(f"Données utilisées pour TXT: {data_to_use}")
         with open(txt_path, 'w', encoding='utf-8') as f:
+            f.write(f"Date export: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
             f.write(f"Numéro Facture: {data_to_use.get('numeroFacture', '')}\n")
             f.write(f"Taux TVA: {taux_tva_clean}\n")
@@ -637,9 +661,11 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
         
         logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement dans le dossier foxpro")
         
+        print("save_extraction_for_foxpro completed successfully.")
+        
         # Créer aussi automatiquement le fichier DBF s'il n'existe pas
         try:
-            write_invoice_to_dbf(extracted_data)
+            write_invoice_to_dbf(data_to_use)
             logging.info("Fichier factures.dbf créé/mis à jour automatiquement")
         except Exception as dbf_error:
             logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
@@ -1713,15 +1739,23 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
         table = dbf.Table(dbf_path)
         table.open(mode=dbf.READ_WRITE)
         
-        # Ajouter la facture
+        # Ajouter la facture (mapping robuste)
+        fournisseur = invoice_data.get('fournisseur', '')
+        numero_facture = invoice_data.get('numeroFacture', invoice_data.get('numFacture', ''))
+        date_facturation = invoice_data.get('dateFacturation', '')
+        taux_tva = float(invoice_data.get('tauxTVA', 0))
+        montant_ht = float(invoice_data.get('montantHT', 0))
+        montant_tva = float(invoice_data.get('montantTVA', 0))
+        montant_ttc = float(invoice_data.get('montantTTC', 0))
+
         table.append((
-            invoice_data['fournisseur'],
-            invoice_data.get('numeroFacture', invoice_data.get('numFacture', '')),
-            invoice_data['dateFacturation'],
-            float(invoice_data['tauxTVA']),
-            float(invoice_data['montantHT']),
-            float(invoice_data['montantTVA']),
-            float(invoice_data['montantTTC'])
+            fournisseur,
+            numero_facture,
+            date_facturation,
+            taux_tva,
+            montant_ht,
+            montant_tva,
+            montant_ttc
         ))
         table.close()
         
@@ -1781,27 +1815,21 @@ async def download_dbf():
     )
 
 @app.post("/save-corrected-data")
-async def save_corrected_data(corrected_data: Dict[str, str]):
+async def save_corrected_data(request: Request):
     """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
     try:
-        # Récupérer les données d'extraction originales depuis le dossier foxpro
-        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
-        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
+        print("=== DEBUG save_corrected_data ===")
         
-        if not os.path.exists(json_path):
-            return {
-                "success": False,
-                "message": "Aucune donnée d'extraction trouvée. Veuillez d'abord extraire une facture."
-            }
+        # Récupérer le JSON brut pour diagnostiquer
+        corrected_data = await request.json()
+        print("Payload reçu dans save_corrected_data:", corrected_data)
+        print("Type du payload:", type(corrected_data))
+        print("Clés du payload:", list(corrected_data.keys()) if isinstance(corrected_data, dict) else "Pas un dict")
         
-        # Lire les données originales
-        with open(json_path, 'r', encoding='utf-8') as f:
-            original_data = json.load(f)
-        
-        # Sauvegarder avec les données corrigées
+        # Sauvegarder directement les données corrigées sans dépendre d'un fichier existant
         save_extraction_for_foxpro(
-            extracted_data=original_data.get('data', {}),
-            confidence_scores=original_data.get('confidence_scores', {}),
+            extracted_data={},  # Données extraites vides car on utilise les données corrigées
+            confidence_scores={},  # Scores de confiance vides
             corrected_data=corrected_data
         )
         

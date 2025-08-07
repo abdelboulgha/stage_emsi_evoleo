@@ -6,6 +6,7 @@ import {
   Database,
   ZoomIn,
 } from "lucide-react";
+import { useExtraction } from "../hooks/useExtraction";
 
 const ExtractionSidebar = ({
   extractionState,
@@ -19,6 +20,8 @@ const ExtractionSidebar = ({
   setExtractDrawState,
   showNotification,
 }) => {
+  // Récupère la fonction du hook
+  const { saveAllCorrectedDataAndLaunchFoxPro } = useExtraction(extractionState, setExtractionState, showNotification);
  
   return (
     <div className="extraction-sidebar">
@@ -116,7 +119,7 @@ const ExtractionSidebar = ({
             </button>
             
             <button
-              onClick={launchFoxPro}
+              onClick={saveAllCorrectedDataAndLaunchFoxPro}
               disabled={
                 extractionState.extractedDataList.length === 0
               }

@@ -36,3 +36,85 @@
 2025-08-07 02:40:29,086 INFO Base de données initialisée avec succès
 2025-08-07 02:40:29,086 INFO Authentication database initialized
 2025-08-07 02:40:29,100 INFO Database connection pool created successfully
+2025-08-07 11:45:21,272 ERROR Erreur lors de l'initialisation de la base de données: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-07 11:45:21,280 ERROR Error initializing authentication database: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-07 11:45:25,313 ERROR Error creating connection pool: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-07 11:45:25,313 WARNING Continuing without database connection pool
+2025-08-07 11:46:42,781 INFO Base de données initialisée avec succès
+2025-08-07 11:46:42,781 INFO Authentication database initialized
+2025-08-07 11:46:42,812 INFO Database connection pool created successfully
+2025-08-07 12:29:55,231 INFO Base de données initialisée avec succès
+2025-08-07 12:29:55,231 INFO Authentication database initialized
+2025-08-07 12:29:55,251 INFO Database connection pool created successfully
+2025-08-07 12:34:58,104 INFO Base de données initialisée avec succès
+2025-08-07 12:34:58,104 INFO Authentication database initialized
+2025-08-07 12:34:58,120 INFO Database connection pool created successfully
+2025-08-07 12:35:18,784 INFO Base de données initialisée avec succès
+2025-08-07 12:35:18,784 INFO Authentication database initialized
+2025-08-07 12:35:18,801 INFO Database connection pool created successfully
+2025-08-07 13:05:41,829 INFO Base de données initialisée avec succès
+2025-08-07 13:05:41,829 INFO Authentication database initialized
+2025-08-07 13:05:41,852 INFO Database connection pool created successfully
+2025-08-07 13:05:56,032 ERROR Erreur lors de la sauvegarde pour FoxPro: local variable 'datetime' referenced before assignment
+2025-08-07 13:09:52,151 INFO Base de données initialisée avec succès
+2025-08-07 13:09:52,151 INFO Authentication database initialized
+2025-08-07 13:09:52,169 INFO Database connection pool created successfully
+2025-08-07 13:10:05,128 INFO Base de données initialisée avec succès
+2025-08-07 13:10:05,128 INFO Authentication database initialized
+2025-08-07 13:10:05,153 INFO Database connection pool created successfully
+2025-08-07 13:10:18,134 INFO Base de données initialisée avec succès
+2025-08-07 13:10:18,134 INFO Authentication database initialized
+2025-08-07 13:10:18,140 INFO Database connection pool created successfully
+2025-08-07 13:10:39,102 ERROR Erreur lors de la sauvegarde pour FoxPro: local variable 'datetime' referenced before assignment
+2025-08-07 13:12:06,305 ERROR Erreur lors de la sauvegarde pour FoxPro: local variable 'datetime' referenced before assignment
+2025-08-07 13:16:42,710 INFO Base de données initialisée avec succès
+2025-08-07 13:16:42,710 INFO Authentication database initialized
+2025-08-07 13:16:42,726 INFO Database connection pool created successfully
+2025-08-07 13:16:47,598 ERROR Erreur lors de la sauvegarde pour FoxPro: local variable 'datetime' referenced before assignment
+2025-08-07 13:17:48,344 ERROR Erreur lors de la sauvegarde pour FoxPro: local variable 'datetime' referenced before assignment
+2025-08-07 13:22:25,921 INFO Base de données initialisée avec succès
+2025-08-07 13:22:25,921 INFO Authentication database initialized
+2025-08-07 13:22:25,940 INFO Database connection pool created successfully
+2025-08-07 13:22:41,618 ERROR Erreur lors de la sauvegarde pour FoxPro: local variable 'datetime' referenced before assignment
+2025-08-07 13:26:58,115 INFO Base de données initialisée avec succès
+2025-08-07 13:26:58,115 INFO Authentication database initialized
+2025-08-07 13:26:58,165 INFO Database connection pool created successfully
+2025-08-07 13:27:08,018 ERROR Erreur lors de la sauvegarde pour FoxPro: type object 'datetime.datetime' has no attribute 'datetime'
+2025-08-07 13:29:22,257 ERROR Erreur lors de la sauvegarde pour FoxPro: type object 'datetime.datetime' has no attribute 'datetime'
+2025-08-07 13:34:04,673 INFO Base de données initialisée avec succès
+2025-08-07 13:34:04,673 INFO Authentication database initialized
+2025-08-07 13:34:04,699 INFO Database connection pool created successfully
+2025-08-07 13:34:23,001 ERROR Erreur lors de la sauvegarde pour FoxPro: type object 'datetime.datetime' has no attribute 'datetime'
+2025-08-07 13:37:19,470 INFO Base de données initialisée avec succès
+2025-08-07 13:37:19,470 INFO Authentication database initialized
+2025-08-07 13:37:19,501 INFO Database connection pool created successfully
+2025-08-07 13:37:32,745 ERROR Erreur lors de l'écriture dans le fichier DBF: incoming data has too many values
+2025-08-07 13:37:32,755 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-07 13:37:32,755 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-07 13:39:21,334 ERROR Erreur lors de l'écriture dans le fichier DBF: incoming data has too many values
+2025-08-07 13:39:21,337 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-07 13:39:21,337 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-07 13:45:14,976 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
+2025-08-07 13:45:14,987 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:45:14,987 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:46:16,392 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
+2025-08-07 13:46:16,408 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:46:16,408 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:48:34,636 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
+2025-08-07 13:48:34,656 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:48:34,656 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:51:42,350 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-07 13:51:42,370 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:51:42,370 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:55:20,105 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-07 13:55:20,124 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:55:20,124 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:56:30,958 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-07 13:56:30,976 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 13:56:30,978 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 14:00:24,264 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
+2025-08-07 14:00:24,287 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 14:00:24,290 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 14:01:08,106 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
+2025-08-07 14:01:08,141 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-07 14:01:08,141 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records

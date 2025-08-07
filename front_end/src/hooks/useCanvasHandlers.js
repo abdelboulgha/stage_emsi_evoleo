@@ -30,8 +30,28 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
       if (!canvasRef.current) return;
 
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / dataPrepState.currentZoom;
-      const y = (event.clientY - rect.top) / dataPrepState.currentZoom;
+      const xAffiche = (event.clientX - rect.left);
+      const yAffiche = (event.clientY - rect.top);
+
+      // Taille logique du canvas (attributs width/height)
+      const canvasWidth = canvasRef.current.width;
+      const canvasHeight = canvasRef.current.height;
+
+      // Taille affichée à l'écran (CSS)
+      const displayWidth = rect.width;
+      const displayHeight = rect.height;
+
+      // Taille de l'image OCR
+      const imageWidth = dataPrepState.imageDimensions?.width || canvasWidth;
+      const imageHeight = dataPrepState.imageDimensions?.height || canvasHeight;
+
+      // Conversion clic -> coordonnées canvas logique
+      const xCanvas = xAffiche * (canvasWidth / displayWidth);
+      const yCanvas = yAffiche * (canvasHeight / displayHeight);
+
+      // Conversion canvas logique -> image OCR
+      const x = xCanvas * (imageWidth / canvasWidth);
+      const y = yCanvas * (imageHeight / canvasHeight);
 
       // Mode dessin manuel
       if (manualDrawState.isDrawing) {
@@ -45,6 +65,10 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
       // Mode sélection OCR
       if (dataPrepState.isSelecting && dataPrepState.selectedField) {
+        console.log("Coordonnées du clic (image OCR) :", x, y); // DEBUG
+        if (dataPrepState.ocrBoxes && dataPrepState.ocrBoxes.length > 0) {
+          console.log("Première boîte OCR :", dataPrepState.ocrBoxes[0]); // DEBUG
+        }
         const clickedBox = findClickedBox(x, y);
         if (clickedBox) {
           const fieldMappingsUpdate = {

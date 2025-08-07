@@ -102,6 +102,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
             fileType: file.type,
             selectedPageIndex: pageIndex,
           }));
+          console.log("OCR Boxes reçues :", result.boxes); // DEBUG
           setCurrentStep("dataprep");
           navigate("/parametre");
           showNotification(

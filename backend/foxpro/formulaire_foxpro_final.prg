@@ -9,13 +9,14 @@ SET CENTURY ON
 SET DATE TO FRENCH
 
 * Variables pour les champs
-PRIVATE m_fournissr, m_numfact, m_tauxtva, m_mntht, m_mnttva, m_mntttc
+PRIVATE m_fournissr, m_numfact, m_datefacturation, m_tauxtva, m_mntht, m_mnttva, m_mntttc
 PRIVATE ocr_file, json_content
 PRIVATE fournissr_size, numfact_size, fournissr_display, numfact_display
 
 * Initialisation avec des tailles de base
 m_fournissr = SPACE(100)  && Taille maximale pour recevoir les données
 m_numfact = SPACE(50)     && Taille maximale pour recevoir les données
+m_datefacturation = DATE()  && Initialiser avec la date courante
 m_tauxtva = 0.00
 m_mntht = 0.00
 m_mnttva = 0.00
@@ -40,6 +41,49 @@ json_content = FILETOSTR(ocr_file)
 * Extraire les données avec une méthode plus robuste - LIRE DANS LA SECTION "fields"
 m_fournissr = PADR(ALLTRIM(ExtractJSONValueFromSection(json_content, "fields", "fournisseur")), 100)
 m_numfact = PADR(ALLTRIM(ExtractJSONValueFromSection(json_content, "fields", "numeroFacture")), 50)
+
+* Extraire la date de facturation et la convertir au format français
+PRIVATE date_iso, date_fr, date_clean
+date_iso = ExtractJSONValueFromSection(json_content, "fields", "dateFacturation")
+
+* Nettoyer la date en extrayant seulement la partie date
+IF !EMPTY(date_iso)
+    * Chercher le pattern DD/MM/YYYY dans la chaîne
+    PRIVATE pos_slash1, pos_slash2, day_part, month_part, year_part
+    
+    * Chercher le premier "/"
+    pos_slash1 = AT("/", date_iso)
+    IF pos_slash1 > 0
+        * Chercher le deuxième "/"
+        pos_slash2 = AT("/", date_iso, 2)
+        IF pos_slash2 > 0 AND pos_slash2 > pos_slash1
+            * Extraire les parties de la date
+            day_part = ALLTRIM(SUBSTR(date_iso, pos_slash1 - 2, 2))
+            month_part = ALLTRIM(SUBSTR(date_iso, pos_slash1 + 1, 2))
+            year_part = ALLTRIM(SUBSTR(date_iso, pos_slash2 + 1, 4))
+            
+            * Vérifier que les parties sont valides
+            IF ISDIGIT(day_part) AND ISDIGIT(month_part) AND ISDIGIT(year_part)
+                date_fr = day_part + "/" + month_part + "/" + year_part
+                m_datefacturation = CTOD(date_fr)
+            ELSE
+                m_datefacturation = DATE()  && Date courante si format invalide
+            ENDIF
+        ELSE
+            m_datefacturation = DATE()  && Date courante si format invalide
+        ENDIF
+    ELSE
+        * Essayer le format YYYY-MM-DD
+        IF LEN(date_iso) >= 10 AND AT("-", date_iso) > 0
+            date_fr = SUBSTR(date_iso, 9, 2) + "/" + SUBSTR(date_iso, 6, 2) + "/" + SUBSTR(date_iso, 1, 4)
+            m_datefacturation = CTOD(date_fr)
+        ELSE
+            m_datefacturation = DATE()  && Date courante si pas de date valide
+        ENDIF
+    ENDIF
+ELSE
+    m_datefacturation = DATE()  && Date courante si pas de date valide
+ENDIF
 
 * Convertir les nombres avec gestion des virgules - LIRE DANS LA SECTION "fields"
 m_tauxtva = VAL(STRTRAN(ExtractJSONValueFromSection(json_content, "fields", "tauxTVA"), ",", "."))
@@ -70,20 +114,23 @@ CLEAR
 @ 16, 5 SAY "N° Facture:"
 @ 16, 20 GET m_numfact PICTURE (numfact_display)
 
-@ 18, 5 SAY "Taux TVA (%):"
-@ 18, 20 GET m_tauxtva PICTURE "999999.99"
+@ 18, 5 SAY "Date Facturation:"
+@ 18, 20 GET m_datefacturation
 
-@ 20, 5 SAY "Montant HT:"
-@ 20, 20 GET m_mntht PICTURE "999999.99"
+@ 20, 5 SAY "Taux TVA (%):"
+@ 20, 20 GET m_tauxtva PICTURE "999999.99"
 
-@ 22, 5 SAY "Montant TVA:"
-@ 22, 20 GET m_mnttva PICTURE "999999.99"
+@ 22, 5 SAY "Montant HT:"
+@ 22, 20 GET m_mntht PICTURE "999999.99"
 
-@ 24, 5 SAY "Montant TTC:"
-@ 24, 20 GET m_mntttc PICTURE "999999.99"
+@ 24, 5 SAY "Montant TVA:"
+@ 24, 20 GET m_mnttva PICTURE "999999.99"
 
-@ 26, 5 SAY "=========================================="
-@ 27, 5 SAY "Appuyez sur ENTER pour sauvegarder, ESC pour annuler"
+@ 26, 5 SAY "Montant TTC:"
+@ 26, 20 GET m_mntttc PICTURE "999999.99"
+
+@ 28, 5 SAY "=========================================="
+@ 29, 5 SAY "Appuyez sur ENTER pour sauvegarder, ESC pour annuler"
 
 READ
 
@@ -100,14 +147,16 @@ IF LASTKEY() # 27
     IF !EOF()  && Vérifier que l'enregistrement a été ajouté
         REPLACE fournissr WITH ALLTRIM(m_fournissr), ;
                 numfact WITH ALLTRIM(m_numfact), ;
-                tauxTVA WITH m_tauxtva, ;
-                mntHT WITH m_mntht, ;
-                mntTVA WITH m_mnttva, ;
-                mntTTC WITH m_mntttc
+                datefact WITH m_datefacturation, ;
+                tauxtva WITH m_tauxtva, ;
+                mntht WITH m_mntht, ;
+                mnttva WITH m_mnttva, ;
+                mntttc WITH m_mntttc
 
         ? "Facture enregistrée avec succès dans la base de données"
         ? "Fournisseur: " + ALLTRIM(m_fournissr)
         ? "N° Facture: " + ALLTRIM(m_numfact)
+        ? "Date Facturation: " + DTOC(m_datefacturation)
         ? "Montant TTC: " + STR(m_mntttc, 10, 2)
     ELSE
         ? "Erreur lors de l'ajout de l'enregistrement"
