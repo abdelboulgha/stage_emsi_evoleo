@@ -124,3 +124,10 @@
 2025-08-07 15:10:25,030 INFO Base de données initialisée avec succès
 2025-08-07 15:10:25,032 INFO Authentication database initialized
 2025-08-07 15:10:25,062 INFO Database connection pool created successfully
+2025-08-07 15:36:49,379 INFO Base de données initialisée avec succès
+2025-08-07 15:36:49,380 INFO Authentication database initialized
+2025-08-07 15:36:49,398 INFO Database connection pool created successfully
+2025-08-08 01:10:04,471 ERROR Erreur lors de l'initialisation de la base de données: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-08 01:10:04,472 ERROR Error initializing authentication database: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-08 01:10:08,646 ERROR Error creating connection pool: 2003 (HY000): Can't connect to MySQL server on 'localhost:3306' (10061)
+2025-08-08 01:10:08,646 WARNING Continuing without database connection pool

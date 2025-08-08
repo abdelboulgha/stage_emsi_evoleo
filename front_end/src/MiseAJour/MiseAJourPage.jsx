@@ -1,12 +1,7 @@
-import React, { useEffect, useState } from "react";
-import { Edit2, Trash2, CheckCircle, Search, X, ChevronUp, ChevronDown } from "lucide-react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { registerLocale } from "react-datepicker";
-import fr from 'date-fns/locale/fr';
-import "./MiseAJourPage.css";
+import React, { useEffect, useState, useCallback } from "react";
+import { Edit2, Trash2, Search, X, ChevronUp, ChevronDown } from "lucide-react";
 
-registerLocale('fr', fr);
+import "./MiseAJourPage.css";
 
 const formatDateTime = (dateString) => {
   if (!dateString) return '';
@@ -39,8 +34,6 @@ const FIELDS = [
   { key: "date_creation", label: "Date D'ajout" },
 ];
 
-const PAGE_SIZE = 10;
-
 const MiseAJourPage = () => {
   const [factures, setFactures] = useState([]);
   const [search, setSearch] = useState("");
@@ -50,11 +43,7 @@ const MiseAJourPage = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
 
-  useEffect(() => {
-    fetchFactures();
-  }, [page, search]);
-
-  const fetchFactures = async () => {
+  const fetchFactures = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -62,7 +51,7 @@ const MiseAJourPage = () => {
         search: search,
       });
       const res = await fetch(`http://localhost:8000/factures?${params}`, {
-        credentials: 'include', // Ajout des cookies
+        credentials: 'include',
       });
       if (res.ok) {
         const data = await res.json();
@@ -74,7 +63,11 @@ const MiseAJourPage = () => {
       setFactures([]);
       setTotalPages(1);
     }
-  };
+  }, [page, search]);
+
+  useEffect(() => {
+    fetchFactures();
+  }, [fetchFactures]);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -117,13 +110,6 @@ const MiseAJourPage = () => {
     });
   };
 
-  const handleEdit = (id, field, value) => {
-    setEditing((prev) => ({
-      ...prev,
-      [id]: { ...prev[id], [field]: value },
-    }));
-  };
-
   const convertNumericFields = (data) => {
     const copy = { ...data };
     ["montantHT", "montantTVA", "montantTTC", "tauxTVA"].forEach((key) => {
@@ -133,33 +119,6 @@ const MiseAJourPage = () => {
       }
     });
     return copy;
-  };
-
-  const handleUpdate = async (id) => {
-    try {
-      const updatedData = editing[id];
-      if (!updatedData) return;
-
-      const response = await fetch(`http://localhost:8000/factures/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: 'include', // Ajout des cookies
-        body: JSON.stringify(updatedData),
-      });
-
-      if (response.ok) {
-        setEditing((prev) => {
-          const newEditing = { ...prev };
-          delete newEditing[id];
-          return newEditing;
-        });
-        fetchFactures();
-      }
-    } catch (error) {
-      console.error("Erreur lors de la mise à jour:", error);
-    }
   };
 
   const handleDelete = async (id) => {
@@ -395,13 +354,12 @@ const MiseAJourPage = () => {
                         {formatDateTime(editing[f.key])}
                       </div>
                     ) : f.key === 'dateFacturation' ? (
-                      <DatePicker
-                        selected={editing[f.key] ? new Date(editing[f.key]) : null}
-                        onChange={(date) => handleDateChange(date, f.key)}
-                        dateFormat="dd/MM/yyyy"
-                        locale="fr"
+                      <input
+                        type="date"
+                        name={f.key}
+                        value={editing[f.key] ? new Date(editing[f.key]).toISOString().split('T')[0] : ''}
+                        onChange={(e) => handleDateChange(e.target.value, f.key)}
                         className="miseajour-modal-input"
-                        placeholderText="Sélectionner une date"
                       />
                     ) : (
                       <input
