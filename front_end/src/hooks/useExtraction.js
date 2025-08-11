@@ -9,9 +9,9 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     
     // Clean and format dateFacturation field
     if (fieldKey === 'dateFacturation') {
-      const dateMatch = val.toString().match(/\b(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2,4})\b/);
+      const dateMatch = val.toString().match(/\b(\d{1,2})[/\- .](\d{1,2})[/\- .](\d{2,4})\b/);
       if (dateMatch) {
-        const [_, day, month, year] = dateMatch;
+        const [, day, month, year] = dateMatch;
         const fullYear = year.length === 2 ? `20${year}` : year;
         return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       }

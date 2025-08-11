@@ -4,7 +4,7 @@ import {
   Loader2,
   Save,
   Database,
-  ZoomIn,
+ 
 } from "lucide-react";
 import { useExtraction } from "../hooks/useExtraction";
 
@@ -13,7 +13,7 @@ const ExtractionSidebar = ({
   setExtractionState,
   extractAllPdfs,
   openSaveModal,
-  launchFoxPro,
+  launchFoxPro,   
   filterValue,
   EXTRACTION_FIELDS,
   extractDrawState,
@@ -84,21 +84,7 @@ const ExtractionSidebar = ({
                     className="extraction-input-field"
                     placeholder={`${field.label} sera extrait automatiquement`}
                   />
-                 {/*  <button
-                    type="button"
-                    onClick={() => {
-                      if (extractDrawState.isDrawing && extractDrawState.fieldKey === field.key) {
-                        setExtractDrawState({ isDrawing: false, fieldKey: null, start: null, rect: null });
-                      } else {
-                        setExtractDrawState({ isDrawing: true, fieldKey: field.key, start: null, rect: null });
-                        showNotification(`Mode dessin extraction activé pour "${field.label}". Dessinez un rectangle sur l'image.`, "info");
-                      }
-                    }}
-                    className={`extraction-draw-button ${extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'active' : ''}`}
-                    title={extractDrawState.isDrawing && extractDrawState.fieldKey === field.key ? 'Annuler le dessin' : 'Dessiner pour extraire'}
-                  >
-                    <ZoomIn className="extraction-draw-icon" />
-                  </button>*/}
+             
                 </div>
               </div>
             );

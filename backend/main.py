@@ -58,9 +58,10 @@ DB_CONFIG = {
 
 # Configure logging
 logging.basicConfig(
-    filename='invoice_debug.log',
+    filename=r'C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\invoice_debug.log',
     level=logging.DEBUG,
-    format='%(asctime)s %(levelname)s %(message)s'
+    format='%(asctime)s %(levelname)s %(message)s',
+    force=True
 )
 
 # Initialize authentication database
@@ -673,13 +674,19 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
     except Exception as e:
         logging.error(f"Erreur lors de la sauvegarde pour FoxPro: {e}")
 
+logger = logging.getLogger()
+
 
 # extract data function
 @app.post("/ocr-preview")
+
 async def ocr_preview(
     file: UploadFile = File(...),
-    template_id: str = Form(None)
+    template_id: str = Form(None),
+    
 ):
+    print("Entering ocr-preview endpoint")
+    print("Starting OCR processing")
     try:
         # Read and process the uploaded file
         file_content = await file.read()
@@ -705,7 +712,7 @@ async def ocr_preview(
             rec_scores = res.get('rec_scores', [])
             for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
                 if score is None or score < 0.75 or not text.strip():
-                    logging.info(f"Filtered out low confidence text: '{text}' (confidence: {score:.3f})")
+                    print(f"Filtered out low confidence text: '{text}' (confidence: {score:.3f})")
                     continue
                 
                 x_coords = [p[0] for p in poly]
@@ -730,7 +737,7 @@ async def ocr_preview(
                     'score': float(score)
                 })
         
-        logging.info(f"Total detected boxes (after confidence filtering): {len(detected_boxes)}")
+        print(f"Total detected boxes (after confidence filtering): {len(detected_boxes)}")
         
         # Helper functions
         def extract_number(text):
@@ -797,11 +804,112 @@ async def ocr_preview(
             return False
 
         # --- HT extraction ---
+        print("Starting HT candidate search...")
         ht_candidates = []
+        ht_keyword_boxes = []
+        
+        # First pass: Find all HT keywords
         for i, box in enumerate(detected_boxes):
             text = box['text']
-            is_ht = is_valid_ht_keyword(text)
-            if is_ht:
+            if is_valid_ht_keyword(text):
+                print(f"Found HT keyword: '{text}' at position {i}")
+                ht_keyword_boxes.append(box)
+        
+        # Second pass: Try horizontal search for all HT keywords
+        for box in ht_keyword_boxes:
+            ht_x, ht_y = box['center_x'], box['center_y']
+            best_match = None
+            min_distance = float('inf')
+            
+            # Search for values on the same line (horizontal search)
+            for other_box in detected_boxes:
+                if other_box == box:
+                    continue
+                    
+                other_y = other_box['center_y']
+                other_text = other_box['text'].strip()
+                
+                # Check if on same line and to the right
+                if abs(other_y - ht_y) < 20 and other_box['center_x'] > ht_x:
+                    next_value = extract_number(other_text)
+                    if next_value is not None and '%' not in other_text:  # Skip percentage values
+                        distance = other_box['center_x'] - ht_x
+                        print(f"Potential HT value '{other_text}' (score: {other_box['score']:.2f}) at distance {distance:.1f}px")
+                        if 0 < distance < min_distance:
+                            best_match = {
+                                'keyword_box': box,
+                                'value_box': other_box,
+                                'value': next_value,
+                                'keyword_text': box['text'],
+                                'value_text': other_text,
+                                'distance': distance,
+                                'search_type': 'horizontal'
+                            }
+                            min_distance = distance
+            
+            if best_match:
+                print(f"Found HT candidate (horizontal): {best_match['value']} (distance: {best_match['distance']:.1f}px)")
+                ht_candidates.append(best_match)
+        
+        # If no horizontal candidates found for any HT keyword, try vertical search
+        if not ht_candidates and ht_keyword_boxes:
+            print("No horizontal HT candidates found for any keyword, trying vertical search...")
+            for box in ht_keyword_boxes:
+                print(f"Trying vertical search for HT keyword: '{box['text']}'")
+                ht_bottom = box['top'] + box['height']
+                closest_below = None
+                min_y_distance = float('inf')
+                best_value = None
+                
+                for other_box in detected_boxes:
+                    if other_box == box:
+                        continue
+                        
+                    other_top = other_box['top']
+                    other_text = other_box['text'].strip()
+                    
+                    # Check if the box is below the HT keyword and not a percentage
+                    if other_top > ht_bottom and '%' not in other_text:
+                        # Calculate horizontal overlap
+                        ht_left = box['left']
+                        ht_right = ht_left + box['width']
+                        other_left = other_box['left']
+                        other_right = other_left + other_box['width']
+                        
+                        # Check for horizontal overlap
+                        if not (ht_right < other_left or other_right < ht_left):
+                            y_distance = other_top - ht_bottom
+                            if y_distance < min_y_distance and y_distance < 100:  # Limit max vertical distance
+                                next_value = extract_number(other_text)
+                                if next_value is not None:
+                                    print(f"  Found potential vertical match: '{other_text}' at distance {y_distance:.1f}px")
+                                    min_y_distance = y_distance
+                                    closest_below = other_box
+                                    best_value = next_value
+                
+                if closest_below and best_value is not None:
+                    print(f"Found HT candidate (vertical): {best_value} " +
+                          f"(distance: {min_y_distance:.1f}px, " +
+                          f"text: '{closest_below['text']}')")
+                    ht_candidates.append({
+                        'keyword_box': box,
+                        'value_box': closest_below,
+                        'value': best_value,
+                        'keyword_text': box['text'],
+                        'value_text': closest_below['text'],
+                        'distance': min_y_distance,
+                        'search_type': 'vertical'
+                    })
+                if closest_below:
+                    print(f"  Box directly below HT: text='{closest_below['text']}', " +
+                          f"score={closest_below['score']:.2f}, " +
+                          f"coords=({closest_below['left']:.1f},{closest_below['top']:.1f})x" +
+                          f"({closest_below['left'] + closest_below['width']:.1f}," +
+                          f"{closest_below['top'] + closest_below['height']:.1f}), " +
+                          f"distance={min_y_distance:.1f}px")
+                else:
+                    print("  No box found directly below the HT keyword")
+                
                 ht_x, ht_y = box['center_x'], box['center_y']
                 best_match = None
                 min_distance = float('inf')
@@ -812,6 +920,7 @@ async def ocr_preview(
                         next_value = extract_number(next_text)
                         if next_value is not None:
                             distance = next_box['center_x'] - ht_x
+                            print(f"Potential HT value '{next_text}' (score: {next_box['score']:.2f}) at distance {distance:.1f}px")
                             if 0 < distance < min_distance:
                                 best_match = {
                                     'keyword_box': box,
@@ -823,7 +932,9 @@ async def ocr_preview(
                                 }
                                 min_distance = distance
                 if best_match:
+                    print(f"Found HT candidate: {best_match['value']} (distance: {best_match['distance']:.1f}px)")
                     ht_candidates.append(best_match)
+                    
         if not ht_candidates:
             return {
                 "success": False,
@@ -833,42 +944,120 @@ async def ocr_preview(
         ht_candidates.sort(key=lambda x: x['distance'])
         ht_selected = ht_candidates[0]
         ht_extracted = ht_selected['value']
+        print(f"Selected HT value: {ht_selected['value']} from keyword '{ht_selected['keyword_text']}'")
 
         # --- TVA extraction ---
+        print(f"\nFound {len(ht_candidates)} HT candidate(s) in total")
         tva_candidates = []
+        tva_keyword_boxes = []
+        
+        # First pass: Find all TVA keywords
         for i, box in enumerate(detected_boxes):
-            if is_valid_tva_keyword(box['text']):
-                tva_x, tva_y = box['center_x'], box['center_y']
-                best_match = None
-                min_distance = float('inf')
-                for j in range(i + 1, min(i + 10, len(detected_boxes))):
-                    next_box = detected_boxes[j]
-                    next_text = next_box['text'].strip()
-                    if abs(next_box['center_y'] - tva_y) < 20:
-                        next_value = extract_number(next_text)
-                        if next_value is not None:
-                            distance = next_box['center_x'] - tva_x
-                            if 0 < distance < min_distance:
-                                best_match = {
-                                    'keyword_box': box,
-                                    'value_box': next_box,
-                                    'value': next_value,
-                                    'keyword_text': box['text'],
-                                    'value_text': next_text,
-                                    'distance': distance
-                                }
-                                min_distance = distance
-                if best_match:
-                    tva_candidates.append(best_match)
+            text = box['text']
+            if is_valid_tva_keyword(text):
+                print(f"Found TVA keyword: '{text}' at position {i}")
+                tva_keyword_boxes.append(box)
+        
+        # Second pass: Try horizontal search for all TVA keywords
+        for box in tva_keyword_boxes:
+            tva_x, tva_y = box['center_x'], box['center_y']
+            best_match = None
+            min_distance = float('inf')
+            
+            # Search for values on the same line (horizontal search)
+            for other_box in detected_boxes:
+                if other_box == box:
+                    continue
+                    
+                other_y = other_box['center_y']
+                other_text = other_box['text'].strip()
+                
+                # Check if on same line, to the right, and not a percentage
+                if abs(other_y - tva_y) < 20 and other_box['center_x'] > tva_x and '%' not in other_text:
+                    next_value = extract_number(other_text)
+                    if next_value is not None:
+                        distance = other_box['center_x'] - tva_x
+                        print(f"Potential TVA value '{other_text}' (score: {other_box['score']:.2f}) at distance {distance:.1f}px")
+                        if 0 < distance < min_distance:
+                            best_match = {
+                                'keyword_box': box,
+                                'value_box': other_box,
+                                'value': next_value,
+                                'keyword_text': box['text'],
+                                'value_text': other_text,
+                                'distance': distance,
+                                'search_type': 'horizontal'
+                            }
+                            min_distance = distance
+            
+            if best_match:
+                print(f"Found TVA candidate (horizontal): {best_match['value']} (distance: {best_match['distance']:.1f}px)")
+                tva_candidates.append(best_match)
+        
+        # If no horizontal candidates found for any TVA keyword, try vertical search
+        if not tva_candidates and tva_keyword_boxes:
+            print("No horizontal TVA candidates found for any keyword, trying vertical search...")
+            for box in tva_keyword_boxes:
+                print(f"Trying vertical search for TVA keyword: '{box['text']}'")
+                tva_bottom = box['top'] + box['height']
+                closest_below = None
+                min_y_distance = float('inf')
+                best_value = None
+                
+                for other_box in detected_boxes:
+                    if other_box == box:
+                        continue
+                        
+                    other_top = other_box['top']
+                    other_text = other_box['text'].strip()
+                    
+                    # Check if the box is below the TVA keyword and not a percentage
+                    if other_top > tva_bottom and '%' not in other_text:
+                        # Calculate horizontal overlap
+                        tva_left = box['left']
+                        tva_right = tva_left + box['width']
+                        other_left = other_box['left']
+                        other_right = other_left + other_box['width']
+                        
+                        # Check for horizontal overlap
+                        if not (tva_right < other_left or other_right < tva_left):
+                            y_distance = other_top - tva_bottom
+                            if y_distance < min_y_distance and y_distance < 100:  # Limit max vertical distance
+                                next_value = extract_number(other_text)
+                                if next_value is not None:
+                                    print(f"  Found potential vertical match: '{other_text}' at distance {y_distance:.1f}px")
+                                    min_y_distance = y_distance
+                                    closest_below = other_box
+                                    best_value = next_value
+                
+                if closest_below and best_value is not None:
+                    print(f"Found TVA candidate (vertical): {best_value} " +
+                          f"(distance: {min_y_distance:.1f}px, " +
+                          f"text: '{closest_below['text']}')")
+                    tva_candidates.append({
+                        'keyword_box': box,
+                        'value_box': closest_below,
+                        'value': best_value,
+                        'keyword_text': box['text'],
+                        'value_text': closest_below['text'],
+                        'distance': min_y_distance,
+                        'search_type': 'vertical'
+                    })    
+        
         if not tva_candidates:
             return {
                 "success": False,
                 "data": {},
                 "message": "Aucun mot-clé TVA trouvé"
             }
+        
+        # Sort by distance (either horizontal or vertical)
         tva_candidates.sort(key=lambda x: x['distance'])
         tva_selected = tva_candidates[0]
         tva_extracted = tva_selected['value']
+        print(f"\nFound {tva_keyword_count} TVA keyword(s) in total")
+        print(f"Selected TVA value: {tva_selected['value']} from {tva_selected['search_type']} search, " +
+              f"keyword: '{tva_selected['keyword_text']}'")
 
         # --- TTC & tauxTVA ---
         ttc_extracted = round(ht_extracted + tva_extracted, 2)
