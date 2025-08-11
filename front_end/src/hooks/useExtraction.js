@@ -4,7 +4,8 @@ const API_BASE_URL = "http://localhost:8000";
 
 export const useExtraction = (extractionState, setExtractionState, showNotification) => {
   const filterValue = useCallback((val, fieldKey) => {
-    if (!val) return "";
+    // Explicitly check for undefined or null, but allow 0 and '0'
+    if (val === undefined || val === null) return "";
     if (fieldKey === "fournisseur") return val;
     
     // Clean and format dateFacturation field

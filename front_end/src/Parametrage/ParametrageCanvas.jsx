@@ -151,7 +151,7 @@ const ParametrageCanvas = ({
         {!dataPrepState.uploadedImage ? (
           <div className="parametrage-upload-zone">
             <div className="parametrage-upload-content">
-              <Upload className="parametrage-upload-large-icon" />
+            
               <h3 className="parametrage-upload-title">Aucun document sélectionné</h3>
               <p className="parametrage-upload-description">
                 Cliquez sur "Nouveau fichier" pour commencer la configuration

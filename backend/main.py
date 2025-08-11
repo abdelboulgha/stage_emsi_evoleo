@@ -998,7 +998,9 @@ async def ocr_preview(
         if not tva_candidates and tva_keyword_boxes:
             print("No horizontal TVA candidates found for any keyword, trying vertical search...")
             for box in tva_keyword_boxes:
-                print(f"Trying vertical search for TVA keyword: '{box['text']}'")
+                print(f"\n=== TVA VERTICAL SEARCH DEBUG ===")
+                print(f"TVA keyword: '{box['text']}' at position: left={box['left']:.1f}, top={box['top']:.1f}, width={box['width']:.1f}, height={box['height']:.1f}")
+                print(f"Searching for values below TVA keyword within 100px...")
                 tva_bottom = box['top'] + box['height']
                 closest_below = None
                 min_y_distance = float('inf')
@@ -1011,29 +1013,51 @@ async def ocr_preview(
                     other_top = other_box['top']
                     other_text = other_box['text'].strip()
                     
-                    # Check if the box is below the TVA keyword and not a percentage
-                    if other_top > tva_bottom and '%' not in other_text:
-                        # Calculate horizontal overlap
-                        tva_left = box['left']
-                        tva_right = tva_left + box['width']
-                        other_left = other_box['left']
-                        other_right = other_left + other_box['width']
+                    # Calculate vertical distance first to filter out far-away boxes early
+                    y_distance = other_top - tva_bottom
+                    
+                    # Only process boxes that are below the TVA keyword and don't contain percentage signs
+                    if y_distance > 0 and '%' not in other_text:
+                        print(f"\n  Checking box: '{other_text}' at top={other_top:.1f} (TVA bottom={tva_bottom:.1f})")
+                        print(f"  Box coords: left={other_box['left']:.1f}, top={other_top:.1f}, right={other_box['left'] + other_box['width']:.1f}, bottom={other_box['top'] + other_box['height']:.1f}")
                         
-                        # Check for horizontal overlap
-                        if not (tva_right < other_left or other_right < tva_left):
-                            y_distance = other_top - tva_bottom
-                            if y_distance < min_y_distance and y_distance < 100:  # Limit max vertical distance
-                                next_value = extract_number(other_text)
-                                if next_value is not None:
-                                    print(f"  Found potential vertical match: '{other_text}' at distance {y_distance:.1f}px")
-                                    min_y_distance = y_distance
-                                    closest_below = other_box
-                                    best_value = next_value
+                        # Calculate centers
+                        tva_center_x = box['left'] + box['width'] / 2
+                        tva_center_y = box['top'] + box['height'] / 2
+                        
+                        other_center_x = other_box['left'] + other_box['width'] / 2
+                        other_center_y = other_box['top'] + other_box['height'] / 2
+                        
+                        # Calculate Euclidean distance between centers
+                        x_diff = other_center_x - tva_center_x
+                        y_diff = other_center_y - tva_center_y
+                        distance = (x_diff**2 + y_diff**2) ** 0.5
+                        
+                        # Calculate horizontal offset (for reference)
+                        center_offset = abs(other_center_x - tva_center_x)
+                        
+                        print(f"  TVA center: ({tva_center_x:.1f}, {tva_center_y:.1f})")
+                        print(f"  Other center: ({other_center_x:.1f}, {other_center_y:.1f})")
+                        print(f"  Distance: {distance:.1f}px, X offset: {center_offset:.1f}px, Y distance: {y_distance:.1f}px")
+                        
+                        next_value = extract_number(other_text)
+                        print(f"  Extracted number: {next_value}")
+                        if next_value is not None:
+                            print(f"  Found potential match: '{other_text}' at distance {distance:.1f}px")
+                            if best_value is None or distance < min_distance:
+                                best_value = next_value
+                                closest_below = other_box
+                                min_distance = distance
+                                print(f"  New best match: {best_value} at {distance:.1f}px")
+                        else:
+                            print(f"  No valid number extracted from: '{other_text}'")
                 
                 if closest_below and best_value is not None:
-                    print(f"Found TVA candidate (vertical): {best_value} " +
-                          f"(distance: {min_y_distance:.1f}px, " +
-                          f"text: '{closest_below['text']}')")
+                    print(f"\n  FINAL TVA CANDIDATE:")
+                    print(f"  - Value: {best_value}")
+                    print(f"  - Text: '{closest_below['text']}'")
+                    print(f"  - Distance from TVA: {min_distance:.1f}px")
+                    print(f"  - Coords: ({closest_below['left']:.1f}, {closest_below['top']:.1f}) - ({closest_below['left'] + closest_below['width']:.1f}, {closest_below['top'] + closest_below['height']:.1f})")
                     tva_candidates.append({
                         'keyword_box': box,
                         'value_box': closest_below,
@@ -1041,7 +1065,8 @@ async def ocr_preview(
                         'keyword_text': box['text'],
                         'value_text': closest_below['text'],
                         'distance': min_y_distance,
-                        'search_type': 'vertical'
+                        'search_type': 'vertical',
+                        'center_offset': center_offset  # Store center offset for debugging
                     })    
         
         if not tva_candidates:
@@ -1051,11 +1076,37 @@ async def ocr_preview(
                 "message": "Aucun mot-clé TVA trouvé"
             }
         
-        # Sort by distance (either horizontal or vertical)
-        tva_candidates.sort(key=lambda x: x['distance'])
-        tva_selected = tva_candidates[0]
+        # Sort by distance from TVA keyword
+        if tva_candidates:
+            print("\nAll TVA candidates (closest first):")
+            
+            # Sort by distance
+            tva_candidates.sort(key=lambda x: x['distance'])
+            
+            # Display the top candidates
+            for i, c in enumerate(tva_candidates[:5], 1):
+                print(f"{i}. Value: {c['value']:8.2f}, "
+                      f"Distance: {c['distance']:5.1f}px, "
+                      f"Text: '{c['value_text']}'")
+            
+            # Select the best candidate (closest vertically, then most centered)
+            tva_selected = tva_candidates[0]
+            print(f"\nSelected best TVA candidate:")
+            print(f"- Value: {tva_selected['value']}")
+            print(f"- Distance from TVA keyword: {tva_selected['distance']:.1f}px")
+            print(f"- Horizontal offset: {tva_selected.get('center_offset', 0):.1f}px")
+            print(f"- Text: '{tva_selected['value_text']}'")
+            
+            print(f"Selected TVA value: {tva_selected['value']} from text: '{tva_selected['value_text']}'")
+        else:
+            print("\nNo TVA candidates found after processing all potential matches")
+            return {
+                "success": False,
+                "data": {},
+                "message": "Aucun montant TVA trouvé"
+            }
         tva_extracted = tva_selected['value']
-        print(f"\nFound {tva_keyword_count} TVA keyword(s) in total")
+        print(f"\nFound {len(tva_keyword_boxes)} TVA keyword(s) in total")
         print(f"Selected TVA value: {tva_selected['value']} from {tva_selected['search_type']} search, " +
               f"keyword: '{tva_selected['keyword_text']}'")
 

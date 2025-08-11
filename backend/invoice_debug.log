@@ -286,3 +286,45 @@ RuntimeError: In user code:
 2025-08-11 15:41:16,368 INFO Base de données initialisée avec succès
 2025-08-11 15:41:16,369 INFO Authentication database initialized
 2025-08-11 15:41:16,393 INFO Database connection pool created successfully
+2025-08-11 18:42:41,612 INFO Base de données initialisée avec succès
+2025-08-11 18:42:41,613 INFO Authentication database initialized
+2025-08-11 18:42:41,646 INFO Database connection pool created successfully
+2025-08-11 18:43:14,732 ERROR Error in extract_test: name 'tva_keyword_count' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1058, in ocr_preview
+    print(f"\nFound {tva_keyword_count} TVA keyword(s) in total")
+                     ^^^^^^^^^^^^^^^^^
+NameError: name 'tva_keyword_count' is not defined
+2025-08-11 18:43:29,981 ERROR Error in extract_test: name 'tva_keyword_count' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1058, in ocr_preview
+    print(f"\nFound {tva_keyword_count} TVA keyword(s) in total")
+                     ^^^^^^^^^^^^^^^^^
+NameError: name 'tva_keyword_count' is not defined
+2025-08-11 18:45:20,358 INFO Base de données initialisée avec succès
+2025-08-11 18:45:20,359 INFO Authentication database initialized
+2025-08-11 18:45:20,383 INFO Database connection pool created successfully
+2025-08-11 18:45:41,594 INFO Base de données initialisée avec succès
+2025-08-11 18:45:41,594 INFO Authentication database initialized
+2025-08-11 18:45:41,618 INFO Database connection pool created successfully
+2025-08-11 18:51:55,506 INFO Base de données initialisée avec succès
+2025-08-11 18:51:55,507 INFO Authentication database initialized
+2025-08-11 18:51:55,531 INFO Database connection pool created successfully
+2025-08-11 18:54:46,017 INFO Base de données initialisée avec succès
+2025-08-11 18:54:46,018 INFO Authentication database initialized
+2025-08-11 18:54:46,061 INFO Database connection pool created successfully
+2025-08-11 18:58:43,394 INFO Base de données initialisée avec succès
+2025-08-11 18:58:43,395 INFO Authentication database initialized
+2025-08-11 18:58:43,420 INFO Database connection pool created successfully
+2025-08-11 19:07:38,744 INFO Base de données initialisée avec succès
+2025-08-11 19:07:38,744 INFO Authentication database initialized
+2025-08-11 19:07:38,767 INFO Database connection pool created successfully
+2025-08-11 19:09:58,866 INFO Base de données initialisée avec succès
+2025-08-11 19:09:58,867 INFO Authentication database initialized
+2025-08-11 19:09:58,891 INFO Database connection pool created successfully
+2025-08-11 19:28:31,349 INFO Base de données initialisée avec succès
+2025-08-11 19:28:31,349 INFO Authentication database initialized
+2025-08-11 19:28:31,374 INFO Database connection pool created successfully
+2025-08-11 19:29:02,625 INFO Base de données initialisée avec succès
+2025-08-11 19:29:02,625 INFO Authentication database initialized
+2025-08-11 19:29:02,650 INFO Database connection pool created successfully

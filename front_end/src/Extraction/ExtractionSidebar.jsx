@@ -56,6 +56,9 @@ const ExtractionSidebar = ({
           {EXTRACTION_FIELDS.map((field) => {
             const rawValue = extractionState.extractedDataList[extractionState.currentPdfIndex]?.[field.key];
             const displayValue = filterValue(rawValue, field.key);
+            const shouldShowPlaceholder = displayValue === undefined || 
+                                      displayValue === null || 
+                                      displayValue === '';
               
             return (
               <div key={field.key} className="extraction-field-item">
@@ -66,7 +69,7 @@ const ExtractionSidebar = ({
                   <input
                     type={field.key === 'dateFacturation' ? 'date' : 'text'}
                     name={field.key}
-                    value={displayValue || ''}
+                    value={shouldShowPlaceholder ? '' : displayValue}
                     onChange={(e) =>
                       setExtractionState((prev) => ({
                         ...prev,
