@@ -100,13 +100,14 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
 
         const response = await fetch(`${API_BASE_URL}/upload-basic`, {
           method: "POST",
-          credentials: 'include', // Ajout des cookies
+          credentials: 'include',
           body: formData,
         });
         const result = await response.json();
 
         if (result.success) {
           if (result.images) {
+            // Handle multi-page PDFs
             result.images.forEach((img, index) => {
               const uniqueId = `${file.name}-${file.lastModified}-${Date.now()}-${index}`;
               previews.push({
@@ -119,11 +120,12 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
               });
             });
           } else {
+            // Handle single page documents or images
             const uniqueId = `${file.name}-${file.lastModified}-${Date.now()}`;
             previews.push({
               id: uniqueId,
               file: file,
-              preview: result.image,
+              preview: result.preview || URL.createObjectURL(file),
               fileName: file.name,
               pageNumber: 1,
               totalPages: 1,
@@ -132,38 +134,27 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
         }
       }
 
-      const newState = {
-        ...setupState,
-        selectedFiles: files,
-        filePreviews: previews,
-      };
-
-      setSetupState(newState);
-      showNotification(
-        `${files.length} fichier(s) ajouté(s) (${previews.length} page(s))`,
-        "success"
-      );
-
-      if (files.length === 1) {
-        const file = files[0];
-        const filePreview = previews[0];
-        if (filePreview.totalPages === 1) {
-          validateSetupAndProceed({
-            ...setupState,
-            invoiceType: setupState.invoiceType,
-            selectedFiles: files,
-            filePreviews: previews,
-          });
-        }
-      }
-
-      event.target.value = "";
+      // Append new files to existing ones
+      setSetupState(prev => ({
+        ...prev,
+        selectedFiles: [...(prev.selectedFiles || []), ...files],
+        filePreviews: [...(prev.filePreviews || []), ...previews],
+      }));
     } catch (error) {
-      showNotification("Erreur lors du chargement des fichiers", "error");
+      console.error("Error uploading files:", error);
+      showNotification("Erreur lors du téléchargement des fichiers", "error");
     } finally {
       setIsLoading(false);
     }
-  }, [setupState, setSetupState, setIsLoading, showNotification, validateSetupAndProceed]);
+  }, [setSetupState, setIsLoading, showNotification]);
+
+  const clearAllFiles = useCallback(() => {
+    setSetupState(prev => ({
+      ...prev,
+      selectedFiles: [],
+      filePreviews: [],
+    }));
+  }, [setSetupState]);
 
   const removeFile = useCallback((indexToRemove) => {
     setSetupState((prev) => ({
@@ -178,9 +169,11 @@ export const useSetup = (setupState, setSetupState, setExtractionState, setCurre
   }, [setCurrentStep]);
 
   return {
+    validateSetupAndProceed,
     loadExistingMappings,
     handleSetupFileUpload,
-    validateSetupAndProceed,
+    handleSingleDataPrepUpload: handleSetupFileUpload, // Alias for compatibility
+    clearAllFiles,
     removeFile,
     backToSetup,
   };

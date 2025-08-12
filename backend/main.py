@@ -7,6 +7,7 @@ from datetime import date, datetime
 from io import BytesIO
 from typing import Any, Dict, List, Optional, Union
 import math
+import dateparser
 
 # Third-party imports
 import base64
@@ -67,7 +68,7 @@ logging.basicConfig(
 # Initialize authentication database
 try:
     init_database()
-    logging.info("Authentication database initialized")
+    print("Authentication database initialized")
 except Exception as e:
     logging.error(f"Error initializing authentication database: {e}")
 
@@ -82,7 +83,7 @@ try:
         pool_size=5,
         **DB_CONFIG
     )
-    logging.info("Database connection pool created successfully")
+    print("Database connection pool created successfully")
 except Error as e:
     logging.error(f"Error creating connection pool: {e}")
     logging.warning("Continuing without database connection pool")
@@ -169,7 +170,7 @@ async def save_mapping_db(template_name: str, field_map: Dict[str, Any], current
         if not current_user_id:
             raise ValueError("User ID is required to save template mappings")
             
-        logging.info(f"Starting to save mapping for template: {template_name}")
+        print(f"Starting to save mapping for template: {template_name}")
         logging.debug(f"Field map data: {field_map}")
         
         connection = get_connection()
@@ -188,7 +189,7 @@ async def save_mapping_db(template_name: str, field_map: Dict[str, Any], current
         # 2. If template exists, get its ID, otherwise create new template
         if template:
             template_id = template['id']
-            logging.info(f"Found existing template ID {template_id} for name '{template_name}'")
+            print(f"Found existing template ID {template_id} for name '{template_name}'")
         else:
             # Create new template
             cursor.execute("""
@@ -196,7 +197,7 @@ async def save_mapping_db(template_name: str, field_map: Dict[str, Any], current
                 VALUES (%s, %s)
             """, (template_name, current_user_id))
             template_id = cursor.lastrowid
-            logging.info(f"Created new template ID {template_id} with name '{template_name}'")
+            print(f"Created new template ID {template_id} with name '{template_name}'")
         
         if not template_id:
             raise ValueError(f"Failed to get or create template ID for '{template_name}'")
@@ -236,7 +237,7 @@ async def save_mapping_db(template_name: str, field_map: Dict[str, Any], current
                     logging.warning(f"Field name '{field_name}' not found in field_name table")
         
         connection.commit()
-        logging.info(f"Successfully saved {len(field_map)} fields for template '{template_name}' (ID: {template_id})")
+        print(f"Successfully saved {len(field_map)} fields for template '{template_name}' (ID: {template_id})")
         return True
         
     except Exception as e:
@@ -256,14 +257,14 @@ async def load_mapping_db(template_id: str) -> Dict:
     connection = None
     cursor = None
     try:
-        logging.info(f"Loading mappings for template_id: {template_id}")
+        print(f"Loading mappings for template_id: {template_id}")
         connection = get_connection()
         cursor = connection.cursor(dictionary=True)
         
         # Get field ID to name mapping
         cursor.execute("SELECT id, name FROM Field_Name")
         id_to_name = {row['id']: row['name'] for row in cursor.fetchall()}
-        logging.info(f"Loaded field name mapping: {id_to_name}")
+        print(f"Loaded field name mapping: {id_to_name}")
         
         # Get all mappings for this template (inclut 'manual')
         cursor.execute("""
@@ -274,7 +275,7 @@ async def load_mapping_db(template_id: str) -> Dict:
         
         field_map = {}
         rows = cursor.fetchall()
-        logging.info(f"Found {len(rows)} mappings in database")
+        print(f"Found {len(rows)} mappings in database")
         
         for row in rows:
             field_id = row['field_id']
@@ -288,13 +289,13 @@ async def load_mapping_db(template_id: str) -> Dict:
                         'height': float(row['height']) if row['height'] is not None else 0.0,
                         'manual': bool(row.get('manual', 0))  # <-- Ajout du flag manual
                     }
-                    logging.info(f"Loaded mapping for {field_name}: {field_map[field_name]}")
+                    print(f"Loaded mapping for {field_name}: {field_map[field_name]}")
                 except (ValueError, TypeError) as e:
                     logging.error(f"Error processing coordinates for field {field_name}: {e}")
             else:
                 logging.warning(f"No name found for field_id: {field_id}")
         
-        logging.info(f"Successfully loaded {len(field_map)} field mappings")
+        print(f"Successfully loaded {len(field_map)} field mappings")
         # Return in the expected format
         return {
             "status": "success",
@@ -378,36 +379,6 @@ class SaveMappingRequest(BaseModel):
     field_map: Dict[str, Optional[FieldCoordinates]]
 
 
-#upload parametrage
-@app.post("/pdf-page-previews")
-async def get_pdf_page_previews(file: UploadFile = File(...)):
-    try:
-        if not file.filename.lower().endswith('.pdf'):
-            raise HTTPException(status_code=400, detail="Le fichier doit être un PDF")
-        
-        # Read PDF
-        content = await file.read()
-        pdf_document = fitz.open(stream=content, filetype="pdf")
-        pages = []
-
-        # Convert each page to an image
-        for page_num in range(pdf_document.page_count):
-            page = pdf_document.load_page(page_num)
-            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Increase resolution
-            img_bytes = pix.tobytes("png")
-            img_base64 = base64.b64encode(img_bytes).decode("utf-8")
-            pages.append({
-                "image": f"data:image/png;base64,{img_base64}",
-                "pageNumber": page_num + 1
-            })
-
-        pdf_document.close()
-        return {"success": True, "pages": pages}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la génération des aperçus: {str(e)}")
-        
-
-
 @app.post("/upload-for-dataprep")
 async def upload_for_dataprep(
     file: UploadFile = File(...),
@@ -417,11 +388,11 @@ async def upload_for_dataprep(
     """Upload d'un fichier pour DataPrep, retour de l'image en base64, des boîtes OCR détectées, et l'image unwarped si disponible pour la page spécifiée"""
     try:
         file_content = await file.read()
-        logging.info(f"Received file: {file.filename}, page_index: {page_index} (type: {type(page_index)})")
+       
         if file.filename.lower().endswith('.pdf'):
             # Open PDF with PyMuPDF
             pdf_document = fitz.open(stream=file_content, filetype="pdf")
-            logging.info(f"PDF page count: {pdf_document.page_count}")
+           
             if page_index >= pdf_document.page_count:
                 pdf_document.close()
                 raise HTTPException(status_code=400, detail=f"Index de page invalide: {page_index}")
@@ -431,7 +402,7 @@ async def upload_for_dataprep(
             
             # Process only the specified page
             page = pdf_document.load_page(page_index)
-            logging.info(f"Processing page: {page_index}")
+          
             pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))  # Increase resolution
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             pdf_document.close()
@@ -447,7 +418,7 @@ async def upload_for_dataprep(
         # Run OCR on the selected image
         img_array = np.array(images[0])
         result = ocr.predict(img_array)
-        logging.info(f"OCR result: {len(result)} items detected")
+       
         boxes = []
         unwarped_base64 = None
         unwarped_width = None
@@ -503,7 +474,7 @@ async def upload_for_dataprep(
             "unwarped_height": unwarped_height,
             "page_index": page_index
         }
-        logging.info(f"Returning response: {response}")
+      
         return response
     except Exception as e:
         logging.error(f"Erreur lors de l'upload: {e}")
@@ -522,7 +493,7 @@ async def pdf_page_previews(
         
         file_content = await file.read()
         pdf_document = fitz.open(stream=file_content, filetype="pdf")
-        logging.info(f"Generating previews for PDF with {pdf_document.page_count} pages")
+    
         pages = []
 
         for page_num in range(pdf_document.page_count):
@@ -536,7 +507,7 @@ async def pdf_page_previews(
                 "image": f"data:image/png;base64,{img_base64}",
                 "pageNumber": page_num + 1
             })
-            logging.info(f"Generated preview for page {page_num + 1}")
+        
 
         pdf_document.close()
         return {"success": True, "pages": pages}
@@ -565,6 +536,10 @@ async def upload_basic(file: UploadFile = File(...)):
             }
         elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             img = Image.open(BytesIO(file_content)).convert('RGB')
+            # Resize image to match PDF dimensions (1191x1684)
+            target_size = (1191, 1684)
+            if img.size != target_size:
+                img = img.resize(target_size, Image.Resampling.LANCZOS)
             return {
                 "success": True,
                 "image": image_to_base64(img),
@@ -660,14 +635,14 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
             f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
             f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
         
-        logging.info("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement dans le dossier foxpro")
+        print("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement dans le dossier foxpro")
         
         print("save_extraction_for_foxpro completed successfully.")
         
         # Créer aussi automatiquement le fichier DBF s'il n'existe pas
         try:
             write_invoice_to_dbf(data_to_use)
-            logging.info("Fichier factures.dbf créé/mis à jour automatiquement")
+            print("Fichier factures.dbf créé/mis à jour automatiquement")
         except Exception as dbf_error:
             logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
         
@@ -677,18 +652,23 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
 logger = logging.getLogger()
 
 
-# extract data function
 @app.post("/ocr-preview")
-
 async def ocr_preview(
     file: UploadFile = File(...),
     template_id: str = Form(None),
-    
 ):
-    print("Entering ocr-preview endpoint")
-    print("Starting OCR processing")
+   
+
+    MIN_CONFIDENCE = 0.75
+    HORIZONTAL_VERTICAL_TOL = 10        # horizontal search: vertical tolerance (px)
+    HORIZONTAL_MAX_DIST = 600       # horizontal search: max distance to right (px)
+    VERTICAL_MAX_Y = 100              # vertical search: max distance under keyword (px)
+    VERTICAL_HORZ_TOL = 50            # vertical search: horizontal tolerance (px)
+
+  
+
     try:
-        # Read and process the uploaded file
+        # --- Read file to PIL image ---
         file_content = await file.read()
         if file.filename and file.filename.lower().endswith('.pdf'):
             images = process_pdf_to_images(file_content)
@@ -697,54 +677,57 @@ async def ocr_preview(
             img = Image.open(BytesIO(file_content)).convert('RGB')
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
-        
+
         if img is None:
             raise HTTPException(status_code=400, detail="No image available for extraction.")
-            
+
         img_array = np.array(img)
         result = ocr.predict(img_array)
-        
-        # Collect detected boxes with confidence filtering
+
+        # --- Build detected_boxes with consistent keys ---
         detected_boxes = []
         for res in result:
             rec_polys = res.get('rec_polys', [])
             rec_texts = res.get('rec_texts', [])
             rec_scores = res.get('rec_scores', [])
             for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
-                if score is None or score < 0.75 or not text.strip():
-                    print(f"Filtered out low confidence text: '{text}' (confidence: {score:.3f})")
+                if score is None or score < MIN_CONFIDENCE or not text or not text.strip():
                     continue
-                
                 x_coords = [p[0] for p in poly]
                 y_coords = [p[1] for p in poly]
-                left = min(x_coords)
-                top = min(y_coords)
-                right = max(x_coords)
-                bottom = max(y_coords)
+                left = float(min(x_coords))
+                right = float(max(x_coords))
+                top = float(min(y_coords))
+                bottom = float(max(y_coords))
                 width = right - left
                 height = bottom - top
-                center_x = (left + right) / 2
-                center_y = (top + bottom) / 2
-                
                 detected_boxes.append({
-                    'left': float(left),
-                    'top': float(top),
-                    'width': float(width),
-                    'height': float(height),
+                    'left': left,
+                    'top': top,
+                    'right': right,
+                    'bottom': bottom,
+                    'width': width,
+                    'height': height,
+                    'center_x': (left + right) / 2.0,
+                    'center_y': (top + bottom) / 2.0,
                     'text': text.strip(),
-                    'center_x': float(center_x),
-                    'center_y': float(center_y),
                     'score': float(score)
                 })
-        
-        print(f"Total detected boxes (after confidence filtering): {len(detected_boxes)}")
-        
-        # Helper functions
-        def extract_number(text):
-            import re
-            if re.search(r'[a-zA-Z]', text):
+
+        print(f"Detected {len(detected_boxes)} boxes after filtering (conf >= {MIN_CONFIDENCE})")
+
+        # -------------------------
+        # Helpers: number & keyword
+        # -------------------------
+        def extract_number(text: str):
+            """Robust number parser (handles , and . as thousand/decimal separators)."""
+            if not text or re.search(r'[A-Za-zÀ-ÿ]', text) and not re.search(r'\d', text):
+                # If text contains letters and no digits -> not a number
+                pass
+            cleaned = re.sub(r'[^\d\-,\.]', '', text)
+            if cleaned == '':
                 return None
-            cleaned = re.sub(r'[^\d.,-]', '', text)
+            # If both present, decide which is decimal by last occurrence
             if ',' in cleaned and '.' in cleaned:
                 if cleaned.rfind(',') > cleaned.rfind('.'):
                     cleaned = cleaned.replace('.', '').replace(',', '.')
@@ -752,383 +735,346 @@ async def ocr_preview(
                     cleaned = cleaned.replace(',', '')
             elif ',' in cleaned:
                 parts = cleaned.split(',')
+                # If last part length == 2 -> probably decimal
                 if len(parts[-1]) == 2:
                     cleaned = cleaned.replace(',', '.')
                 else:
                     cleaned = cleaned.replace(',', '')
+            # If too many dots, keep last as decimal
             if cleaned.count('.') > 1:
                 parts = cleaned.split('.')
                 cleaned = ''.join(parts[:-1]) + '.' + parts[-1]
+            if cleaned in ('', '-', '.'):
+                return None
+            # Final digit check
             if not re.fullmatch(r'-?\d+(?:\.\d+)?', cleaned):
                 return None
             try:
                 return float(cleaned)
-            except ValueError:
+            except Exception:
                 return None
 
-        def is_valid_ht_keyword(text):
-            if not text or not isinstance(text, str):
+        def is_valid_ht_keyword(text: str):
+            if not text:
                 return False
-            text_upper = text.upper().strip()
+            s = text.upper().strip()
             patterns = [
-                r'^SOUS-TOTAL$',           
-                r'^HT\b',
-                r'^TOTAL\s+HT\b',
-                r'^TOTAL\s+HT\s*:',
-                r'^HORS\s+TAXES$',
-                r'^TOTAL\s+HORS\s*TAXES$',
-                r'^MONTANT\s+(TOTAL\s+)?HT\b',
-                r'^MONTANT\s+(TOTAL\s+)?HORS\s+TAXES\b',
-                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?H\b',
-                r'^(MONTANT\s+)?(TOTAL\s+)?HORS\s+TAXE[S]?\b'
+                r'^SOUS[-\s]*TOTAL\b',
+                r'\bTOTAL\s+HT\b',
+                r'\bHT\b',
+                r'\bHORS\s+TAXES\b',
+                r'\bMONTANT\s+(TOTAL\s+)?HT\b',
+                r'\bMONTANT\s+(TOTAL\s+)?HORS\s+TAXES\b',
+                r'\bTOTAL\s+HORS\s*TAXES\b',
             ]
-            for pattern in patterns:
-                if re.search(pattern, text_upper):
-                    return True
-            return False
+            return any(re.search(p, s) for p in patterns)
 
-        def is_valid_tva_keyword(text):
-            if not text or not isinstance(text, str):
+        def is_valid_tva_keyword(text: str):
+            if not text:
                 return False
-            text_upper = text.upper().strip()
+            s = text.upper().strip()
             patterns = [
-                r'^(MONTANT\s+)?(TOTAL\s+)?T\.?V\.?A\b',
-                r'^(MONTANT\s+)?(TOTAL\s+)?TVA\b',
-                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+SUR\s+LA\s+VALEUR\s+AJOUT[ÉE]E\b',
-                r'^(MONTANT\s+)?(TOTAL\s+)?TAXE\s+AJOUT[ÉE]E\b',
-                r'^TVA\s*:',
+                r'\bTVA\b',
+                r'\bT\.?V\.?A\b',
+                r'\bMONTANT\s+TVA\b',
+                r'\bTAXE\s+SUR\s+LA\s+VALEUR\s+AJOUT',
+                r'\bMONTANT\s+TAXE\s+AJOUT',
             ]
-            for pattern in patterns:
-                if re.search(pattern, text_upper):
-                    return True
-            return False
+            return any(re.search(p, s) for p in patterns)
 
-        # --- HT extraction ---
-        print("Starting HT candidate search...")
-        ht_candidates = []
-        ht_keyword_boxes = []
-        
-        # First pass: Find all HT keywords
-        for i, box in enumerate(detected_boxes):
-            text = box['text']
-            if is_valid_ht_keyword(text):
-                print(f"Found HT keyword: '{text}' at position {i}")
-                ht_keyword_boxes.append(box)
-        
-        # Second pass: Try horizontal search for all HT keywords
-        for box in ht_keyword_boxes:
-            ht_x, ht_y = box['center_x'], box['center_y']
-            best_match = None
-            min_distance = float('inf')
-            
-            # Search for values on the same line (horizontal search)
-            for other_box in detected_boxes:
-                if other_box == box:
-                    continue
-                    
-                other_y = other_box['center_y']
-                other_text = other_box['text'].strip()
-                
-                # Check if on same line and to the right
-                if abs(other_y - ht_y) < 20 and other_box['center_x'] > ht_x:
-                    next_value = extract_number(other_text)
-                    if next_value is not None and '%' not in other_text:  # Skip percentage values
-                        distance = other_box['center_x'] - ht_x
-                        print(f"Potential HT value '{other_text}' (score: {other_box['score']:.2f}) at distance {distance:.1f}px")
-                        if 0 < distance < min_distance:
-                            best_match = {
-                                'keyword_box': box,
-                                'value_box': other_box,
-                                'value': next_value,
-                                'keyword_text': box['text'],
-                                'value_text': other_text,
-                                'distance': distance,
-                                'search_type': 'horizontal'
-                            }
-                            min_distance = distance
-            
-            if best_match:
-                print(f"Found HT candidate (horizontal): {best_match['value']} (distance: {best_match['distance']:.1f}px)")
-                ht_candidates.append(best_match)
-        
-        # If no horizontal candidates found for any HT keyword, try vertical search
-        if not ht_candidates and ht_keyword_boxes:
-            print("No horizontal HT candidates found for any keyword, trying vertical search...")
-            for box in ht_keyword_boxes:
-                print(f"Trying vertical search for HT keyword: '{box['text']}'")
-                ht_bottom = box['top'] + box['height']
-                closest_below = None
-                min_y_distance = float('inf')
-                best_value = None
-                
-                for other_box in detected_boxes:
-                    if other_box == box:
-                        continue
-                        
-                    other_top = other_box['top']
-                    other_text = other_box['text'].strip()
-                    
-                    # Check if the box is below the HT keyword and not a percentage
-                    if other_top > ht_bottom and '%' not in other_text:
-                        # Calculate horizontal overlap
-                        ht_left = box['left']
-                        ht_right = ht_left + box['width']
-                        other_left = other_box['left']
-                        other_right = other_left + other_box['width']
-                        
-                        # Check for horizontal overlap
-                        if not (ht_right < other_left or other_right < ht_left):
-                            y_distance = other_top - ht_bottom
-                            if y_distance < min_y_distance and y_distance < 100:  # Limit max vertical distance
-                                next_value = extract_number(other_text)
-                                if next_value is not None:
-                                    print(f"  Found potential vertical match: '{other_text}' at distance {y_distance:.1f}px")
-                                    min_y_distance = y_distance
-                                    closest_below = other_box
-                                    best_value = next_value
-                
-                if closest_below and best_value is not None:
-                    print(f"Found HT candidate (vertical): {best_value} " +
-                          f"(distance: {min_y_distance:.1f}px, " +
-                          f"text: '{closest_below['text']}')")
-                    ht_candidates.append({
-                        'keyword_box': box,
-                        'value_box': closest_below,
-                        'value': best_value,
-                        'keyword_text': box['text'],
-                        'value_text': closest_below['text'],
-                        'distance': min_y_distance,
-                        'search_type': 'vertical'
-                    })
-                if closest_below:
-                    print(f"  Box directly below HT: text='{closest_below['text']}', " +
-                          f"score={closest_below['score']:.2f}, " +
-                          f"coords=({closest_below['left']:.1f},{closest_below['top']:.1f})x" +
-                          f"({closest_below['left'] + closest_below['width']:.1f}," +
-                          f"{closest_below['top'] + closest_below['height']:.1f}), " +
-                          f"distance={min_y_distance:.1f}px")
-                else:
-                    print("  No box found directly below the HT keyword")
-                
-                ht_x, ht_y = box['center_x'], box['center_y']
-                best_match = None
-                min_distance = float('inf')
-                for j in range(i + 1, min(i + 10, len(detected_boxes))):
-                    next_box = detected_boxes[j]
-                    next_text = next_box['text'].strip()
-                    if abs(next_box['center_y'] - ht_y) < 20:
-                        next_value = extract_number(next_text)
-                        if next_value is not None:
-                            distance = next_box['center_x'] - ht_x
-                            print(f"Potential HT value '{next_text}' (score: {next_box['score']:.2f}) at distance {distance:.1f}px")
-                            if 0 < distance < min_distance:
-                                best_match = {
-                                    'keyword_box': box,
-                                    'value_box': next_box,
-                                    'value': next_value,
-                                    'keyword_text': box['text'],
-                                    'value_text': next_text,
-                                    'distance': distance
-                                }
-                                min_distance = distance
-                if best_match:
-                    print(f"Found HT candidate: {best_match['value']} (distance: {best_match['distance']:.1f}px)")
-                    ht_candidates.append(best_match)
-                    
-        if not ht_candidates:
-            return {
-                "success": False,
-                "data": {},
-                "message": "Aucun mot-clé HT trouvé"
-            }
-        ht_candidates.sort(key=lambda x: x['distance'])
-        ht_selected = ht_candidates[0]
-        ht_extracted = ht_selected['value']
-        print(f"Selected HT value: {ht_selected['value']} from keyword '{ht_selected['keyword_text']}'")
+        def is_total_keyword(text: str):
+            if not text:
+                return False
+            return 'TOTAL' in text.upper()
 
-        # --- TVA extraction ---
-        print(f"\nFound {len(ht_candidates)} HT candidate(s) in total")
-        tva_candidates = []
-        tva_keyword_boxes = []
-        
-        # First pass: Find all TVA keywords
-        for i, box in enumerate(detected_boxes):
-            text = box['text']
-            if is_valid_tva_keyword(text):
-                print(f"Found TVA keyword: '{text}' at position {i}")
-                tva_keyword_boxes.append(box)
-        
-        # Second pass: Try horizontal search for all TVA keywords
-        for box in tva_keyword_boxes:
-            tva_x, tva_y = box['center_x'], box['center_y']
-            best_match = None
-            min_distance = float('inf')
+        # -------------------------
+        # Candidate search function
+        # -------------------------
+        def find_value_for_field(keyword_test_fn, is_tva=False, field_name=""):
+            """
+            Returns dict with keys: value (float), value_text, value_box, keyword_box, distance, search_type, is_total_keyword
             
-            # Search for values on the same line (horizontal search)
-            for other_box in detected_boxes:
-                if other_box == box:
-                    continue
-                    
-                other_y = other_box['center_y']
-                other_text = other_box['text'].strip()
+            Search Logic:
+            1. First, try to find horizontal matches for all keywords, prioritizing those containing 'TOTAL'
+            2. If multiple horizontal matches exist, prefer the one with 'TOTAL' in the keyword
+            3. Only if no horizontal matches are found for any keyword, try vertical search
+            4. In vertical search, still prefer 'TOTAL' keywords
+            5. For TVA, ignore candidate boxes containing '%'.
+            """
+            print(f"\n{'='*40}")
+            print(f"Searching for field: {field_name}")
+            print(f"Using keyword test function: {keyword_test_fn.__name__}")
+            print("-"*40)
+            
+            keywords = [b for b in detected_boxes if keyword_test_fn(b['text'])]
+            
+            print(f"Found {len(keywords)} potential keywords:")
+            for i, kw in enumerate(keywords, 1):
+                print(f"  {i}. '{kw['text']}' (score: {kw['score']:.2f}) at ({kw['center_x']:.1f}, {kw['center_y']:.1f})")
+            
+            if not keywords:
+                print("No matching keywords found!")
+                return None
+
+            total_kw = [k for k in keywords if is_total_keyword(k['text'])]
+            other_kw = [k for k in keywords if k not in total_kw]
+
+            # Process a set of keywords (list), return best match or None
+            def process_keyword_set(klist, search_type='horizontal'):
+                candidates = []
                 
-                # Check if on same line, to the right, and not a percentage
-                if abs(other_y - tva_y) < 20 and other_box['center_x'] > tva_x and '%' not in other_text:
-                    next_value = extract_number(other_text)
-                    if next_value is not None:
-                        distance = other_box['center_x'] - tva_x
-                        print(f"Potential TVA value '{other_text}' (score: {other_box['score']:.2f}) at distance {distance:.1f}px")
-                        if 0 < distance < min_distance:
-                            best_match = {
-                                'keyword_box': box,
-                                'value_box': other_box,
-                                'value': next_value,
-                                'keyword_text': box['text'],
-                                'value_text': other_text,
-                                'distance': distance,
-                                'search_type': 'horizontal'
+                for kw in klist:
+                    kw_cy = kw['center_y']
+                    kw_cx = kw['center_x']
+                    
+                    if search_type == 'horizontal':
+                        # Horizontal search (to the right of keyword)
+                        right_boxes = [b for b in detected_boxes if b['center_x'] > kw_cx]
+                        right_boxes.sort(key=lambda b: (b['center_x'] - kw_cx))  # Sort by distance to right
+                        
+                        print(f"\n{'='*80}")
+                        print(f"CHECKING HORIZONTAL MATCHES FOR: '{kw['text']}' at ({kw_cx:.1f}, {kw_cy:.1f})")
+                        print(f"Searching up to {HORIZONTAL_MAX_DIST}px to the right, vertical tolerance: {HORIZONTAL_VERTICAL_TOL}px")
+                        print(f"Found {len(right_boxes)} boxes to the right")
+                        print("-"*80)
+                        
+                        # First pass: Collect all boxes and their status
+                        all_boxes_info = []
+                        for i, ob in enumerate(right_boxes, 1):
+                            dx = ob['center_x'] - kw_cx
+                            dy = ob['center_y'] - kw_cy
+                            
+                            # Debug info for each box being checked
+                            debug_info = {
+                                'index': i,
+                                'text': ob['text'].strip(),
+                                'pos': f"({ob['center_x']:.1f}, {ob['center_y']:.1f})",
+                                'dx': dx,
+                                'dy': dy,
+                                'reasons': [],
+                                'is_match': False,
+                                'value': None
                             }
-                            min_distance = distance
-            
-            if best_match:
-                print(f"Found TVA candidate (horizontal): {best_match['value']} (distance: {best_match['distance']:.1f}px)")
-                tva_candidates.append(best_match)
-        
-        # If no horizontal candidates found for any TVA keyword, try vertical search
-        if not tva_candidates and tva_keyword_boxes:
-            print("No horizontal TVA candidates found for any keyword, trying vertical search...")
-            for box in tva_keyword_boxes:
-                print(f"\n=== TVA VERTICAL SEARCH DEBUG ===")
-                print(f"TVA keyword: '{box['text']}' at position: left={box['left']:.1f}, top={box['top']:.1f}, width={box['width']:.1f}, height={box['height']:.1f}")
-                print(f"Searching for values below TVA keyword within 100px...")
-                tva_bottom = box['top'] + box['height']
-                closest_below = None
-                min_y_distance = float('inf')
-                best_value = None
-                
-                for other_box in detected_boxes:
-                    if other_box == box:
-                        continue
+                            
+                            # Check rejection reasons
+                            if dx <= 0 or dx > HORIZONTAL_MAX_DIST:
+                                debug_info['reasons'].append(f"x-distance {dx:.1f}px out of range (0-{HORIZONTAL_MAX_DIST})")
+                            elif abs(dy) > HORIZONTAL_VERTICAL_TOL:
+                                debug_info['reasons'].append(f"y-distance {dy:.1f}px exceeds tolerance")
+                            elif is_tva and '%' in ob['text']:
+                                debug_info['reasons'].append("contains '%' (TVA filter)")
+                            else:
+                                val = extract_number(ob['text'])
+                                if val is not None:
+                                    debug_info['is_match'] = True
+                                    debug_info['value'] = val
+                                    candidate = {
+                                        'keyword_box': kw,
+                                        'value_box': ob,
+                                        'value': val,
+                                        'value_text': ob['text'],
+                                        'keyword_text': kw['text'],
+                                        'distance': dx,
+                                        'search_type': search_type,
+                                        'is_total_keyword': is_total_keyword(kw['text'])
+                                    }
+                                    candidates.append(candidate)
+                                    debug_info['reasons'].append(f"MATCH - value: {val}")
+                                else:
+                                    debug_info['reasons'].append("no valid number found")
+                            
+                            all_boxes_info.append(debug_info)
                         
-                    other_top = other_box['top']
-                    other_text = other_box['text'].strip()
-                    
-                    # Calculate vertical distance first to filter out far-away boxes early
-                    y_distance = other_top - tva_bottom
-                    
-                    # Only process boxes that are below the TVA keyword and don't contain percentage signs
-                    if y_distance > 0 and '%' not in other_text:
-                        print(f"\n  Checking box: '{other_text}' at top={other_top:.1f} (TVA bottom={tva_bottom:.1f})")
-                        print(f"  Box coords: left={other_box['left']:.1f}, top={other_top:.1f}, right={other_box['left'] + other_box['width']:.1f}, bottom={other_box['top'] + other_box['height']:.1f}")
+                        # Print all boxes with their status
+                       # print("\nALL BOXES CHECKED:")
+                        #print("-"*80)
+                        #for box in all_boxes_info:
+                         #   status = "✅ MATCH" if box['is_match'] else "❌ REJECTED"
+                          #  print(f"{box['index']:2d}. {status} - '{box['text']}' at {box['pos']}")
+                          #  print(f"    dx: {box['dx']:6.1f}px, dy: {box['dy']:5.1f}px")
+                            #if box['reasons']:
+                            #    print(f"    Reasons: {'; '.join(box['reasons'])}")
+                            #if box['value'] is not None:
+                            #    print(f"    Extracted value: {box['value']}")
                         
-                        # Calculate centers
-                        tva_center_x = box['left'] + box['width'] / 2
-                        tva_center_y = box['top'] + box['height'] / 2
-                        
-                        other_center_x = other_box['left'] + other_box['width'] / 2
-                        other_center_y = other_box['top'] + other_box['height'] / 2
-                        
-                        # Calculate Euclidean distance between centers
-                        x_diff = other_center_x - tva_center_x
-                        y_diff = other_center_y - tva_center_y
-                        distance = (x_diff**2 + y_diff**2) ** 0.5
-                        
-                        # Calculate horizontal offset (for reference)
-                        center_offset = abs(other_center_x - tva_center_x)
-                        
-                        print(f"  TVA center: ({tva_center_x:.1f}, {tva_center_y:.1f})")
-                        print(f"  Other center: ({other_center_x:.1f}, {other_center_y:.1f})")
-                        print(f"  Distance: {distance:.1f}px, X offset: {center_offset:.1f}px, Y distance: {y_distance:.1f}px")
-                        
-                        next_value = extract_number(other_text)
-                        print(f"  Extracted number: {next_value}")
-                        if next_value is not None:
-                            print(f"  Found potential match: '{other_text}' at distance {distance:.1f}px")
-                            if best_value is None or distance < min_distance:
-                                best_value = next_value
-                                closest_below = other_box
-                                min_distance = distance
-                                print(f"  New best match: {best_value} at {distance:.1f}px")
+                        if not candidates:
+                            print("\n❌ NO VALID MATCHES FOUND IN HORIZONTAL SEARCH")
                         else:
-                            print(f"  No valid number extracted from: '{other_text}'")
+                            print(f"\n✅ FOUND {len(candidates)} VALID MATCH(ES)")
+                    
+                    else:  # vertical search
+                        kw_bottom = kw['bottom']
+                        kw_cx = kw['center_x']
+                        kw_cy = kw['center_y']
+                        
+                        for ob in detected_boxes:
+                            if ob is kw:
+                                continue
+                                
+                            # require box to be below keyword
+                            y_distance = ob['top'] - kw_bottom
+                            if y_distance <= 0 or y_distance > VERTICAL_MAX_Y:
+                                continue
+                                
+                            # horizontal tolerance
+                            if abs(ob['center_x'] - kw_cx) > VERTICAL_HORZ_TOL:
+                                continue
+                                
+                            if is_tva and '%' in ob['text']:
+                                continue
+                                
+                            val = extract_number(ob['text'])
+                            if val is not None:
+                                # Euclidean distance between centers
+                                xdiff = ob['center_x'] - kw_cx
+                                ydiff = (ob['center_y'] - kw_cy)
+                                dist = math.hypot(xdiff, ydiff)
+                                
+                                candidates.append({
+                                    'keyword_box': kw,
+                                    'value_box': ob,
+                                    'value': val,
+                                    'value_text': ob['text'],
+                                    'keyword_text': kw['text'],
+                                    'distance': dist,
+                                    'search_type': 'vertical',
+                                    'is_total_keyword': is_total_keyword(kw['text'])
+                                })
                 
-                if closest_below and best_value is not None:
-                    print(f"\n  FINAL TVA CANDIDATE:")
-                    print(f"  - Value: {best_value}")
-                    print(f"  - Text: '{closest_below['text']}'")
-                    print(f"  - Distance from TVA: {min_distance:.1f}px")
-                    print(f"  - Coords: ({closest_below['left']:.1f}, {closest_below['top']:.1f}) - ({closest_below['left'] + closest_below['width']:.1f}, {closest_below['top'] + closest_below['height']:.1f})")
-                    tva_candidates.append({
-                        'keyword_box': box,
-                        'value_box': closest_below,
-                        'value': best_value,
-                        'keyword_text': box['text'],
-                        'value_text': closest_below['text'],
-                        'distance': min_y_distance,
-                        'search_type': 'vertical',
-                        'center_offset': center_offset  # Store center offset for debugging
-                    })    
-        
-        if not tva_candidates:
-            return {
-                "success": False,
-                "data": {},
-                "message": "Aucun mot-clé TVA trouvé"
-            }
-        
-        # Sort by distance from TVA keyword
-        if tva_candidates:
-            print("\nAll TVA candidates (closest first):")
+                if not candidates:
+                    return None
+                    
+                # Sort candidates: first by whether they're from a TOTAL keyword, then by distance
+                candidates.sort(key=lambda c: (0 if c['is_total_keyword'] else 1, c['distance']))
+                return candidates[0]
+            # First, try horizontal search for TOTAL keywords
+            if total_kw:
+                print("\nTrying horizontal search for TOTAL keywords...")
+                result = process_keyword_set(total_kw, 'horizontal')
+                if result:
+                    print(f"Found match from TOTAL keyword: {result['value_text']}")
+                    return result
             
-            # Sort by distance
-            tva_candidates.sort(key=lambda x: x['distance'])
+            # Then try horizontal search for other keywords
+            if other_kw:
+                print("\nTrying horizontal search for other keywords...")
+                result = process_keyword_set(other_kw, 'horizontal')
+                if result:
+                    print(f"Found match from other keyword: {result['value_text']}")
+                    return result
             
-            # Display the top candidates
-            for i, c in enumerate(tva_candidates[:5], 1):
-                print(f"{i}. Value: {c['value']:8.2f}, "
-                      f"Distance: {c['distance']:5.1f}px, "
-                      f"Text: '{c['value_text']}'")
+            # If no horizontal matches found, try vertical search as fallback
+            print("\nNo horizontal matches found, trying vertical search...")
             
-            # Select the best candidate (closest vertically, then most centered)
-            tva_selected = tva_candidates[0]
-            print(f"\nSelected best TVA candidate:")
-            print(f"- Value: {tva_selected['value']}")
-            print(f"- Distance from TVA keyword: {tva_selected['distance']:.1f}px")
-            print(f"- Horizontal offset: {tva_selected.get('center_offset', 0):.1f}px")
-            print(f"- Text: '{tva_selected['value_text']}'")
+            # First try vertical search with TOTAL keywords
+            if total_kw:
+                print("Trying vertical search for TOTAL keywords...")
+                result = process_keyword_set(total_kw, 'vertical')
+                if result:
+                    print(f"Found vertical match from TOTAL keyword: {result['value_text']}")
+                    return result
             
-            print(f"Selected TVA value: {tva_selected['value']} from text: '{tva_selected['value_text']}'")
-        else:
-            print("\nNo TVA candidates found after processing all potential matches")
-            return {
-                "success": False,
-                "data": {},
-                "message": "Aucun montant TVA trouvé"
-            }
-        tva_extracted = tva_selected['value']
-        print(f"\nFound {len(tva_keyword_boxes)} TVA keyword(s) in total")
-        print(f"Selected TVA value: {tva_selected['value']} from {tva_selected['search_type']} search, " +
-              f"keyword: '{tva_selected['keyword_text']}'")
+            # Finally, try vertical search with other keywords
+            if other_kw:
+                print("Trying vertical search for other keywords...")
+                result = process_keyword_set(other_kw, 'vertical')
+                if result:
+                    print(f"Found vertical match from other keyword: {result['value_text']}")
+                    return result
+            
+            print("No matching values found in any search direction")
+            return None
 
-        # --- TTC & tauxTVA ---
+
+
+        # -------------------------
+        # Extract HT
+        # -------------------------
+        print("\n" + "="*60)
+        print("🔍 SEARCHING FOR HT (HORS TAXES)")
+        print("="*60)
+        import time
+        start_time = time.time()
+        ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+        ht_time = time.time() - start_time
+        if not ht_match:
+            return {"success": False, "data": {}, "message": "Aucun mot-clé HT trouvé"}
+        ht_extracted = ht_match['value']
+        print(f"\n✅ SELECTED HT: {ht_extracted} (from '{ht_match['value_text']}', keyword: '{ht_match['keyword_text']}')")
+        print(f"⏱️  HT extraction took: {ht_time:.4f} seconds")
+
+        # -------------------------
+        # Extract numFacture
+        # -------------------------
+        print("\n" + "="*60)
+        print("🔍 SEARCHING FOR NUMERO FACTURE")
+        print("="*60)
+        start_time = time.time()
+        
+        def is_valid_num_facture_keyword(text: str):
+            if not text:
+                return False
+            s = text.upper().strip()
+            patterns = [
+                r'\bFACTURE\s*[#:]?\s*',
+                r'\bNUMERO?\s*[#:]?\s*',
+                r'\bREF\s*[#:]?\s*',
+                r'\bN°\s*'
+            ]
+            return any(re.search(p, s) for p in patterns)
+        
+        num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+        num_facture_time = time.time() - start_time
+        
+        if not num_facture_match:
+            return {"success": False, "data": {}, "message": "Aucun numéro de facture trouvé"}
+            
+        num_facture_extracted = num_facture_match['value_text']
+        print(f"\n✅ SELECTED NUMERO FACTURE: '{num_facture_extracted}' (keyword: '{num_facture_match['keyword_text']}')")
+        print(f"⏱️  Numéro facture extraction took: {num_facture_time:.4f} seconds")
+
+        # -------------------------
+        # Extract TVA
+        # -------------------------
+        print("\n" + "="*60)
+        print("🔍 SEARCHING FOR TVA")
+        print("="*60)
+        start_time = time.time()
+        tva_match = find_value_for_field(is_valid_tva_keyword, is_tva=True, field_name="TVA")
+        tva_time = time.time() - start_time
+        if not tva_match:
+            return {"success": False, "data": {}, "message": "Aucun mot-clé TVA trouvé"}
+        tva_extracted = tva_match['value']
+        print(f"\n✅ SELECTED TVA: {tva_extracted} (from '{tva_match['value_text']}', keyword: '{tva_match['keyword_text']}')")
+        print(f"⏱️  TVA extraction took: {tva_time:.4f} seconds")
+
+        # -------------------------
+        # TTC and taux TVA
+        # -------------------------
+        print("\n" + "="*60)
+        print("🧮 CALCULATING TTC AND TVA RATE")
+        print("="*60)
+        
         ttc_extracted = round(ht_extracted + tva_extracted, 2)
+        print(f"HT: {ht_extracted:.2f} + TVA: {tva_extracted:.2f} = TTC: {ttc_extracted:.2f}")
+        
         if ht_extracted != 0:
-            raw_taux = (tva_extracted * 100) / ht_extracted
-            decimal_part = raw_taux - math.floor(raw_taux)
-            if decimal_part > 0.5:
-                taux_tva = math.ceil(raw_taux)
-            else:
-                taux_tva = math.floor(raw_taux)
+            raw_taux = (tva_extracted * 100.0) / ht_extracted
+            # Round to nearest integer (0.5 rounds up)
+            taux_tva = int(round(raw_taux))
+            print(f"Raw TVA rate: {raw_taux:.2f}% -> Rounded to: {taux_tva}%")
         else:
             taux_tva = 0
+            print("HT is zero, cannot calculate TVA rate")
 
-        # --- numFacture extraction using mapping ---
+        # -------------------------
+        # numFacture extraction (left as-is, minimally adapted to detected_boxes)
+        # -------------------------
         numfacture_value = None
         numfacture_box = None
         try:
             connection = get_connection()
             cursor = connection.cursor(dictionary=True)
-            # Get field_id for numFacture
             cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
             row = cursor.fetchone()
             if row:
@@ -1144,88 +1090,98 @@ async def ocr_preview(
                     mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
                     mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
 
-                    vertical_threshold = 30  # allowed vertical deviation
-                    best_match = None
-                    best_score = -1
-
                     def is_valid_invoice_number(text):
-                        """Improved validation that accepts invoice patterns"""
                         text = text.strip()
-                        # Must contain at least 4 consecutive digits
-                        if not re.search(r'\d{4,}', text):
-                            return False
-                        # Accepts common invoice formats with letters/numbers/symbols
-                        return bool(re.match(r'^[\w\s\-/°#]+$', text, re.UNICODE))
+                        patterns = [
+                            r'(?i)(?:facture|fact|inv|no\.?\s*#?)\s*[\w\-\s/]*\d{2,}',
+                            r'\b\d{4,}[\-\s/]?\d+\b',
+                            r'\b[A-Z]{2,}[-\s]?\d+[-\s]?\d+\b',
+                            r'\b\d{6,}\b'
+                        ]
+                        return any(re.search(p, text) for p in patterns)
 
                     def calculate_invoice_score(text):
-                        """Score based on digit count and invoice-like patterns"""
-                        # Count total digits
                         digit_count = len(re.findall(r'\d', text))
-                        # Bonus for long consecutive digit sequences
-                        max_consecutive = max(len(m) for m in re.findall(r'\d+', text))
-                        # Bonus for common invoice patterns
+                        max_consecutive = max((len(m) for m in re.findall(r'\d+', text)), default=0)
                         pattern_bonus = 2 if re.search(r'(n[°º]|no|num|ref|facture)\s*\d', text.lower()) else 0
                         return digit_count + max_consecutive + pattern_bonus
 
-                    # Step 1: Find best candidate near mapped position
+                    print("\n" + "="*60)
+                    print("🔍 SEARCHING FOR INVOICE NUMBER")
+                    print("="*60)
+                    search_radius_x = 400  # Define search radius
+                    search_radius_y = 100   # Define search radius
+                    print(f"Mapped position: ({mapped_cx:.1f}, {mapped_cy:.1f})")
+                    print(f"Search radius: {search_radius_x}px horizontal, {search_radius_y}px vertical")
+                    
+                    candidates = []
+                    best_match = None  # Initialize best_match as None
                     for box in detected_boxes:
                         text = box["text"].strip()
-                        if not is_valid_invoice_number(text):
-                            continue
-                        
-                        # Check vertical alignment
-                        if abs(box["center_y"] - mapped_cy) > vertical_threshold:
-                            continue
-                        
-                        # Calculate score
-                        score = calculate_invoice_score(text)
-                        
-                        # Adjust score by position (closer = better)
+                        is_valid = is_valid_invoice_number(text)
                         dist_x = abs(box["center_x"] - mapped_cx)
                         dist_y = abs(box["center_y"] - mapped_cy)
-                        position_factor = 1/(1 + dist_x + dist_y)  # 1 for perfect match
-                        score *= position_factor
+                        in_radius = dist_x <= search_radius_x and dist_y <= search_radius_y
                         
-                        if score > best_score:
-                            best_score = score
-                            best_match = box
-
-                    # Step 2: Verify and store best match
-                    if best_match:
+                        if not in_radius:
+                            continue
+                            
+                        print(f"\nText: '{text}'")
+                        print(f"  Position: ({box['center_x']:.1f}, {box['center_y']:.1f})")
+                        print(f"  Valid format: {'✅' if is_valid else '❌'}")
+                        print(f"  Distance from mapped: ({dist_x:.1f}, {dist_y:.1f})")
+                        
+                        if not is_valid:
+                            continue
+                            
+                        # Apply weights: Y-axis distance is 3x more important than X-axis
+                        weight_x = 1.0
+                        weight_y = 10
+                        distance = ((dist_x * weight_x) ** 2 + (dist_y * weight_y) ** 2) ** 0.5
+                        candidates.append((distance, box))
+                        print(f"  🎯 Candidate added with distance: {distance:.1f}")
+                    
+                    if candidates:
+                        candidates.sort()
+                        best_match = candidates[0][1]
+                        print(f"\n🏆 Best match: '{best_match['text'].strip()}' with distance {candidates[0][0]:.1f}")
+                        
+                        # Only process best_match if we found valid candidates
                         numfacture_value = best_match["text"].strip()
                         numfacture_box = {
                             "left": best_match["left"],
                             "top": best_match["top"],
                             "width": best_match["width"],
                             "height": best_match["height"],
+                            "manual": False
                         }
+                    else:
+                        print("\n❌ No valid invoice number candidates found within search radius")
+        except Exception as e:
+            import traceback
+            print(f"Error extracting numFacture: {e}")
+            print(traceback.format_exc())
+        finally:
+            if 'cursor' in locals() and cursor:
+                cursor.close()
+            if 'connection' in locals() and connection and getattr(connection, 'is_connected', lambda: True)():
+                try:
+                    connection.close()
+                except Exception:
+                    pass
 
-                    # Step 3: Fallback - global search for best invoice number
-                    if not numfacture_value:
-                        global_best = None
-                        global_score = -1
-                        for box in detected_boxes:
-                            text = box["text"].strip()
-                            if not is_valid_invoice_number(text):
-                                continue
-                                
-                            score = calculate_invoice_score(text)
-                            if score > global_score:
-                                global_score = score
-                                global_best = box
-                        
-                        if global_best:
-                            numfacture_value = global_best["text"].strip()
-                            numfacture_box = {
-                                "left": global_best["left"],
-                                "top": global_best["top"],
-                                "width": global_best["width"],
-                                "height": global_best["height"],
-                            }
-
-            # --- Date Facturation extraction using mapping ---
-            datefacturation_value = None
-            datefacturation_box = None
+        # -------------------------
+        # Date extraction 
+        # -------------------------
+        print("\n" + "="*60)
+        print("📅 EXTRACTING INVOICE DATE")
+        print("="*60)
+        date_extraction_start = time.time()
+        datefacturation_value = None
+        datefacturation_box = None
+        try:
+            connection = get_connection()
+            cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id FROM field_name WHERE name = 'datefacturation'")
             row = cursor.fetchone()
             if row:
@@ -1241,124 +1197,199 @@ async def ocr_preview(
                     mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
                     mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
 
-                    vertical_threshold = 30  # allowed vertical deviation
-                    best_match = None
-                    best_score = -1
-
-                    def is_valid_date(text):
-                        """Validate date patterns"""
-                        text = text.strip()
-                        # Common date patterns: dd/mm/yyyy, dd-mm-yyyy, dd.mm.yyyy, etc.
-                        date_patterns = [
-                            r'\b\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}\b',  # dd-mm-yyyy, dd/mm/yyyy, dd.mm.yyyy
-                            r'\b\d{2,4}[-/.]\d{1,2}[-/.]\d{1,2}\b',  # yyyy-mm-dd, yyyy/mm/dd, etc.
-                            r'\b\d{1,2}\s+[a-zA-Z]+\s+\d{4}\b',     # 01 Jan 2023
+                    def parse_date_try(text):
+                        # First, try to extract date from common labeled formats
+                        labeled_patterns = [
+                            r'(?:date|date\s*facturation|date\s*échéance)[:\s]+([0-9]{1,2}[/\-\.][0-9]{1,2}[/\-\.][0-9]{2,4})',  # DD/MM/YYYY after label
+                            r'(?:date|date\s*facturation|date\s*échéance)[:\s]+([0-9]{4}[/\-\.][0-9]{1,2}[/\-\.][0-9]{1,2})',  # YYYY/MM/DD after label
+                            r'([0-9]{1,2}[/\-\.][0-9]{1,2}[/\-\.][0-9]{2,4})',  # Just DD/MM/YYYY
+                            r'([0-9]{4}[/\-\.][0-9]{1,2}[/\-\.][0-9]{1,2})'   # Just YYYY/MM/DD
                         ]
                         
-                        for pattern in date_patterns:
-                            if re.search(pattern, text, re.IGNORECASE):
-                                return True
-                        return False
-
-                    def parse_date(text):
-                        """Parse date from text with multiple formats"""
-                        from datetime import datetime
+                        for pattern in labeled_patterns:
+                            match = re.search(pattern, text, re.IGNORECASE)
+                            if match:
+                                date_str = match.group(1) if len(match.groups()) > 0 else match.group(0)
+                                try:
+                                    # Try parsing with day first (DD/MM/YYYY)
+                                    try:
+                                        return datetime.strptime(date_str, '%d/%m/%Y').date()
+                                    except ValueError:
+                                        pass
+                                    # Try parsing with year first (YYYY/MM/DD)
+                                    try:
+                                        return datetime.strptime(date_str, '%Y/%m/%d').date()
+                                    except ValueError:
+                                        pass
+                                except (ValueError, AttributeError):
+                                    continue
                         
-                        # Common date formats to try
-                        date_formats = [
-                            '%d/%m/%Y', '%d-%m-%Y', '%d.%m.%Y',  # DD/MM/YYYY
-                            '%Y/%m/%d', '%Y-%m-%d', '%Y.%m.%d',  # YYYY/MM/DD
-                            '%d %b %Y', '%d %B %Y',              # 01 Jan 2023, 01 January 2023
-                            '%b %d, %Y', '%B %d, %Y',            # Jan 01, 2023, January 01, 2023
-                        ]
+                        # For all other formats, use dateparser with French locale and specific settings
+                        settings = {
+                            'PREFER_DAY_OF_MONTH': 'first',  # Always use first day for month/year dates
+                            'DATE_ORDER': 'DMY',            # Day/Month/Year order
+                            'PREFER_LOCALE_DATE_ORDER': True,  # Respect locale preferences
+                            'STRICT_PARSING': False,        # Be more lenient with formats
+                            'RELATIVE_BASE': datetime.now()  # For relative dates
+                        }
                         
-                        for fmt in date_formats:
-                            try:
-                                return datetime.strptime(text, fmt).strftime('%d/%m/%Y')
-                            except ValueError:
-                                continue
-                        return text  # Return original if no format matched
+                        try:
+                            # First try parsing with French locale
+                            dt = dateparser.parse(
+                                text, 
+                                languages=['fr'],
+                                settings=settings
+                            )
+                            
+                            # If that fails, try without language (fallback to English)
+                            if not dt:
+                                dt = dateparser.parse(text, settings=settings)
+                            
+                            if dt:
+                                # Ensure we have a date object, not datetime
+                                if hasattr(dt, 'date'):
+                                    return dt.date()
+                                return dt
+                                
+                        except Exception as e:
+                            print(f"Date parsing error with dateparser: {e}")
+                        
+                        return None  # Return None if all parsing attempts fail
+                        
 
-                    # Find best date candidate near mapped position
+                    # Search for candidate dates and score them by proximity & parseability
+                    print("\n" + "="*60)
+                    print("📅 SEARCHING FOR INVOICE DATE")
+                    print("="*60)
+                    search_radius_x = 200  # Define search radius
+                    search_radius_y = 100  # Define search radius
+                    print(f"Mapped position: ({mapped_cx:.1f}, {mapped_cy:.1f})")
+                    print(f"Search radius: {search_radius_x}px horizontal, {search_radius_y}px vertical")
+                    
+                    best_score = -1.0
+                    best_box = None
+                    
                     for box in detected_boxes:
-                        text = box["text"].strip()
-                        if not is_valid_date(text):
+                        text = box['text'].strip()
+                        has_digits = bool(re.search(r'\d', text))
+                        
+                        # Calculate distance from mapped position
+                        dist_x = abs(box['center_x'] - mapped_cx)
+                        dist_y = abs(box['center_y'] - mapped_cy)
+                        in_radius = dist_x <= search_radius_x and dist_y <= search_radius_y
+                        
+                        if not in_radius:
                             continue
                             
-                        # Check vertical alignment
-                        if abs(box["center_y"] - mapped_cy) > vertical_threshold:
+                        print(f"\nText: '{text}'")
+                        print(f"  Position: ({box['center_x']:.1f}, {box['center_y']:.1f})")
+                        print(f"  Distance from mapped: ({dist_x:.1f}, {dist_y:.1f})")
+                        
+                        if not has_digits:
+                            print("  ❌ No digits found")
                             continue
+                            
+                        # Try to parse the date
+                        dt = parse_date_try(text)
+                        print(f"  Parsed date: {dt}")
                         
-                        # Calculate score based on position (closer = better)
-                        dist_x = abs(box["center_x"] - mapped_cx)
-                        dist_y = abs(box["center_y"] - mapped_cy)
-                        position_score = 1 / (1 + dist_x + dist_y)
+                        if not dt:
+                            print("  ❌ Could not parse as date")
+                            continue
+                            
+                        # Calculate position-based score (inverse of distance)
+                        dist_x = abs(box['center_x'] - mapped_cx)
+                        dist_y = abs(box['center_y'] - mapped_cy)
+                        total_score = 1.0 / (1.0 + 0.001 * (dist_x + dist_y))
                         
-                        # Prefer longer text (more likely to be a full date)
-                        length_score = len(text) / 20  # Normalize to 0-1 range
-                        
-                        total_score = position_score * 0.7 + length_score * 0.3
+                        print(f"  Distance score: {total_score:.3f}")
                         
                         if total_score > best_score:
                             best_score = total_score
-                            best_match = box
+                            best_box = (box, dt)
+                            print("  🏆 New best match!")
+                    
+                    if best_box:
+                        print(f"\n🏆 Best date match: '{best_box[0]['text'].strip()}' with score {best_score:.3f}")
 
-                    # If found a good match, store it
-                    if best_match:
-                        date_text = best_match["text"].strip()
-                        datefacturation_value = parse_date(date_text)
+                    if best_box:
+                        box, dt = best_box
+                        datefacturation_value = dt.strftime('%Y-%m-%d')  # normalized output
                         datefacturation_box = {
-                            "left": best_match["left"],
-                            "top": best_match["top"],
-                            "width": best_match["width"],
-                            "height": best_match["height"],
+                            "left": box["left"],
+                            "top": box["top"],
+                            "width": box["width"],
+                            "height": box["height"],
                         }
-
         except Exception as e:
-            logging.error(f"Error extracting numFacture: {e}", exc_info=True)
+            print(f"Error extracting dateFacturation: {e}")
+            print(traceback.format_exc())
         finally:
+            # Calculate the time taken for date extraction
+            datefacturation_time = time.time() - date_extraction_start
+            print(f"⏱️  Date extraction took: {datefacturation_time:.4f} seconds")
+            
             if 'cursor' in locals() and cursor:
                 cursor.close()
-            if 'connection' in locals() and connection and connection.is_connected():
-                connection.close()
-                
-        # --- Prepare response ---
+            if 'connection' in locals() and connection and getattr(connection, 'is_connected', lambda: True)():
+                try:
+                    connection.close()
+                except Exception:
+                    pass
+
+        # -------------------------
+        # Prepare response
+        # -------------------------
+        print("\n" + "="*60)
+        print("📊 EXTRACTION SUMMARY")
+        print("="*60)
+        print(f"📄 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+        print(f"📅 Invoice Date: {datefacturation_value} (took {datefacturation_time:.4f}s)")
+        print(f"💰 HT: {ht_extracted:.2f} (took {ht_time:.4f}s)")
+        print(f"💸 TVA: {tva_extracted:.2f} (took {tva_time:.4f}s)")
+        print(f"💵 TTC: {ttc_extracted:.2f} (calculated)")
+        print("="*60)
+
         result_data = {
             "montantHT": ht_extracted,
             "montantTVA": tva_extracted,
             "montantTTC": ttc_extracted,
-            "tauxTVA": round(taux_tva, 2),
+            "tauxTVA": taux_tva,
             "boxHT": {
-                "left": ht_selected['value_box']['left'],
-                "top": ht_selected['value_box']['top'],
-                "width": ht_selected['value_box']['width'],
-                "height": ht_selected['value_box']['height'],
+                "left": ht_match['value_box']['left'],
+                "top": ht_match['value_box']['top'],
+                "width": ht_match['value_box']['width'],
+                "height": ht_match['value_box']['height'],
             },
             "boxTVA": {
-                "left": tva_selected['value_box']['left'],
-                "top": tva_selected['value_box']['top'],
-                "width": tva_selected['value_box']['width'],
-                "height": tva_selected['value_box']['height'],
+                "left": tva_match['value_box']['left'],
+                "top": tva_match['value_box']['top'],
+                "width": tva_match['value_box']['width'],
+                "height": tva_match['value_box']['height'],
             },
             "numFacture": numfacture_value,
             "boxNumFacture": numfacture_box,
             "dateFacturation": datefacturation_value,
             "boxDateFacturation": datefacturation_box,
             "template_id": template_id
-           
         }
+
         return {
             "success": True,
             "data": result_data,
             "message": "Extraction réussie"
         }
+
     except Exception as e:
-        logging.error(f"Error in extract_test: {str(e)}", exc_info=True)
-        return { 
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error in ocr_preview: {str(e)}\n{error_details}")
+        return {
             "success": False,
-            "data": {},
+            "data": {"error": str(e), "traceback": error_details},
             "message": f"Erreur lors de l'extraction: {str(e)}"
         }
+        
 
 @app.post("/mappings")
 async def save_field_mapping(
@@ -1385,7 +1416,7 @@ async def save_field_mapping(
                 else:
                     field_map[field_name] = coords.dict()
         
-        logging.info(f"Saving mapping for template: {request.template_id}")
+        print(f"Saving mapping for template: {request.template_id}")
         logging.debug(f"Field map: {field_map}")
         
         success = await save_mapping_db(
@@ -1473,7 +1504,7 @@ async def delete_mapping(template_id: str):
     connection = None
     cursor = None
     try:
-        logging.info(f"Attempting to delete template and its mappings: {template_id}")
+        print(f"Attempting to delete template and its mappings: {template_id}")
         connection = get_connection()
         cursor = connection.cursor()
         
@@ -1493,7 +1524,7 @@ async def delete_mapping(template_id: str):
             raise HTTPException(status_code=404, detail=f"Template '{template_id}' non trouvé")
             
         connection.commit()
-        logging.info(f"Successfully deleted template '{template_id}' and {deleted_mappings} mappings")
+        print(f"Successfully deleted template '{template_id}' and {deleted_mappings} mappings")
         
         return {
             "success": True,
@@ -1961,11 +1992,11 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
         # Vérifier si le fichier existe et n'est pas vide
         if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
             os.remove(dbf_path)
-            logging.info("Fichier DBF vide supprimé")
+            print("Fichier DBF vide supprimé")
         
         # Créer le fichier DBF s'il n'existe pas
         if not os.path.exists(dbf_path):
-            logging.info("Création automatique du fichier factures.dbf")
+            print("Création automatique du fichier factures.dbf")
             # Créer la table DBF avec une structure compatible FoxPro
             table = dbf.Table(
                 dbf_path,
@@ -1973,7 +2004,7 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
             )
             table.open(mode=dbf.READ_WRITE)
             table.close()
-            logging.info("Fichier factures.dbf créé avec succès")
+            print("Fichier factures.dbf créé avec succès")
         
         # Ouvrir la table existante
         table = dbf.Table(dbf_path)
@@ -1999,7 +2030,7 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
         ))
         table.close()
         
-        logging.info(f"Facture ajoutée au fichier DBF: {invoice_data.get('numeroFacture', 'N/A')}")
+        print(f"Facture ajoutée au fichier DBF: {invoice_data.get('numeroFacture', 'N/A')}")
         
     except Exception as e:
         logging.error(f"Erreur lors de l'écriture dans le fichier DBF: {e}")
@@ -2029,7 +2060,7 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
                 float(invoice_data['montantTTC'])
             ))
             table.close()
-            logging.info("Fichier DBF recréé et facture ajoutée avec succès")
+            print("Fichier DBF recréé et facture ajoutée avec succès")
         except Exception as retry_error:
             logging.error(f"Erreur fatale lors de la création du fichier DBF: {retry_error}")
             raise retry_error
@@ -2113,7 +2144,7 @@ async def launch_foxpro():
                 )
                 table.open(mode=dbf.READ_WRITE)
                 table.close()
-                logging.info("Fichier factures.dbf créé automatiquement")
+                print("Fichier factures.dbf créé automatiquement")
             except Exception as dbf_error:
                 logging.error(f"Erreur lors de la création automatique du fichier DBF: {dbf_error}")
                 return {

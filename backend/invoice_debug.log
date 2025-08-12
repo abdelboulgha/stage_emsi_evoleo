@@ -1,330 +1,180 @@
-2025-08-11 12:14:44,382 INFO Base de données initialisée avec succès
-2025-08-11 12:14:44,383 INFO Authentication database initialized
-2025-08-11 12:14:44,404 INFO Database connection pool created successfully
-2025-08-11 12:17:05,063 INFO Base de données initialisée avec succès
-2025-08-11 12:17:05,064 INFO Authentication database initialized
-2025-08-11 12:17:05,077 INFO Database connection pool created successfully
-2025-08-11 12:20:23,009 INFO Base de données initialisée avec succès
-2025-08-11 12:20:23,010 INFO Authentication database initialized
-2025-08-11 12:20:23,029 INFO Database connection pool created successfully
-2025-08-11 12:53:02,149 INFO Base de données initialisée avec succès
-2025-08-11 12:53:02,150 INFO Authentication database initialized
-2025-08-11 12:53:02,164 INFO Database connection pool created successfully
-2025-08-11 12:54:31,858 INFO Base de données initialisée avec succès
-2025-08-11 12:54:31,859 INFO Authentication database initialized
-2025-08-11 12:54:31,873 INFO Database connection pool created successfully
-2025-08-11 12:57:45,589 INFO Base de données initialisée avec succès
-2025-08-11 12:57:45,589 INFO Authentication database initialized
-2025-08-11 12:57:45,606 INFO Database connection pool created successfully
-2025-08-11 12:58:06,524 INFO Base de données initialisée avec succès
-2025-08-11 12:58:06,525 INFO Authentication database initialized
-2025-08-11 12:58:06,547 INFO Database connection pool created successfully
-2025-08-11 13:06:08,836 INFO Base de données initialisée avec succès
-2025-08-11 13:06:08,836 INFO Authentication database initialized
-2025-08-11 13:06:08,850 INFO Database connection pool created successfully
-2025-08-11 13:16:13,045 INFO Base de données initialisée avec succès
-2025-08-11 13:16:13,046 INFO Authentication database initialized
-2025-08-11 13:16:13,059 INFO Database connection pool created successfully
-2025-08-11 13:19:56,237 INFO Base de données initialisée avec succès
-2025-08-11 13:19:56,237 INFO Authentication database initialized
-2025-08-11 13:19:56,250 INFO Database connection pool created successfully
-2025-08-11 13:23:16,465 INFO Base de données initialisée avec succès
-2025-08-11 13:23:16,465 INFO Authentication database initialized
-2025-08-11 13:23:16,477 INFO Database connection pool created successfully
-2025-08-11 13:30:41,912 INFO Base de données initialisée avec succès
-2025-08-11 13:30:41,913 INFO Authentication database initialized
-2025-08-11 13:30:41,929 INFO Database connection pool created successfully
-2025-08-11 13:47:06,990 INFO Base de données initialisée avec succès
-2025-08-11 13:47:06,990 INFO Authentication database initialized
-2025-08-11 13:47:07,003 INFO Database connection pool created successfully
-2025-08-11 13:50:42,550 ERROR Error in extract_test: cannot access local variable 'closest_below' where it is not associated with a value
+2025-08-12 13:47:38,985 INFO Base de données initialisée avec succès
+2025-08-12 13:50:25,086 INFO Base de données initialisée avec succès
+2025-08-12 13:55:52,899 INFO Base de données initialisée avec succès
+2025-08-12 13:56:44,146 INFO Base de données initialisée avec succès
+2025-08-12 14:04:56,177 INFO Base de données initialisée avec succès
+2025-08-12 14:19:43,815 INFO Base de données initialisée avec succès
+2025-08-12 14:23:26,962 INFO Base de données initialisée avec succès
+2025-08-12 14:28:31,438 ERROR Error in ocr_preview: 'exc_info' is an invalid keyword argument for print()
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 896, in ocr_preview
-    if closest_below:
-       ^^^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'closest_below' where it is not associated with a value
-2025-08-11 13:53:06,185 INFO Base de données initialisée avec succès
-2025-08-11 13:53:06,185 INFO Authentication database initialized
-2025-08-11 13:53:06,200 INFO Database connection pool created successfully
-2025-08-11 13:55:13,849 ERROR Error in extract_test: cannot access local variable 'closest_below' where it is not associated with a value
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1037, in ocr_preview
+    print(f"Search radius: {search_radius_x}px horizontal, {search_radius_y}px vertical")
+                            ^^^^^^^^^^^^^^^
+NameError: name 'search_radius_x' is not defined
+
+During handling of the above exception, another exception occurred:
+
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 913, in ocr_preview
-    if closest_below:
-       ^^^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'closest_below' where it is not associated with a value
-2025-08-11 14:22:04,053 INFO Base de données initialisée avec succès
-2025-08-11 14:22:04,053 INFO Authentication database initialized
-2025-08-11 14:22:04,067 INFO Database connection pool created successfully
-2025-08-11 14:24:49,668 ERROR Error in extract_test: cannot access local variable 'closest_below' where it is not associated with a value
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1073, in ocr_preview
+    print(f"Error extracting numFacture: {e}", exc_info=True)
+TypeError: 'exc_info' is an invalid keyword argument for print()
+
+2025-08-12 14:28:57,594 ERROR Error in ocr_preview: 'exc_info' is an invalid keyword argument for print()
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 917, in ocr_preview
-    if closest_below:
-       ^^^^^^^^^^^^^
-UnboundLocalError: cannot access local variable 'closest_below' where it is not associated with a value
-2025-08-11 14:32:48,756 INFO Base de données initialisée avec succès
-2025-08-11 14:32:48,757 INFO Authentication database initialized
-2025-08-11 14:32:48,770 INFO Database connection pool created successfully
-2025-08-11 14:33:22,220 ERROR Error in extract_test: In user code:
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1037, in ocr_preview
+    print(f"Search radius: {search_radius_x}px horizontal, {search_radius_y}px vertical")
+                            ^^^^^^^^^^^^^^^
+NameError: name 'search_radius_x' is not defined
 
+During handling of the above exception, another exception occurred:
 
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 703, in ocr_preview
-    result = ocr.predict(img_array)
-             ^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddleocr\_pipelines\ocr.py", line 208, in predict
-    return list(
-           ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\_parallel.py", line 129, in predict
-    yield from self._pipeline.predict(
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\ocr\pipeline.py", line 350, in predict
-    det_results = list(
-                  ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 211, in __call__
-    yield from self.apply(input, **kwargs)
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 267, in apply
-    prediction = self.process(batch_data, **kwargs)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\text_detection\predictor.py", line 105, in process
-    batch_preds = self.infer(x=x)
-                  ^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 287, in __call__
-    pred = self.infer(x)
-           ^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 252, in __call__
-    self.predictor.run()
-RuntimeError: In user code:
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1073, in ocr_preview
+    print(f"Error extracting numFacture: {e}", exc_info=True)
+TypeError: 'exc_info' is an invalid keyword argument for print()
 
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
-2025-08-11 14:33:42,655 ERROR Error in extract_test: In user code:
-
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
+2025-08-12 14:30:32,142 INFO Base de données initialisée avec succès
+2025-08-12 14:34:03,162 INFO Base de données initialisée avec succès
+2025-08-12 14:40:59,667 INFO Base de données initialisée avec succès
+2025-08-12 14:42:31,453 INFO Base de données initialisée avec succès
+2025-08-12 14:52:52,020 INFO Base de données initialisée avec succès
+2025-08-12 14:56:49,773 INFO Base de données initialisée avec succès
+2025-08-12 15:10:36,890 INFO Base de données initialisée avec succès
+2025-08-12 15:14:12,483 INFO Base de données initialisée avec succès
+2025-08-12 15:15:25,310 INFO Base de données initialisée avec succès
+2025-08-12 15:15:53,836 INFO Base de données initialisée avec succès
+2025-08-12 15:20:47,414 INFO Base de données initialisée avec succès
+2025-08-12 15:44:04,094 INFO Base de données initialisée avec succès
+2025-08-12 15:47:06,960 INFO Base de données initialisée avec succès
+2025-08-12 15:47:59,458 INFO Base de données initialisée avec succès
+2025-08-12 15:49:51,939 INFO Base de données initialisée avec succès
+2025-08-12 15:56:09,262 INFO Base de données initialisée avec succès
+2025-08-12 16:01:04,513 INFO Base de données initialisée avec succès
+2025-08-12 16:03:16,414 INFO Base de données initialisée avec succès
+2025-08-12 17:29:14,469 INFO Base de données initialisée avec succès
+2025-08-12 17:39:06,141 INFO Base de données initialisée avec succès
+2025-08-12 17:44:52,585 INFO Base de données initialisée avec succès
+2025-08-12 17:47:05,274 INFO Base de données initialisée avec succès
+2025-08-12 17:49:31,991 INFO Base de données initialisée avec succès
+2025-08-12 17:52:07,290 INFO Base de données initialisée avec succès
+2025-08-12 17:54:33,839 INFO Base de données initialisée avec succès
+2025-08-12 17:57:13,357 INFO Base de données initialisée avec succès
+2025-08-12 17:59:04,098 ERROR Error in ocr_preview: 'keyword_text'
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 703, in ocr_preview
-    result = ocr.predict(img_array)
-             ^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddleocr\_pipelines\ocr.py", line 208, in predict
-    return list(
-           ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\_parallel.py", line 129, in predict
-    yield from self._pipeline.predict(
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\ocr\pipeline.py", line 350, in predict
-    det_results = list(
-                  ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 211, in __call__
-    yield from self.apply(input, **kwargs)
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 267, in apply
-    prediction = self.process(batch_data, **kwargs)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\text_detection\predictor.py", line 105, in process
-    batch_preds = self.infer(x=x)
-                  ^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 287, in __call__
-    pred = self.infer(x)
-           ^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 252, in __call__
-    self.predictor.run()
-RuntimeError: In user code:
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 980, in ocr_preview
+    print(f"\n\u2705 SELECTED HT: {ht_extracted} (from '{ht_match['value_text']}', keyword: '{ht_match['keyword_text']}')")
+                                                                                          ~~~~~~~~^^^^^^^^^^^^^^^^
+KeyError: 'keyword_text'
 
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
-2025-08-11 14:34:04,807 INFO Base de données initialisée avec succès
-2025-08-11 14:34:04,807 INFO Authentication database initialized
-2025-08-11 14:34:04,826 INFO Database connection pool created successfully
-2025-08-11 14:34:41,733 ERROR Error in extract_test: In user code:
-
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
+2025-08-12 18:00:11,096 INFO Base de données initialisée avec succès
+2025-08-12 18:04:11,101 INFO Base de données initialisée avec succès
+2025-08-12 18:36:23,763 INFO Base de données initialisée avec succès
+2025-08-12 18:44:24,577 INFO Base de données initialisée avec succès
+2025-08-12 18:47:03,257 INFO Base de données initialisée avec succès
+2025-08-12 18:47:16,208 INFO Base de données initialisée avec succès
+2025-08-12 18:47:42,330 INFO Base de données initialisée avec succès
+2025-08-12 18:49:12,158 INFO Base de données initialisée avec succès
+2025-08-12 18:59:30,015 INFO Base de données initialisée avec succès
+2025-08-12 19:05:53,756 INFO Base de données initialisée avec succès
+2025-08-12 20:35:27,542 INFO Base de données initialisée avec succès
+2025-08-12 20:35:36,593 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 703, in ocr_preview
-    result = ocr.predict(img_array)
-             ^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddleocr\_pipelines\ocr.py", line 208, in predict
-    return list(
-           ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\_parallel.py", line 129, in predict
-    yield from self._pipeline.predict(
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\ocr\pipeline.py", line 350, in predict
-    det_results = list(
-                  ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 211, in __call__
-    yield from self.apply(input, **kwargs)
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 267, in apply
-    prediction = self.process(batch_data, **kwargs)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\text_detection\predictor.py", line 105, in process
-    batch_preds = self.infer(x=x)
-                  ^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 287, in __call__
-    pred = self.infer(x)
-           ^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 252, in __call__
-    self.predictor.run()
-RuntimeError: In user code:
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
 
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
-2025-08-11 15:20:15,660 INFO Base de données initialisée avec succès
-2025-08-11 15:20:15,661 INFO Authentication database initialized
-2025-08-11 15:20:15,685 INFO Database connection pool created successfully
-2025-08-11 15:20:39,486 ERROR Erreur lors de l'upload: In user code:
-
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
-2025-08-11 15:21:02,597 ERROR Erreur lors de l'upload: In user code:
-
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
-2025-08-11 15:21:18,888 ERROR Error in extract_test: In user code:
-
-
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
+2025-08-12 20:35:38,500 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 705, in ocr_preview
-    result = ocr.predict(img_array)
-             ^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddleocr\_pipelines\ocr.py", line 208, in predict
-    return list(
-           ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\_parallel.py", line 129, in predict
-    yield from self._pipeline.predict(
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\pipelines\ocr\pipeline.py", line 350, in predict
-    det_results = list(
-                  ^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 211, in __call__
-    yield from self.apply(input, **kwargs)
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\base\predictor\base_predictor.py", line 267, in apply
-    prediction = self.process(batch_data, **kwargs)
-                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\text_detection\predictor.py", line 105, in process
-    batch_preds = self.infer(x=x)
-                  ^^^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 287, in __call__
-    pred = self.infer(x)
-           ^^^^^^^^^^^^^
-  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\paddlex\inference\models\common\static_infer.py", line 252, in __call__
-    self.predictor.run()
-RuntimeError: In user code:
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
 
+2025-08-12 20:35:40,244 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
 
-    PreconditionNotMetError: The third-party dynamic library (cudnn64_9.dll) that Paddle depends on is not configured correctly. (error code is 126)
-      Suggestions:
-      1. Check if the third-party dynamic library (e.g. CUDA, CUDNN) is installed correctly and its version is matched with paddlepaddle you installed.
-      2. Configure third-party dynamic library environment variables as follows:
-      - Linux: set LD_LIBRARY_PATH by `export LD_LIBRARY_PATH=...`
-      - Windows: set PATH by `set PATH=XXX;%PATH%`
-      - Mac: set  DYLD_LIBRARY_PATH by `export DYLD_LIBRARY_PATH=...` [Note: After Mac OS 10.11, using the DYLD_LIBRARY_PATH is impossible unless System Integrity Protection (SIP) is disabled.] (at ..\paddle\phi\backends\dynload\dynamic_loader.cc:350)
-      [operator < pd_kernel.phi_kernel > error]
-2025-08-11 15:25:45,706 INFO Base de données initialisée avec succès
-2025-08-11 15:25:45,706 INFO Authentication database initialized
-2025-08-11 15:25:45,735 INFO Database connection pool created successfully
-2025-08-11 15:41:16,368 INFO Base de données initialisée avec succès
-2025-08-11 15:41:16,369 INFO Authentication database initialized
-2025-08-11 15:41:16,393 INFO Database connection pool created successfully
-2025-08-11 18:42:41,612 INFO Base de données initialisée avec succès
-2025-08-11 18:42:41,613 INFO Authentication database initialized
-2025-08-11 18:42:41,646 INFO Database connection pool created successfully
-2025-08-11 18:43:14,732 ERROR Error in extract_test: name 'tva_keyword_count' is not defined
+2025-08-12 20:35:42,463 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1058, in ocr_preview
-    print(f"\nFound {tva_keyword_count} TVA keyword(s) in total")
-                     ^^^^^^^^^^^^^^^^^
-NameError: name 'tva_keyword_count' is not defined
-2025-08-11 18:43:29,981 ERROR Error in extract_test: name 'tva_keyword_count' is not defined
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:35:44,460 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
 Traceback (most recent call last):
-  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1058, in ocr_preview
-    print(f"\nFound {tva_keyword_count} TVA keyword(s) in total")
-                     ^^^^^^^^^^^^^^^^^
-NameError: name 'tva_keyword_count' is not defined
-2025-08-11 18:45:20,358 INFO Base de données initialisée avec succès
-2025-08-11 18:45:20,359 INFO Authentication database initialized
-2025-08-11 18:45:20,383 INFO Database connection pool created successfully
-2025-08-11 18:45:41,594 INFO Base de données initialisée avec succès
-2025-08-11 18:45:41,594 INFO Authentication database initialized
-2025-08-11 18:45:41,618 INFO Database connection pool created successfully
-2025-08-11 18:51:55,506 INFO Base de données initialisée avec succès
-2025-08-11 18:51:55,507 INFO Authentication database initialized
-2025-08-11 18:51:55,531 INFO Database connection pool created successfully
-2025-08-11 18:54:46,017 INFO Base de données initialisée avec succès
-2025-08-11 18:54:46,018 INFO Authentication database initialized
-2025-08-11 18:54:46,061 INFO Database connection pool created successfully
-2025-08-11 18:58:43,394 INFO Base de données initialisée avec succès
-2025-08-11 18:58:43,395 INFO Authentication database initialized
-2025-08-11 18:58:43,420 INFO Database connection pool created successfully
-2025-08-11 19:07:38,744 INFO Base de données initialisée avec succès
-2025-08-11 19:07:38,744 INFO Authentication database initialized
-2025-08-11 19:07:38,767 INFO Database connection pool created successfully
-2025-08-11 19:09:58,866 INFO Base de données initialisée avec succès
-2025-08-11 19:09:58,867 INFO Authentication database initialized
-2025-08-11 19:09:58,891 INFO Database connection pool created successfully
-2025-08-11 19:28:31,349 INFO Base de données initialisée avec succès
-2025-08-11 19:28:31,349 INFO Authentication database initialized
-2025-08-11 19:28:31,374 INFO Database connection pool created successfully
-2025-08-11 19:29:02,625 INFO Base de données initialisée avec succès
-2025-08-11 19:29:02,625 INFO Authentication database initialized
-2025-08-11 19:29:02,650 INFO Database connection pool created successfully
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:40:03,458 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:40:05,669 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:40:06,996 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:40:08,110 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:40:09,158 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:42:33,927 INFO Base de données initialisée avec succès
+2025-08-12 20:48:58,217 INFO Base de données initialisée avec succès
+2025-08-12 20:50:45,052 ERROR Error in ocr_preview: name 'is_valid_num_facture_keyword' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1013, in ocr_preview
+    num_facture_match = find_value_for_field(is_valid_num_facture_keyword, is_tva=False, field_name="Numéro de facture")
+                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'is_valid_num_facture_keyword' is not defined
+
+2025-08-12 20:53:51,282 INFO Base de données initialisée avec succès
+2025-08-12 20:55:33,897 ERROR Error in ocr_preview: name 'get_field_using_mapping' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1017, in ocr_preview
+    field_value = get_field_using_mapping(detected_boxes, template_id, "numeroFacture")
+                  ^^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'get_field_using_mapping' is not defined
+
+2025-08-12 20:58:33,651 INFO Base de données initialisée avec succès
+2025-08-12 21:02:11,976 INFO Base de données initialisée avec succès
+2025-08-12 21:10:25,256 ERROR Error in ocr_preview: name 'datefacturation_time' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1339, in ocr_preview
+    print(f"\U0001f4c5 Invoice Date: {datefacturation_value} (took {datefacturation_time:.4f}s)")
+                                                            ^^^^^^^^^^^^^^^^^^^^
+NameError: name 'datefacturation_time' is not defined
+
+2025-08-12 21:12:16,412 INFO Base de données initialisée avec succès
+2025-08-12 21:13:06,849 INFO Base de données initialisée avec succès
+2025-08-12 21:31:16,375 INFO Base de données initialisée avec succès
+2025-08-12 21:34:37,648 INFO Base de données initialisée avec succès
+2025-08-12 21:41:47,019 INFO Base de données initialisée avec succès

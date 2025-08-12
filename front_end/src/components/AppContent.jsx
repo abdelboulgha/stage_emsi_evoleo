@@ -129,7 +129,7 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
                   setCurrentView('miseajour');
                 }}
               >
-                <span style={{whiteSpace: 'nowrap'}}>Mise à jour</span>
+                <span style={{whiteSpace: 'nowrap'}}>Modification </span>
               </button>
             </div>
           </div>

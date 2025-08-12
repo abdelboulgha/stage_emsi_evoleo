@@ -40,6 +40,15 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
     hoveredIndex, setHoveredIndex,
   } = state;
 
+  // Function to clear all files
+  const clearAllFiles = () => {
+    setSetupState(prev => ({
+      ...prev,
+      selectedFiles: [],
+      filePreviews: []
+    }));
+  };
+
   const canvasRef = useRef(null);
   const imageRef = useRef(null);
   const previewImageRef = useRef(null);
@@ -165,7 +174,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
     <div className="extractor-container">
       <Notifications notifications={notifications} />
 
-      <div className="extractor-content">
+      
         {currentStep === "setup" && (
           <PreparationSetup
             setupState={setupState}
@@ -176,6 +185,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
             handleSingleDataPrepUpload={handleDataPrepFileUpload}
             validateSetupAndProceed={validateSetupAndProceed}
             removeFile={removeFile}
+            clearAllFiles={clearAllFiles}
             showNotification={showNotification}
             getPagePreviews={getPagePreviews}
           />
@@ -249,7 +259,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
           />
         )}
       </div>
-    </div>
+   
   );
 };
 

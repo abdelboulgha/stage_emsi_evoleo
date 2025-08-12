@@ -63,38 +63,55 @@ const PageSelectionModal = ({ isOpen, onClose, pages, onSelectPage }) => {
   );
 };
 
-const PreparationSetup = ({
-  setupState,
-  setSetupState,
-  mappings,
-  isLoading,
-  handleSetupFileUpload,
-  handleSingleDataPrepUpload,
-  validateSetupAndProceed,
-  removeFile,
-  showNotification,
-  getPagePreviews,
-}) => {
+const PreparationSetup = (props) => {
+  const {
+    setupState,
+    setSetupState,
+    mappings,
+    isLoading,
+    handleSetupFileUpload,
+    handleSingleDataPrepUpload,
+    validateSetupAndProceed,
+    removeFile,
+    clearAllFiles,
+    showNotification,
+    getPagePreviews,
+  } = props;
+
   const [showPageModal, setShowPageModal] = useState(false);
   const [pdfPages, setPdfPages] = useState([]);
   const [pendingFile, setPendingFile] = useState(null);
 
   const handleFileSelection = async (event) => {
     const file = event.target.files[0];
-    if (!file || file.type !== "application/pdf") {
-      showNotification("Veuillez sélectionner un fichier PDF.", "error");
+    if (!file) {
+      showNotification("Aucun fichier sélectionné.", "error");
+      return;
+    }
+
+    // Check if the file is a PDF or an image
+    const isPDF = file.type === 'application/pdf';
+    const isImage = file.type.startsWith('image/');
+
+    if (!isPDF && !isImage) {
+      showNotification("Veuillez sélectionner un fichier PDF ou une image valide.", "error");
       return;
     }
 
     try {
-      const pagePreviews = await getPagePreviews(file);
-     
-      if (pagePreviews.length > 1) {
-        setPdfPages(pagePreviews);
-        setPendingFile(file);
-        setShowPageModal(true);
-      } else {
+      if (isPDF) {
+        // For PDFs, get page previews
+        const pagePreviews = await getPagePreviews(file);
         
+        if (pagePreviews.length > 1) {
+          setPdfPages(pagePreviews);
+          setPendingFile(file);
+          setShowPageModal(true);
+        } else {
+          handleSingleDataPrepUpload({ target: { files: [file] } }, 0);
+        }
+      } else {
+        // For images, directly upload without page selection
         handleSingleDataPrepUpload({ target: { files: [file] } }, 0);
       }
     } catch (error) {
@@ -116,74 +133,15 @@ const PreparationSetup = ({
     <div className="preparation-setup">
       <div className="preparation-setup-header">
         <h1 className="preparation-setup-title">Configuration de l'Extraction</h1>
-        <p className="preparation-setup-subtitle">
-          Configurez votre extraction de factures en quelques étapes simples
-        </p>
+     
       </div>
 
       <div className="preparation-steps">
-        {/* Étape 1: Type de facture */}
-        <div className="preparation-step">
-          <div className="preparation-step-header">
-            <div className="preparation-step-icon">1</div>
-            <div>
-              <h3 className="preparation-step-title">Type de facture</h3>
-              <p className="preparation-step-description">
-                Sélectionnez le type de facture à traiter
-              </p>
-            </div>
-          </div>
-          
-          <div className="preparation-step-content">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <button
-                onClick={() =>
-                  setSetupState((prev) => ({
-                    ...prev,
-                    invoiceType: "achat",
-                  }))
-                }
-                className={`preparation-type-card ${
-                  setupState.invoiceType === "achat" ? "active" : ""
-                }`}
-              >
-                <div className="preparation-type-icon">
-                  <ShoppingCart className="w-8 h-8" />
-                </div>
-                <h4 className="preparation-type-title">Facture d'Achat</h4>
-                <p className="preparation-type-description">
-                  Factures reçues de vos fournisseurs
-                </p>
-              </button>
-
-              <button
-                onClick={() =>
-                  setSetupState((prev) => ({
-                    ...prev,
-                    invoiceType: "vente",
-                  }))
-                }
-                className={`preparation-type-card ${
-                  setupState.invoiceType === "vente" ? "active" : ""
-                }`}
-              >
-                <div className="preparation-type-icon">
-                  <DollarSign className="w-8 h-8" />
-                </div>
-                <h4 className="preparation-type-title">Facture de Vente</h4>
-                <p className="preparation-type-description">
-                  Factures émises vers vos clients
-                </p>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Étape 2: Configuration du fournisseur */}
+        {/* Étape 1: Configuration du fournisseur */}
         {setupState.invoiceType && (
           <div className="preparation-step">
             <div className="preparation-step-header">
-              <div className="preparation-step-icon">2</div>
+              <div className="preparation-step-icon">1</div>
               <div>
                 <h3 className="preparation-step-title">Configuration</h3>
                 <p className="preparation-step-description">
@@ -196,7 +154,7 @@ const PreparationSetup = ({
               <div className="preparation-upload-area">
                 <input
                   type="file"
-                  accept=".pdf"
+                  accept=".pdf,.png,.jpg,.jpeg"
                   onChange={handleFileSelection}
                   className="hidden"
                   id="single-dataprep-upload"
@@ -213,7 +171,7 @@ const PreparationSetup = ({
                     {setupState.invoiceType === "achat" ? "d'achat" : "de vente"}
                   </div>
                   <div className="preparation-upload-subtext">
-                    Cliquez pour sélectionner un fichier PDF de référence
+                    Cliquez pour sélectionner un fichier PDF ou image de référence
                   </div>
                   <ArrowRight className="w-6 h-6 text-gray-400" />
                 </label>
@@ -222,11 +180,11 @@ const PreparationSetup = ({
           </div>
         )}
 
-        {/* Étape 3: Sélection du fournisseur */}
+        {/* Étape 2: Sélection du fournisseur */}
         {setupState.invoiceType && (
           <div className="preparation-step">
             <div className="preparation-step-header">
-              <div className="preparation-step-icon">3</div>
+              <div className="preparation-step-icon">2</div>
               <div>
                 <h3 className="preparation-step-title">Fournisseur</h3>
                 <p className="preparation-step-description">
@@ -276,7 +234,7 @@ const PreparationSetup = ({
         {setupState.invoiceType && setupState.selectedModel?.id && (
           <div className="preparation-step">
             <div className="preparation-step-header">
-              <div className="preparation-step-icon">4</div>
+              <div className="preparation-step-icon">3</div>
               <div>
                 <h3 className="preparation-step-title">Documents à traiter</h3>
                 <p className="preparation-step-description">
@@ -311,13 +269,29 @@ const PreparationSetup = ({
                 </label>
               </div>
 
-              {setupState.filePreviews.length > 0 && (
-                <div className="preparation-file-list">
-                  <h4 className="preparation-file-list-title">
-                    Fichiers sélectionnés ({setupState.filePreviews.length} page(s))
-                  </h4>
-                  <div className="preparation-file-grid">
-                    {setupState.filePreviews.map((preview) => (
+              <div className="preparation-file-list">
+                <div className="preparation-file-list-header">
+                  <div className="preparation-file-list-header-content">
+                    <h4 className="preparation-file-list-title">
+                      Fichiers sélectionnés ({setupState.filePreviews?.length || 0} page(s))
+                    </h4>
+                    {setupState.filePreviews?.length > 0 && (
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          clearAllFiles();
+                        }}
+                        className="preparation-clear-all"
+                        disabled={isLoading}
+                      >
+                        Tout effacer
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <div className="preparation-file-grid">
+                  {setupState.filePreviews?.map((preview) => (
                       <div key={preview.id} className="preparation-file-item">
                         <div className="preparation-file-preview">
                           <img
@@ -350,8 +324,8 @@ const PreparationSetup = ({
                       </div>
                     ))}
                   </div>
-                </div>
-              )}
+                
+              </div>
             </div>
           </div>
         )}

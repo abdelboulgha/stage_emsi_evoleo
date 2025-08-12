@@ -69,7 +69,8 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         formData.append("file", file);
         formData.append("page_index", pageIndex.toString());
         
-
+        setCurrentStep("dataprep");
+        navigate("/parametre");
     
         const response = await fetch(`${API_BASE_URL}/upload-for-dataprep`, {
           method: "POST",
@@ -103,8 +104,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
             selectedPageIndex: pageIndex,
           }));
           console.log("OCR Boxes reçues :", result.boxes); // DEBUG
-          setCurrentStep("dataprep");
-          navigate("/parametre");
+        
           showNotification(
             `Page ${pageIndex + 1} chargée avec succès (${widthToUse} × ${heightToUse} px) - ${
               result.box_count || (result.boxes ? result.boxes.length : 0)

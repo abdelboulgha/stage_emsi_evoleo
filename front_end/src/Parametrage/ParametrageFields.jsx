@@ -132,7 +132,7 @@ const ParametrageFields = ({
         >
           {isLoading ? (
             <>
-              <Loader2 className="parametrage-save-icon" />
+              <Loader2 className="parametrage-save-icon-loader" />
               Sauvegarde...
             </>
           ) : (

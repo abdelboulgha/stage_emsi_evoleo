@@ -405,6 +405,15 @@
    
 }
 
+
+
+.parametrage-save-icon-loader {
+    width: 20px;
+    height: 20px;
+    animation: spin 1s linear infinite;
+   
+}
+
 /* Progress Section */
 .parametrage-progress-section {
     margin-top: var(--spacing-xl);

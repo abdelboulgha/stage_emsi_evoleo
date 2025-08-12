@@ -41,9 +41,7 @@ const ExtractionMain = ({
       <div className="extraction-content">
         <div className="extraction-header">
           <h1 className="extraction-title">Extraction de Données</h1>
-          <p className="extraction-subtitle">
-            Analysez et extrayez automatiquement les informations de vos factures
-          </p>
+          
         </div>
 
         <div className="extraction-grid">

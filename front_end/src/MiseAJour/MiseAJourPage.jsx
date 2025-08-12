@@ -209,10 +209,8 @@ const MiseAJourPage = () => {
     <div className="miseajour-container">
       <div className="miseajour-content">
         <div className="miseajour-header">
-          <h1 className="miseajour-title">Mise à jour</h1>
-          <p className="miseajour-subtitle">
-            Gérez et modifiez vos factures extraites
-          </p>
+          <h1 className="miseajour-title">Modification des factures</h1>
+         
         </div>
 
         <div className="miseajour-main">

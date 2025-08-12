@@ -42,9 +42,7 @@ const ParametrageMain = ({
       <div className="parametrage-content">
         <div className="parametrage-header">
           <h1 className="parametrage-title">Paramétrage des Champs</h1>
-          <p className="parametrage-subtitle">
-            Configurez les zones d'extraction pour vos factures
-          </p>
+       
         </div>
 
         <div className="parametrage-grid">
