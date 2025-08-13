@@ -240,11 +240,14 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
 
   // Nouvelle fonction pour sauvegarder toutes les données corrigées avant d'envoyer à FoxPro
   const saveAllCorrectedDataAndLaunchFoxPro = useCallback(async () => {
-    for (let i = 0; i < extractionState.extractedDataList.length; i++) {
-      await saveCorrectedData(i);
+    // Only save the current image's data, not all images
+    // This prevents overwriting issues where the last image overwrites previous ones
+    const currentIndex = extractionState.currentPdfIndex;
+    if (currentIndex >= 0 && currentIndex < extractionState.extractedDataList.length) {
+      await saveCorrectedData(currentIndex);
     }
     await launchFoxPro();
-  }, [extractionState.extractedDataList, saveCorrectedData, launchFoxPro]);
+  }, [extractionState.extractedDataList, extractionState.currentPdfIndex, saveCorrectedData, launchFoxPro]);
 
   return {
     filterValue,

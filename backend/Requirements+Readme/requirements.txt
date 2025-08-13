@@ -7,8 +7,12 @@ python-multipart>=0.0.6
 pydantic>=2.5.0
 email-validator>=2.1.0
 
-# Database
-mysql-connector-python>=8.2.0
+# Database - ORM
+sqlalchemy>=2.0.0
+alembic>=1.13.0
+asyncmy>=0.2.8
+
+# Legacy database support (for FoxPro)
 dbf>=0.99.3
 
 # PDF and Image Processing
@@ -16,9 +20,7 @@ pymupdf>=1.23.8
 Pillow>=10.1.0
 
 # OCR
-
 paddleocr
-
 
 # Data processing
 numpy>=1.24.3

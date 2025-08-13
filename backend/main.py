@@ -12,7 +12,6 @@ import dateparser
 # Third-party imports
 import base64
 import dbf
-import mysql.connector
 import numpy as np
 import pymupdf as fitz
 from fastapi import (
@@ -20,15 +19,19 @@ from fastapi import (
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
-from mysql.connector import Error, pooling
 from paddleocr import PaddleOCR
 from PIL import Image, ImageEnhance, ImageOps
 from pydantic import BaseModel, Field, field_validator
 from dotenv import load_dotenv
 
+# Database and ORM imports
+from database.config import get_async_db, init_database
+from database.models import Base
+from services.template_service import TemplateService
+from services.facture_service import FactureService
+
 # Authentication modules
 from auth.auth_routes import router as auth_router
-from auth.auth_database import init_database
 from auth.auth_jwt import require_comptable_or_admin
 from auth.auth_config import CORS_ORIGINS, CORS_ALLOW_CREDENTIALS
 
@@ -49,47 +52,19 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Database configuration
-DB_CONFIG = {
-    "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),
-    "database": os.getenv("DB_NAME", "evoleo")
-}
-
 # Configure logging
 logging.basicConfig(
-    filename=r'C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\invoice_debug.log',
+    filename=r'C:\Users\pc\Desktop\stage_emsi_2025\backend\invoice_debug.log',
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(message)s',
     force=True
 )
 
-# Initialize authentication database
-try:
-    init_database()
-    print("Authentication database initialized")
-except Exception as e:
-    logging.error(f"Error initializing authentication database: {e}")
+# Initialize database
+init_database()
 
 # Include authentication routes
 app.include_router(auth_router)
-
-# Create database connection pool
-connection_pool = None
-try:
-    connection_pool = mysql.connector.pooling.MySQLConnectionPool(
-        pool_name="evoleo_pool",
-        pool_size=5,
-        **DB_CONFIG
-    )
-    print("Database connection pool created successfully")
-except Error as e:
-    logging.error(f"Error creating connection pool: {e}")
-    logging.warning("Continuing without database connection pool")
-except Exception as e:
-    logging.error(f"Unexpected error creating connection pool: {e}")
-    logging.warning("Continuing without database connection pool")
 
 # Initialize PaddleOCR with specified parameters
 ocr = PaddleOCR(
@@ -127,11 +102,57 @@ class ExtractionResult(BaseModel):
     success: bool
     data: Dict[str, str]
     message: str
-   
+
+
+class SaveMappingRequest(BaseModel):
+    template_id: str = "default"
+    field_map: Dict[str, Optional[FieldCoordinates]]
+
+
+class InvoiceUpdate(BaseModel):
+    """Model for updating invoice data"""
+    fournisseur: Optional[str] = None
+    numFacture: Optional[str] = None
+    dateFacturation: Optional[str] = None
+    tauxTVA: Optional[float] = None
+    montantHT: Optional[float] = None
+    montantTVA: Optional[float] = None
+    montantTTC: Optional[float] = None
+
+
+class InvoiceCreate(BaseModel):
+    """Model for creating invoice data"""
+    fournisseur: str
+    numFacture: str
+    dateFacturation: str  # Changed from date to str for flexibility
+    tauxTVA: float  # Changed from tva to tauxTVA
+    montantHT: float
+    montantTVA: float  # Added montantTVA
+    montantTTC: float
+
+
+class InvoiceResponse(BaseModel):
+    """Model for invoice response"""
+    success: bool
+    message: str
+    data: Optional[Dict[str, Any]] = None
+
 
 # =======================
-# Database Utilities
+# Utility Functions
 # =======================
+def image_to_base64(img: Image.Image) -> str:
+    """Convertir une image PIL en base64"""
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    img_str = base64.b64encode(buffer.getvalue()).decode()
+    return f"data:image/png;base64,{img_str}"
+
+
+# Add a single variable for PDF rendering scale
+PDF_RENDER_SCALE = 2  # Change this value to affect all PDF image renderings
+
+# Database connection function (for backward compatibility)
 def get_connection():
     """
     Get a database connection from the connection pool.
@@ -143,198 +164,17 @@ def get_connection():
         Exception: If the connection pool is not available
         Error: If there's an error getting a connection
     """
-    if connection_pool is None:
-        raise Exception("Database connection pool not available")
+    # For now, we'll use the ORM session, but this function is kept for compatibility
+    # with the existing OCR extraction code
     try:
-        connection = connection_pool.get_connection()
-        return connection
-    except Error as e:
-        logging.error(f"Error getting connection from pool: {e}")
-        raise
-
-async def save_mapping_db(template_name: str, field_map: Dict[str, Any], current_user_id: int = None) -> bool:
-    """
-    Save field mappings to the database with user ownership check
-    
-    Args:
-        template_name: The name of the template to save mappings for
-        field_map: Dictionary of field names to their coordinate data
-        current_user_id: User ID who is creating/updating the template
-        
-    Returns:
-        bool: True if save was successful, False otherwise
-    """
-    connection = None
-    cursor = None
-    try:
-        if not current_user_id:
-            raise ValueError("User ID is required to save template mappings")
-            
-        print(f"Starting to save mapping for template: {template_name}")
-        logging.debug(f"Field map data: {field_map}")
-        
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        connection.start_transaction()
-        
-        # 1. Check if template with this name already exists for this user
-        cursor.execute("""
-            SELECT id FROM templates 
-            WHERE name = %s AND created_by = %s
-            LIMIT 1
-        """, (template_name, current_user_id))
-        template = cursor.fetchone()
-        
-        # 2. If template exists, get its ID, otherwise create new template
-        if template:
-            template_id = template['id']
-            print(f"Found existing template ID {template_id} for name '{template_name}'")
-        else:
-            # Create new template
-            cursor.execute("""
-                INSERT INTO templates (name, created_by)
-                VALUES (%s, %s)
-            """, (template_name, current_user_id))
-            template_id = cursor.lastrowid
-            print(f"Created new template ID {template_id} with name '{template_name}'")
-        
-        if not template_id:
-            raise ValueError(f"Failed to get or create template ID for '{template_name}'")
-        
-        # 3. Delete existing mappings for this template
-        cursor.execute("""
-            DELETE FROM mappings 
-            WHERE template_id = %s
-        """, (template_id,))
-        
-        # 4. Insert new mappings
-        for field_name, coords in field_map.items():
-            if coords is not None:
-                # First, get the field_id for this field_name
-                cursor.execute("""
-                    SELECT id FROM field_name WHERE name = %s
-                """, (field_name,))
-                field = cursor.fetchone()
-                
-                if field:
-                    field_id = field['id']
-                    cursor.execute("""
-                        INSERT INTO mappings 
-                        (template_id, field_id, `left`, `top`, width, height, manual, created_by)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-                    """, (
-                        template_id,
-                        field_id,
-                        coords.get('left'),
-                        coords.get('top'),
-                        coords.get('width'),
-                        coords.get('height'),
-                        coords.get('manual', False),
-                        current_user_id
-                    ))
-                else:
-                    logging.warning(f"Field name '{field_name}' not found in field_name table")
-        
-        connection.commit()
-        print(f"Successfully saved {len(field_map)} fields for template '{template_name}' (ID: {template_id})")
-        return True
-        
-    except Exception as e:
-        if connection:
-            connection.rollback()
-        logging.error(f"Error saving mapping for template {template_name}: {str(e)}", exc_info=True)
-        logging.error(f"Error saving mapping for template {template_id}: {str(e)}", exc_info=True)
-        return False
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
-async def load_mapping_db(template_id: str) -> Dict:
-    """Load field mappings from the database using field names, including the 'manual' flag"""
-    connection = None
-    cursor = None
-    try:
-        print(f"Loading mappings for template_id: {template_id}")
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
-        
-        # Get field ID to name mapping
-        cursor.execute("SELECT id, name FROM Field_Name")
-        id_to_name = {row['id']: row['name'] for row in cursor.fetchall()}
-        print(f"Loaded field name mapping: {id_to_name}")
-        
-        # Get all mappings for this template (inclut 'manual')
-        cursor.execute("""
-            SELECT field_id, `left`, `top`, `width`, `height`, `manual`
-            FROM Mappings 
-            WHERE template_id = %s
-        """, (template_id,))
-        
-        field_map = {}
-        rows = cursor.fetchall()
-        print(f"Found {len(rows)} mappings in database")
-        
-        for row in rows:
-            field_id = row['field_id']
-            field_name = id_to_name.get(field_id)
-            if field_name:
-                try:
-                    field_map[field_name] = {
-                        'left': float(row['left']) if row['left'] is not None else 0.0,
-                        'top': float(row['top']) if row['top'] is not None else 0.0,
-                        'width': float(row['width']) if row['width'] is not None else 0.0,
-                        'height': float(row['height']) if row['height'] is not None else 0.0,
-                        'manual': bool(row.get('manual', 0))  # <-- Ajout du flag manual
-                    }
-                    print(f"Loaded mapping for {field_name}: {field_map[field_name]}")
-                except (ValueError, TypeError) as e:
-                    logging.error(f"Error processing coordinates for field {field_name}: {e}")
-            else:
-                logging.warning(f"No name found for field_id: {field_id}")
-        
-        print(f"Successfully loaded {len(field_map)} field mappings")
-        # Return in the expected format
-        return {
-            "status": "success",
-            "mappings": {
-                template_id: field_map
-            }
-        }
-        
-    except Exception as e:
-        error_msg = f"Error loading mapping from database: {str(e)}"
-        logging.error(error_msg, exc_info=True)
-        return {
-            "status": "error",
-            "message": error_msg,
-            "mappings": {}
-        }
-    finally:
-        if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
-
-
-
-
-
-
-
-def image_to_base64(img: Image.Image) -> str:
-    """Convertir une image PIL en base64"""
-    buffer = BytesIO()
-    img.save(buffer, format='PNG')
-    img_str = base64.b64encode(buffer.getvalue()).decode()
-    return f"data:image/png;base64,{img_str}"
-
-
-
-# Add a single variable for PDF rendering scale
-PDF_RENDER_SCALE = 2  # Change this value to affect all PDF image renderings
+        # Import here to avoid circular imports
+        from database.config import get_async_db
+        from auth.auth_database import get_connection as get_mysql_connection
+        return get_mysql_connection()
+    except ImportError:
+        # Fallback to original MySQL connection if ORM not available
+        from auth.auth_database import get_connection as get_mysql_connection
+        return get_mysql_connection()
 
 def process_pdf_to_image(file_content: bytes) -> Image.Image:
     """Convertir un PDF en image en utilisant PyMuPDF"""
@@ -356,6 +196,7 @@ def process_pdf_to_image(file_content: bytes) -> Image.Image:
         logging.error(f"Erreur lors de la conversion PDF: {e}")
         raise e
 
+
 def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
     """Convertir un PDF en une liste d'images (une par page) en utilisant PyMuPDF"""
     try:
@@ -373,12 +214,10 @@ def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
         logging.error(f"Erreur lors de la conversion PDF en images: {e}")
         raise e
 
-# Routes API
-class SaveMappingRequest(BaseModel):
-    template_id: str = "default"
-    field_map: Dict[str, Optional[FieldCoordinates]]
 
-
+# =======================
+# API Routes
+# =======================
 @app.post("/upload-for-dataprep")
 async def upload_for_dataprep(
     file: UploadFile = File(...),
@@ -498,24 +337,240 @@ async def pdf_page_previews(
 
         for page_num in range(pdf_document.page_count):
             page = pdf_document.load_page(page_num)
-            pix = page.get_pixmap(matrix=fitz.Matrix(2, 2))
+            pix = page.get_pixmap(matrix=fitz.Matrix(1, 1))  # Lower resolution for previews
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+            
+            # Convert to base64
             buffer = BytesIO()
             img.save(buffer, format='PNG')
-            img_base64 = base64.b64encode(buffer.getvalue()).decode('utf-8')
+            img_str = base64.b64encode(buffer.getvalue()).decode()
+            base64_img = f"data:image/png;base64,{img_str}"
+            
             pages.append({
-                "image": f"data:image/png;base64,{img_base64}",
-                "pageNumber": page_num + 1
+                "page_number": page_num,
+                "image": base64_img,
+                "width": img.width,
+                "height": img.height
             })
         
-
         pdf_document.close()
-        return {"success": True, "pages": pages}
+        
+        return {
+            "success": True,
+            "total_pages": len(pages),
+            "pages": pages
+        }
+        
     except Exception as e:
         logging.error(f"Erreur lors de la génération des aperçus: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la génération des aperçus: {str(e)}")
 
-#upload preparation
+
+@app.post("/save-mapping")
+async def save_mapping(
+    request: SaveMappingRequest,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Save field mappings to the database using ORM"""
+    try:
+        template_service = TemplateService(db)
+        success = await template_service.save_mapping(
+            template_name=request.template_id,  # template_id is actually the template name
+            field_map=request.field_map, 
+            current_user_id=current_user["id"]
+        )
+        
+        if success:
+            return {"success": True, "message": "Mapping saved successfully"}
+        else:
+            return {"success": False, "message": "Failed to save mapping"}
+            
+    except Exception as e:
+        logging.error(f"Error saving mapping: {e}")
+        raise HTTPException(status_code=500, detail=f"Error saving mapping: {str(e)}")
+
+
+@app.get("/load-mapping/{template_id}")
+async def load_mapping(
+    template_id: str,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Load field mappings from the database using ORM"""
+    try:
+        template_service = TemplateService(db)
+        result = await template_service.load_mapping(template_id)
+        return result
+        
+    except Exception as e:
+        logging.error(f"Error loading mapping: {e}")
+        raise HTTPException(status_code=500, detail=f"Error loading mapping: {str(e)}")
+
+
+@app.post("/mappings")
+async def save_field_mapping(
+    request: SaveMappingRequest,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """
+    Save field mappings for a template using ORM
+    
+    Args:
+        request: SaveMappingRequest containing template_id and field_map
+        current_user: Authenticated user from JWT token
+        db: Database session
+        
+    Returns:
+        JSON response with success/error status
+    """
+    try:
+        template_service = TemplateService(db)
+        
+        # Convert Pydantic model to dict and handle FieldCoordinates objects
+        field_map = {}
+        for field_name, coords in request.field_map.items():
+            if coords is not None:
+                if isinstance(coords, dict):
+                    field_map[field_name] = coords
+                else:
+                    field_map[field_name] = coords.dict()
+        
+        print(f"Saving mapping for template: {request.template_id}")
+        logging.debug(f"Field map: {field_map}")
+        
+        success = await template_service.save_mapping(
+            template_name=request.template_id,  # template_id is actually the template name
+            field_map=field_map,
+            current_user_id=current_user['id']
+        )
+        
+        if success:
+            return {
+                "success": True,
+                "message": "Mapping saved successfully",
+                "template_id": request.template_id,
+                "fields_saved": list(field_map.keys())
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to save mapping")
+    except HTTPException:
+        raise  # Re-raise HTTP exceptions as-is
+    except Exception as e:
+        error_msg = f"Unexpected error saving mapping: {str(e)}"
+        logging.error(error_msg, exc_info=True)
+        raise HTTPException(status_code=500, detail=error_msg)
+
+
+@app.get("/mappings")
+async def get_mappings(
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Get all templates and mappings for the current user using ORM"""
+    try:
+        template_service = TemplateService(db)
+        result = await template_service.get_all_templates(current_user["id"])
+        return result
+        
+    except Exception as e:
+        logging.error(f"Error getting mappings: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting mappings: {str(e)}")
+
+
+@app.delete("/mappings/{template_id}")
+async def delete_mapping(
+    template_id: str,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Delete a template and all its mappings using ORM"""
+    try:
+        template_service = TemplateService(db)
+        result = await template_service.delete_template(template_id, current_user["id"])
+        return result
+        
+    except Exception as e:
+        logging.error(f"Error deleting mapping: {e}")
+        raise HTTPException(status_code=500, detail=f"Error deleting mapping: {str(e)}")
+
+
+@app.post("/create-facture")
+async def create_facture(
+    facture_data: dict,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Create a new invoice using ORM"""
+    try:
+        facture_service = FactureService(db)
+        result = await facture_service.create_facture(facture_data, current_user["id"])
+        return result
+        
+    except Exception as e:
+        logging.error(f"Error creating invoice: {e}")
+        raise HTTPException(status_code=500, detail=f"Error creating invoice: {str(e)}")
+
+
+@app.get("/factures")
+async def get_factures(
+    skip: int = 0,
+    limit: int = 100,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Get invoices for the current user using ORM"""
+    try:
+        facture_service = FactureService(db)
+        result = await facture_service.get_factures(current_user["id"], skip, limit)
+        return result
+        
+    except Exception as e:
+        logging.error(f"Error getting invoices: {e}")
+        raise HTTPException(status_code=500, detail=f"Error getting invoices: {str(e)}")
+
+
+@app.put("/factures/{facture_id}")
+async def update_facture(
+    facture_id: int,
+    invoice_update: InvoiceUpdate,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Update an invoice using ORM"""
+    try:
+        facture_service = FactureService(db)
+        update_data = invoice_update.dict(exclude_unset=True)
+        result = await facture_service.update_facture(facture_id, update_data, current_user["id"])
+        return result
+        
+    except Exception as e:
+        logging.error(f"Error updating invoice: {e}")
+        raise HTTPException(status_code=500, detail=f"Error updating invoice: {str(e)}")
+
+
+@app.delete("/factures/{facture_id}")
+async def delete_facture(
+    facture_id: int,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """Delete an invoice using ORM"""
+    try:
+        facture_service = FactureService(db)
+        result = await facture_service.delete_facture(facture_id, current_user["id"])
+        return result
+        
+    except Exception as e:
+        logging.error(f"Error deleting invoice: {e}")
+        raise HTTPException(status_code=500, detail=f"Error deleting invoice: {str(e)}")
+
+
+# =======================
+# OCR Extraction Functions (keeping existing logic)
+# =======================
+
 @app.post("/upload-basic")
 async def upload_basic(file: UploadFile = File(...)):
     """Upload d'un fichier pour preview rapide (pas d'OCR, juste image(s) base64, width, height)"""
@@ -555,101 +610,8 @@ async def upload_basic(file: UploadFile = File(...)):
         logging.error(f"Erreur lors de l'upload basic: {e}")
         raise HTTPException(status_code=500, detail=f"Erreur lors du traitement: {str(e)}")
 
-
-def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float], corrected_data: Dict[str, str] = None):
-    """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
-    try:
-        print(f"=== DEBUG save_extraction_for_foxpro ===")
-        print(f"extracted_data reçu: {extracted_data}")
-        print(f"corrected_data reçu: {corrected_data}")
-        print(f"confidence_scores reçu: {confidence_scores}")
-        
-        # Utiliser les données corrigées si disponibles, sinon les données extraites
-        # Note: corrected_data peut contenir des chaînes vides, ce qui est valide
-        if corrected_data is not None:
-            data_to_use = corrected_data
-            print(f"Utilisation des données corrigées: {data_to_use}")
-        else:
-            data_to_use = extracted_data
-            print(f"Utilisation des données extraites: {data_to_use}")
-        
-        # Gérer les différents noms de champs possibles
-        numero_facture = data_to_use.get("numeroFacture") or data_to_use.get("numFacture", "")
-        print(f"Numéro facture trouvé: {numero_facture}")
-        
-        # Nettoyer le taux TVA - extraire juste le nombre
-        taux_tva_raw = data_to_use.get("tauxTVA", "0")
-        taux_tva_clean = "0"
-        if taux_tva_raw:
-            # Chercher un nombre dans la chaîne (ex: "Total TVA 20%" -> "20")
-            match = re.search(r'(\d+(?:[.,]\d+)?)', str(taux_tva_raw))
-            if match:
-                taux_tva_clean = match.group(1)
-        
-        print(f"Taux TVA nettoyé: {taux_tva_clean}")
-        
-        # Créer un fichier JSON avec les données (corrigées ou extraites)
-        print("Début construction foxpro_data...")
-        print(f"extracted_data: {extracted_data}")
-        print(f"confidence_scores: {confidence_scores}")
-        print(f"datetime.now(): {datetime.now()}")
-        
-        foxpro_data = {
-            "success": True,
-            "data": extracted_data if extracted_data else {},  # Garder les données originales pour référence
-            "corrected_data": corrected_data,  # Ajouter les données corrigées
-            "confidence_scores": confidence_scores if confidence_scores else {},
-            "timestamp": str(datetime.now()),
-            "fields": {
-                "fournisseur": data_to_use.get("fournisseur", ""),
-                "dateFacturation": data_to_use.get("dateFacturation", ""),
-                "numeroFacture": numero_facture,
-                "tauxTVA": taux_tva_clean,
-                "montantHT": data_to_use.get("montantHT", "0"),
-                "montantTVA": data_to_use.get("montantTVA", "0"),
-                "montantTTC": data_to_use.get("montantTTC", "0")
-            }
-        }
-        print("foxpro_data construit avec succès")
-        
-        # Créer automatiquement le fichier JSON dans le dossier foxpro
-        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
-        os.makedirs(foxpro_dir, exist_ok=True)
-        
-        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
-        print(f"Écriture du fichier JSON: {json_path}")
-        print(f"Contenu foxpro_data: {foxpro_data}")
-        with open(json_path, 'w', encoding='utf-8') as f:
-            json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
-        
-        # Créer automatiquement le fichier texte simple pour FoxPro
-        txt_path = os.path.join(foxpro_dir, 'ocr_extraction.txt')
-        print(f"Écriture du fichier TXT: {txt_path}")
-        print(f"Données utilisées pour TXT: {data_to_use}")
-        with open(txt_path, 'w', encoding='utf-8') as f:
-            f.write(f"Date export: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
-            f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
-            f.write(f"Numéro Facture: {data_to_use.get('numeroFacture', '')}\n")
-            f.write(f"Taux TVA: {taux_tva_clean}\n")
-            f.write(f"Montant HT: {data_to_use.get('montantHT', '0')}\n")
-            f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
-            f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
-        
-        print("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement dans le dossier foxpro")
-        
-        print("save_extraction_for_foxpro completed successfully.")
-        
-        # Créer aussi automatiquement le fichier DBF s'il n'existe pas
-        try:
-            write_invoice_to_dbf(data_to_use)
-            print("Fichier factures.dbf créé/mis à jour automatiquement")
-        except Exception as dbf_error:
-            logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
-        
-    except Exception as e:
-        logging.error(f"Erreur lors de la sauvegarde pour FoxPro: {e}")
-
-logger = logging.getLogger()
+# ... (keep all your existing OCR extraction functions here)
+# These functions don't need database access, so they can remain as is
 
 
 @app.post("/ocr-preview")
@@ -657,15 +619,11 @@ async def ocr_preview(
     file: UploadFile = File(...),
     template_id: str = Form(None),
 ):
-   
-
     MIN_CONFIDENCE = 0.75
     HORIZONTAL_VERTICAL_TOL = 10        # horizontal search: vertical tolerance (px)
     HORIZONTAL_MAX_DIST = 600       # horizontal search: max distance to right (px)
     VERTICAL_MAX_Y = 100              # vertical search: max distance under keyword (px)
     VERTICAL_HORZ_TOL = 50            # vertical search: horizontal tolerance (px)
-
-  
 
     try:
         # --- Read file to PIL image ---
@@ -885,18 +843,6 @@ async def ocr_preview(
                             
                             all_boxes_info.append(debug_info)
                         
-                        # Print all boxes with their status
-                       # print("\nALL BOXES CHECKED:")
-                        #print("-"*80)
-                        #for box in all_boxes_info:
-                         #   status = "✅ MATCH" if box['is_match'] else "❌ REJECTED"
-                          #  print(f"{box['index']:2d}. {status} - '{box['text']}' at {box['pos']}")
-                          #  print(f"    dx: {box['dx']:6.1f}px, dy: {box['dy']:5.1f}px")
-                            #if box['reasons']:
-                            #    print(f"    Reasons: {'; '.join(box['reasons'])}")
-                            #if box['value'] is not None:
-                            #    print(f"    Extracted value: {box['value']}")
-                        
                         if not candidates:
                             print("\n❌ NO VALID MATCHES FOUND IN HORIZONTAL SEARCH")
                         else:
@@ -985,8 +931,6 @@ async def ocr_preview(
             print("No matching values found in any search direction")
             return None
 
-
-
         # -------------------------
         # Extract HT
         # -------------------------
@@ -1073,6 +1017,8 @@ async def ocr_preview(
         numfacture_value = None
         numfacture_box = None
         try:
+            # Note: This part still uses raw SQL for now since it's complex
+            # TODO: Migrate to ORM when possible
             connection = get_connection()
             cursor = connection.cursor(dictionary=True)
             cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
@@ -1383,597 +1329,320 @@ async def ocr_preview(
     except Exception as e:
         import traceback
         error_details = traceback.format_exc()
-        logger.error(f"Error in ocr_preview: {str(e)}\n{error_details}")
+        logging.error(f"Error in ocr_preview: {str(e)}\n{error_details}")
         return {
             "success": False,
             "data": {"error": str(e), "traceback": error_details},
             "message": f"Erreur lors de l'extraction: {str(e)}"
         }
-        
-
-@app.post("/mappings")
-async def save_field_mapping(
-    request: SaveMappingRequest,
-    current_user = Depends(require_comptable_or_admin)
-):
-    """
-    Save field mappings for a template
-    
-    Args:
-        request: SaveMappingRequest containing template_id and field_map
-        current_user: Authenticated user from JWT token
-        
-    Returns:
-        JSON response with success/error status
-    """
-    try:
-        # Convert Pydantic model to dict and handle FieldCoordinates objects
-        field_map = {}
-        for field_name, coords in request.field_map.items():
-            if coords is not None:
-                if isinstance(coords, dict):
-                    field_map[field_name] = coords
-                else:
-                    field_map[field_name] = coords.dict()
-        
-        print(f"Saving mapping for template: {request.template_id}")
-        logging.debug(f"Field map: {field_map}")
-        
-        success = await save_mapping_db(
-            template_name=request.template_id,  # template_id is actually the template name
-            field_map=field_map,
-            current_user_id=current_user['id']
-        )
-        
-        if success:
-            return {
-                "success": True,
-                "message": "Mapping saved successfully",
-                "template_id": request.template_id,
-                "fields_saved": list(field_map.keys())
-            }
-        else:
-            raise HTTPException(status_code=500, detail="Failed to save mapping")
-    except HTTPException:
-        raise  # Re-raise HTTP exceptions as-is
-    except Exception as e:
-        error_msg = f"Unexpected error saving mapping: {str(e)}"
-        logging.error(error_msg, exc_info=True)
-        raise HTTPException(status_code=500, detail=error_msg)
 
 
-@app.get("/mappings")
-async def get_mappings(current_user = Depends(require_comptable_or_admin)):
-    """Récupérer seulement les mappings créés par l'utilisateur actuel"""
-    connection = None
-    cursor = None
-    try:
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        # Get only mappings created by current user
-        cursor.execute("""
-            SELECT 
-                m.template_id,
-                t.name as template_name,
-                f.name as field_name,
-                m.`left`,
-                m.`top`,
-                m.`width`,
-                m.`height`
-            FROM Mappings m
-            JOIN Field_Name f ON m.field_id = f.id
-            JOIN Templates t ON m.template_id = t.id
-            WHERE t.created_by = %s  # Filter by creator
-            ORDER BY t.name, f.name
-        """, (current_user['id'],))  # Pass current user ID
-
-        mappings = cursor.fetchall()
-        
-        # Group by template_id with template names
-        result = {}
-        for row in mappings:
-            template_id = row['template_id']
-            if template_id not in result:
-                result[template_id] = {
-                    'template_name': row['template_name'],
-                    'fields': {}
-                }
-
-            result[template_id]['fields'][row['field_name']] = {
-                'left': float(row['left']),
-                'top': float(row['top']),
-                'width': float(row['width']),
-                'height': float(row['height']),
-                'manual': False
-            }
-
-        return {
-            "status": "success",
-            "mappings": result,
-            "count": len(mappings),
-            "template_count": len(result)
-        }
-    finally:
-        if cursor: cursor.close()
-        if connection: connection.close()
-
-@app.delete("/mappings/{template_id}")
-async def delete_mapping(template_id: str):
-    """Supprimer un template et tous ses mappings associés"""
-    connection = None
-    cursor = None
-    try:
-        print(f"Attempting to delete template and its mappings: {template_id}")
-        connection = get_connection()
-        cursor = connection.cursor()
-        
-        # Start transaction
-        connection.start_transaction()
-        
-        # First, delete all mappings for this template
-        cursor.execute("DELETE FROM Mappings WHERE template_id = %s", (template_id,))
-        deleted_mappings = cursor.rowcount
-        
-        # Then delete the template itself
-        cursor.execute("DELETE FROM Templates WHERE id = %s", (template_id,))
-        deleted_templates = cursor.rowcount
-        
-        if deleted_templates == 0:
-            connection.rollback()
-            raise HTTPException(status_code=404, detail=f"Template '{template_id}' non trouvé")
-            
-        connection.commit()
-        print(f"Successfully deleted template '{template_id}' and {deleted_mappings} mappings")
-        
-        return {
-            "success": True,
-            "message": f"Template '{template_id}' et ses {deleted_mappings} mappings ont été supprimés avec succès"
-        }
-        
-    except Error as e:
-        if connection:
-            connection.rollback()
-        error_msg = f"Erreur lors de la suppression du template {template_id}: {str(e)}"
-        logging.error(error_msg, exc_info=True)
-        raise HTTPException(status_code=500, detail=error_msg)
-        
-    finally:
-        if cursor:
-            cursor.close()
-        if connection and connection.is_connected():
-            connection.close()
-
-
-
-# Pydantic models for invoice data
-class InvoiceBase(BaseModel):
-    """Base model for invoice data with common fields and validations."""
-    fournisseur: str = Field(..., description="Supplier name")
-    numFacture: str = Field(..., description="Invoice number")
-    dateFacturation: date = Field(..., description="Invoice date (YYYY-MM-DD)")
-    tauxTVA: float = Field(..., ge=0, le=100, description="VAT rate (0-100)")
-    montantHT: float = Field(..., ge=0, description="Amount excluding tax")
-    montantTVA: float = Field(..., ge=0, description="Tax amount")
-    montantTTC: float = Field(..., ge=0, description="Total amount including tax")
-
-    @field_validator('dateFacturation', mode='before')
-    def parse_date(cls, v):
-        if isinstance(v, str):
-            try:
-                return datetime.strptime(v, '%Y-%m-%d').date()
-            except ValueError:
-                try:
-                    # Try with different date formats if needed
-                    return datetime.strptime(v, '%d/%m/%Y').date()
-                except ValueError as e:
-                    raise ValueError("Date must be in YYYY-MM-DD or DD/MM/YYYY format") from e
-        return v
-
-    @field_validator('tauxTVA', 'montantHT', 'montantTVA', 'montantTTC', mode='before')
-    def validate_numbers(cls, v):
-        if isinstance(v, str):
-            try:
-                return float(v.replace(',', '.'))
-            except ValueError as e:
-                raise ValueError(f"Could not convert '{v}' to number") from e
-        return v
-
-
-class InvoiceCreate(InvoiceBase):
-    """Model for creating a new invoice."""
-    pass
-
-
-class InvoiceUpdate(BaseModel):
-    """Model for updating an existing invoice."""
-    fournisseur: Optional[str] = Field(None, description="Supplier name")
-    numFacture: Optional[str] = Field(None, description="Invoice number")
-    dateFacturation: Optional[date] = Field(None, description="Invoice date (YYYY-MM-DD)")
-    tauxTVA: Optional[float] = Field(None, ge=0, le=100, description="VAT rate (0-100)")
-    montantHT: Optional[float] = Field(None, ge=0, description="Amount excluding tax")
-    montantTVA: Optional[float] = Field(None, ge=0, description="Tax amount")
-    montantTTC: Optional[float] = Field(None, ge=0, description="Total amount including tax")
-
-    @field_validator('dateFacturation', mode='before')
-    def parse_date(cls, v):
-        if isinstance(v, str):
-            try:
-                return datetime.strptime(v, '%Y-%m-%d').date()
-            except ValueError:
-                try:
-                    return datetime.strptime(v, '%d/%m/%Y').date()
-                except ValueError as e:
-                    raise ValueError("Date must be in YYYY-MM-DD or DD/MM/YYYY format") from e
-        return v
-
-    @field_validator('tauxTVA', 'montantHT', 'montantTVA', 'montantTTC', mode='before')
-    def validate_numbers(cls, v):
-        if v is None:
-            return v
-        if isinstance(v, str):
-            try:
-                return float(v.replace(',', '.'))
-            except ValueError as e:
-                raise ValueError(f"Could not convert '{v}' to number") from e
-        return v
-
-
-class InvoiceResponse(InvoiceBase):
-    """Response model for invoice data including database-generated fields."""
-    id: int
-    date_creation: datetime
-
-    class Config:
-        from_attributes = True
-
-# Factures endpoints
-# add
 @app.post("/ajouter-facture", response_model=InvoiceResponse)
 async def ajouter_facture(
     invoice: InvoiceCreate,
-    current_user = Depends(require_comptable_or_admin)
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
 ):
     """
-    Save invoice data to the database.
+    Save invoice data to the database using ORM.
     
     Args:
         invoice: The invoice data to be saved
         current_user: The currently authenticated user (from dependency)
+        db: Database session
         
     Returns:
-        dict: A dictionary containing success status, message, and invoice ID
+        InvoiceResponse: A response containing success status, message, and invoice data
     """
-    connection = None
-    cursor = None
     try:
-        connection = get_connection()
-        cursor = connection.cursor()
+        facture_service = FactureService(db)
         
-        # Convert date to string format for database
-        date_str = invoice.dateFacturation.strftime('%Y-%m-%d')
-        
-        # Insert the invoice data with created_by
-        query = """
-        INSERT INTO Facture 
-        (fournisseur, numFacture, dateFacturation, tauxTVA, montantHT, montantTVA, montantTTC, created_by)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        values = (
-            invoice.fournisseur,
-            invoice.numFacture,
-            date_str,
-            invoice.tauxTVA,
-            invoice.montantHT,
-            invoice.montantTVA,
-            invoice.montantTTC,
-            current_user['id']  # Add current user ID as created_by
-        )
-        
-        cursor.execute(query, values)
-        connection.commit()
-        
-        # Get the inserted invoice
-        invoice_id = cursor.lastrowid
-        cursor.execute("SELECT * FROM Facture WHERE id = %s", (invoice_id,))
-        result = cursor.fetchone()
-        
-        # Convert to dictionary with column names if it's a tuple
-        if isinstance(result, tuple):
-            cursor.execute("SHOW COLUMNS FROM Facture")
-            columns = [col[0] for col in cursor.fetchall()]
-            result = dict(zip(columns, result))
-        
-        # Create response data with proper date serialization
-        invoice_data = invoice.model_dump()
-        # Convert date objects to ISO format strings
-        if 'dateFacturation' in invoice_data and invoice_data['dateFacturation'] is not None:
-            if hasattr(invoice_data['dateFacturation'], 'isoformat'):
-                invoice_data['dateFacturation'] = invoice_data['dateFacturation'].isoformat()
-            
-        response_data = {
-            "success": True,
-            "message": "Facture enregistrée avec succès",
-            "data": {
-                "id": result['id'],
-                "date_creation": (result.get('date_creation') or datetime.now()).isoformat(),
-                **invoice_data
-            }
+        # Convert Pydantic model to dict for the service
+        facture_data = {
+            "fournisseur": invoice.fournisseur,
+            "numFacture": invoice.numFacture,
+            "dateFacturation": invoice.dateFacturation,
+            "tauxTVA": invoice.tauxTVA,
+            "montantHT": invoice.montantHT,
+            "montantTVA": invoice.montantTVA,
+            "montantTTC": invoice.montantTTC,
+            "created_by": current_user["id"]
         }
         
-        return JSONResponse(content=response_data)
-    except mysql.connector.IntegrityError as e:
-        if "unique_invoice" in str(e).lower() or "duplicate" in str(e).lower():
-            # Essayer de mettre à jour l'enregistrement existant
-            try:
-                update_query = """
-                UPDATE Facture 
-                SET dateFacturation = %s, tauxTVA = %s, montantHT = %s, montantTVA = %s, montantTTC = %s
-                WHERE fournisseur = %s AND numFacture = %s
-                """
-                update_values = (
-                    invoice.dateFacturation,
-                    invoice.tauxTVA,
-                    invoice.montantHT,
-                    invoice.montantTVA,
-                    invoice.montantTTC,
-                    invoice.fournisseur,
-                    invoice.numFacture
-                )
-                cursor.execute(update_query, update_values)
-                connection.commit()
-                
-                # Retrieve the (now updated) invoice to comply with the response model
-                cursor.execute("SELECT * FROM Facture WHERE fournisseur = %s AND numFacture = %s", (
-                    invoice.fournisseur,
-                    invoice.numFacture,
-                ))
-                updated = cursor.fetchone()
-                if isinstance(updated, tuple):
-                    cursor.execute("SHOW COLUMNS FROM Facture")
-                    cols = [col[0] for col in cursor.fetchall()]
-                    updated = dict(zip(cols, updated))
+        result = await facture_service.create_facture(facture_data, current_user["id"])
+        
+        if result["success"]:
+            return InvoiceResponse(
+                success=True,
+                message="Facture enregistrée avec succès",
+                data=result["facture"]
+            )
+        else:
+            return InvoiceResponse(
+                success=False,
+                message=result["message"]
+            )
+            
+    except Exception as e:
+        logging.error(f"Error creating invoice: {e}")
+        return InvoiceResponse(
+            success=False,
+            message=f"Erreur lors de la création de la facture: {str(e)}"
+        )
 
-                # Prepare invoice data with proper date serialization
-                invoice_data = invoice.model_dump()
-                if 'dateFacturation' in invoice_data and invoice_data['dateFacturation'] is not None:
-                    if hasattr(invoice_data['dateFacturation'], 'isoformat'):
-                        invoice_data['dateFacturation'] = invoice_data['dateFacturation'].isoformat()
-                
-                response_data = {
-                    "success": True,
-                    "message": "Facture mise à jour avec succès",
-                    "data": {
-                        "id": updated['id'],
-                        "date_creation": (updated.get('date_creation') or datetime.now()).isoformat(),
-                        **invoice_data
-                    }
-                }
-                return JSONResponse(content=response_data)
-            except Exception as update_error:
+
+@app.get("/download-dbf")
+async def download_dbf():
+    """Download the DBF file for FoxPro"""
+    foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+    dbf_path = os.path.join(foxpro_dir, "factures.dbf")
+    if not os.path.exists(dbf_path):
+        raise HTTPException(status_code=404, detail="Fichier DBF non trouvé")
+    return FileResponse(
+        path=dbf_path,
+        filename="factures.dbf",
+        media_type="application/octet-stream"
+    )
+
+
+@app.post("/save-corrected-data")
+async def save_corrected_data(request: Request):
+    """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
+    try:
+        print("=== DEBUG save_corrected_data ===")
+        
+        # Récupérer le JSON brut pour diagnostiquer
+        corrected_data = await request.json()
+        print("Payload reçu dans save_corrected_data:", corrected_data)
+        print("Type du payload:", type(corrected_data))
+        print("Clés du payload:", list(corrected_data.keys()) if isinstance(corrected_data, dict) else "Pas un dict")
+        
+        # Utiliser la fonction save_extraction_for_foxpro pour assurer la cohérence
+        save_extraction_for_foxpro(
+            extracted_data={},  # Données extraites vides car on utilise les données corrigées
+            confidence_scores={},  # Scores de confiance vides
+            corrected_data=corrected_data
+        )
+        
+        return {
+            "success": True,
+            "message": "Données corrigées sauvegardées pour FoxPro"
+        }
+        
+    except Exception as e:
+        logging.error(f"Erreur lors de la sauvegarde des données corrigées: {e}")
+        return {
+            "success": False,
+            "message": f"Erreur lors de la sauvegarde: {str(e)}"
+        }
+
+
+@app.post("/launch-foxpro")
+async def launch_foxpro():
+    """Lancer FoxPro avec le formulaire de saisie"""
+    try:
+        import subprocess
+        import platform
+        
+        # Vérifier si le fichier d'extraction existe dans le dossier foxpro
+        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
+        
+        # Créer le dossier foxpro s'il n'existe pas
+        os.makedirs(foxpro_dir, exist_ok=True)
+        
+        # Si pas de données extraites, créer un fichier JSON vide avec la structure attendue
+        if not os.path.exists(json_path):
+            # Créer un fichier JSON vide avec la structure attendue
+            empty_data = {
+                "fournisseur": "",
+                "numFacture": "",
+                "dateFacturation": "",
+                "montantHT": 0.0,
+                "montantTVA": 0.0,
+                "montantTTC": 0.0,
+                "tauxTVA": 0.0
+            }
+            
+            with open(json_path, 'w', encoding='utf-8') as f:
+                json.dump(empty_data, f, ensure_ascii=False, indent=2)
+            
+            print(f"Fichier JSON vide créé: {json_path}")
+        
+        # Vérifier si le fichier DBF existe, sinon le créer
+        dbf_path = os.path.join(foxpro_dir, 'factures.dbf')
+        if not os.path.exists(dbf_path):
+            try:
+                # Créer un fichier DBF vide avec la bonne structure (compatible avec write_invoice_to_dbf)
+                table = dbf.Table(
+                    dbf_path,
+                    'fournissr C(30); numfact C(15); datefact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
+                )
+                table.open(mode=dbf.READ_WRITE)
+                table.close()
+                print("Fichier factures.dbf créé automatiquement")
+            except Exception as dbf_error:
+                logging.error(f"Erreur lors de la création automatique du fichier DBF: {dbf_error}")
                 return {
                     "success": False,
-                    "message": f"Erreur lors de la mise à jour: {str(update_error)}"
+                    "message": f"Erreur lors de la création de la base de données: {str(dbf_error)}"
                 }
-        return {
-            "success": False,
-            "message": f"Erreur d'intégrité de la base de données: {str(e)}"
-        }
-    except Error as e:
-        logging.error(f"Error saving invoice: {e}")
-        return {
-            "success": False,
-            "message": f"Erreur lors de l'enregistrement de la facture: {str(e)}"
-        }
-    finally:
-        if connection and connection.is_connected():
-            if cursor:
-                cursor.close()
-            connection.close()
-
-#get all
-@app.get("/factures")
-async def list_factures(
-    page: int = 1,
-    page_size: int = 10,
-    search: str = "",
-    current_user = Depends(require_comptable_or_admin)
-):
-    """
-    List factures for the current user with pagination and search
-    """
-    try:
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
         
-        # Build the base query with user filter
-        query = """
-            SELECT SQL_CALC_FOUND_ROWS *
-            FROM facture
-            WHERE created_by = %(user_id)s
-              AND (%(search)s = '' 
-                  OR fournisseur LIKE %(search_like)s 
-                  OR numFacture LIKE %(search_like)s
-                  OR dateFacturation LIKE %(search_like)s
-                  OR tauxTVA LIKE %(search_like)s
-                  OR montantHT LIKE %(search_like)s
-                  OR montantTVA LIKE %(search_like)s
-                  OR montantTTC LIKE %(search_like)s)
-            ORDER BY id DESC
-            LIMIT %(offset)s, %(limit)s
-        """
+        # Chercher FoxPro automatiquement
+        foxpro_path = None
         
-        # Calculate pagination
-        offset = (page - 1) * page_size
+        # Emplacements courants
+        possible_paths = [
+            r"C:\Program Files (x86)\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Program Files\Microsoft Visual FoxPro 9\vfp9.exe",
+            r"C:\Users\pc\Desktop\microsoft visual foxpro 9\microsoft visual foxpro 9\vfp9.exe"
+        ]
         
-        # Execute query with user_id
-        cursor.execute(
-            query,
-            {
-                'user_id': current_user['id'],
-                'search': search,
-                'search_like': f'%{search}%',
-                'offset': offset,
-                'limit': page_size
+        # Chercher dans les emplacements courants
+        for path in possible_paths:
+            if os.path.exists(path):
+                foxpro_path = path
+                break
+        
+        # Si pas trouvé, chercher avec where
+        if not foxpro_path:
+            try:
+                import subprocess
+                result = subprocess.run(['where', 'vfp9'], capture_output=True, text=True)
+                if result.returncode == 0:
+                    foxpro_path = result.stdout.strip().split('\n')[0]
+            except:
+                pass
+        
+        if not foxpro_path:
+            return {
+                "success": False,
+                "message": "FoxPro 9 non trouvé. Veuillez l'installer ou vérifier le chemin."
             }
-        )
         
-        factures = cursor.fetchall()
-        
-        # Get total count
-        cursor.execute("SELECT FOUND_ROWS() AS total")
-        total = cursor.fetchone()['total']
-        total_pages = (total + page_size - 1) // page_size
-        
-        # Format dates and ensure all fields are present
-        for facture in factures:
-            # Add default date_creation if missing
-            if 'date_creation' not in facture:
-                facture['date_creation'] = '2024-01-01T00:00:00'
-            # Ensure dateFacturation is in the response, even if null
-            if 'dateFacturation' not in facture:
-                facture['dateFacturation'] = None
-        
+        # Lancer FoxPro avec le formulaire
+        try:
+            # Chemin vers le formulaire FoxPro (utiliser le fichier .prg, pas .FXP)
+            form_path = os.path.join(foxpro_dir, 'formulaire_foxpro_final.prg')
+            
+            if not os.path.exists(form_path):
+                return {
+                    "success": False,
+                    "message": "Formulaire FoxPro non trouvé."
+                }
+            
+            # Lancer FoxPro avec le formulaire
+            subprocess.Popen([foxpro_path, form_path], cwd=foxpro_dir)
+            
+            return {
+                "success": True,
+                "message": "FoxPro lancé avec succès"
+            }
+            
+        except Exception as e:
+            logging.error(f"Erreur lors du lancement de FoxPro: {e}")
+            return {
+                "success": False,
+                "message": f"Erreur lors du lancement de FoxPro: {str(e)}"
+            }
+            
+    except Exception as e:
+        logging.error(f"Erreur lors du lancement de FoxPro: {e}")
         return {
-            "factures": factures,
-            "total": total,
-            "page": page,
-            "page_size": page_size,
-            "total_pages": total_pages
+            "success": False,
+            "message": f"Erreur lors du lancement de FoxPro: {str(e)}"
         }
-        
-    except Exception as e:
-        logging.error(f"Error listing factures: {str(e)}")
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'connection' in locals():
-            connection.close()
 
 
-#update
-@app.put("/factures/{facture_id}", response_model=InvoiceResponse)
-async def update_facture(
-    facture_id: int,
-    invoice_update: InvoiceUpdate,
-    current_user = Depends(require_comptable_or_admin)
-):
-    """
-    Update a facture by ID. Users can only update their own factures.
-    """
+# =======================
+# FoxPro Integration Functions
+# =======================
+
+def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float], corrected_data: Dict[str, str] = None):
+    """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
     try:
-        connection = get_connection()
-        cursor = connection.cursor(dictionary=True)
-
-        # Check if facture exists and is owned by the current user
-        cursor.execute(
-            "SELECT * FROM facture WHERE id = %s AND created_by = %s",
-            (facture_id, current_user['id'])
-        )
-        facture = cursor.fetchone()
-
-        if not facture:
-            raise HTTPException(
-                status_code=404,
-                detail="Facture not found or you don't have permission to update it"
-            )
-
-        # Prepare update data (exclude id and date_creation)
-        update_data = invoice_update.dict(exclude_unset=True)
-
-        if not update_data:
-            raise HTTPException(status_code=400, detail="No fields to update")
-
-        # Build and execute update query
-        set_parts = []
-        params = {}
-        for field, value in update_data.items():
-            if field not in ['id', 'date_creation']:  # Skip these fields
-                param_name = f"{field}"
-                set_parts.append(f"{field} = %({param_name})s")
-                params[param_name] = value
-
-        set_clause = ", ".join(set_parts)
-        query = f"""
-            UPDATE facture
-            SET {set_clause}
-            WHERE id = %(id)s
-        """
-        params['id'] = facture_id
-
-        cursor.execute(query, params)
-        connection.commit()
-
-        # Get updated facture and return
-        cursor.execute("""
-            SELECT 
-                id,
-                fournisseur,
-                numFacture,
-                tauxTVA,
-                montantHT,
-                montantTVA,
-                montantTTC,
-                DATE_FORMAT(date_creation, '%%Y-%%m-%%dT%%H:%%i:%%s') as date_creation
-            FROM facture 
-            WHERE id = %s
-        """, (facture_id,))
-        updated_facture = cursor.fetchone()
-
-        if not updated_facture:
-            raise HTTPException(status_code=404, detail="Updated facture not found")
-
-        return updated_facture
-
-    except HTTPException:
-        raise
+        print(f"=== DEBUG save_extraction_for_foxpro ===")
+        print(f"extracted_data reçu: {extracted_data}")
+        print(f"corrected_data reçu: {corrected_data}")
+        print(f"confidence_scores reçu: {confidence_scores}")
+        
+        # Utiliser les données corrigées si disponibles, sinon les données extraites
+        if corrected_data is not None:
+            data_to_use = corrected_data
+            print(f"Utilisation des données corrigées: {data_to_use}")
+        else:
+            data_to_use = extracted_data
+            print(f"Utilisation des données extraites: {data_to_use}")
+        
+        # Gérer les différents noms de champs possibles
+        numero_facture = data_to_use.get("numeroFacture") or data_to_use.get("numFacture", "")
+        print(f"Numéro facture trouvé: {numero_facture}")
+        
+        # Nettoyer le taux TVA - extraire juste le nombre
+        taux_tva_raw = data_to_use.get("tauxTVA", "0")
+        taux_tva_clean = "0"
+        if taux_tva_raw:
+            # Chercher un nombre dans la chaîne (ex: "Total TVA 20%" -> "20")
+            match = re.search(r'(\d+(?:[.,]\d+)?)', str(taux_tva_raw))
+            if match:
+                taux_tva_clean = match.group(1)
+        
+        print(f"Taux TVA nettoyé: {taux_tva_clean}")
+        
+        # Créer un fichier JSON avec les données (corrigées ou extraites)
+        print("Début construction foxpro_data...")
+        
+        foxpro_data = {
+            "success": True,
+            "data": extracted_data if extracted_data else {},
+            "corrected_data": corrected_data,
+            "confidence_scores": confidence_scores if confidence_scores else {},
+            "timestamp": str(datetime.now()),
+            "fields": {
+                "fournisseur": data_to_use.get("fournisseur", ""),
+                "dateFacturation": data_to_use.get("dateFacturation", ""),
+                "numeroFacture": numero_facture,  # Use the processed numero_facture variable
+                "tauxTVA": taux_tva_clean,
+                "montantHT": data_to_use.get("montantHT", "0"),
+                "montantTVA": data_to_use.get("montantTVA", "0"),
+                "montantTTC": data_to_use.get("montantTTC", "0")
+            }
+        }
+        print("foxpro_data construit avec succès")
+        
+        # Créer automatiquement le fichier JSON dans le dossier foxpro
+        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
+        os.makedirs(foxpro_dir, exist_ok=True)
+        
+        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
+        print(f"Écriture du fichier JSON: {json_path}")
+        with open(json_path, 'w', encoding='utf-8') as f:
+            json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
+        
+        # Créer automatiquement le fichier texte simple pour FoxPro
+        txt_path = os.path.join(foxpro_dir, 'ocr_extraction.txt')
+        print(f"Écriture du fichier TXT: {txt_path}")
+        with open(txt_path, 'w', encoding='utf-8') as f:
+            f.write(f"Date export: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+            f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
+            f.write(f"Numéro Facture: {numero_facture}\n")  # Use the processed numero_facture variable
+            f.write(f"Taux TVA: {taux_tva_clean}\n")
+            f.write(f"Montant HT: {data_to_use.get('montantHT', '0')}\n")
+            f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
+            f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
+        
+        print("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement dans le dossier foxpro")
+        
+        # Créer aussi automatiquement le fichier DBF s'il n'existe pas
+        try:
+            write_invoice_to_dbf(data_to_use)
+            print("Fichier factures.dbf créé/mis à jour automatiquement")
+        except Exception as dbf_error:
+            logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
+        
     except Exception as e:
-        logging.error(f"Error updating facture: {str(e)}")
- 
-        
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'connection' in locals():
-            connection.close()
+        logging.error(f"Erreur lors de la sauvegarde pour FoxPro: {e}")
 
-
-#delete
-@app.delete("/factures/{facture_id}")
-async def delete_facture(facture_id: int):
-    """
-    Delete a facture by ID
-    """
-    try:
-        connection = get_connection()
-        cursor = connection.cursor()
-        
-        # Check if facture exists
-        cursor.execute("SELECT id FROM facture WHERE id = %s", (facture_id,))
-        if not cursor.fetchone():
-            raise HTTPException(status_code=404, detail="Facture not found")
-        
-        # Delete facture
-        cursor.execute("DELETE FROM facture WHERE id = %s", (facture_id,))
-        connection.commit()
-        
-        return {"message": "Facture deleted successfully"}
-        
-    except HTTPException:
-        raise
-    except Exception as e:
-        logging.error(f"Error deleting facture: {str(e)}")
-        
-        raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if 'cursor' in locals():
-            cursor.close()
-        if 'connection' in locals():
-            connection.close()
-
-#  FoxPro
 
 def write_invoice_to_dbf(invoice_data, dbf_path=None):
     """
@@ -2034,9 +1703,9 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
         
     except Exception as e:
         logging.error(f"Erreur lors de l'écriture dans le fichier DBF: {e}")
-        # En cas d'erreur, essayer de recréer le fichier
+        
         try:
-            # S'assurer que la table est correctement fermée avant suppression
+            
             try:
                 table.close()
             except Exception:
@@ -2072,159 +1741,6 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
                 pass
 
 
-
-@app.get("/download-dbf")
-async def download_dbf():
-    foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
-    dbf_path = os.path.join(foxpro_dir, "factures.dbf")
-    if not os.path.exists(dbf_path):
-        raise HTTPException(status_code=404, detail="Fichier DBF non trouvé")
-    return FileResponse(
-        path=dbf_path,
-        filename="factures.dbf",
-        media_type="application/octet-stream"
-    )
-
-@app.post("/save-corrected-data")
-async def save_corrected_data(request: Request):
-    """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
-    try:
-        print("=== DEBUG save_corrected_data ===")
-        
-        # Récupérer le JSON brut pour diagnostiquer
-        corrected_data = await request.json()
-        print("Payload reçu dans save_corrected_data:", corrected_data)
-        print("Type du payload:", type(corrected_data))
-        print("Clés du payload:", list(corrected_data.keys()) if isinstance(corrected_data, dict) else "Pas un dict")
-        
-        # Sauvegarder directement les données corrigées sans dépendre d'un fichier existant
-        save_extraction_for_foxpro(
-            extracted_data={},  # Données extraites vides car on utilise les données corrigées
-            confidence_scores={},  # Scores de confiance vides
-            corrected_data=corrected_data
-        )
-        
-        return {
-            "success": True,
-            "message": "Données corrigées sauvegardées pour FoxPro"
-        }
-        
-    except Exception as e:
-        logging.error(f"Erreur lors de la sauvegarde des données corrigées: {e}")
-        return {
-            "success": False,
-            "message": f"Erreur lors de la sauvegarde: {str(e)}"
-        }
-
-@app.post("/launch-foxpro")
-async def launch_foxpro():
-    """Lancer FoxPro avec le formulaire de saisie"""
-    try:
-        import subprocess
-        import platform
-        
-        # Vérifier si le fichier d'extraction existe dans le dossier foxpro
-        foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
-        json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
-        
-        if not os.path.exists(json_path):
-            return {
-                "success": False,
-                "message": "Aucune donnée extraite trouvée. Veuillez d'abord extraire une facture via l'interface web."
-            }
-        
-        # Vérifier si le fichier DBF existe, sinon le créer
-        dbf_path = os.path.join(foxpro_dir, 'factures.dbf')
-        if not os.path.exists(dbf_path):
-            try:
-                # Créer un fichier DBF vide avec la bonne structure
-                table = dbf.Table(
-                    dbf_path,
-                    'fournissr C(30); numfact C(15); tauxtva N(5,2); mntht N(10,2); mnttva N(10,2); mntttc N(10,2)'
-                )
-                table.open(mode=dbf.READ_WRITE)
-                table.close()
-                print("Fichier factures.dbf créé automatiquement")
-            except Exception as dbf_error:
-                logging.error(f"Erreur lors de la création automatique du fichier DBF: {dbf_error}")
-                return {
-                    "success": False,
-                    "message": f"Erreur lors de la création de la base de données: {str(dbf_error)}"
-                }
-        
-        # Chercher FoxPro automatiquement
-        foxpro_path = None
-        
-        # Emplacements courants
-        possible_paths = [
-            r"C:\Program Files (x86)\Microsoft Visual FoxPro 9\vfp9.exe",
-            r"C:\Program Files\Microsoft Visual FoxPro 9\vfp9.exe",
-            r"C:\Users\pc\Desktop\microsoft visual foxpro 9\microsoft visual foxpro 9\vfp9.exe"
-        ]
-        
-        # Chercher dans les emplacements courants
-        for path in possible_paths:
-            if os.path.exists(path):
-                foxpro_path = path
-                break
-        
-        # Si pas trouvé, chercher avec where
-        if not foxpro_path:
-            try:
-                import subprocess
-                result = subprocess.run(['where', 'vfp9.exe'], capture_output=True, text=True)
-                if result.returncode == 0:
-                    foxpro_path = result.stdout.strip().split('\n')[0]
-            except:
-                pass
-        
-        if not foxpro_path or not os.path.exists(foxpro_path):
-            return {
-                "success": False,
-                "message": "FoxPro non trouvé. Vérifiez l'installation ou ajoutez-le au PATH."
-            }
-        
-        # Lancer FoxPro avec le formulaire depuis le dossier foxpro
-        if platform.system() == "Windows":
-            prg_path = os.path.join(foxpro_dir, "formulaire_foxpro_final.prg")
-            subprocess.Popen([foxpro_path, prg_path], 
-                           cwd=foxpro_dir,
-                           shell=True)
-        else:
-            return {
-                "success": False,
-                "message": "Cette fonctionnalité n'est disponible que sur Windows."
-            }
-        
-        return {
-            "success": True,
-            "message": "FoxPro lancé avec succès. Le formulaire devrait s'ouvrir."
-        }
-        
-    except Exception as e:
-        logging.error(f"Erreur lors du lancement de FoxPro: {e}")
-        return {
-            "success": False,
-            "message": f"Erreur lors du lancement de FoxPro: {str(e)}"
-        }
-
-
-
 if __name__ == "__main__":
     import uvicorn
-    import signal
-    import sys
-    
-    def signal_handler(sig, frame):
-        print("\nShutting down server gracefully...")
-        sys.exit(0)
-    
-    signal.signal(signal.SIGINT, signal_handler)
-    
-    try:
-        uvicorn.run(app, host="0.0.0.0", port=8000, reload=True)
-    except KeyboardInterrupt:
-        print("\nServer stopped by user")
-    except Exception as e:
-        print(f"Server error: {e}")
-        sys.exit(1)
+    uvicorn.run(app, host="0.0.0.0", port=8000)

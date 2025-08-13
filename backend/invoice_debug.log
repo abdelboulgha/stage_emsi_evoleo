@@ -178,3 +178,124 @@ NameError: name 'datefacturation_time' is not defined
 2025-08-12 21:31:16,375 INFO Base de données initialisée avec succès
 2025-08-12 21:34:37,648 INFO Base de données initialisée avec succès
 2025-08-12 21:41:47,019 INFO Base de données initialisée avec succès
+2025-08-13 12:46:38,281 INFO Base de données initialisée avec succès
+2025-08-13 12:53:01,148 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 18 bytes in 15 byte field',)
+2025-08-13 12:53:01,179 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 12:53:01,179 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 13:22:23,965 INFO Base de données initialisée avec succès
+2025-08-13 13:22:43,522 INFO Base de données initialisée avec succès
+2025-08-13 13:24:47,819 INFO Database tables created successfully
+2025-08-13 13:24:47,819 INFO Default data inserted successfully
+2025-08-13 13:24:47,819 INFO Database initialization completed successfully
+2025-08-13 13:26:56,888 INFO Database tables created successfully
+2025-08-13 13:26:56,888 INFO Default data inserted successfully
+2025-08-13 13:26:56,888 INFO Database initialization completed successfully
+2025-08-13 13:27:17,254 ERROR Error getting mappings: 'user_id'
+2025-08-13 13:29:29,308 INFO Database tables created successfully
+2025-08-13 13:29:29,308 INFO Default data inserted successfully
+2025-08-13 13:29:29,308 INFO Database initialization completed successfully
+2025-08-13 13:32:30,618 INFO Database tables created successfully
+2025-08-13 13:32:30,618 INFO Default data inserted successfully
+2025-08-13 13:32:30,618 INFO Database initialization completed successfully
+2025-08-13 13:37:52,526 INFO Database tables created successfully
+2025-08-13 13:37:52,526 INFO Default data inserted successfully
+2025-08-13 13:37:52,542 INFO Database initialization completed successfully
+2025-08-13 13:43:26,359 INFO Base de données initialisée avec succès
+2025-08-13 13:45:26,995 INFO Database tables created successfully
+2025-08-13 13:45:27,011 INFO Default data inserted successfully
+2025-08-13 13:45:27,011 INFO Database initialization completed successfully
+2025-08-13 13:52:02,021 INFO Database tables created successfully
+2025-08-13 13:52:02,025 INFO Default data inserted successfully
+2025-08-13 13:52:02,025 INFO Database initialization completed successfully
+2025-08-13 13:59:17,056 INFO Database tables created successfully
+2025-08-13 13:59:17,071 INFO Default data inserted successfully
+2025-08-13 13:59:17,071 INFO Database initialization completed successfully
+2025-08-13 14:07:27,831 INFO Database tables created successfully
+2025-08-13 14:07:27,831 INFO Default data inserted successfully
+2025-08-13 14:07:27,831 INFO Database initialization completed successfully
+2025-08-13 14:08:20,385 ERROR Unexpected error saving mapping: save_mapping() got an unexpected keyword argument 'template_id'
+Traceback (most recent call last):
+  File "C:\Users\pc\Desktop\stage_emsi_2025\backend\main_refactored.py", line 445, in save_field_mapping
+    success = await template_service.save_mapping(
+TypeError: save_mapping() got an unexpected keyword argument 'template_id'
+2025-08-13 14:09:47,892 INFO Database tables created successfully
+2025-08-13 14:09:47,892 INFO Default data inserted successfully
+2025-08-13 14:09:47,892 INFO Database initialization completed successfully
+2025-08-13 14:22:51,241 INFO Database tables created successfully
+2025-08-13 14:22:51,241 INFO Default data inserted successfully
+2025-08-13 14:22:51,241 INFO Database initialization completed successfully
+2025-08-13 14:26:45,229 INFO Database tables created successfully
+2025-08-13 14:26:45,229 INFO Default data inserted successfully
+2025-08-13 14:26:45,229 INFO Database initialization completed successfully
+2025-08-13 14:32:11,368 INFO Database tables created successfully
+2025-08-13 14:32:11,370 INFO Default data inserted successfully
+2025-08-13 14:32:11,370 INFO Database initialization completed successfully
+2025-08-13 18:43:25,101 INFO Database tables created successfully
+2025-08-13 18:43:25,110 INFO Default data inserted successfully
+2025-08-13 18:43:25,110 INFO Database initialization completed successfully
+2025-08-13 18:46:40,070 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-13 18:46:40,076 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 18:46:40,076 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 18:46:46,060 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-13 18:46:46,062 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 18:46:46,062 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 18:47:51,597 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-13 18:47:51,597 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 18:47:51,599 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 18:54:16,109 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 18:54:16,110 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 18:54:16,110 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 19:10:35,315 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:10:35,341 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:10:35,343 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:11:37,609 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:11:37,632 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:11:37,634 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:11:37,713 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:11:37,728 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:11:37,728 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:12:31,735 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:12:31,745 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:12:31,745 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:12:31,830 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:12:31,842 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:12:31,842 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:17:36,885 INFO Database tables created successfully
+2025-08-13 19:17:36,889 INFO Default data inserted successfully
+2025-08-13 19:17:36,891 INFO Database initialization completed successfully
+2025-08-13 19:21:50,346 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:21:50,362 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:21:50,362 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:21:50,405 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:21:50,426 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:21:50,426 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:21:50,479 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:21:50,493 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:21:50,497 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:21:50,528 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:21:50,542 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:21:50,542 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:23:48,090 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:23:48,113 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:23:48,113 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:32:02,888 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:32:02,903 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:32:02,905 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 19:41:43,318 INFO Database tables created successfully
+2025-08-13 19:41:43,322 INFO Default data inserted successfully
+2025-08-13 19:41:43,322 INFO Database initialization completed successfully
+2025-08-13 19:50:49,220 INFO Database tables created successfully
+2025-08-13 19:50:49,235 INFO Default data inserted successfully
+2025-08-13 19:50:49,235 INFO Database initialization completed successfully
+2025-08-13 19:58:12,894 INFO Database tables created successfully
+2025-08-13 19:58:12,910 INFO Default data inserted successfully
+2025-08-13 19:58:12,910 INFO Database initialization completed successfully
+2025-08-13 19:59:21,952 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'TAUXTVA': ('Integer portion too big',)
+2025-08-13 19:59:21,952 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 19:59:21,952 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-13 20:18:23,399 INFO Database tables created successfully
+2025-08-13 20:18:23,399 INFO Default data inserted successfully
+2025-08-13 20:18:23,399 INFO Database initialization completed successfully
+2025-08-13 20:23:25,156 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
+2025-08-13 20:23:25,161 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-13 20:23:25,161 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records

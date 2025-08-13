@@ -194,7 +194,6 @@ optimal_size = MIN(optimal_size, max_size)
 optimal_size = MIN(optimal_size, screen_available)
 
 RETURN optimal_size
-
 * ========================================
 * FONCTION AMELIOREE POUR EXTRAIRE LES VALEURS JSON
 * ========================================
