@@ -21,6 +21,7 @@ import { useInvoiceSelection } from "../hooks/useInvoiceSelection";
 import './ExtractorNew.css';
 
 const ExtractorNew = ({ currentStep, setCurrentStep }) => {
+  console.log('🚀 ExtractorNew - Props reçues:', { currentStep, setCurrentStep });
   // États et refs
   const state = useExtractorState();
   const {
@@ -193,6 +194,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
 
         {currentStep === "extract" && (
           <>
+            {console.log('🚀 ExtractorNew - Rendering ExtractionMain with currentStep:', currentStep)}
             <ExtractionMain
               extractionState={extractionState}
               setExtractionState={setExtractionState}

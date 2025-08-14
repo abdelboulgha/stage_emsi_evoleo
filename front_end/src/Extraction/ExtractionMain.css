@@ -187,10 +187,11 @@
     height: 20px;
     animation: spin 1s linear infinite;
 }
+
 .extraction-button-icon-no-animation {
     width: 20px;
     height: 20px;
-    
+
 }
 
 .extraction-model-info {
@@ -408,7 +409,7 @@
 .extraction-preview {
     display: flex;
     flex-direction: column;
-    
+
     overflow: hidden;
     background: var(--white);
     border-radius: var(--border-radius-xl);
@@ -528,15 +529,18 @@
 .extraction-preview-image-container {
     position: relative;
     background-color: white;
-    display: inline-block; /* Make container fit content */
+    display: inline-block;
+    /* Make container fit content */
     transform-origin: top left;
     margin: 0 auto;
-    line-height: 0; /* Remove extra space below inline-block */
+    line-height: 0;
+    /* Remove extra space below inline-block */
 }
 
 .extraction-preview-image {
     display: block;
-    max-width: none; /* Allow image to be larger than container */
+    max-width: none;
+    /* Allow image to be larger than container */
     height: auto;
     user-select: none;
     position: relative;
@@ -845,4 +849,138 @@
         padding: var(--spacing-md);
         font-size: 0.875rem;
     }
+}
+
+/* Styles pour le mode AI d'extraction */
+.ai-extraction-mode {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.ai-extraction-mode h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+    font-size: 2rem;
+}
+
+.file-upload-section,
+.extraction-section,
+.results-section {
+    background: white;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.file-upload-section h3,
+.extraction-section h3,
+.results-section h3 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.file-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    background: #f8f9fa;
+    cursor: pointer;
+    margin-bottom: 1rem;
+}
+
+.file-input:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.file-info {
+    color: #666;
+    font-size: 0.9rem;
+    text-align: center;
+}
+
+.extract-button {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.3s ease;
+    width: 100%;
+}
+
+.extract-button:hover:not(:disabled) {
+    background: #0056b3;
+}
+
+.extract-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.results-section {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.result-item {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background: #f8f9fa;
+}
+
+.result-item h4 {
+    color: #333;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.error {
+    color: #dc3545;
+    font-weight: 500;
+}
+
+.extracted-data {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.field-group {
+    background: white;
+    padding: 1rem;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+}
+
+.field-group strong {
+    color: #333;
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.field-group ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.field-group li {
+    padding: 0.25rem 0;
+    color: #666;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.field-group li:last-child {
+    border-bottom: none;
 }

@@ -1,4 +1,5 @@
 import React from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   ChevronLeft,
   Eye,
@@ -11,6 +12,7 @@ import {
 import ExtractionSidebar from "./ExtractionSidebar";
 import ExtractionPreview from "./ExtractionPreview";
 import InvoiceSelectionModal from "./InvoiceSelectionModal";
+import AIExtractionMode from "./AIExtractionMode";
 import "./ExtractionMain.css";
 
 const ExtractionMain = ({
@@ -36,12 +38,28 @@ const ExtractionMain = ({
   setIsLoading,
   setDataPrepState,
 }) => {
+  const [searchParams] = useSearchParams();
+  const extractionMode = searchParams.get('mode') || 'parametrage';
+  
+  // Si c'est le mode AI, afficher le composant AI
+  if (extractionMode === 'ai') {
+    return (
+      <AIExtractionMode
+        extractionState={extractionState}
+        setExtractionState={setExtractionState}
+        showNotification={showNotification}
+        setCurrentStep={setCurrentStep}
+        setIsLoading={setIsLoading}
+      />
+    );
+  }
+
+  // Mode paramétrage normal
   return (
     <div className="extraction-container">
       <div className="extraction-content">
         <div className="extraction-header">
           <h1 className="extraction-title">Extraction de Données</h1>
-          
         </div>
 
         <div className="extraction-grid">

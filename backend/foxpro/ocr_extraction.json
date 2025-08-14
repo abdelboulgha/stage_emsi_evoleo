@@ -2,50 +2,23 @@
   "success": true,
   "data": {},
   "corrected_data": {
-    "montantHT": 194.86,
-    "montantTVA": 34.97,
-    "montantTTC": 229.83,
-    "tauxTVA": 18,
-    "boxHT": {
-      "left": 1068,
-      "top": 819,
-      "width": 62,
-      "height": 22
-    },
-    "boxTVA": {
-      "left": 1075,
-      "top": 838,
-      "width": 55,
-      "height": 25
-    },
-    "numFacture": "FACTURE ELECTRICITEN°2025207462845",
-    "boxNumFacture": {
-      "left": 175,
-      "top": 105,
-      "width": 544,
-      "height": 31,
-      "manual": false
-    },
-    "dateFacturation": "2025-08-04",
-    "boxDateFacturation": {
-      "left": 895,
-      "top": 255,
-      "width": 70,
-      "height": 28
-    },
-    "template_id": "13",
-    "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
-    "fournisseur": "rademaTesthh"
+    "fournisseur": "capi",
+    "numFacture": "IN2411-0001",
+    "date": "21/11/2024",
+    "HT": "275.00",
+    "TTC": "330.00",
+    "TVA": "55.00",
+    "taux": "20%"
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-13 20:23:25.145917",
+  "timestamp": "2025-08-14 18:47:10.820909",
   "fields": {
-    "fournisseur": "rademaTesthh",
-    "dateFacturation": "2025-08-04",
-    "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
-    "tauxTVA": "18",
-    "montantHT": 194.86,
-    "montantTVA": 34.97,
-    "montantTTC": 229.83
+    "fournisseur": "capi",
+    "dateFacturation": "",
+    "numeroFacture": "IN2411-0001",
+    "tauxTVA": "0",
+    "montantHT": "0",
+    "montantTVA": "0",
+    "montantTTC": "0"
   }
 }

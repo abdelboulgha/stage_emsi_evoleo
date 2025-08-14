@@ -32,3 +32,11 @@ python-dotenv>=1.0.0
 
 # Development tools
 python-dotenv>=1.0.0
+
+# AI Model dependencies
+ultralytics>=8.0.0
+opencv-python>=4.8.0
+Pillow>=10.0.0
+pytesseract>=0.3.10
+PyMuPDF>=1.23.0
+numpy>=1.24.0

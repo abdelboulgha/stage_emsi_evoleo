@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import AuthPage from './auth/AuthPage';
 import ExtractorNew from './ExtractorNew';
@@ -10,6 +10,7 @@ import './AppContent.css';
 
 const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, loading, logout, isAdmin } = useAuth();
     const [currentView, setCurrentView] = useState(initialView);
     const [currentStep, setCurrentStep] = useState(initialStep);
@@ -51,6 +52,13 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
     window.addEventListener('popstate', updateStateFromUrl);
     return () => window.removeEventListener('popstate', updateStateFromUrl);
   }, []);
+
+  // Listen for URL changes (including programmatic navigation)
+  useEffect(() => {
+    if (user) {
+      updateStateFromUrl();
+    }
+  }, [user, location.pathname]);
 
   if (loading) {
     return (

@@ -29,6 +29,7 @@ from database.config import get_async_db, init_database
 from database.models import Base
 from services.template_service import TemplateService
 from services.facture_service import FactureService
+from services.ai_extraction_service import AIExtractionService
 
 # Authentication modules
 from auth.auth_routes import router as auth_router
@@ -79,6 +80,9 @@ ocr = PaddleOCR(
     text_det_unclip_ratio=1.3,
     text_rec_score_thresh=0.5
 )
+
+# Initialiser le service AI
+ai_extraction_service = AIExtractionService()
 
 # =======================
 # Pydantic Models
@@ -1739,6 +1743,76 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
                 table.close()
             except Exception:
                 pass
+
+
+@app.post("/api/ai-extract")
+async def ai_extract_invoices(files: List[UploadFile], confidence: float = 0.5):
+    """Extrait les données de plusieurs factures avec le modèle AI"""
+    try:
+        logging.info(f"Début de l'extraction AI avec {len(files)} fichiers")
+        
+        # Vérifier que le service AI est initialisé
+        if not ai_extraction_service:
+            logging.error("Service AI non initialisé")
+            return {"success": False, "error": "Service AI non initialisé"}
+        
+        # Vérifier que le modèle YOLO est chargé
+        model_info = ai_extraction_service.get_model_info()
+        logging.info(f"Info du modèle: {model_info}")
+        
+        if not ai_extraction_service.validate_model():
+            logging.error("Modèle YOLO non valide")
+            return {"success": False, "error": "Modèle YOLO non valide"}
+        
+        # Sauvegarder temporairement les fichiers
+        temp_files = []
+        for file in files:
+            temp_path = f"temp_{file.filename}"
+            with open(temp_path, "wb") as buffer:
+                content = await file.read()
+                buffer.write(content)
+            temp_files.append(temp_path)
+            logging.info(f"Fichier temporaire créé: {temp_path}")
+        
+        # Extraire avec le modèle AI
+        logging.info("Début de l'extraction avec YOLO")
+        results = ai_extraction_service.extract_from_files(temp_files, confidence)
+        logging.info(f"Extraction terminée, {len(results)} résultats")
+        
+        # Nettoyer les fichiers temporaires
+        for temp_file in temp_files:
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+                logging.info(f"Fichier temporaire supprimé: {temp_file}")
+        
+        return {"success": True, "results": results}
+    
+    except Exception as e:
+        logging.error(f"Erreur lors de l'extraction AI: {str(e)}")
+        import traceback
+        logging.error(f"Traceback: {traceback.format_exc()}")
+        return {"success": False, "error": str(e)}
+
+
+@app.get("/api/ai-test")
+async def test_ai_service():
+    """Test simple du service AI"""
+    try:
+        if not ai_extraction_service:
+            return {"success": False, "error": "Service AI non initialisé"}
+        
+        model_info = ai_extraction_service.get_model_info()
+        is_valid = ai_extraction_service.validate_model()
+        
+        return {
+            "success": True,
+            "service_initialized": ai_extraction_service is not None,
+            "model_info": model_info,
+            "model_valid": is_valid
+        }
+    except Exception as e:
+        logging.error(f"Erreur lors du test AI: {str(e)}")
+        return {"success": False, "error": str(e)}
 
 
 if __name__ == "__main__":
