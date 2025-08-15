@@ -100,14 +100,19 @@ const ExtractionPreview = ({
 
 
   useEffect(() => {
-    if (extractionState.extractedDataList[extractionState.currentPdfIndex]) {
+    if (extractionState && 
+        extractionState.extractedDataList && 
+        extractionState.extractedDataList[extractionState.currentPdfIndex]) {
       drawExtractionBoxes();
     }
-  }, [extractionState.extractedDataList, extractionState.currentPdfIndex, drawExtractionBoxes]);
+  }, [extractionState?.extractedDataList, extractionState?.currentPdfIndex, drawExtractionBoxes]);
 
   // Get the current file preview
   const getCurrentFilePreview = () => {
-    if (extractionState.filePreviews && extractionState.filePreviews.length > 0) {
+    if (extractionState && 
+        extractionState.filePreviews && 
+        extractionState.filePreviews.length > 0 &&
+        extractionState.currentPdfIndex !== undefined) {
       const currentPreview = extractionState.filePreviews[extractionState.currentPdfIndex];
       // Handle both string and object formats
       if (typeof currentPreview === 'string') {
@@ -125,9 +130,11 @@ const ExtractionPreview = ({
     <div className="extraction-preview">
       <div className="extraction-preview-header">
         <h3 className="extraction-preview-title">Aperçu des Documents</h3>
-        {extractionState.filePreviews && extractionState.filePreviews.length > 0 && (
+        {extractionState && 
+         extractionState.filePreviews && 
+         extractionState.filePreviews.length > 0 && (
           <div className="extraction-preview-counter">
-            {extractionState.currentPdfIndex + 1} / {extractionState.filePreviews.length}
+            {(extractionState.currentPdfIndex || 0) + 1} / {extractionState.filePreviews.length}
           </div>
         )}
       </div>
@@ -193,7 +200,9 @@ const ExtractionPreview = ({
       )}
 
       {/* Navigation controls */}
-      {extractionState.filePreviews && extractionState.filePreviews.length > 1 && (
+      {extractionState && 
+       extractionState.filePreviews && 
+       extractionState.filePreviews.length > 1 && (
         <div className="extraction-navigation">
           <button
             onClick={goToPrevPdf}

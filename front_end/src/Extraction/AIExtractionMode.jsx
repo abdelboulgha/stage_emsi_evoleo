@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { Upload, FileText, X, Play, CheckCircle, AlertCircle, Loader2, Database, Save } from "lucide-react";
 import ExtractionSidebar from "./ExtractionSidebar";
 import ExtractionPreview from "./ExtractionPreview";
@@ -9,26 +9,70 @@ const AIExtractionMode = () => {
   const [isExtracting, setIsExtracting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [extractionResults, setExtractionResults] = useState(null);
+  const [currentStep, setCurrentStep] = useState('upload'); // 'upload' ou 'extraction'
   const [extractionState, setExtractionState] = useState({
     selectedFiles: [],
     filePreviews: [],
     currentIndex: 0,
-    currentPdfIndex: 0, // Ajouté pour ExtractionSidebar
+    currentPdfIndex: 0,
     extractedData: [],
-    extractedDataList: [], // Ajouté pour ExtractionSidebar
+    extractedDataList: [],
     isExtractionComplete: false,
-    isProcessing: false, // Ajouté pour ExtractionSidebar
-    processingMode: 'ai' // Ajouté pour ExtractionSidebar
+    isProcessing: false, // Initialement pas en cours de traitement
+    processingMode: 'ai',
+    extractionBoxes: [],
+    selectedModelId: null,
+    selectedModelName: null
   });
-     const [extractDrawState, setExtractDrawState] = useState({});
-   const fileInputRef = useRef(null);
- 
-   // Effet pour synchroniser l'affichage des données quand on change de page
-   useEffect(() => {
-     if (extractionState.isExtractionComplete && extractionState.currentPdfIndex >= 0) {
-       updateSidebarData(extractionState.currentPdfIndex);
-     }
-   }, [extractionState.currentPdfIndex, extractionState.isExtractionComplete]);
+  const [extractDrawState, setExtractDrawState] = useState({});
+  const fileInputRef = useRef(null);
+
+  // Fonction pour mettre à jour les données affichées dans la sidebar
+  const updateSidebarData = (index) => {
+    if (extractionState && 
+        extractionState.extractedDataList && 
+        extractionState.extractedDataList[index]) {
+      // Les données sont déjà dans extractedDataList, pas besoin de les modifier
+      // ExtractionSidebar les affichera automatiquement selon currentPdfIndex
+      console.log(`Affichage des données de la page ${index + 1}`);
+    }
+  };
+
+  const handleValidate = () => {
+    if (files.length === 0) {
+      return;
+    }
+    
+    // Basculer vers la deuxième partie (affichage des fichiers et champs)
+    setCurrentStep('extraction');
+    
+    // Mettre à jour l'état d'extraction avec les fichiers uploadés
+    // et s'assurer que le premier fichier est sélectionné
+    setExtractionState(prev => ({
+      ...prev,
+      selectedFiles: files.map((file, index) => ({
+        id: index,
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        preview: file.preview
+      })),
+      filePreviews: files.map(file => file.preview),
+      extractedDataList: files.map(() => ({
+        fournisseur: '',
+        numFacture: '',
+        date: '',
+        HT: '',
+        TTC: '',
+        TVA: '',
+        taux: ''
+      })),
+      currentPdfIndex: 0, // Premier fichier sélectionné par défaut
+      isExtractionComplete: false,
+      isProcessing: false,
+      processingMode: 'ai'
+    }));
+  };
 
   const handleFileUpload = async (event) => {
     const selectedFiles = Array.from(event.target.files);
@@ -94,7 +138,8 @@ const AIExtractionMode = () => {
       }
 
       // Ajouter les nouveaux fichiers
-      setFiles(prev => [...prev, ...newFiles]);
+      const updatedFiles = [...files, ...newFiles];
+      setFiles(updatedFiles);
       
     } catch (error) {
       console.error("Erreur lors du téléchargement des fichiers:", error);
@@ -111,7 +156,8 @@ const AIExtractionMode = () => {
         preview: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
         originalFile: file
       }));
-      setFiles(prev => [...prev, ...fallbackFiles]);
+      const updatedFiles = [...files, ...fallbackFiles];
+      setFiles(updatedFiles);
     } finally {
       setIsLoading(false);
     }
@@ -119,16 +165,9 @@ const AIExtractionMode = () => {
     event.target.value = null; // Reset input
   };
 
-
-
   const removeFile = (fileId) => {
-    setFiles(prev => {
-      const fileToRemove = prev.find(f => f.id === fileId);
-      if (fileToRemove && fileToRemove.preview) {
-        URL.revokeObjectURL(fileToRemove.preview);
-      }
-      return prev.filter(f => f.id !== fileId);
-    });
+    const updatedFiles = files.filter(f => f.id !== fileId);
+    setFiles(updatedFiles);
   };
 
   const clearAllFiles = () => {
@@ -139,18 +178,21 @@ const AIExtractionMode = () => {
     });
     setFiles([]);
     setExtractionResults(null);
-         // Réinitialiser l'état d'extraction
-     setExtractionState(prev => ({
-       ...prev,
-       selectedFiles: [],
-       filePreviews: [],
-       extractedData: [],
-       extractedDataList: [],
-       currentPdfIndex: 0,
-       isExtractionComplete: false,
-       isProcessing: false,
-       processingMode: 'ai'
-     }));
+    setCurrentStep('upload'); // Retourner à la première étape
+    setExtractionState(prev => ({
+      ...prev,
+      selectedFiles: [],
+      filePreviews: [],
+      extractedData: [],
+      extractedDataList: [],
+      currentPdfIndex: 0,
+      isExtractionComplete: false,
+      isProcessing: false, // Remettre à false
+      processingMode: 'ai',
+      extractionBoxes: [],
+      selectedModelId: null,
+      selectedModelName: null
+    }));
   };
 
   const handleExtractAll = async () => {
@@ -158,21 +200,27 @@ const AIExtractionMode = () => {
 
     setIsExtracting(true);
     setExtractionResults(null);
+    
+    // Mettre à jour l'état pour indiquer que l'extraction est en cours
+    setExtractionState(prev => ({
+      ...prev,
+      isProcessing: true
+    }));
 
     try {
-             const formData = new FormData();
-       files.forEach(file => {
-         // Pour les PDFs, envoyer le fichier original avec l'information de la page
-         if (file.isPDF) {
-           formData.append('files', file.originalFile);
-           formData.append('page_info', JSON.stringify({
-             page: file.pageNumber,
-             total_pages: file.totalPages
-           }));
-         } else {
-           formData.append('files', file.file);
-         }
-       });
+      const formData = new FormData();
+      files.forEach(file => {
+        // Pour les PDFs, envoyer le fichier original avec l'information de la page
+        if (file.isPDF) {
+          formData.append('files', file.originalFile);
+          formData.append('page_info', JSON.stringify({
+            page: file.pageNumber,
+            total_pages: file.totalPages
+          }));
+        } else {
+          formData.append('files', file.file);
+        }
+      });
 
       const response = await fetch('http://localhost:8000/api/ai-extract', {
         method: 'POST',
@@ -184,77 +232,89 @@ const AIExtractionMode = () => {
       if (result.success) {
         setExtractionResults(result.results);
         
-                 // Traiter les résultats et créer l'état d'extraction
-         const processedFiles = [];
-         const processedPreviews = [];
-         const processedData = [];
-         
-         // S'assurer que nous avons le bon nombre de résultats
-         const maxLength = Math.max(result.results.length, files.length);
-         
-         for (let index = 0; index < maxLength; index++) {
-           const fileResult = result.results[index];
-           const originalFile = files[index];
-           
-           if (fileResult && fileResult.success && fileResult.extracted_data) {
-             // Créer un objet fichier traité avec le vrai aperçu
-             const processedFile = {
-               id: index,
-               name: originalFile ? originalFile.name : `Fichier ${index + 1}`,
-               type: 'image/jpeg', // Après conversion PDF -> image
-               size: originalFile ? originalFile.size : 0,
-               preview: originalFile ? originalFile.preview : null
-             };
-             
-             processedFiles.push(processedFile);
-             // Utiliser le vrai aperçu du fichier original
-             processedPreviews.push(originalFile ? originalFile.preview : null);
-             
-             // Créer les données extraites avec une structure complète
-             const extractedData = {
-               fournisseur: '',
-               numFacture: '',
-               date: '',
-               HT: '',
-               TTC: '',
-               TVA: '',
-               taux: ''
-             };
-             
-             // Remplir avec les données extraites si disponibles
-             if (fileResult.extracted_data) {
-               Object.entries(fileResult.extracted_data).forEach(([field, values]) => {
-                 if (values && values.length > 0) {
-                   extractedData[field] = values[0];
-                 }
-               });
-             }
-             
-             processedData.push(extractedData);
-           }
-         }
+        // Traiter les résultats et créer l'état d'extraction
+        const processedFiles = [];
+        const processedPreviews = [];
+        const processedData = [];
+        
+        // S'assurer que nous avons le bon nombre de résultats
+        const maxLength = Math.max(result.results.length, files.length);
+        
+        for (let index = 0; index < maxLength; index++) {
+          const fileResult = result.results[index];
+          const originalFile = files[index];
+          
+          if (fileResult && fileResult.success && fileResult.extracted_data) {
+            // Créer un objet fichier traité avec le vrai aperçu
+            const processedFile = {
+              id: index,
+              name: originalFile ? originalFile.name : `Fichier ${index + 1}`,
+              type: 'image/jpeg', // Après conversion PDF -> image
+              size: originalFile ? originalFile.size : 0,
+              preview: originalFile ? originalFile.preview : null
+            };
+            
+            processedFiles.push(processedFile);
+            // Utiliser le vrai aperçu du fichier original
+            processedPreviews.push(originalFile ? originalFile.preview : null);
+            
+            // Créer les données extraites avec une structure complète
+            const extractedData = {
+              fournisseur: '',
+              numFacture: '',
+              date: '',
+              HT: '',
+              TTC: '',
+              TVA: '',
+              taux: ''
+            };
+            
+            // Remplir avec les données extraites si disponibles
+            if (fileResult.extracted_data) {
+              Object.entries(fileResult.extracted_data).forEach(([field, values]) => {
+                if (values && values.length > 0) {
+                  extractedData[field] = values[0];
+                }
+              });
+            }
+            
+            processedData.push(extractedData);
+          }
+        }
 
-                 // Mettre à jour l'état d'extraction avec la structure attendue par ExtractionSidebar
-         setExtractionState(prev => ({
-           ...prev,
-           selectedFiles: processedFiles,
-           filePreviews: processedPreviews,
-           extractedDataList: processedData, // Changé de extractedData à extractedDataList
-           currentPdfIndex: 0, // Ajouté pour ExtractionSidebar
-           isExtractionComplete: true,
-           isProcessing: false // Ajouté pour ExtractionSidebar
-         }));
+        // Mettre à jour l'état d'extraction avec la structure attendue par ExtractionSidebar
+        setExtractionState(prev => ({
+          ...prev,
+          selectedFiles: processedFiles,
+          filePreviews: processedPreviews,
+          extractedDataList: processedData,
+          currentPdfIndex: 0,
+          isExtractionComplete: true,
+          isProcessing: false // L'extraction est terminée
+        }));
 
       } else {
         setExtractionResults([{
           error: result.error || "Erreur lors de l'extraction"
         }]);
+        
+        // En cas d'erreur, remettre isProcessing à false
+        setExtractionState(prev => ({
+          ...prev,
+          isProcessing: false
+        }));
       }
     } catch (error) {
       console.error('Erreur lors de l\'extraction:', error);
       setExtractionResults([{
         error: "Erreur de connexion au serveur"
       }]);
+      
+      // En cas d'erreur, remettre isProcessing à false
+      setExtractionState(prev => ({
+        ...prev,
+        isProcessing: false
+      }));
     } finally {
       setIsExtracting(false);
     }
@@ -290,56 +350,47 @@ const AIExtractionMode = () => {
     console.log('Lancer FoxPro');
   };
 
-     const scrollToIndex = (index) => {
-     setExtractionState(prev => ({ ...prev, currentPdfIndex: index }));
-   };
- 
-   const goToPrevPdf = () => {
-     setExtractionState(prev => ({
-       ...prev,
-       currentPdfIndex: Math.max(0, prev.currentPdfIndex - 1)
-     }));
-   };
- 
-   const goToNextPdf = () => {
-     setExtractionState(prev => ({
-       ...prev,
-       currentPdfIndex: Math.min(prev.selectedFiles.length - 1, prev.currentPdfIndex + 1)
-     }));
-   };
+  const scrollToIndex = (index) => {
+    setExtractionState(prev => ({ ...prev, currentPdfIndex: index }));
+  };
 
-     const setHoveredIndex = (index) => {
-     // Gérer l'index survolé
-   };
- 
-   const setCurrentStep = (step) => {
-     // Gérer l'étape actuelle
-   };
- 
-   const handleSetIsLoading = (loading) => {
-     // Gérer le chargement
-   };
- 
-   const setDataPrepState = (state) => {
-     // Gérer l'état de préparation des données
-   };
- 
-   // Fonction pour gérer le clic sur les miniatures
-   const handleThumbnailClick = (index) => {
-     setExtractionState(prev => ({ ...prev, currentPdfIndex: index }));
-     updateSidebarData(index);
-   };
- 
-   // Fonction pour mettre à jour les données affichées dans la sidebar
-   const updateSidebarData = (index) => {
-     if (extractionState.extractedDataList && extractionState.extractedDataList[index]) {
-       // Les données sont déjà dans extractedDataList, pas besoin de les modifier
-       // ExtractionSidebar les affichera automatiquement selon currentPdfIndex
-       console.log(`Affichage des données de la page ${index + 1}`);
-     }
-   };
+  const goToPrevPdf = () => {
+    setExtractionState(prev => ({
+      ...prev,
+      currentPdfIndex: Math.max(0, prev.currentPdfIndex - 1)
+    }));
+  };
 
-    // Si l'extraction est terminée, afficher l'interface par défaut
+  const goToNextPdf = () => {
+    setExtractionState(prev => ({
+      ...prev,
+      currentPdfIndex: Math.min(prev.selectedFiles.length - 1, prev.currentPdfIndex + 1)
+    }));
+  };
+
+  const setHoveredIndex = (index) => {
+    // Gérer l'index survolé
+  };
+
+  const handleSetCurrentStep = (step) => {
+    // Gérer l'étape actuelle
+  };
+
+  const handleSetIsLoading = (loading) => {
+    // Gérer le chargement
+  };
+
+  const setDataPrepState = (state) => {
+    // Gérer l'état de préparation des données
+  };
+
+  // Fonction pour gérer le clic sur les miniatures
+  const handleThumbnailClick = (index) => {
+    setExtractionState(prev => ({ ...prev, currentPdfIndex: index }));
+    updateSidebarData(index);
+  };
+
+  // Si l'extraction est terminée, afficher l'interface par défaut
   if (extractionState.isExtractionComplete) {
     return (
       <div className="extraction-container">
@@ -351,55 +402,110 @@ const AIExtractionMode = () => {
 
           <div className="extraction-grid">
             {/* Sidebar with extracted data */}
-                         <ExtractionSidebar
-               extractionState={extractionState}
-               setExtractionState={setExtractionState}
-               extractAllPdfs={extractAllPdfs}
-               openSaveModal={openSaveModal}
-               launchFoxPro={launchFoxPro}
-               filterValue={(value, key) => value || ''} // Fonction filterValue simple
-               EXTRACTION_FIELDS={[
-                 { key: 'fournisseur', label: 'Fournisseur' },
-                 { key: 'numFacture', label: 'Numéro de Facture' },
-                 { key: 'date', label: 'Date' },
-                 { key: 'HT', label: 'Montant HT' },
-                 { key: 'TTC', label: 'Montant TTC' },
-                 { key: 'TVA', label: 'Montant TVA' },
-                 { key: 'taux', label: 'Taux TVA' }
-               ]}
-               extractDrawState={extractDrawState}
-               setExtractDrawState={setExtractDrawState}
-               showNotification={() => {}}
-             />
+            <ExtractionSidebar
+              extractionState={extractionState}
+              setExtractionState={setExtractionState}
+              extractAllPdfs={extractAllPdfs}
+              openSaveModal={openSaveModal}
+              launchFoxPro={launchFoxPro}
+              filterValue={(value, key) => value || ''}
+              EXTRACTION_FIELDS={[
+                { key: 'fournisseur', label: 'Fournisseur' },
+                { key: 'numFacture', label: 'Numéro de Facture' },
+                { key: 'date', label: 'Date Facturation' },
+                { key: 'taux', label: 'Taux TVA' },
+                { key: 'HT', label: 'Montant HT' },
+                { key: 'TVA', label: 'Montant TVA' },
+                { key: 'TTC', label: 'Montant TTC' },
+                
+                
+              ]}
+              extractDrawState={extractDrawState}
+              setExtractDrawState={setExtractDrawState}
+              showNotification={() => {}}
+            />
 
             {/* Main document preview area */}
-                         <ExtractionPreview
-               extractionState={{
-                 ...extractionState,
-                 selectedFiles: extractionState.selectedFiles || [],
-                 filePreviews: (extractionState.filePreviews || []).map(preview => 
-                   preview || { preview: null, name: 'Aperçu non disponible' }
-                 ),
-                 currentIndex: extractionState.currentPdfIndex // Synchroniser avec currentPdfIndex
-               }}
-               scrollToIndex={handleThumbnailClick} // Utiliser handleThumbnailClick pour la navigation
-               goToPrevPdf={goToPrevPdf}
-               goToNextPdf={goToNextPdf}
-               hoveredIndex={null}
-               setHoveredIndex={setHoveredIndex}
-               isExtractionComplete={true}
-               mappings={{}}
-               setCurrentStep={setCurrentStep}
-               setIsLoading={handleSetIsLoading}
-               setDataPrepState={setDataPrepState}
-             />
+            <ExtractionPreview
+              extractionState={{
+                ...extractionState,
+                selectedFiles: extractionState.selectedFiles || [],
+                filePreviews: (extractionState.filePreviews || []).map(preview => 
+                  preview || { preview: null, name: 'Aperçu non disponible' }
+                ),
+                currentIndex: extractionState.currentPdfIndex
+              }}
+              scrollToIndex={handleThumbnailClick}
+              goToPrevPdf={goToPrevPdf}
+              goToNextPdf={goToNextPdf}
+              hoveredIndex={null}
+              setHoveredIndex={setHoveredIndex}
+              isExtractionComplete={true}
+              mappings={{}}
+              setCurrentStep={handleSetCurrentStep}
+              setIsLoading={handleSetIsLoading}
+              setDataPrepState={setDataPrepState}
+            />
           </div>
         </div>
       </div>
     );
   }
 
-  // Interface d'upload et d'extraction
+  // DEUXIÈME PARTIE : Affichage des fichiers et champs (après avoir cliqué sur "Valider")
+  if (currentStep === 'extraction') {
+    return (
+      <div className="extraction-container">
+        <div className="extraction-content">
+          <div className="extraction-header">
+            <h1 className="extraction-title">Extraction avec Modèle AI</h1>
+            <p>Vos fichiers sont prêts pour l'extraction</p>
+          </div>
+
+          <div className="extraction-grid">
+            {/* Sidebar with extracted data */}
+            <ExtractionSidebar
+              extractionState={extractionState}
+              setExtractionState={setExtractionState}
+              extractAllPdfs={handleExtractAll}
+              openSaveModal={openSaveModal}
+              launchFoxPro={launchFoxPro}
+              filterValue={(value, key) => value || ''}
+              EXTRACTION_FIELDS={[
+                { key: 'fournisseur', label: 'Fournisseur' },
+                { key: 'numFacture', label: 'Numéro de Facture' },
+                { key: 'date', label: 'Date Facturation' },
+                { key: 'taux', label: 'Taux TVA' },
+                { key: 'HT', label: 'Montant HT' },
+                { key: 'TVA', label: 'Montant TVA' },
+                { key: 'TTC', label: 'Montant TTC' },
+              ]}
+              extractDrawState={extractDrawState}
+              setExtractDrawState={setExtractDrawState}
+              showNotification={() => {}}
+            />
+
+            {/* Main document preview area */}
+            <ExtractionPreview
+              extractionState={extractionState}
+              scrollToIndex={handleThumbnailClick}
+              goToPrevPdf={goToPrevPdf}
+              goToNextPdf={goToNextPdf}
+              hoveredIndex={null}
+              setHoveredIndex={setHoveredIndex}
+              isExtractionComplete={false}
+              mappings={{}}
+              setCurrentStep={handleSetCurrentStep}
+              setIsLoading={handleSetIsLoading}
+              setDataPrepState={setDataPrepState}
+            />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // PREMIÈRE PARTIE : Interface d'upload (par défaut)
   return (
     <div className="ai-extraction-mode">
       <div className="ai-extraction-header">
@@ -416,37 +522,37 @@ const AIExtractionMode = () => {
           </div>
           
           <div className="upload-area">
-                         <input
-               ref={fileInputRef}
-               type="file"
-               multiple
-               accept=".pdf,.png,.jpg,.jpeg,.bmp,.tiff"
-               onChange={handleFileUpload}
-               className="file-input"
-               disabled={isLoading}
-             />
-                         <div className="upload-placeholder" onClick={() => fileInputRef.current?.click()}>
-               {isLoading ? (
-                 <>
-                   <Loader2 className="upload-icon animate-spin" />
-                   <div className="upload-text">
-                     <strong>Conversion en cours...</strong>
-                     <span>Veuillez patienter pendant le traitement</span>
-                   </div>
-                 </>
-               ) : (
-                 <>
-                   <Upload className="upload-icon" />
-                   <div className="upload-text">
-                     <strong>Cliquez pour sélectionner des fichiers</strong>
-                     <span>ou glissez-déposez vos factures ici</span>
-                   </div>
-                   <div className="upload-formats">
-                     PDF, PNG, JPG, JPEG, BMP, TIFF acceptés
-                   </div>
-                 </>
-               )}
-             </div>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept=".pdf,.png,.jpg,.jpeg,.bmp,.tiff"
+              onChange={handleFileUpload}
+              className="file-input"
+              disabled={isLoading}
+            />
+            <div className="upload-placeholder" onClick={() => fileInputRef.current?.click()}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="upload-icon animate-spin" />
+                  <div className="upload-text">
+                    <strong>Conversion en cours...</strong>
+                    <span>Veuillez patienter pendant le traitement</span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <Upload className="upload-icon" />
+                  <div className="upload-text">
+                    <strong>Cliquez pour sélectionner des fichiers</strong>
+                    <span>ou glissez-déposez vos factures ici</span>
+                  </div>
+                  <div className="upload-formats">
+                    PDF, PNG, JPG, JPEG, BMP, TIFF acceptés
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Liste des fichiers */}
@@ -467,18 +573,18 @@ const AIExtractionMode = () => {
               <div className="files-grid">
                 {files.map((file, index) => (
                   <div key={file.id} className="file-item">
-                                         <div className="file-preview">
-                       {file.preview ? (
-                         <img 
-                           src={file.preview} 
-                           alt={file.name}
-                           className="file-image"
-                         />
-                       ) : (
-                         <div className="file-icon">
-                           {file.isPDF ? '📄' : '🖼️'}
-                         </div>
-                       )}
+                    <div className="file-preview">
+                      {file.preview ? (
+                        <img 
+                          src={file.preview} 
+                          alt={file.name}
+                          className="file-image"
+                        />
+                      ) : (
+                        <div className="file-icon">
+                          {file.isPDF ? '📄' : '🖼️'}
+                        </div>
+                      )}
                       <button
                         onClick={() => removeFile(file.id)}
                         className="remove-file-btn"
@@ -487,14 +593,14 @@ const AIExtractionMode = () => {
                         <X className="w-4 h-4" />
                       </button>
                     </div>
-                                         <div className="file-info">
-                       <div className="file-name" title={file.name}>
-                         {file.isPDF ? `${file.name} - Page ${file.pageNumber}/${file.totalPages}` : file.name}
-                       </div>
-                       <div className="file-details">
-                         {file.isPDF ? `Page ${file.pageNumber}` : formatFileSize(file.size)}
-                       </div>
-                     </div>
+                    <div className="file-info">
+                      <div className="file-name" title={file.name}>
+                        {file.isPDF ? `${file.name} - Page ${file.pageNumber}/${file.totalPages}` : file.name}
+                      </div>
+                      <div className="file-details">
+                        {file.isPDF ? `Page ${file.pageNumber}` : formatFileSize(file.size)}
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -504,13 +610,8 @@ const AIExtractionMode = () => {
 
         {/* Section Extraction */}
         <div className="extraction-section">
-          <div className="section-header">
-            <h2>2. Extraction des données</h2>
-            <p>Lancez l'extraction automatique avec le modèle YOLO</p>
-          </div>
-          
           <button
-            onClick={handleExtractAll}
+            onClick={handleValidate}
             disabled={files.length === 0 || isExtracting}
             className="extract-button"
           >
@@ -522,94 +623,11 @@ const AIExtractionMode = () => {
             ) : (
               <>
                 <Play className="w-5 h-5" />
-                Extraire toutes les factures
+                Valider
               </>
             )}
           </button>
         </div>
-
-        {/* Section Résultats */}
-        {extractionResults && (
-          <div className="results-section">
-            <div className="section-header">
-              <h2>3. Résultats de l'extraction</h2>
-              <p>Données extraites par le modèle AI</p>
-            </div>
-            
-            <div className="results-content">
-              {/* Résultats par fichier */}
-              <div className="file-results">
-                <h3>Résultats par fichier</h3>
-                {extractionResults.map((result, fileIndex) => (
-                  <div key={fileIndex} className="file-result-card">
-                                         <div className="file-result-header">
-                       <h4>📄 {files[fileIndex]?.isPDF ? 
-                         `${files[fileIndex].name} - Page ${files[fileIndex].pageNumber}` : 
-                         (result.file_path || `Fichier ${fileIndex + 1}`)
-                       }</h4>
-                       {result.success ? (
-                         <span className="success-badge">✅ Succès</span>
-                       ) : (
-                         <span className="error-badge">❌ Erreur</span>
-                       )}
-                     </div>
-                    
-                    {result.error ? (
-                      <div className="error-detail">
-                        <AlertCircle className="w-4 h-4" />
-                        <span>Erreur: {result.error}</span>
-                      </div>
-                    ) : result.extracted_data ? (
-                      <div className="extracted-fields">
-                        <div className="fields-grid">
-                          {Object.entries(result.extracted_data).map(([field, values]) => (
-                            <div key={field} className="field-group">
-                              <label>{field}</label>
-                              <input
-                                type="text"
-                                value={Array.isArray(values) ? values.join(', ') : values}
-                                readOnly
-                                placeholder={`${field} extrait automatiquement`}
-                                className="field-input"
-                              />
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="no-data">
-                        <span>Aucune donnée extraite</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-
-              {/* Résumé global */}
-              <div className="global-summary">
-                <h3>Résumé global</h3>
-                <div className="summary-stats">
-                  <div className="stat-item">
-                    <span className="stat-label">Fichiers traités:</span>
-                    <span className="stat-value">{extractionResults.length}</span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Succès:</span>
-                    <span className="stat-value success">
-                      {extractionResults.filter(r => r.success).length}
-                    </span>
-                  </div>
-                  <div className="stat-item">
-                    <span className="stat-label">Erreurs:</span>
-                    <span className="stat-value error">
-                      {extractionResults.filter(r => !r.success).length}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
