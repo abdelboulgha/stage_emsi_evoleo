@@ -616,11 +616,7 @@ async def ocr_preview(
     template_id: str = Form(None),
 ):
     MIN_CONFIDENCE = 0.8
-    HORIZONTAL_VERTICAL_TOL = 10        # horizontal search: vertical tolerance (px)
-    HORIZONTAL_MAX_DIST = 600       # horizontal search: max distance to right (px)
-    VERTICAL_MAX_Y = 100              # vertical search: max distance under keyword (px)
-    VERTICAL_HORZ_TOL = 50            # vertical search: horizontal tolerance (px)
-
+   
     try:
         # --- Read file to PIL image ---
         file_content = await file.read()
@@ -786,13 +782,13 @@ async def ocr_preview(
                 for kw in klist:
                     if search_type == 'horizontal':
                         # Calculate expanded search area 
-                        vertical_padding = 5  # Add some vertical padding
+                        vertical_padding = -5  # Add some vertical padding
                         search_area = {
                             'left': kw['left'],
                             'top': kw['top'] - vertical_padding,  # Expand vertically
-                            'right': kw['right'] + 400,  # Expand  to the right
+                            'right': kw['right'] + 450,  # Expand  to the right
                             'bottom': kw['bottom'] + vertical_padding,  # Expand vertically
-                            'width': kw['width'] + 400,
+                            'width': kw['width'] + 450,
                             'height': kw['height'] + (2 * vertical_padding)
                         }
                         
@@ -808,14 +804,17 @@ async def ocr_preview(
                             if ob is kw:  # Skip the keyword itself
                                 continue
                                 
-                            # Calculate centers and distance
+                            # Calculate distance from keyword to box
                             box_center_x = (ob['left'] + ob['right']) / 2
                             box_center_y = (ob['top'] + ob['bottom']) / 2
-                            search_center_x = (search_area['left'] + search_area['right']) / 2
-                            search_center_y = (search_area['top'] + search_area['bottom']) / 2
                             
-                            dx = box_center_x - search_center_x
-                            dy = box_center_y - search_center_y
+                            # Calculate distance from keyword right edge to box center
+                            kw_right = kw['right']
+                            kw_center_y = (kw['top'] + kw['bottom']) / 2
+                            
+                            # Distance from keyword right to box center
+                            dx = box_center_x - kw_right
+                            dy = box_center_y - kw_center_y
                             distance = (dx**2 + dy**2) ** 0.5
                             
                             # Check if box is to the right of the keyword and within vertical range
@@ -844,19 +843,18 @@ async def ocr_preview(
                             value_box_area = (ob['right'] - ob['left']) * (ob['bottom'] - ob['top'])
                             overlap_pct = (overlap_area / value_box_area) * 100 if value_box_area > 0 else 0
                             
-                            # Calculate score (similar to invoice number logic)
-                            max_possible_distance = ((search_area['right'] - search_area['left'])**2 + 
-                                                  (search_area['bottom'] - search_area['top'])**2) ** 0.5
-                            distance_score = 1 - min(distance / max_possible_distance, 1)  # Normalize to 0-1
+                            # Calculate score with max horizontal distance of 400px
+                            max_horizontal_distance = 600
+                            distance_score = 1 - min(distance / max_horizontal_distance, 1) 
                             
-                            # Combine scores (70% overlap, 30% distance)
-                            score = (overlap_pct/100 * 0.7) + (distance_score * 0.3)
+                            # Combine scores (60% overlap, 40% distance)
+                            score = (overlap_pct/100 * 0.6) + (distance_score * 0.4)
                             
                             # Print detailed match info
                             print(f"\nText: '{ob['text']}'")
                             print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
-                            print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Search center: ({search_center_x:.0f}, {search_center_y:.0f})")
-                            print(f"  Overlap: {overlap_pct:.1f}% | Distance: {distance:.1f}px | Score: {score:.6f}")
+                            print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_right:.0f}, {kw_center_y:.0f})")
+                            print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
                             
                             candidates.append({
                                 'keyword_box': kw,
@@ -894,44 +892,95 @@ async def ocr_preview(
                             print(f"   - Position: ({best_match['value_box']['center_x']:.0f}, {best_match['value_box']['center_y']:.0f})")
                     
                     else:  # vertical search
-                        kw_bottom = kw['bottom']
-                        kw_cx = kw['center_x']
-                        kw_cy = kw['center_y']
-
+                        # Calculate expanded search area 
+                        horizontal_padding = 20  # Add some horizontal padding
+                        search_area = {
+                            'left': kw['left'] - horizontal_padding,  # Expand horizontally
+                            'top': kw['bottom'],  # Start from bottom of keyword
+                            'right': kw['right'] + horizontal_padding,  # Expand horizontally
+                            'bottom': kw['bottom'] + 50,  # Expand downward
+                            'width': kw['width'] + (2 * horizontal_padding),
+                            'height': 50
+                        }
                         
+                        # Print search area header
+                        print(f"\n{'='*60}")
+                        print(f"🔍 VERTICAL SEARCH FOR {'HT' if not is_tva else 'TVA'}")
+                        print("="*60)
+                        print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
+                        
+                        # Find all boxes that overlap with the search area
+                        potential_boxes = []
                         for ob in detected_boxes:
-                            if ob is kw:
+                            if ob is kw:  # Skip the keyword itself
                                 continue
                                 
-                            # require box to be below keyword
-                            y_distance = ob['top'] - kw_bottom
-                            if y_distance <= 0 or y_distance > VERTICAL_MAX_Y:
+                            # Check if box is below the keyword and within horizontal range
+                            is_below = ob['top'] > kw['bottom']
+                            is_in_horizontal_range = (
+                                ob['right'] > search_area['left'] and 
+                                ob['left'] < search_area['right']
+                            )
+                            
+                            if is_below and is_in_horizontal_range:
+                                overlap_area = calculate_overlap_area(search_area, ob)
+                                if overlap_area > 0:
+                                    # Calculate distance from keyword to box
+                                    box_center_x = (ob['left'] + ob['right']) / 2
+                                    box_center_y = (ob['top'] + ob['bottom']) / 2
+                                    
+                                    # Calculate horizontal distance from keyword center
+                                    kw_center_x = (kw['left'] + kw['right']) / 2
+                                    kw_bottom = kw['bottom']
+                                    
+                                    # Distance from keyword bottom to box center
+                                    dx = box_center_x - kw_center_x
+                                    dy = box_center_y - kw_bottom
+                                    distance = (dx**2 + dy**2) ** 0.5
+                                    
+                                    potential_boxes.append((ob, overlap_area, distance))
+                        
+                        # Process potential matches
+                        for ob, overlap_area, distance in potential_boxes:
+                            # Skip non-numeric boxes
+                            val = extract_number(ob['text'])
+                            if val is None:
                                 continue
                                 
-                            # horizontal tolerance
-                            if abs(ob['center_x'] - kw_cx) > VERTICAL_HORZ_TOL:
-                                continue
-                                
+                            # Skip TVA boxes with %
                             if is_tva and '%' in ob['text']:
                                 continue
-                                
-                            val = extract_number(ob['text'])
-                            if val is not None:
-                                # Euclidean distance between centers
-                                xdiff = ob['center_x'] - kw_cx
-                                ydiff = (ob['center_y'] - kw_cy)
-                                dist = math.hypot(xdiff, ydiff)
-                                
-                                candidates.append({
-                                    'keyword_box': kw,
-                                    'value_box': ob,
-                                    'value': val,
-                                    'value_text': ob['text'],
-                                    'keyword_text': kw['text'],
-                                    'distance': dist,
-                                    'search_type': 'vertical',
-                                    'is_total_keyword': is_total_keyword(kw['text'])
-                                })
+                            
+                            # Calculate overlap percentage
+                            value_box_area = (ob['right'] - ob['left']) * (ob['bottom'] - ob['top'])
+                            overlap_pct = (overlap_area / value_box_area) * 100 if value_box_area > 0 else 0
+                            
+                            # Calculate score with max vertical distance of 400px
+                            max_vertical_distance = 400
+                            distance_score = 1 - min(distance / max_vertical_distance, 1)  
+                            
+                            # Combine scores (60% overlap, 40% distance)
+                            score = (overlap_pct/100 * 0.6) + (distance_score * 0.4)
+                            
+                            # Print detailed match info
+                            print(f"\nText: '{ob['text']}'")
+                            print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
+                            print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+                            print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
+                            
+                            candidates.append({
+                                'keyword_box': kw,
+                                'value_box': ob,
+                                'value': val,
+                                'value_text': ob['text'],
+                                'keyword_text': kw['text'],
+                                'distance': distance,
+                                'search_type': 'vertical',
+                                'is_total_keyword': is_total_keyword(kw['text']),
+                                'search_area': search_area,
+                                'score': score,
+                                'overlap_pct': overlap_pct
+                            })
                 
                 if not candidates:
                     return None

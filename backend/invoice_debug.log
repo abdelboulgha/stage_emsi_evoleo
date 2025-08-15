@@ -431,3 +431,214 @@ NameError: name 'num_facture_time' is not defined
 2025-08-15 18:56:15,072 INFO Database tables created successfully
 2025-08-15 18:56:15,076 INFO Default data inserted successfully
 2025-08-15 18:56:15,076 INFO Database initialization completed successfully
+2025-08-15 19:14:08,920 INFO Database tables created successfully
+2025-08-15 19:14:08,924 INFO Default data inserted successfully
+2025-08-15 19:14:08,924 INFO Database initialization completed successfully
+2025-08-15 19:17:40,919 ERROR Error in ocr_preview: 'score'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 999, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 975, in find_value_for_field
+    result = process_keyword_set(total_kw, 'vertical')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 940, in process_keyword_set
+    candidates.sort(key=lambda c: (-c['score'], 0 if c['is_total_keyword'] else 1))
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 940, in <lambda>
+    candidates.sort(key=lambda c: (-c['score'], 0 if c['is_total_keyword'] else 1))
+                                    ~^^^^^^^^^
+KeyError: 'score'
+
+2025-08-15 19:21:44,310 INFO Database tables created successfully
+2025-08-15 19:21:44,314 INFO Default data inserted successfully
+2025-08-15 19:21:44,314 INFO Database initialization completed successfully
+2025-08-15 19:24:32,943 INFO Database tables created successfully
+2025-08-15 19:24:32,946 INFO Default data inserted successfully
+2025-08-15 19:24:32,946 INFO Database initialization completed successfully
+2025-08-15 19:28:42,199 INFO Database tables created successfully
+2025-08-15 19:28:42,204 INFO Default data inserted successfully
+2025-08-15 19:28:42,204 INFO Database initialization completed successfully
+2025-08-15 19:29:10,566 INFO Database tables created successfully
+2025-08-15 19:29:10,570 INFO Default data inserted successfully
+2025-08-15 19:29:10,570 INFO Database initialization completed successfully
+2025-08-15 19:30:05,092 ERROR Error in ocr_preview: cannot access local variable 'kw_center_x' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1050, in ocr_preview
+    import time
+               ^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1007, in find_value_for_field
+    if total_kw:
+                 
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 858, in process_keyword_set
+    print(f"\nText: '{ob['text']}'")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'kw_center_x' where it is not associated with a value
+
+2025-08-15 19:30:22,590 INFO Database tables created successfully
+2025-08-15 19:30:22,593 INFO Default data inserted successfully
+2025-08-15 19:30:22,594 INFO Database initialization completed successfully
+2025-08-15 19:30:42,215 ERROR Error in ocr_preview: cannot access local variable 'kw_center_x' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1052, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1009, in find_value_for_field
+    result = process_keyword_set(total_kw, 'horizontal')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 860, in process_keyword_set
+    print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword bottom: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'kw_center_x' where it is not associated with a value
+
+2025-08-15 19:34:34,960 ERROR Error in ocr_preview: cannot access local variable 'kw_center_x' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1052, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1009, in find_value_for_field
+    result = process_keyword_set(total_kw, 'horizontal')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 860, in process_keyword_set
+    print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword bottom: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'kw_center_x' where it is not associated with a value
+
+2025-08-15 19:34:37,546 ERROR Error in ocr_preview: cannot access local variable 'kw_center_x' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1052, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1009, in find_value_for_field
+    result = process_keyword_set(total_kw, 'horizontal')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 860, in process_keyword_set
+    print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword bottom: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'kw_center_x' where it is not associated with a value
+
+2025-08-15 19:34:57,448 ERROR Error in ocr_preview: cannot access local variable 'kw_center_x' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1052, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1009, in find_value_for_field
+    result = process_keyword_set(total_kw, 'horizontal')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 860, in process_keyword_set
+    print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword bottom: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'kw_center_x' where it is not associated with a value
+
+2025-08-15 20:15:07,994 INFO Database tables created successfully
+2025-08-15 20:15:08,000 INFO Default data inserted successfully
+2025-08-15 20:15:08,000 INFO Database initialization completed successfully
+2025-08-15 20:18:20,895 INFO Database tables created successfully
+2025-08-15 20:18:20,898 INFO Default data inserted successfully
+2025-08-15 20:18:20,898 INFO Database initialization completed successfully
+2025-08-15 20:19:22,591 INFO Database tables created successfully
+2025-08-15 20:19:22,597 INFO Default data inserted successfully
+2025-08-15 20:19:22,598 INFO Database initialization completed successfully
+2025-08-15 20:20:42,043 INFO Database tables created successfully
+2025-08-15 20:20:42,047 INFO Default data inserted successfully
+2025-08-15 20:20:42,047 INFO Database initialization completed successfully
+2025-08-15 20:21:42,579 ERROR Error in ocr_preview: cannot access local variable 'kw_center_x' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1052, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1009, in find_value_for_field
+    result = process_keyword_set(total_kw, 'horizontal')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 860, in process_keyword_set
+    print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword bottom: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'kw_center_x' where it is not associated with a value
+
+2025-08-15 20:21:45,893 ERROR Error in ocr_preview: cannot access local variable 'kw_center_x' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1052, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1009, in find_value_for_field
+    result = process_keyword_set(total_kw, 'horizontal')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 860, in process_keyword_set
+    print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword bottom: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'kw_center_x' where it is not associated with a value
+
+2025-08-15 20:23:43,053 INFO Database tables created successfully
+2025-08-15 20:23:43,069 INFO Default data inserted successfully
+2025-08-15 20:23:43,069 INFO Database initialization completed successfully
+2025-08-15 20:41:11,853 INFO Database tables created successfully
+2025-08-15 20:41:11,856 INFO Default data inserted successfully
+2025-08-15 20:41:11,856 INFO Database initialization completed successfully
+2025-08-15 21:10:17,700 INFO Database tables created successfully
+2025-08-15 21:10:17,704 INFO Default data inserted successfully
+2025-08-15 21:10:17,705 INFO Database initialization completed successfully
+2025-08-15 21:12:52,830 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:12:54,727 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:12:56,746 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:13:01,305 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:13:04,227 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:13:08,927 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:13:10,680 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:13:12,494 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:13:14,744 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1635, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-15 21:14:52,391 INFO Database tables created successfully
+2025-08-15 21:14:52,395 INFO Default data inserted successfully
+2025-08-15 21:14:52,396 INFO Database initialization completed successfully
