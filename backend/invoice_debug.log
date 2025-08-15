@@ -1,0 +1,424 @@
+2025-08-13 23:55:37,138 INFO Database tables created successfully
+2025-08-13 23:55:37,182 INFO Default data inserted successfully
+2025-08-13 23:55:37,182 INFO Database initialization completed successfully
+2025-08-14 00:06:34,094 INFO Database tables created successfully
+2025-08-14 00:06:34,096 INFO Default data inserted successfully
+2025-08-14 00:06:34,097 INFO Database initialization completed successfully
+2025-08-14 00:49:18,325 INFO Database tables created successfully
+2025-08-14 00:49:18,327 INFO Default data inserted successfully
+2025-08-14 00:49:18,327 INFO Database initialization completed successfully
+2025-08-14 00:56:48,951 INFO Database tables created successfully
+2025-08-14 00:56:48,953 INFO Default data inserted successfully
+2025-08-14 00:56:48,953 INFO Database initialization completed successfully
+2025-08-14 01:00:52,623 INFO Database tables created successfully
+2025-08-14 01:00:52,625 INFO Default data inserted successfully
+2025-08-14 01:00:52,625 INFO Database initialization completed successfully
+2025-08-14 01:03:25,298 INFO Database tables created successfully
+2025-08-14 01:03:25,299 INFO Default data inserted successfully
+2025-08-14 01:03:25,299 INFO Database initialization completed successfully
+2025-08-14 01:04:03,670 INFO Database tables created successfully
+2025-08-14 01:04:03,672 INFO Default data inserted successfully
+2025-08-14 01:04:03,672 INFO Database initialization completed successfully
+2025-08-14 01:05:26,412 INFO Database tables created successfully
+2025-08-14 01:05:26,414 INFO Default data inserted successfully
+2025-08-14 01:05:26,414 INFO Database initialization completed successfully
+2025-08-14 01:06:01,741 INFO Database tables created successfully
+2025-08-14 01:06:01,743 INFO Default data inserted successfully
+2025-08-14 01:06:01,743 INFO Database initialization completed successfully
+2025-08-14 01:07:08,807 INFO Database tables created successfully
+2025-08-14 01:07:08,809 INFO Default data inserted successfully
+2025-08-14 01:07:08,809 INFO Database initialization completed successfully
+2025-08-14 01:12:00,743 INFO Database tables created successfully
+2025-08-14 01:12:00,745 INFO Default data inserted successfully
+2025-08-14 01:12:00,745 INFO Database initialization completed successfully
+2025-08-14 01:18:29,851 INFO Database tables created successfully
+2025-08-14 01:18:29,853 INFO Default data inserted successfully
+2025-08-14 01:18:29,853 INFO Database initialization completed successfully
+2025-08-14 01:24:45,972 INFO Database tables created successfully
+2025-08-14 01:24:45,974 INFO Default data inserted successfully
+2025-08-14 01:24:45,975 INFO Database initialization completed successfully
+2025-08-14 01:25:26,287 INFO Database tables created successfully
+2025-08-14 01:25:26,289 INFO Default data inserted successfully
+2025-08-14 01:25:26,289 INFO Database initialization completed successfully
+2025-08-14 01:27:32,355 INFO Database tables created successfully
+2025-08-14 01:27:32,357 INFO Default data inserted successfully
+2025-08-14 01:27:32,357 INFO Database initialization completed successfully
+2025-08-14 01:27:49,822 INFO Database tables created successfully
+2025-08-14 01:27:49,824 INFO Default data inserted successfully
+2025-08-14 01:27:49,824 INFO Database initialization completed successfully
+2025-08-14 01:28:40,501 ERROR Error in ocr_preview: cannot access local variable 'traceback' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1374, in ocr_preview
+    dt = parse_date_try(text)
+         ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1332, in parse_date_try
+    dt = dateparser.parse(clean_text, languages=['fr'], settings=settings)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 100, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\__init__.py", line 71, in parse
+    parser = DateDataParser(
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 100, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\date.py", line 454, in __init__
+    check_settings(settings)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 267, in check_settings
+    extra_check(setting_name, setting_value)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 141, in _check_parsers
+    raise SettingValidationError(
+dateparser.conf.SettingValidationError: Found unknown parsers in the "PARSERS" setting: base-formats
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1407, in ocr_preview
+    print(traceback.format_exc())
+          ^^^^^^^^^
+UnboundLocalError: cannot access local variable 'traceback' where it is not associated with a value
+
+2025-08-14 01:28:42,578 ERROR Error in ocr_preview: cannot access local variable 'traceback' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1374, in ocr_preview
+    dt = parse_date_try(text)
+         ^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1332, in parse_date_try
+    dt = dateparser.parse(clean_text, languages=['fr'], settings=settings)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 100, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\__init__.py", line 71, in parse
+    parser = DateDataParser(
+             ^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 100, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\date.py", line 454, in __init__
+    check_settings(settings)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 267, in check_settings
+    extra_check(setting_name, setting_value)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\dateparser\conf.py", line 141, in _check_parsers
+    raise SettingValidationError(
+dateparser.conf.SettingValidationError: Found unknown parsers in the "PARSERS" setting: base-formats
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1407, in ocr_preview
+    print(traceback.format_exc())
+          ^^^^^^^^^
+UnboundLocalError: cannot access local variable 'traceback' where it is not associated with a value
+
+2025-08-14 01:29:17,127 INFO Database tables created successfully
+2025-08-14 01:29:17,129 INFO Default data inserted successfully
+2025-08-14 01:29:17,129 INFO Database initialization completed successfully
+2025-08-14 21:51:57,851 INFO Database tables created successfully
+2025-08-14 21:51:57,925 INFO Default data inserted successfully
+2025-08-14 21:51:57,926 INFO Database initialization completed successfully
+2025-08-14 22:00:03,720 INFO Database tables created successfully
+2025-08-14 22:00:03,722 INFO Default data inserted successfully
+2025-08-14 22:00:03,722 INFO Database initialization completed successfully
+2025-08-14 22:01:25,741 INFO Database tables created successfully
+2025-08-14 22:01:25,743 INFO Default data inserted successfully
+2025-08-14 22:01:25,743 INFO Database initialization completed successfully
+2025-08-14 22:07:36,618 INFO Database tables created successfully
+2025-08-14 22:07:36,620 INFO Default data inserted successfully
+2025-08-14 22:07:36,621 INFO Database initialization completed successfully
+2025-08-14 22:07:54,189 INFO Database tables created successfully
+2025-08-14 22:07:54,193 INFO Default data inserted successfully
+2025-08-14 22:07:54,193 INFO Database initialization completed successfully
+2025-08-14 22:08:50,980 INFO Database tables created successfully
+2025-08-14 22:08:50,984 INFO Default data inserted successfully
+2025-08-14 22:08:50,984 INFO Database initialization completed successfully
+2025-08-14 22:09:47,902 INFO Database tables created successfully
+2025-08-14 22:09:47,904 INFO Default data inserted successfully
+2025-08-14 22:09:47,904 INFO Database initialization completed successfully
+2025-08-14 23:32:13,585 INFO Database tables created successfully
+2025-08-14 23:32:13,587 INFO Default data inserted successfully
+2025-08-14 23:32:13,587 INFO Database initialization completed successfully
+2025-08-14 23:33:16,773 INFO Database tables created successfully
+2025-08-14 23:33:16,777 INFO Default data inserted successfully
+2025-08-14 23:33:16,777 INFO Database initialization completed successfully
+2025-08-14 23:34:05,716 INFO Database tables created successfully
+2025-08-14 23:34:05,720 INFO Default data inserted successfully
+2025-08-14 23:34:05,720 INFO Database initialization completed successfully
+2025-08-14 23:42:00,635 INFO Database tables created successfully
+2025-08-14 23:42:00,637 INFO Default data inserted successfully
+2025-08-14 23:42:00,638 INFO Database initialization completed successfully
+2025-08-14 23:43:04,167 INFO Database tables created successfully
+2025-08-14 23:43:04,170 INFO Default data inserted successfully
+2025-08-14 23:43:04,170 INFO Database initialization completed successfully
+2025-08-14 23:44:07,968 INFO Database tables created successfully
+2025-08-14 23:44:07,971 INFO Default data inserted successfully
+2025-08-14 23:44:07,971 INFO Database initialization completed successfully
+2025-08-14 23:45:11,824 INFO Database tables created successfully
+2025-08-14 23:45:11,827 INFO Default data inserted successfully
+2025-08-14 23:45:11,827 INFO Database initialization completed successfully
+2025-08-14 23:47:11,753 INFO Database tables created successfully
+2025-08-14 23:47:11,755 INFO Default data inserted successfully
+2025-08-14 23:47:11,756 INFO Database initialization completed successfully
+2025-08-14 23:48:52,255 INFO Database tables created successfully
+2025-08-14 23:48:52,259 INFO Default data inserted successfully
+2025-08-14 23:48:52,259 INFO Database initialization completed successfully
+2025-08-14 23:49:15,547 INFO Database tables created successfully
+2025-08-14 23:49:15,551 INFO Default data inserted successfully
+2025-08-14 23:49:15,551 INFO Database initialization completed successfully
+2025-08-14 23:50:41,445 INFO Database tables created successfully
+2025-08-14 23:50:41,447 INFO Default data inserted successfully
+2025-08-14 23:50:41,447 INFO Database initialization completed successfully
+2025-08-14 23:52:06,039 INFO Database tables created successfully
+2025-08-14 23:52:06,041 INFO Default data inserted successfully
+2025-08-14 23:52:06,041 INFO Database initialization completed successfully
+2025-08-14 23:55:39,402 INFO Database tables created successfully
+2025-08-14 23:55:39,405 INFO Default data inserted successfully
+2025-08-14 23:55:39,405 INFO Database initialization completed successfully
+2025-08-14 23:56:12,178 INFO Database tables created successfully
+2025-08-14 23:56:12,180 INFO Default data inserted successfully
+2025-08-14 23:56:12,180 INFO Database initialization completed successfully
+2025-08-14 23:58:13,556 INFO Database tables created successfully
+2025-08-14 23:58:13,558 INFO Default data inserted successfully
+2025-08-14 23:58:13,558 INFO Database initialization completed successfully
+2025-08-15 00:00:01,916 INFO Database tables created successfully
+2025-08-15 00:00:01,918 INFO Default data inserted successfully
+2025-08-15 00:00:01,918 INFO Database initialization completed successfully
+2025-08-15 00:01:31,857 INFO Database tables created successfully
+2025-08-15 00:01:31,861 INFO Default data inserted successfully
+2025-08-15 00:01:31,861 INFO Database initialization completed successfully
+2025-08-15 00:03:34,636 INFO Database tables created successfully
+2025-08-15 00:03:34,638 INFO Default data inserted successfully
+2025-08-15 00:03:34,638 INFO Database initialization completed successfully
+2025-08-15 00:04:13,812 INFO Database tables created successfully
+2025-08-15 00:04:13,814 INFO Default data inserted successfully
+2025-08-15 00:04:13,814 INFO Database initialization completed successfully
+2025-08-15 00:07:30,874 INFO Database tables created successfully
+2025-08-15 00:07:30,877 INFO Default data inserted successfully
+2025-08-15 00:07:30,877 INFO Database initialization completed successfully
+2025-08-15 00:08:24,533 INFO Database tables created successfully
+2025-08-15 00:08:24,534 INFO Default data inserted successfully
+2025-08-15 00:08:24,535 INFO Database initialization completed successfully
+2025-08-15 00:10:15,741 INFO Database tables created successfully
+2025-08-15 00:10:15,743 INFO Default data inserted successfully
+2025-08-15 00:10:15,744 INFO Database initialization completed successfully
+2025-08-15 00:14:27,347 INFO Database tables created successfully
+2025-08-15 00:14:27,349 INFO Default data inserted successfully
+2025-08-15 00:14:27,349 INFO Database initialization completed successfully
+2025-08-15 00:15:11,116 INFO Database tables created successfully
+2025-08-15 00:15:11,119 INFO Default data inserted successfully
+2025-08-15 00:15:11,119 INFO Database initialization completed successfully
+2025-08-15 00:16:03,971 INFO Database tables created successfully
+2025-08-15 00:16:03,975 INFO Default data inserted successfully
+2025-08-15 00:16:03,975 INFO Database initialization completed successfully
+2025-08-15 00:17:40,727 INFO Database tables created successfully
+2025-08-15 00:17:40,729 INFO Default data inserted successfully
+2025-08-15 00:17:40,730 INFO Database initialization completed successfully
+2025-08-15 00:19:33,047 INFO Database tables created successfully
+2025-08-15 00:19:33,049 INFO Default data inserted successfully
+2025-08-15 00:19:33,049 INFO Database initialization completed successfully
+2025-08-15 00:38:35,753 INFO Database tables created successfully
+2025-08-15 00:38:35,756 INFO Default data inserted successfully
+2025-08-15 00:38:35,756 INFO Database initialization completed successfully
+2025-08-15 00:39:43,889 ERROR Error in ocr_preview: cannot access local variable 'ht_extracted' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1363, in ocr_preview
+    ttc_extracted = round(ht_extracted + tva_extracted, 2)
+                          ^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'ht_extracted' where it is not associated with a value
+
+2025-08-15 00:41:07,465 INFO Database tables created successfully
+2025-08-15 00:41:07,469 INFO Default data inserted successfully
+2025-08-15 00:41:07,469 INFO Database initialization completed successfully
+2025-08-15 00:47:07,387 INFO Database tables created successfully
+2025-08-15 00:47:07,397 INFO Default data inserted successfully
+2025-08-15 00:47:07,397 INFO Database initialization completed successfully
+2025-08-15 00:52:58,730 INFO Database tables created successfully
+2025-08-15 00:52:58,734 INFO Default data inserted successfully
+2025-08-15 00:52:58,734 INFO Database initialization completed successfully
+2025-08-15 12:28:37,524 INFO Database tables created successfully
+2025-08-15 12:28:37,567 INFO Default data inserted successfully
+2025-08-15 12:28:37,567 INFO Database initialization completed successfully
+2025-08-15 12:33:54,142 INFO Database tables created successfully
+2025-08-15 12:33:54,144 INFO Default data inserted successfully
+2025-08-15 12:33:54,145 INFO Database initialization completed successfully
+2025-08-15 14:02:15,533 INFO Database tables created successfully
+2025-08-15 14:02:15,535 INFO Default data inserted successfully
+2025-08-15 14:02:15,535 INFO Database initialization completed successfully
+2025-08-15 14:06:15,175 INFO Database tables created successfully
+2025-08-15 14:06:15,177 INFO Default data inserted successfully
+2025-08-15 14:06:15,177 INFO Database initialization completed successfully
+2025-08-15 14:40:56,762 INFO Database tables created successfully
+2025-08-15 14:40:56,766 INFO Default data inserted successfully
+2025-08-15 14:40:56,766 INFO Database initialization completed successfully
+2025-08-15 14:50:06,134 INFO Database tables created successfully
+2025-08-15 14:50:06,137 INFO Default data inserted successfully
+2025-08-15 14:50:06,137 INFO Database initialization completed successfully
+2025-08-15 14:54:25,033 INFO Database tables created successfully
+2025-08-15 14:54:25,038 INFO Default data inserted successfully
+2025-08-15 14:54:25,039 INFO Database initialization completed successfully
+2025-08-15 14:58:29,841 INFO Database tables created successfully
+2025-08-15 14:58:29,847 INFO Default data inserted successfully
+2025-08-15 14:58:29,847 INFO Database initialization completed successfully
+2025-08-15 14:59:04,078 INFO Database tables created successfully
+2025-08-15 14:59:04,084 INFO Default data inserted successfully
+2025-08-15 14:59:04,085 INFO Database initialization completed successfully
+2025-08-15 14:59:28,794 INFO Database tables created successfully
+2025-08-15 14:59:28,797 INFO Default data inserted successfully
+2025-08-15 14:59:28,798 INFO Database initialization completed successfully
+2025-08-15 15:01:30,795 INFO Database tables created successfully
+2025-08-15 15:01:30,798 INFO Default data inserted successfully
+2025-08-15 15:01:30,798 INFO Database initialization completed successfully
+2025-08-15 15:04:55,471 ERROR Error in ocr_preview: 'right'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 975, in ocr_preview
+    ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 932, in find_value_for_field
+    result = process_keyword_set(total_kw, 'horizontal')
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 801, in process_keyword_set
+    f"right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
+             ~~~~~~~~~~~^^^^^^^^^
+KeyError: 'right'
+
+2025-08-15 15:05:29,861 INFO Database tables created successfully
+2025-08-15 15:05:29,863 INFO Default data inserted successfully
+2025-08-15 15:05:29,863 INFO Database initialization completed successfully
+2025-08-15 15:20:39,439 INFO Database tables created successfully
+2025-08-15 15:20:39,441 INFO Default data inserted successfully
+2025-08-15 15:20:39,441 INFO Database initialization completed successfully
+2025-08-15 15:54:26,183 INFO Database tables created successfully
+2025-08-15 15:54:26,185 INFO Default data inserted successfully
+2025-08-15 15:54:26,185 INFO Database initialization completed successfully
+2025-08-15 15:54:52,218 INFO Database tables created successfully
+2025-08-15 15:54:52,221 INFO Default data inserted successfully
+2025-08-15 15:54:52,221 INFO Database initialization completed successfully
+2025-08-15 15:55:34,608 INFO Database tables created successfully
+2025-08-15 15:55:34,610 INFO Default data inserted successfully
+2025-08-15 15:55:34,610 INFO Database initialization completed successfully
+2025-08-15 16:01:25,560 INFO Database tables created successfully
+2025-08-15 16:01:25,562 INFO Default data inserted successfully
+2025-08-15 16:01:25,562 INFO Database initialization completed successfully
+2025-08-15 16:01:50,417 INFO Database tables created successfully
+2025-08-15 16:01:50,419 INFO Default data inserted successfully
+2025-08-15 16:01:50,419 INFO Database initialization completed successfully
+2025-08-15 16:02:21,867 ERROR Error in ocr_preview: name 'template_data' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 999, in ocr_preview
+    if template_id and 'mappings' in template_data and 'numeroFacture' in template_data['mappings']:
+                                     ^^^^^^^^^^^^^
+NameError: name 'template_data' is not defined
+
+2025-08-15 16:04:42,629 INFO Database tables created successfully
+2025-08-15 16:04:42,631 INFO Default data inserted successfully
+2025-08-15 16:04:42,631 INFO Database initialization completed successfully
+2025-08-15 16:05:56,312 INFO Database tables created successfully
+2025-08-15 16:05:56,314 INFO Default data inserted successfully
+2025-08-15 16:05:56,314 INFO Database initialization completed successfully
+2025-08-15 16:06:26,960 INFO Database tables created successfully
+2025-08-15 16:06:26,961 INFO Default data inserted successfully
+2025-08-15 16:06:26,962 INFO Database initialization completed successfully
+2025-08-15 16:10:11,804 INFO Database tables created successfully
+2025-08-15 16:10:11,806 INFO Default data inserted successfully
+2025-08-15 16:10:11,807 INFO Database initialization completed successfully
+2025-08-15 16:11:47,456 INFO Database tables created successfully
+2025-08-15 16:11:47,457 INFO Default data inserted successfully
+2025-08-15 16:11:47,458 INFO Database initialization completed successfully
+2025-08-15 16:12:39,718 ERROR Error in ocr_preview: name 'num_facture_time' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1650, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+                                                         ^^^^^^^^^^^^^^^^
+NameError: name 'num_facture_time' is not defined
+
+2025-08-15 16:13:22,700 INFO Database tables created successfully
+2025-08-15 16:13:22,704 INFO Default data inserted successfully
+2025-08-15 16:13:22,704 INFO Database initialization completed successfully
+2025-08-15 16:14:09,799 INFO Database tables created successfully
+2025-08-15 16:14:09,801 INFO Default data inserted successfully
+2025-08-15 16:14:09,802 INFO Database initialization completed successfully
+2025-08-15 16:31:11,339 INFO Database tables created successfully
+2025-08-15 16:31:11,341 INFO Default data inserted successfully
+2025-08-15 16:31:11,342 INFO Database initialization completed successfully
+2025-08-15 16:31:38,012 ERROR Error in ocr_preview: name 'time' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1001, in ocr_preview
+    start_time = time.time()
+                 ^^^^
+NameError: name 'time' is not defined
+
+2025-08-15 16:32:32,295 INFO Database tables created successfully
+2025-08-15 16:32:32,297 INFO Default data inserted successfully
+2025-08-15 16:32:32,297 INFO Database initialization completed successfully
+2025-08-15 16:33:29,448 ERROR Error in ocr_preview: name 'datefacturation_value' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1310, in ocr_preview
+    print(f"\U0001f4c5 Invoice Date: {datefacturation_value} (took {datefacturation_time:.4f}s)")
+                              ^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'datefacturation_value' is not defined
+
+2025-08-15 17:04:35,874 INFO Database tables created successfully
+2025-08-15 17:04:35,875 INFO Default data inserted successfully
+2025-08-15 17:04:35,876 INFO Database initialization completed successfully
+2025-08-15 17:05:48,302 INFO Database tables created successfully
+2025-08-15 17:05:48,305 INFO Default data inserted successfully
+2025-08-15 17:05:48,305 INFO Database initialization completed successfully
+2025-08-15 18:06:42,833 INFO Database tables created successfully
+2025-08-15 18:06:42,836 INFO Default data inserted successfully
+2025-08-15 18:06:42,836 INFO Database initialization completed successfully
+2025-08-15 18:10:56,888 INFO Database tables created successfully
+2025-08-15 18:10:56,891 INFO Default data inserted successfully
+2025-08-15 18:10:56,891 INFO Database initialization completed successfully
+2025-08-15 18:11:22,756 INFO Database tables created successfully
+2025-08-15 18:11:22,760 INFO Default data inserted successfully
+2025-08-15 18:11:22,760 INFO Database initialization completed successfully
+2025-08-15 18:16:47,915 INFO Database tables created successfully
+2025-08-15 18:16:47,919 INFO Default data inserted successfully
+2025-08-15 18:16:47,919 INFO Database initialization completed successfully
+2025-08-15 18:18:27,636 INFO Database tables created successfully
+2025-08-15 18:18:27,639 INFO Default data inserted successfully
+2025-08-15 18:18:27,640 INFO Database initialization completed successfully
+2025-08-15 18:22:25,672 INFO Database tables created successfully
+2025-08-15 18:22:25,678 INFO Default data inserted successfully
+2025-08-15 18:22:25,678 INFO Database initialization completed successfully
+2025-08-15 18:28:25,089 INFO Database tables created successfully
+2025-08-15 18:28:25,093 INFO Default data inserted successfully
+2025-08-15 18:28:25,093 INFO Database initialization completed successfully
+2025-08-15 18:29:03,521 ERROR Error in ocr_preview: cannot access local variable 'traceback' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1413, in ocr_preview
+    dx = max(0, max(box1['left'], box2['left']) - min(box1['right'], box2['right']))
+                    ^^^^
+NameError: name 'box1' is not defined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1519, in ocr_preview
+    print(traceback.format_exc())
+          ^^^^^^^^^
+UnboundLocalError: cannot access local variable 'traceback' where it is not associated with a value
+
+2025-08-15 18:30:20,042 INFO Database tables created successfully
+2025-08-15 18:30:20,047 INFO Default data inserted successfully
+2025-08-15 18:30:20,047 INFO Database initialization completed successfully
+2025-08-15 18:31:47,588 INFO Database tables created successfully
+2025-08-15 18:31:47,592 INFO Default data inserted successfully
+2025-08-15 18:31:47,593 INFO Database initialization completed successfully
+2025-08-15 18:33:18,917 ERROR Error in ocr_preview: name 'num_facture_time' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1556, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+                                                         ^^^^^^^^^^^^^^^^
+NameError: name 'num_facture_time' is not defined
+
+2025-08-15 18:35:48,711 INFO Database tables created successfully
+2025-08-15 18:35:48,716 INFO Default data inserted successfully
+2025-08-15 18:35:48,717 INFO Database initialization completed successfully
+2025-08-15 18:36:21,128 INFO Database tables created successfully
+2025-08-15 18:36:21,132 INFO Default data inserted successfully
+2025-08-15 18:36:21,132 INFO Database initialization completed successfully
+2025-08-15 18:37:53,867 INFO Database tables created successfully
+2025-08-15 18:37:53,871 INFO Default data inserted successfully
+2025-08-15 18:37:53,871 INFO Database initialization completed successfully

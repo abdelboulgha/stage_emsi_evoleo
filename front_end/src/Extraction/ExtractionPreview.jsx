@@ -30,7 +30,6 @@ const ExtractionPreview = ({
     if (!data) return;
 
     // Set canvas size to match the image's display size
-    const container = img.parentElement;
     canvas.style.width = `${img.offsetWidth}px`;
     canvas.style.height = `${img.offsetHeight}px`;
     
@@ -43,67 +42,228 @@ const ExtractionPreview = ({
     ctx.scale(scale, scale);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Helper to draw a box
+    // Get the current image dimensions for scaling
+    const naturalWidth = img.naturalWidth;
+    const naturalHeight = img.naturalHeight;
+    const displayWidth = img.offsetWidth;
+    const displayHeight = img.offsetHeight;
+    
+    // Calculate scale factors based on natural dimensions
+    const scaleX = displayWidth / naturalWidth;
+    const scaleY = displayHeight / naturalHeight;
+    
+    // Debug logging for coordinates
+    console.log('=== DEBUG COORDINATES ===');
+    console.log('Image dimensions - Natural:', { naturalWidth, naturalHeight }, 'Display:', { displayWidth, displayHeight });
+    
+    if (data.boxNumFacture) {
+      console.log('Box Num Facture (original):', data.boxNumFacture);
+      console.log('Box Num Facture (scaled):', {
+        left: data.boxNumFacture.left * scaleX,
+        top: data.boxNumFacture.top * scaleY,
+        width: data.boxNumFacture.width * scaleX,
+        height: data.boxNumFacture.height * scaleY
+      });
+    }
+    
+    // Draw search area first (behind other boxes)
+    if (data.boxNumFactureSearchArea) {
+      const { left, top, width, height } = data.boxNumFactureSearchArea;
+      const x = left * scaleX;
+      const y = top * scaleY;
+      const w = width * scaleX;
+      const h = height * scaleY;
+      
+      console.log('Search Area (original):', data.boxNumFactureSearchArea);
+      console.log('Search Area (scaled):', { x, y, w, h });
+      
+      ctx.save();
+      ctx.strokeStyle = '#6366f166';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#6366f122';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      
+      // Add label with scaled position
+      ctx.fillStyle = '#6366f1';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('Search Area', x + 5, y + 15);
+      
+      ctx.restore();
+    }
+    
+    // Helper function to draw a box with consistent scaling
     const drawBox = (box, color, label, labelPosition = 'left') => {
       if (!box) return;
       
-      // Get the actual dimensions of the displayed image
-      const displayWidth = img.offsetWidth;
-      const displayHeight = img.offsetHeight;
-      
-      // Use the image's natural dimensions for scaling
-      const naturalWidth = img.naturalWidth;
-      const naturalHeight = img.naturalHeight;
-      
-      // Calculate scale factors based on natural dimensions
-      const scaleX = displayWidth / naturalWidth;
-      const scaleY = displayHeight / naturalHeight;
-      
-      // Scale the box coordinates from unwrapped image to displayed size
       const x = box.left * scaleX;
       const y = box.top * scaleY;
       const w = box.width * scaleX;
       const h = box.height * scaleY;
-
+      
+      // Draw box
       ctx.save();
       ctx.strokeStyle = color;
-      ctx.lineWidth = 3;
+      ctx.lineWidth = 2;
       ctx.setLineDash([]);
       ctx.strokeRect(x, y, w, h);
-
+      
       // Draw label
       ctx.fillStyle = color;
-      ctx.font = "bold 13px Arial";
+      ctx.font = 'bold 12px Arial';
       
       if (labelPosition === 'top') {
-        ctx.textAlign = "left";
-        ctx.fillText(label, x + 2, y - 5 < 10 ? y + 13 : y - 5);
+        ctx.textAlign = 'center';
+        ctx.fillText(label, x + w/2, y - 5);
       } else { // left position
-        ctx.textAlign = "right";
-        const textY = y + (h / 2) + 4; // Center vertically with the box
-        ctx.fillText(label, x - 5, textY);
+        ctx.textAlign = 'right';
+        ctx.fillText(label, x - 5, y + h/2 + 4);
       }
       
       ctx.restore();
     };
-
-    // Draw each box
-    const drawBoxes = () => {
-      if (data.boxDateFacturation) drawBox(data.boxDateFacturation, '#008000', 'Date', 'left');
-      if (data.boxNumFacture) drawBox(data.boxNumFacture, '#6366f1', 'N° Facture', 'top');
-      if (data.boxHT) drawBox(data.boxHT, '#b91010ff', 'HT', 'left');
-      if (data.boxTVA) drawBox(data.boxTVA, '#0b0ff5ff', 'TVA', 'left');
-    };
-
-    drawBoxes();
-  }, [extractionState.extractedDataList, extractionState.currentPdfIndex]);
-
-
-  useEffect(() => {
-    if (extractionState.extractedDataList[extractionState.currentPdfIndex]) {
-      drawExtractionBoxes();
+    
+    // Draw search areas first (behind other boxes)
+    if (data.htSearchArea) {
+      const { left, top, width, height } = data.htSearchArea;
+      const x = left * scaleX;
+      const y = top * scaleY;
+      const w = width * scaleX;
+      const h = height * scaleY;
+      
+      ctx.save();
+      ctx.strokeStyle = '#b9101066';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#b9101122';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      
+      // Add label
+      ctx.fillStyle = '#b91010';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('HT Search Area', x + 5, y + 15);
+      ctx.restore();
     }
-  }, [extractionState.extractedDataList, extractionState.currentPdfIndex, drawExtractionBoxes]);
+    
+    if (data.tvaSearchArea) {
+      const { left, top, width, height } = data.tvaSearchArea;
+      const x = left * scaleX;
+      const y = top * scaleY;
+      const w = width * scaleX;
+      const h = height * scaleY;
+      
+      ctx.save();
+      ctx.strokeStyle = '#0b0ff566';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#0b0ff522';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      
+      // Add label
+      ctx.fillStyle = '#0b0ff5';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('TVA Search Area', x + 5, y + 15);
+      ctx.restore();
+    }
+    
+    // Draw search areas first (behind other boxes)
+    if (data.ht_match?.search_area) {
+      const { left, top, width, height } = data.ht_match.search_area;
+      
+      // Log in the same format as other logs
+      console.log('HT Search Area (original):', { 
+        left, 
+        top, 
+        width, 
+        height,
+        type: 'search_area_ht'
+      });
+      
+      // Log scaled coordinates in the same format
+      console.log('HT Search Area (scaled):', {
+        x: left * scaleX,
+        y: top * scaleY,
+        w: width * scaleX,
+        h: height * scaleY
+      });
+      const x = left * scaleX;
+      const y = top * scaleY;
+      const w = width * scaleX;
+      const h = height * scaleY;
+      
+      ctx.save();
+      ctx.strokeStyle = '#b9101066';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#b9101122';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      
+      // Add label
+      ctx.fillStyle = '#b91010';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('HT Search Area', x + 5, y + 15);
+      ctx.restore();
+    }
+    
+    if (data.tva_match?.search_area) {
+      const { left, top, width, height } = data.tva_match.search_area;
+      
+      // Log in the same format as other logs
+      console.log('TVA Search Area (original):', { 
+        left, 
+        top, 
+        width, 
+        height,
+        type: 'search_area_tva'
+      });
+      
+      // Log scaled coordinates in the same format
+      console.log('TVA Search Area (scaled):', {
+        x: left * scaleX,
+        y: top * scaleY,
+        w: width * scaleX,
+        h: height * scaleY
+      });
+      const x = left * scaleX;
+      const y = top * scaleY;
+      const w = width * scaleX;
+      const h = height * scaleY;
+      
+      ctx.save();
+      ctx.strokeStyle = '#0b0ff566';
+      ctx.setLineDash([5, 5]);
+      ctx.lineWidth = 1;
+      ctx.fillStyle = '#0b0ff522';
+      ctx.fillRect(x, y, w, h);
+      ctx.strokeRect(x, y, w, h);
+      
+      // Add label
+      ctx.fillStyle = '#0b0ff5';
+      ctx.font = 'bold 11px Arial';
+      ctx.textAlign = 'left';
+      ctx.fillText('TVA Search Area', x + 5, y + 15);
+      ctx.restore();
+    }
+
+    // Draw all boxes with consistent scaling (on top of search areas)
+    if (data.boxDateFacturation) drawBox(data.boxDateFacturation, '#008000', 'Date', 'left');
+    if (data.boxNumFacture) drawBox(data.boxNumFacture, '#6366f1', 'N° Facture', 'top');
+    if (data.boxHT) drawBox(data.boxHT, '#b91010ff', 'HT', 'left');
+    if (data.boxTVA) drawBox(data.boxTVA, '#0b0ff5ff', 'TVA', 'left');
+  }, [extractionState.extractedDataList, extractionState.currentPdfIndex, extractionState.filePreviews]);
+  
+  // Redraw when data changes
+  useEffect(() => {
+    drawExtractionBoxes();
+  }, [drawExtractionBoxes]);
 
   // Get the current file preview
   const getCurrentFilePreview = () => {

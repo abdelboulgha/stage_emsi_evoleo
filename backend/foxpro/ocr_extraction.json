@@ -23,19 +23,25 @@
       "left": 175,
       "top": 105,
       "width": 544,
-      "height": 31
+      "height": 31,
+      "manual": false
     },
-    "dateFacturation": "2025-08-05",
-    "boxDateFacturation": null,
-    "template_id": "5",
+    "dateFacturation": "2025-08-04",
+    "boxDateFacturation": {
+      "left": 895,
+      "top": 255,
+      "width": 70,
+      "height": 28
+    },
+    "template_id": "13",
     "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
-    "fournisseur": "ca"
+    "fournisseur": "rademaTesthh"
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-07 14:01:08.091763",
+  "timestamp": "2025-08-13 20:23:25.145917",
   "fields": {
-    "fournisseur": "ca",
-    "dateFacturation": "2025-08-05",
+    "fournisseur": "rademaTesthh",
+    "dateFacturation": "2025-08-04",
     "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
     "tauxTVA": "18",
     "montantHT": 194.86,

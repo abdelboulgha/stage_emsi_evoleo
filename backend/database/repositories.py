@@ -1,0 +1,220 @@
+"""
+Repository pattern for database operations
+"""
+from typing import List, Optional, Dict, Any
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select, update, delete, and_, or_, func
+from sqlalchemy.orm import selectinload
+from database.models import User, Template, Mapping, FieldName, Facture
+
+
+class BaseRepository:
+    """Base repository with common operations"""
+    
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+
+class UserRepository(BaseRepository):
+    """Repository for user operations"""
+    
+    async def get_by_email(self, email: str) -> Optional[User]:
+        """Get user by email"""
+        result = await self.session.execute(
+            select(User).where(User.email == email)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_id(self, user_id: int) -> Optional[User]:
+        """Get user by ID"""
+        result = await self.session.execute(
+            select(User).where(User.id == user_id)
+        )
+        return result.scalar_one_or_none()
+    
+    async def create(self, user_data: dict) -> User:
+        """Create a new user"""
+        user = User(**user_data)
+        self.session.add(user)
+        await self.session.commit()
+        await self.session.refresh(user)
+        return user
+
+
+class TemplateRepository(BaseRepository):
+    """Repository for template operations"""
+    
+    async def get_by_name_and_user(self, name: str, user_id: int) -> Optional[Template]:
+        """Get template by name and user ID"""
+        result = await self.session.execute(
+            select(Template).where(
+                and_(Template.name == name, Template.created_by == user_id)
+            )
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_user_id(self, user_id: int) -> List[Template]:
+        """Get all templates for a user"""
+        result = await self.session.execute(
+            select(Template).where(Template.created_by == user_id)
+        )
+        return result.scalars().all()
+    
+    async def create(self, template_data: dict) -> Template:
+        """Create a new template"""
+        template = Template(**template_data)
+        self.session.add(template)
+        await self.session.commit()
+        await self.session.refresh(template)
+        return template
+    
+    async def delete_template_and_mappings(self, template_id: int) -> bool:
+        """Delete template and all its mappings"""
+        try:
+            # Delete mappings first (cascade will handle this)
+            await self.session.execute(
+                delete(Mapping).where(Mapping.template_id == template_id)
+            )
+            
+            # Delete template
+            await self.session.execute(
+                delete(Template).where(Template.id == template_id)
+            )
+            
+            await self.session.commit()
+            return True
+        except Exception:
+            await self.session.rollback()
+            return False
+
+
+class MappingRepository(BaseRepository):
+    """Repository for mapping operations"""
+    
+    async def get_by_template_id(self, template_id: int) -> List[Mapping]:
+        """Get all mappings for a template"""
+        result = await self.session.execute(
+            select(Mapping, FieldName.name.label('field_name'))
+            .join(FieldName, Mapping.field_id == FieldName.id)
+            .where(Mapping.template_id == template_id)
+        )
+        return result.all()
+    
+    async def delete_by_template_id(self, template_id: int) -> int:
+        """Delete all mappings for a template"""
+        result = await self.session.execute(
+            delete(Mapping).where(Mapping.template_id == template_id)
+        )
+        await self.session.commit()
+        return result.rowcount
+    
+    async def create_mappings(self, mappings_data: List[dict]) -> List[Mapping]:
+        """Create multiple mappings"""
+        mappings = [Mapping(**data) for data in mappings_data]
+        self.session.add_all(mappings)
+        await self.session.commit()
+        for mapping in mappings:
+            await self.session.refresh(mapping)
+        return mappings
+
+
+class FieldNameRepository(BaseRepository):
+    """Repository for field name operations"""
+    
+    async def get_by_name(self, name: str) -> Optional[FieldName]:
+        """Get field by name"""
+        result = await self.session.execute(
+            select(FieldName).where(FieldName.name == name)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_all(self) -> List[FieldName]:
+        """Get all field names"""
+        result = await self.session.execute(select(FieldName))
+        return result.scalars().all()
+
+
+class FactureRepository(BaseRepository):
+    """Repository for invoice operations"""
+    
+    async def create(self, facture_data: dict) -> Facture:
+        """Create a new invoice"""
+        print(f"=== DEBUG FactureRepository.create ===")
+        print(f"Creating facture with data: {facture_data}")
+        
+        facture = Facture(**facture_data)
+        print(f"Created Facture object: {facture}")
+        
+        self.session.add(facture)
+        print("Added facture to session")
+        
+        await self.session.commit()
+        print("Committed to database")
+        
+        await self.session.refresh(facture)
+        print(f"Refreshed facture: {facture}")
+        print(f"Facture ID after refresh: {facture.id}")
+        
+        return facture
+    
+    async def get_by_id(self, facture_id: int) -> Optional[Facture]:
+        """Get invoice by ID"""
+        result = await self.session.execute(
+            select(Facture).where(Facture.id == facture_id)
+        )
+        return result.scalar_one_or_none()
+    
+    async def get_by_user(self, user_id: int, skip: int = 0, limit: int = 100) -> List[Facture]:
+        """Get invoices by user with pagination"""
+        result = await self.session.execute(
+            select(Facture)
+            .where(Facture.created_by == user_id)
+            .offset(skip)
+            .limit(limit)
+            .order_by(Facture.id.desc())  # Use ID instead of created_at
+        )
+        return result.scalars().all()
+    
+    async def get_by_user_with_count(self, user_id: int, skip: int = 0, limit: int = 100) -> tuple[List[Facture], int]:
+        """Get invoices by user with total count"""
+        # Get total count
+        count_result = await self.session.execute(
+            select(func.count(Facture.id)).where(Facture.created_by == user_id)
+        )
+        total_count = count_result.scalar()
+        
+        # Get invoices
+        invoices = await self.get_by_user(user_id, skip, limit)
+        
+        return invoices, total_count
+    
+    async def update(self, facture_id: int, user_id: int, update_data: dict) -> Optional[Facture]:
+        """Update invoice by ID (only if user owns it)"""
+        # First check if user owns the invoice
+        facture = await self.get_by_id(facture_id)
+        if not facture or facture.created_by != user_id:
+            return None
+        
+        # Update the invoice
+        await self.session.execute(
+            update(Facture)
+            .where(Facture.id == facture_id)
+            .values(**update_data)
+        )
+        await self.session.commit()
+        
+        # Return updated invoice
+        await self.session.refresh(facture)
+        return facture
+    
+    async def delete(self, facture_id: int, user_id: int) -> bool:
+        """Delete invoice by ID (only if user owns it)"""
+        facture = await self.get_by_id(facture_id)
+        if not facture or facture.created_by != user_id:
+            return False
+        
+        await self.session.execute(
+            delete(Facture).where(Facture.id == facture_id)
+        )
+        await self.session.commit()
+        return True
