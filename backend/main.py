@@ -796,14 +796,11 @@ async def ocr_preview(
                             'height': kw['height'] + (2 * vertical_padding)
                         }
                         
-                        # Debug print search area
-                        print(f"Search area: left={search_area['left']:.1f}, top={search_area['top']:.1f}, "
-                              f"right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
-                        
-                        print(f"\n{'='*80}")
-                        print(f"CHECKING HORIZONTAL MATCHES FOR: '{kw['text']}' at ({kw['center_x']:.1f}, {kw['center_y']:.1f})")
-                        print(f"Search area: left={search_area['left']:.1f}, top={search_area['top']:.1f}, "
-                              f"right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
+                        # Print search area header
+                        print(f"\n{'='*60}")
+                        print(f"🔍 SEARCHING FOR {'HT' if not is_tva else 'TVA'}")
+                        print("="*60)
+                        print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
                         
                         # Find all boxes that overlap with the search area
                         potential_boxes = []
@@ -811,7 +808,7 @@ async def ocr_preview(
                             if ob is kw:  # Skip the keyword itself
                                 continue
                                 
-                            # Calculate distance between centers for debugging
+                            # Calculate centers and distance
                             box_center_x = (ob['left'] + ob['right']) / 2
                             box_center_y = (ob['top'] + ob['bottom']) / 2
                             search_center_x = (search_area['left'] + search_area['right']) / 2
@@ -829,17 +826,11 @@ async def ocr_preview(
                             )
                             
                             if is_to_right and is_in_vertical_range:
-                                print(f"Found potential match: '{ob['text']}' at ({ob['left']:.1f}, {ob['top']:.1f}), "
-                                      f"distance: {distance:.1f}px")
-                                overlap = calculate_overlap_area(search_area, ob)
-                                potential_boxes.append((ob, overlap))
+                                overlap_area = calculate_overlap_area(search_area, ob)
+                                potential_boxes.append((ob, overlap_area, distance))
                         
-                        print(f"Found {len(potential_boxes)} overlapping boxes")
-                        
-                        # Sort by overlap area (descending)
-                        potential_boxes.sort(key=lambda x: -x[1])
-                        
-                        for ob, overlap in potential_boxes:
+                        # Process potential matches
+                        for ob, overlap_area, distance in potential_boxes:
                             # Skip non-numeric boxes
                             val = extract_number(ob['text'])
                             if val is None:
@@ -849,10 +840,23 @@ async def ocr_preview(
                             if is_tva and '%' in ob['text']:
                                 continue
                             
-                            # Calculate distance between centers for tie-breaking
-                            dx = ob['center_x'] - kw['center_x']
-                            dy = ob['center_y'] - kw['center_y']
-                            dist = math.hypot(dx, dy)
+                            # Calculate overlap percentage
+                            value_box_area = (ob['right'] - ob['left']) * (ob['bottom'] - ob['top'])
+                            overlap_pct = (overlap_area / value_box_area) * 100 if value_box_area > 0 else 0
+                            
+                            # Calculate score (similar to invoice number logic)
+                            max_possible_distance = ((search_area['right'] - search_area['left'])**2 + 
+                                                  (search_area['bottom'] - search_area['top'])**2) ** 0.5
+                            distance_score = 1 - min(distance / max_possible_distance, 1)  # Normalize to 0-1
+                            
+                            # Combine scores (70% overlap, 30% distance)
+                            score = (overlap_pct/100 * 0.7) + (distance_score * 0.3)
+                            
+                            # Print detailed match info
+                            print(f"\nText: '{ob['text']}'")
+                            print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
+                            print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Search center: ({search_center_x:.0f}, {search_center_y:.0f})")
+                            print(f"  Overlap: {overlap_pct:.1f}% | Distance: {distance:.1f}px | Score: {score:.6f}")
                             
                             candidates.append({
                                 'keyword_box': kw,
@@ -860,25 +864,34 @@ async def ocr_preview(
                                 'value': val,
                                 'value_text': ob['text'],
                                 'keyword_text': kw['text'],
-                                'distance': dist,
+                                'distance': distance,
                                 'search_type': search_type,
                                 'is_total_keyword': is_total_keyword(kw['text']),
-                                'search_area': search_area  # Add search area for visualization
+                                'search_area': search_area,
+                                'score': score,
+                                'overlap_pct': overlap_pct
                             })
                         
                         if not candidates:
-                            print("\n❌ NO VALID MATCHES FOUND IN HORIZONTAL SEARCH")
+                            print("\n❌ NO VALID MATCHES FOUND")
                         else:
-                            print(f"\n✅ FOUND {len(candidates)} VALID MATCH(ES)")
+                            # Sort by score (descending)
+                            candidates.sort(key=lambda c: -c['score'])
                             
-                            # Sort by overlap area (descending) and then by distance
-                            candidates.sort(key=lambda c: (-calculate_overlap_area(c['search_area'], c['value_box']), c['distance']))
-                            
-                            # Log top candidates
-                            print("\nTop candidates:")
+                            print("\n" + "="*60)
+                            print("🏆 CANDIDATE SELECTION SUMMARY")
+                            print("="*60)
+                            print(f"Found {len(candidates)} valid candidates")
+                            print("\nTop 3 candidates:")
                             for i, c in enumerate(candidates[:3], 1):
-                                overlap = calculate_overlap_area(c['search_area'], c['value_box'])
-                                print(f"  {i}. '{c['value_text']}' (overlap: {overlap:.1f}px², dist: {c['distance']:.1f}px)")
+                                print(f"{i}. '{c['value_text']}' | {c['overlap_pct']:.1f}% overlap | Score: {c['score']:.6f}")
+                            
+                            best_match = candidates[0]
+                            print("\n" + "-"*60)
+                            print(f"🏆 SELECTED: '{best_match['value_text']}'")
+                            print(f"   - Overlap: {best_match['overlap_pct']:.1f}%")
+                            print(f"   - Score: {best_match['score']:.6f}")
+                            print(f"   - Position: ({best_match['value_box']['center_x']:.0f}, {best_match['value_box']['center_y']:.0f})")
                     
                     else:  # vertical search
                         kw_bottom = kw['bottom']
@@ -923,9 +936,20 @@ async def ocr_preview(
                 if not candidates:
                     return None
                     
-                # Sort candidates: first by whether they're from a TOTAL keyword, then by distance
-                candidates.sort(key=lambda c: (0 if c['is_total_keyword'] else 1, c['distance']))
-                return candidates[0]
+                # Sort candidates by score (highest first), then by whether they're from a TOTAL keyword
+                candidates.sort(key=lambda c: (-c['score'], 0 if c['is_total_keyword'] else 1))
+                
+                # If we have any candidates from TOTAL keywords, return the highest scoring one
+                total_candidates = [c for c in candidates if c['is_total_keyword']]
+                if total_candidates:
+                    print(f"\n🏆 SELECTED FROM TOTAL KEYWORDS: '{total_candidates[0]['value_text']}' (Score: {total_candidates[0]['score']:.6f})")
+                    return total_candidates[0]
+                    
+                # Otherwise return the highest scoring candidate overall
+                if candidates:
+                    return candidates[0]
+                    
+                return None
             # First, try horizontal search for TOTAL keywords
             if total_kw:
                 print("\nTrying horizontal search for TOTAL keywords...")

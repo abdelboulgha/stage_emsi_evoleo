@@ -422,3 +422,12 @@ NameError: name 'num_facture_time' is not defined
 2025-08-15 18:37:53,867 INFO Database tables created successfully
 2025-08-15 18:37:53,871 INFO Default data inserted successfully
 2025-08-15 18:37:53,871 INFO Database initialization completed successfully
+2025-08-15 18:46:53,003 INFO Database tables created successfully
+2025-08-15 18:46:53,007 INFO Default data inserted successfully
+2025-08-15 18:46:53,007 INFO Database initialization completed successfully
+2025-08-15 18:51:04,397 INFO Database tables created successfully
+2025-08-15 18:51:04,404 INFO Default data inserted successfully
+2025-08-15 18:51:04,404 INFO Database initialization completed successfully
+2025-08-15 18:56:15,072 INFO Database tables created successfully
+2025-08-15 18:56:15,076 INFO Default data inserted successfully
+2025-08-15 18:56:15,076 INFO Database initialization completed successfully
