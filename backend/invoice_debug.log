@@ -329,3 +329,58 @@ TypeError: save_mapping() got an unexpected keyword argument 'template_id'
 2025-08-14 19:46:18,517 INFO Database tables created successfully
 2025-08-14 19:46:18,523 INFO Default data inserted successfully
 2025-08-14 19:46:18,523 INFO Database initialization completed successfully
+2025-08-15 12:41:06,828 INFO Database tables created successfully
+2025-08-15 12:41:06,836 INFO Default data inserted successfully
+2025-08-15 12:41:06,836 INFO Database initialization completed successfully
+2025-08-15 12:52:01,317 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: ''
+2025-08-15 12:52:01,321 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:52:01,321 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:54:59,560 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 12:54:59,560 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:54:59,560 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:15,434 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 12:55:15,438 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:15,438 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:19,870 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 12:55:19,874 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:19,876 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:33,586 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 12:55:33,586 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:33,588 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:34,448 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 12:55:34,450 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 12:55:34,452 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 13:01:02,466 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 13:01:02,466 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 13:01:02,466 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:11:29,889 INFO Database tables created successfully
+2025-08-15 23:11:29,905 INFO Default data inserted successfully
+2025-08-15 23:11:29,905 INFO Database initialization completed successfully
+2025-08-15 23:12:37,884 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 23:12:37,886 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:12:37,886 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:15:28,269 INFO Database tables created successfully
+2025-08-15 23:15:28,269 INFO Default data inserted successfully
+2025-08-15 23:15:28,269 INFO Database initialization completed successfully
+2025-08-15 23:16:21,865 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 23:16:21,865 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:16:21,865 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:21:13,149 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 23:21:13,152 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:21:13,152 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:21:38,760 INFO Database tables created successfully
+2025-08-15 23:21:38,776 INFO Default data inserted successfully
+2025-08-15 23:21:38,776 INFO Database initialization completed successfully
+2025-08-15 23:21:50,706 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 23:21:50,707 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:21:50,707 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:22:26,529 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 23:22:26,529 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:22:26,529 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-15 23:25:16,868 ERROR Erreur lors de l'inscription: 
+2025-08-15 23:28:14,671 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-15 23:28:14,681 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-15 23:28:14,681 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-15 23:29:54,726 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-08-15 23:29:54,726 ERROR Erreur fatale lors de la création du fichier DBF: could not convert string to float: '20%'
+2025-08-15 23:29:54,726 WARNING Impossible de créer le fichier DBF: could not convert string to float: '20%'

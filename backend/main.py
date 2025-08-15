@@ -1442,18 +1442,58 @@ async def save_corrected_data(request: Request):
 
 
 @app.post("/launch-foxpro")
-async def launch_foxpro():
+async def launch_foxpro(request: Request):
     """Lancer FoxPro avec le formulaire de saisie"""
     try:
         import subprocess
         import platform
         
+        # Récupérer les données envoyées depuis le frontend
+        data = await request.json()
+        extracted_data = data.get("extracted_data", {})
+        current_index = data.get("current_index", 0)
+        
+        print(f"🚀 Données reçues pour FoxPro: {extracted_data}")
+        print(f"📍 Index actuel: {current_index}")
+        
         # Vérifier si le fichier d'extraction existe dans le dossier foxpro
         foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
         json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
         
+        # Sauvegarder les données dans ocr_extraction.json AVANT de lancer FoxPro
+        if extracted_data:
+            print(f"🔍 Données reçues du frontend: {extracted_data}")
+            print(f"🔍 Clés disponibles: {list(extracted_data.keys())}")
+            
+            # Appeler la fonction existante pour sauvegarder les données
+            save_extraction_for_foxpro(
+                extracted_data=extracted_data,
+                confidence_scores={},
+                corrected_data=extracted_data
+            )
+            print("✅ Données sauvegardées dans ocr_extraction.json")
+            
+            # Vérifier le contenu du fichier après sauvegarde
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    saved_content = json.load(f)
+                print(f"📄 Contenu du fichier après sauvegarde: {saved_content}")
+            except Exception as e:
+                print(f"❌ Impossible de lire le fichier après sauvegarde: {e}")
+        
         # Créer le dossier foxpro s'il n'existe pas
         os.makedirs(foxpro_dir, exist_ok=True)
+        
+        # Vérifier le contenu actuel du fichier ocr_extraction.json
+        if os.path.exists(json_path):
+            try:
+                with open(json_path, 'r', encoding='utf-8') as f:
+                    current_content = json.load(f)
+                print(f"📄 Contenu actuel du fichier ocr_extraction.json: {current_content}")
+            except Exception as e:
+                print(f"❌ Impossible de lire le fichier actuel: {e}")
+        else:
+            print(f"📄 Fichier ocr_extraction.json n'existe pas encore")
         
         # Si pas de données extraites, créer un fichier JSON vide avec la structure attendue
         if not os.path.exists(json_path):
@@ -1596,20 +1636,16 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
         # Créer un fichier JSON avec les données (corrigées ou extraites)
         print("Début construction foxpro_data...")
         
+        # Créer un fichier JSON dans le format attendu par FoxPro
         foxpro_data = {
-            "success": True,
-            "data": extracted_data if extracted_data else {},
-            "corrected_data": corrected_data,
-            "confidence_scores": confidence_scores if confidence_scores else {},
-            "timestamp": str(datetime.now()),
             "fields": {
                 "fournisseur": data_to_use.get("fournisseur", ""),
+                "numeroFacture": numero_facture,
                 "dateFacturation": data_to_use.get("dateFacturation", ""),
-                "numeroFacture": numero_facture,  # Use the processed numero_facture variable
-                "tauxTVA": taux_tva_clean,
-                "montantHT": data_to_use.get("montantHT", "0"),
-                "montantTVA": data_to_use.get("montantTVA", "0"),
-                "montantTTC": data_to_use.get("montantTTC", "0")
+                "tauxTVA": float(taux_tva_clean) if taux_tva_clean.replace('.', '').isdigit() else 0.0,
+                "montantHT": float(data_to_use.get("montantHT", "0")) if str(data_to_use.get("montantHT", "0")).replace('.', '').replace(',', '').isdigit() else 0.0,
+                "montantTVA": float(data_to_use.get("montantTVA", "0")) if str(data_to_use.get("montantTVA", "0")).replace('.', '').replace(',', '').isdigit() else 0.0,
+                "montantTTC": float(data_to_use.get("montantTTC", "0")) if str(data_to_use.get("montantTTC", "0")).replace('.', '').replace(',', '').isdigit() else 0.0
             }
         }
         print("foxpro_data construit avec succès")
@@ -1778,6 +1814,10 @@ async def ai_extract_invoices(files: List[UploadFile], confidence: float = 0.5):
         logging.info("Début de l'extraction avec YOLO")
         results = ai_extraction_service.extract_from_files(temp_files, confidence)
         logging.info(f"Extraction terminée, {len(results)} résultats")
+        
+        # Ne pas mettre à jour ocr_extraction.json ici - ce sera fait dans /launch-foxpro
+        # quand l'utilisateur clique sur "Enregistrer dans FoxPro"
+        logging.info("Extraction AI terminée - ocr_extraction.json sera mis à jour lors de l'enregistrement FoxPro")
         
         # Nettoyer les fichiers temporaires
         for temp_file in temp_files:

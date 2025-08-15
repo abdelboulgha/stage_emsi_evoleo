@@ -2,6 +2,7 @@ import React, { useState, useRef } from "react";
 import { Upload, FileText, X, Play, CheckCircle, AlertCircle, Loader2, Database, Save } from "lucide-react";
 import ExtractionSidebar from "./ExtractionSidebar";
 import ExtractionPreview from "./ExtractionPreview";
+import { useExtraction } from "../hooks/useExtraction";
 import "./AIExtractionMode.css";
 
 const AIExtractionMode = () => {
@@ -26,6 +27,15 @@ const AIExtractionMode = () => {
   });
   const [extractDrawState, setExtractDrawState] = useState({});
   const fileInputRef = useRef(null);
+
+  // Fonction de notification simple
+  const showNotification = (message, type = 'info') => {
+    console.log(`${type.toUpperCase()}: ${message}`);
+    // Ici vous pourriez intégrer avec votre système de notifications
+  };
+
+  // Utiliser le hook useExtraction pour les vraies fonctions d'enregistrement
+  const { saveCorrectedData, launchFoxPro, saveAllCorrectedDataAndLaunchFoxPro } = useExtraction(extractionState, setExtractionState, showNotification);
 
   // Fonction pour mettre à jour les données affichées dans la sidebar
   const updateSidebarData = (index) => {
@@ -60,12 +70,12 @@ const AIExtractionMode = () => {
       filePreviews: files.map(file => file.preview),
       extractedDataList: files.map(() => ({
         fournisseur: '',
-        numFacture: '',
-        date: '',
-        HT: '',
-        TTC: '',
-        TVA: '',
-        taux: ''
+        numeroFacture: '',
+        dateFacturation: '',
+        tauxTVA: '',
+        montantHT: '',
+        montantTVA: '',
+        montantTTC: ''
       })),
       currentPdfIndex: 0, // Premier fichier sélectionné par défaut
       isExtractionComplete: false,
@@ -232,6 +242,9 @@ const AIExtractionMode = () => {
       if (result.success) {
         setExtractionResults(result.results);
         
+        // Debug: Afficher les données reçues
+        console.log('🔍 Données reçues du backend YOLO:', result.results);
+        
         // Traiter les résultats et créer l'état d'extraction
         const processedFiles = [];
         const processedPreviews = [];
@@ -261,21 +274,54 @@ const AIExtractionMode = () => {
             // Créer les données extraites avec une structure complète
             const extractedData = {
               fournisseur: '',
-              numFacture: '',
-              date: '',
-              HT: '',
-              TTC: '',
-              TVA: '',
-              taux: ''
+              numeroFacture: '',
+              dateFacturation: '',
+              tauxTVA: '',
+              montantHT: '',
+              montantTVA: '',
+              montantTTC: ''
             };
             
             // Remplir avec les données extraites si disponibles
             if (fileResult.extracted_data) {
-              Object.entries(fileResult.extracted_data).forEach(([field, values]) => {
+              console.log(`🔍 Données extraites pour le fichier ${index}:`, fileResult.extracted_data);
+              console.log(`🔑 Clés disponibles:`, Object.keys(fileResult.extracted_data));
+              
+              // Mapping des clés YOLO vers les clés du frontend
+              const fieldMapping = {
+                'fournisseur': 'fournisseur',
+                'numFacture': 'numeroFacture', 
+                'date': 'dateFacturation',  // YOLO détecte 'date', pas 'dateFacturation'
+                'taux': 'tauxTVA',
+                'HT': 'montantHT',
+                'TVA': 'montantTVA',
+                'TTC': 'montantTTC'
+              };
+              
+              Object.entries(fileResult.extracted_data).forEach(([yoloField, values]) => {
+                console.log(`🔍 Traitement de la clé YOLO: ${yoloField} = ${values}`);
                 if (values && values.length > 0) {
-                  extractedData[field] = values[0];
+                  // Trouver la clé correspondante dans le mapping
+                  const frontendKey = fieldMapping[yoloField];
+                  if (frontendKey) {
+                    let value = values[0];
+                    
+                    // Transformer la date avant de la stocker
+                    if (frontendKey === 'dateFacturation' && value.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+                      const [day, month, year] = value.split('/');
+                      value = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                      console.log(`📅 Conversion date stockée: ${values[0]} -> ${value}`);
+                    }
+                    
+                    extractedData[frontendKey] = value;
+                    console.log(`✅ Mapping: ${yoloField} -> ${frontendKey} = ${value}`);
+                  } else {
+                    console.log(`❌ Clé YOLO non mappée: ${yoloField} = ${values[0]}`);
+                  }
                 }
               });
+              
+              console.log(`📊 Données finales pour le fichier ${index}:`, extractedData);
             }
             
             processedData.push(extractedData);
@@ -340,14 +386,49 @@ const AIExtractionMode = () => {
     console.log('Extraction déjà effectuée');
   };
 
-  const openSaveModal = () => {
-    // Ouvrir le modal de sauvegarde
-    console.log('Ouvrir modal de sauvegarde');
+  // Fonction pour nettoyer et formater les valeurs affichées
+  const filterValue = (value, fieldKey) => {
+    if (!value) return '';
+    
+    let cleanedValue = value.toString().trim();
+    
+    // Nettoyage spécifique selon le type de champ
+    if (fieldKey === 'tauxTVA') {
+      // Enlever le symbole % et les espaces
+      cleanedValue = cleanedValue.replace(/%/g, '').replace(/\s/g, '');
+    } else if (fieldKey === 'montantHT' || fieldKey === 'montantTTC' || fieldKey === 'montantTVA') {
+      // Enlever les espaces et symboles monétaires
+      cleanedValue = cleanedValue.replace(/\s/g, '').replace(/[€$]/g, '');
+      // Remplacer la virgule par un point pour la cohérence
+      cleanedValue = cleanedValue.replace(/,/g, '.');
+    } else if (fieldKey === 'dateFacturation') {
+      // Convertir le format de date de "DD/MM/YYYY" vers "YYYY-MM-DD"
+      if (cleanedValue.match(/^\d{2}\/\d{2}\/\d{4}$/)) {
+        const [day, month, year] = cleanedValue.split('/');
+        cleanedValue = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        console.log(`📅 Conversion date: ${value} -> ${cleanedValue}`);
+      }
+    }
+    
+    return cleanedValue;
   };
 
-  const launchFoxPro = () => {
-    // Lancer FoxPro
-    console.log('Lancer FoxPro');
+  // Fonction pour ouvrir le modal de sauvegarde (utilise saveCorrectedData)
+  const openSaveModal = async () => {
+    try {
+      await saveCorrectedData(extractionState.currentPdfIndex);
+    } catch (error) {
+      console.error('Erreur lors de la sauvegarde:', error);
+    }
+  };
+
+  // Fonction pour lancer FoxPro (utilise la vraie fonction du hook)
+  const handleLaunchFoxPro = async () => {
+    try {
+      await launchFoxPro();
+    } catch (error) {
+      console.error('Erreur lors du lancement de FoxPro:', error);
+    }
   };
 
   const scrollToIndex = (index) => {
@@ -407,22 +488,20 @@ const AIExtractionMode = () => {
               setExtractionState={setExtractionState}
               extractAllPdfs={extractAllPdfs}
               openSaveModal={openSaveModal}
-              launchFoxPro={launchFoxPro}
-              filterValue={(value, key) => value || ''}
+              launchFoxPro={handleLaunchFoxPro}
+              filterValue={filterValue}
               EXTRACTION_FIELDS={[
                 { key: 'fournisseur', label: 'Fournisseur' },
-                { key: 'numFacture', label: 'Numéro de Facture' },
-                { key: 'date', label: 'Date Facturation' },
-                { key: 'taux', label: 'Taux TVA' },
-                { key: 'HT', label: 'Montant HT' },
-                { key: 'TVA', label: 'Montant TVA' },
-                { key: 'TTC', label: 'Montant TTC' },
-                
-                
+                { key: 'numeroFacture', label: 'Numéro de Facture' },
+                { key: 'dateFacturation', label: 'Date Facturation' },
+                { key: 'tauxTVA', label: 'Taux TVA' },
+                { key: 'montantHT', label: 'Montant HT' },
+                { key: 'montantTVA', label: 'Montant TVA' },
+                { key: 'montantTTC', label: 'Montant TTC' }
               ]}
               extractDrawState={extractDrawState}
               setExtractDrawState={setExtractDrawState}
-              showNotification={() => {}}
+              showNotification={showNotification}
             />
 
             {/* Main document preview area */}
@@ -469,20 +548,20 @@ const AIExtractionMode = () => {
               setExtractionState={setExtractionState}
               extractAllPdfs={handleExtractAll}
               openSaveModal={openSaveModal}
-              launchFoxPro={launchFoxPro}
-              filterValue={(value, key) => value || ''}
+              launchFoxPro={handleLaunchFoxPro}
+              filterValue={filterValue}
               EXTRACTION_FIELDS={[
                 { key: 'fournisseur', label: 'Fournisseur' },
-                { key: 'numFacture', label: 'Numéro de Facture' },
-                { key: 'date', label: 'Date Facturation' },
-                { key: 'taux', label: 'Taux TVA' },
-                { key: 'HT', label: 'Montant HT' },
-                { key: 'TVA', label: 'Montant TVA' },
-                { key: 'TTC', label: 'Montant TTC' },
+                { key: 'numeroFacture', label: 'Numéro de Facture' },
+                { key: 'dateFacturation', label: 'Date Facturation' },
+                { key: 'tauxTVA', label: 'Taux TVA' },
+                { key: 'montantHT', label: 'Montant HT' },
+                { key: 'montantTVA', label: 'Montant TVA' },
+                { key: 'montantTTC', label: 'Montant TTC' }
               ]}
               extractDrawState={extractDrawState}
               setExtractDrawState={setExtractDrawState}
-              showNotification={() => {}}
+              showNotification={showNotification}
             />
 
             {/* Main document preview area */}

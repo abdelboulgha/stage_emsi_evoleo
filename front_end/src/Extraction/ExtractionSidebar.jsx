@@ -59,6 +59,15 @@ const ExtractionSidebar = ({
             const shouldShowPlaceholder = displayValue === undefined || 
                                       displayValue === null || 
                                       displayValue === '';
+            
+            // Debug: Afficher les valeurs pour chaque champ
+            console.log(`🔍 Sidebar - Champ ${field.key}:`, {
+              rawValue,
+              displayValue,
+              shouldShowPlaceholder,
+              currentPdfIndex: extractionState.currentPdfIndex,
+              extractedDataList: extractionState.extractedDataList
+            });
               
             return (
               <div key={field.key} className="extraction-field-item">

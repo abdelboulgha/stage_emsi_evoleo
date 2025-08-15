@@ -192,15 +192,37 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
   const saveCorrectedData = useCallback(async (index) => {
     const data = extractionState.extractedDataList[index];
     if (!data) return;
+    
     try {
-      const response = await fetch(`${API_BASE_URL}/save-corrected-data`, {
+      // Transformer les données dans le format attendu par le backend
+      const transformedData = {
+        fournisseur: data.fournisseur || '',
+        numFacture: data.numeroFacture || '', // Le backend attend numFacture, pas numeroFacture
+        dateFacturation: data.dateFacturation || '',
+        tauxTVA: parseFloat(data.tauxTVA) || 0,
+        montantHT: parseFloat(data.montantHT) || 0,
+        montantTVA: parseFloat(data.montantTVA) || 0,
+        montantTTC: parseFloat(data.montantTTC) || 0
+      };
+      
+      console.log('🔍 Données originales:', data);
+      console.log('🔍 Données transformées:', transformedData);
+      
+      const response = await fetch(`${API_BASE_URL}/ajouter-facture`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         credentials: 'include',
-        body: JSON.stringify(data), // Correction ici : on envoie directement les champs édités
+        body: JSON.stringify(transformedData),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Erreur backend:', errorData);
+        throw new Error(errorData.detail || `Erreur ${response.status}: ${response.statusText}`);
+      }
+      
       const result = await response.json();
       if (result.success) {
         showNotification("Données corrigées sauvegardées", "success");
@@ -209,12 +231,31 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       }
     } catch (error) {
       console.error("Erreur lors de la sauvegarde:", error);
-      showNotification("Erreur lors de la sauvegarde", "error");
+      showNotification("Erreur lors de la sauvegarde", error.message);
     }
   }, [extractionState, showNotification]);
 
   const launchFoxPro = useCallback(async () => {
     try {
+      console.log('🚀 Lancement de FoxPro...');
+      console.log('📊 État d\'extraction actuel:', extractionState);
+      console.log('📋 Données extraites:', extractionState.extractedDataList);
+      console.log('📍 Index actuel:', extractionState.currentPdfIndex);
+      
+      const currentData = extractionState.extractedDataList[extractionState.currentPdfIndex];
+      console.log('🎯 Données de la page actuelle (depuis le sidebar):', currentData);
+      
+      // Log détaillé des données envoyées
+      console.log('📤 Données envoyées au backend:');
+      console.log('  - fournisseur:', currentData.fournisseur);
+      console.log('  - numeroFacture:', currentData.numeroFacture);
+      console.log('  - dateFacturation:', currentData.dateFacturation);
+      console.log('  - montantHT:', currentData.montantHT);
+      console.log('  - montantTVA:', currentData.montantTVA);
+      console.log('  - montantTTC:', currentData.montantTTC);
+      console.log('  - tauxTVA:', currentData.tauxTVA);
+      
+      // Envoyer les données du sidebar au backend pour mettre à jour ocr_extraction.json
       const response = await fetch(`${API_BASE_URL}/launch-foxpro`, {
         method: "POST",
         headers: {
@@ -222,21 +263,24 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         },
         credentials: 'include',
         body: JSON.stringify({
-          factures: extractionState.extractedDataList,
+          extracted_data: currentData,  // Données exactes du sidebar
+          current_index: extractionState.currentPdfIndex
         }),
       });
       
       const result = await response.json();
+      console.log('📤 Réponse FoxPro:', result);
+      
       if (result.success) {
         showNotification("FoxPro lancé avec succès", "success");
       } else {
-        showNotification("Erreur lors du lancement de FoxPro", "error");
+        showNotification(`Erreur lors du lancement de FoxPro: ${result.message || 'Unknown error'}`, "error");
       }
     } catch (error) {
       console.error("Erreur lors du lancement de FoxPro:", error);
-      showNotification("Erreur lors du lancement de FoxPro", "error");
+      showNotification("Erreur de connexion au serveur", "error");
     }
-  }, [extractionState.extractedDataList, showNotification]);
+  }, [extractionState, showNotification]);
 
   // Nouvelle fonction pour sauvegarder toutes les données corrigées avant d'envoyer à FoxPro
   const saveAllCorrectedDataAndLaunchFoxPro = useCallback(async () => {
