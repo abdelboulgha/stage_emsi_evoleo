@@ -91,6 +91,16 @@ ocr = PaddleOCR(
 # Initialiser le service AI
 ai_extraction_service = AIExtractionService()
 
+# Log du statut de validation du modèle au démarrage
+if ai_extraction_service:
+    validation_status = ai_extraction_service.get_validation_status()
+    if validation_status['validated']:
+        logging.info("🚀 Service AI initialisé avec succès - Modèle YOLO validé")
+    else:
+        logging.error(f"❌ Service AI initialisé mais modèle non valide: {validation_status['validation_error']}")
+else:
+    logging.error("❌ Échec de l'initialisation du service AI")
+
 # =======================
 # Pydantic Models
 # =======================
@@ -1799,13 +1809,15 @@ async def ai_extract_invoices(files: List[UploadFile], confidence: float = 0.5):
             logging.error("Service AI non initialisé")
             return {"success": False, "error": "Service AI non initialisé"}
         
-        # Vérifier que le modèle YOLO est chargé
+        # Le modèle est déjà validé au démarrage, pas besoin de le revalider
         model_info = ai_extraction_service.get_model_info()
         logging.info(f"Info du modèle: {model_info}")
         
-        if not ai_extraction_service.validate_model():
-            logging.error("Modèle YOLO non valide")
-            return {"success": False, "error": "Modèle YOLO non valide"}
+        # Vérifier le statut de validation (caché au démarrage)
+        validation_status = ai_extraction_service.get_validation_status()
+        if not validation_status['validated']:
+            logging.error(f"Modèle YOLO non valide: {validation_status['validation_error']}")
+            return {"success": False, "error": f"Modèle YOLO non valide: {validation_status['validation_error']}"}
         
         # Sauvegarder temporairement les fichiers
         temp_files = []
@@ -1817,10 +1829,10 @@ async def ai_extract_invoices(files: List[UploadFile], confidence: float = 0.5):
             temp_files.append(temp_path)
             logging.info(f"Fichier temporaire créé: {temp_path}")
         
-        # Extraire avec le modèle AI
-        logging.info("Début de l'extraction avec YOLO")
+        # Extraire avec le modèle AI (traitement parallèle)
+        logging.info("🚀 Début de l'extraction avec YOLO (traitement parallèle)")
         results = ai_extraction_service.extract_from_files(temp_files, confidence)
-        logging.info(f"Extraction terminée, {len(results)} résultats")
+        logging.info(f"✅ Extraction terminée, {len(results)} résultats")
         
         # Ne pas mettre à jour ocr_extraction.json ici - ce sera fait dans /launch-foxpro
         # quand l'utilisateur clique sur "Enregistrer dans FoxPro"
@@ -1849,13 +1861,15 @@ async def test_ai_service():
             return {"success": False, "error": "Service AI non initialisé"}
         
         model_info = ai_extraction_service.get_model_info()
-        is_valid = ai_extraction_service.validate_model()
+        validation_status = ai_extraction_service.get_validation_status()
         
         return {
             "success": True,
             "service_initialized": ai_extraction_service is not None,
             "model_info": model_info,
-            "model_valid": is_valid
+            "validation_status": validation_status,
+            "model_valid": validation_status['validated'],
+            "startup_validation": "Le modèle est validé une seule fois au démarrage du serveur"
         }
     except Exception as e:
         logging.error(f"Erreur lors du test AI: {str(e)}")

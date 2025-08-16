@@ -7,6 +7,9 @@ import os
 import json
 from typing import List, Dict, Any, Tuple
 import logging
+import concurrent.futures
+from concurrent.futures import ThreadPoolExecutor
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +36,7 @@ class YOLOExtractor:
             model_path = os.path.join(os.path.dirname(__file__), "best.pt")
         
         self.model_path = model_path
+        self._ocr_executor = ThreadPoolExecutor(max_workers=8)  # Pool pour l'OCR parallèle
         self.load_model()
     
     def load_model(self) -> bool:
@@ -53,10 +57,75 @@ class YOLOExtractor:
         except Exception as e:
             logger.error(f"Erreur lors du chargement du modèle: {str(e)}")
             return False
-    
+
+    def _extract_text_from_roi_parallel(self, roi_data: Tuple[np.ndarray, str, float, Tuple[int, int, int, int]]) -> Dict[str, Any]:
+        """
+        Extrait le texte d'une région d'intérêt en parallèle
+        
+        Args:
+            roi_data: Tuple contenant (roi_image, class_name, confidence, bbox)
+            
+        Returns:
+            Dict contenant les informations d'extraction
+        """
+        roi, class_name, confidence, bbox = roi_data
+        
+        try:
+            if roi.size == 0:
+                return {
+                    'class': class_name,
+                    'confidence': confidence,
+                    'bbox': bbox,
+                    'text': '',
+                    'success': False,
+                    'error': 'ROI vide'
+                }
+            
+            # Convertir en niveaux de gris pour un meilleur OCR
+            gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            
+            # Appliquer un prétraitement pour améliorer l'OCR
+            # Redimensionner pour une meilleure résolution
+            gray_roi = cv2.resize(gray_roi, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+            
+            # Appliquer des filtres pour améliorer la qualité
+            # Filtre gaussien pour réduire le bruit
+            gray_roi = cv2.GaussianBlur(gray_roi, (1, 1), 0)
+            
+            # Seuillage adaptatif pour améliorer la lisibilité
+            gray_roi = cv2.adaptiveThreshold(
+                gray_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
+            )
+            
+            # Extraire le texte avec Tesseract avec configuration optimisée
+            extracted_text = pytesseract.image_to_string(
+                gray_roi, 
+                config='--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,€$%()/- '
+            ).strip()
+            
+            return {
+                'class': class_name,
+                'confidence': confidence,
+                'bbox': bbox,
+                'text': extracted_text,
+                'success': True,
+                'error': None
+            }
+            
+        except Exception as e:
+            logger.error(f"Erreur lors de l'extraction OCR de {class_name}: {str(e)}")
+            return {
+                'class': class_name,
+                'confidence': confidence,
+                'bbox': bbox,
+                'text': '',
+                'success': False,
+                'error': str(e)
+            }
+
     def extract_from_image(self, image_path: str, confidence_threshold: float = 0.5) -> Dict[str, Any]:
         """
-        Extrait les données d'une image de facture
+        Extrait les données d'une image de facture avec OCR parallèle
         
         Args:
             image_path: Chemin vers l'image
@@ -77,7 +146,9 @@ class YOLOExtractor:
             # Extraire les données
             extracted_data = {}
             detections = []
+            roi_tasks = []
             
+            # Préparer toutes les tâches d'OCR en parallèle
             for result in results:
                 boxes = result.boxes
                 if boxes is not None:
@@ -88,34 +159,53 @@ class YOLOExtractor:
                         class_id = int(box.cls[0].cpu().numpy())
                         class_name = self.class_names.get(class_id, f"Class_{class_id}")
                         
-                        # Extraire le texte de la région détectée
+                        # Extraire la région d'intérêt
                         roi = image[y1:y2, x1:x2]
                         if roi.size > 0:
-                            # Convertir en niveaux de gris pour un meilleur OCR
-                            gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
-                            
-                            # Appliquer un prétraitement pour améliorer l'OCR
-                            gray_roi = cv2.resize(gray_roi, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-                            
-                            # Extraire le texte avec Tesseract
-                            extracted_text = pytesseract.image_to_string(
-                                gray_roi, 
-                                config='--psm 6'
-                            ).strip()
-                            
-                            # Stocker les informations de détection
-                            detection_info = {
-                                'class': class_name,
-                                'confidence': confidence,
-                                'bbox': (int(x1), int(y1), int(x2), int(y2)),
-                                'text': extracted_text
-                            }
-                            detections.append(detection_info)
+                            # Préparer la tâche d'OCR
+                            roi_data = (roi, class_name, confidence, (int(x1), int(y1), int(x2), int(y2)))
+                            roi_tasks.append(roi_data)
+            
+            # Exécuter toutes les tâches d'OCR en parallèle
+            if roi_tasks:
+                logger.info(f"🚀 Lancement de {len(roi_tasks)} tâches d'OCR en parallèle")
+                
+                # Utiliser le pool d'exécution pour traiter toutes les régions simultanément
+                with ThreadPoolExecutor(max_workers=min(len(roi_tasks), 8)) as executor:
+                    # Soumettre toutes les tâches
+                    future_to_roi = {
+                        executor.submit(self._extract_text_from_roi_parallel, roi_data): roi_data
+                        for roi_data in roi_tasks
+                    }
+                    
+                    # Collecter les résultats au fur et à mesure qu'ils arrivent
+                    for future in concurrent.futures.as_completed(future_to_roi):
+                        roi_data = future_to_roi[future]
+                        try:
+                            result = future.result()
+                            detections.append(result)
                             
                             # Ajouter aux données extraites
-                            if class_name not in extracted_data:
-                                extracted_data[class_name] = []
-                            extracted_data[class_name].append(extracted_text)
+                            if result['success'] and result['text']:
+                                class_name = result['class']
+                                if class_name not in extracted_data:
+                                    extracted_data[class_name] = []
+                                extracted_data[class_name].append(result['text'])
+                            
+                            logger.debug(f"✅ OCR terminé pour {result['class']}: '{result['text'][:20]}...'")
+                            
+                        except Exception as e:
+                            logger.error(f"❌ Erreur lors de l'OCR de {roi_data[1]}: {str(e)}")
+                            detections.append({
+                                'class': roi_data[1],
+                                'confidence': roi_data[2],
+                                'bbox': roi_data[3],
+                                'text': '',
+                                'success': False,
+                                'error': str(e)
+                            })
+            
+            logger.info(f"🎯 Extraction terminée: {len(detections)} détections, {len(extracted_data)} classes")
             
             return {
                 'success': True,
@@ -274,6 +364,19 @@ class YOLOExtractor:
             logger.error(f"Erreur de validation du modèle: {str(e)}")
             return False
 
+    def cleanup(self):
+        """Nettoie les ressources de l'extracteur"""
+        try:
+            if hasattr(self, '_ocr_executor'):
+                self._ocr_executor.shutdown(wait=True)
+                logger.info("Pool d'exécution OCR fermé")
+        except Exception as e:
+            logger.error(f"Erreur lors de la fermeture du pool d'exécution: {str(e)}")
+
+    def __del__(self):
+        """Destructeur pour nettoyer les ressources"""
+        self.cleanup()
+
 # Fonction utilitaire pour créer une instance de l'extracteur
 def create_yolo_extractor(model_path: str = None) -> YOLOExtractor:
     """
@@ -292,3 +395,4 @@ if __name__ == "__main__":
     extractor = YOLOExtractor()
     print("Informations du modèle:", extractor.get_model_info())
     print("Modèle valide:", extractor.validate_model())
+    extractor.cleanup()

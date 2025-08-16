@@ -429,3 +429,6 @@ TypeError: save_mapping() got an unexpected keyword argument 'template_id'
 2025-08-16 20:28:58,701 INFO Database initialization completed successfully
 2025-08-16 20:43:32,400 ERROR Erreur lors de l'inscription: 
 2025-08-16 20:47:28,634 ERROR Erreur lors de la sauvegarde pour FoxPro: could not convert string to float: '60,26'
+2025-08-16 22:47:40,809 INFO Database tables created successfully
+2025-08-16 22:47:40,828 INFO Default data inserted successfully
+2025-08-16 22:47:40,828 INFO Database initialization completed successfully
