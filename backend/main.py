@@ -67,6 +67,13 @@ init_database()
 # Include authentication routes
 app.include_router(auth_router)
 
+# Include subscription routes
+try:
+    from subscription_routes import router as subscription_router
+    app.include_router(subscription_router)
+except ImportError:
+    print("Warning: subscription_routes not found. Subscription features will not be available.")
+
 # Initialize PaddleOCR with specified parameters
 ocr = PaddleOCR(
     use_doc_orientation_classify=False,

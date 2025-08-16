@@ -15,8 +15,8 @@ COOKIE_SAMESITE = os.getenv("COOKIE_SAMESITE", "lax")  # "strict", "lax", ou "no
 COOKIE_DOMAIN = os.getenv("COOKIE_DOMAIN", None)  # Domaine du cookie
 COOKIE_PATH = "/"  # Chemin du cookie
 
-# Configuration CORS
-CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+# Configuration CORS - Forcer les valeurs pour résoudre le problème
+CORS_ORIGINS = ["http://localhost:3000"]  # Forcer localhost:3000
 CORS_ALLOW_CREDENTIALS = True
 
 # Configuration de la base de données MySQL

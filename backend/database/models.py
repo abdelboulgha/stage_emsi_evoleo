@@ -30,6 +30,8 @@ class User(Base):
     templates: Mapped[List["Template"]] = relationship("Template", back_populates="created_by_user")
     mappings: Mapped[List["Mapping"]] = relationship("Mapping", back_populates="created_by_user")
     factures: Mapped[List["Facture"]] = relationship("Facture", back_populates="created_by_user")
+    subscriptions: Mapped[List["Subscription"]] = relationship("Subscription", back_populates="user")
+    cards: Mapped[List["UserCard"]] = relationship("UserCard", back_populates="user")
 
 
 class FieldName(Base):
@@ -108,3 +110,56 @@ class Facture(Base):
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "created_by": self.created_by
         }
+
+
+class Subscription(Base):
+    """Subscription model for user plans"""
+    __tablename__ = "subscriptions"
+    
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
+    plan_type: Mapped[str] = Column(String(50), nullable=False)  # "trial", "monthly", "semester", "yearly"
+    amount: Mapped[float] = Column(DECIMAL(10,2), nullable=False)
+    start_date: Mapped[datetime] = Column(DateTime, nullable=False, default=datetime.utcnow)
+    end_date: Mapped[datetime] = Column(DateTime, nullable=False)
+    is_active: Mapped[bool] = Column(Boolean, default=True, nullable=False)
+    stripe_subscription_id: Mapped[Optional[str]] = Column(String(255), nullable=True)
+    
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="subscriptions")
+    payments: Mapped[List["Payment"]] = relationship("Payment", back_populates="subscription")
+
+
+class Payment(Base):
+    """Payment model for tracking transactions"""
+    __tablename__ = "payments"
+    
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True)
+    subscription_id: Mapped[int] = Column(Integer, ForeignKey("subscriptions.id"), nullable=False)
+    amount: Mapped[float] = Column(DECIMAL(10,2), nullable=False)
+    currency: Mapped[str] = Column(String(3), default="MAD", nullable=False)
+    stripe_payment_intent_id: Mapped[str] = Column(String(255), nullable=False)
+    status: Mapped[str] = Column(String(50), default="pending", nullable=False)  # pending, succeeded, failed
+    payment_method: Mapped[str] = Column(String(50), nullable=False)  # card, etc.
+    created_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    subscription: Mapped["Subscription"] = relationship("Subscription", back_populates="payments")
+
+
+class UserCard(Base):
+    """User's saved card information"""
+    __tablename__ = "user_cards"
+    
+    id: Mapped[int] = Column(Integer, primary_key=True, index=True)
+    user_id: Mapped[int] = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
+    stripe_payment_method_id: Mapped[str] = Column(String(255), nullable=False)
+    card_brand: Mapped[str] = Column(String(50), nullable=False)
+    last4: Mapped[str] = Column(String(4), nullable=False)
+    expiry_month: Mapped[int] = Column(Integer, nullable=False)
+    expiry_year: Mapped[int] = Column(Integer, nullable=False)
+    is_default: Mapped[bool] = Column(Boolean, default=False, nullable=False)
+    created_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, nullable=False)
+    
+    # Relationships
+    user: Mapped["User"] = relationship("User", back_populates="cards")

@@ -384,3 +384,40 @@ TypeError: save_mapping() got an unexpected keyword argument 'template_id'
 2025-08-15 23:29:54,726 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
 2025-08-15 23:29:54,726 ERROR Erreur fatale lors de la création du fichier DBF: could not convert string to float: '20%'
 2025-08-15 23:29:54,726 WARNING Impossible de créer le fichier DBF: could not convert string to float: '20%'
+2025-08-16 17:25:23,186 INFO Database tables created successfully
+2025-08-16 17:25:23,186 INFO Default data inserted successfully
+2025-08-16 17:25:23,186 INFO Database initialization completed successfully
+2025-08-16 17:46:38,451 INFO Database tables created successfully
+2025-08-16 17:46:38,460 INFO Default data inserted successfully
+2025-08-16 17:46:38,461 INFO Database initialization completed successfully
+2025-08-16 17:49:06,998 INFO Database tables created successfully
+2025-08-16 17:49:07,012 INFO Default data inserted successfully
+2025-08-16 17:49:07,012 INFO Database initialization completed successfully
+2025-08-16 17:59:03,583 INFO Database tables created successfully
+2025-08-16 17:59:03,591 INFO Default data inserted successfully
+2025-08-16 17:59:03,591 INFO Database initialization completed successfully
+2025-08-16 18:09:32,709 INFO Database tables created successfully
+2025-08-16 18:09:32,709 INFO Default data inserted successfully
+2025-08-16 18:09:32,709 INFO Database initialization completed successfully
+2025-08-16 18:14:20,485 INFO Database tables created successfully
+2025-08-16 18:14:20,488 INFO Default data inserted successfully
+2025-08-16 18:14:20,488 INFO Database initialization completed successfully
+2025-08-16 18:15:39,501 INFO Database tables created successfully
+2025-08-16 18:15:39,501 INFO Default data inserted successfully
+2025-08-16 18:15:39,501 INFO Database initialization completed successfully
+2025-08-16 18:21:10,047 INFO Database tables created successfully
+2025-08-16 18:21:10,054 INFO Default data inserted successfully
+2025-08-16 18:21:10,054 INFO Database initialization completed successfully
+2025-08-16 18:22:48,637 ERROR Erreur de décodage JWT: Not enough segments
+2025-08-16 18:36:20,847 ERROR Erreur de décodage JWT: Not enough segments
+2025-08-16 18:36:43,387 ERROR Erreur de décodage JWT: Not enough segments
+2025-08-16 18:38:17,316 ERROR Erreur de décodage JWT: Not enough segments
+2025-08-16 18:57:09,669 INFO Database tables created successfully
+2025-08-16 18:57:09,675 INFO Default data inserted successfully
+2025-08-16 18:57:09,675 INFO Database initialization completed successfully
+2025-08-16 19:01:00,712 INFO Database tables created successfully
+2025-08-16 19:01:00,717 INFO Default data inserted successfully
+2025-08-16 19:01:00,718 INFO Database initialization completed successfully
+2025-08-16 19:29:40,228 INFO Database tables created successfully
+2025-08-16 19:29:40,244 INFO Default data inserted successfully
+2025-08-16 19:29:40,244 INFO Database initialization completed successfully

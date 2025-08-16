@@ -6,14 +6,17 @@ import ExtractorNew from './ExtractorNew';
 import UserManagement from './auth/UserManagement';
 import MiseAJourPage from '../MiseAJour/MiseAJourPage';
 import StepNavigation from './StepNavigation';
+import SubscriptionGuard from './SubscriptionGuard';
+import useSubscription from '../hooks/useSubscription';
 import './AppContent.css';
 
 const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, loading, logout, isAdmin } = useAuth();
-    const [currentView, setCurrentView] = useState(initialView);
-    const [currentStep, setCurrentStep] = useState(initialStep);
+  const [currentView, setCurrentView] = useState(initialView);
+  const [currentStep, setCurrentStep] = useState(initialStep);
+  const { subscriptionStatus, canAccessServices, isLoading: subscriptionLoading } = useSubscription();
 
   // Map URL paths to steps
   const pathToStep = {
@@ -60,7 +63,7 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
     }
   }, [user, location.pathname]);
 
-  if (loading) {
+  if (loading || subscriptionLoading) {
     return (
       <div className="loading-container">
         <div className="loading-spinner"></div>
@@ -80,13 +83,21 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
   const renderView = () => {
     switch (currentView) {
       case 'extractor':
-        return <ExtractorNew currentStep={currentStep} setCurrentStep={setCurrentStep} />;
+        return (
+          <SubscriptionGuard showModalOnMount={!canAccessServices}>
+            <ExtractorNew currentStep={currentStep} setCurrentStep={setCurrentStep} />
+          </SubscriptionGuard>
+        );
       case 'users':
         return <UserManagement />;
       case 'miseajour':
         return <MiseAJourPage />;
       default:
-        return <ExtractorNew currentStep={currentStep} setCurrentStep={setCurrentStep} />;
+        return (
+          <SubscriptionGuard showModalOnMount={!canAccessServices}>
+            <ExtractorNew currentStep={currentStep} setCurrentStep={setCurrentStep} />
+          </SubscriptionGuard>
+        );
     }
   };
 

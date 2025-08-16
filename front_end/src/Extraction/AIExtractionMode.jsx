@@ -91,14 +91,21 @@ const AIExtractionMode = () => {
       return;
     }
 
+    console.log('🚀 === DÉBUT UPLOAD ===');
+    console.log('📁 Fichiers sélectionnés:', selectedFiles.map(f => ({ name: f.name, size: f.size, type: f.type })));
+
     setIsLoading(true);
 
     try {
       const newFiles = [];
       
       for (const [fileIndex, file] of selectedFiles.entries()) {
+        console.log(`\n📄 Traitement du fichier ${fileIndex + 1}: ${file.name}`);
+        
         const formData = new FormData();
         formData.append("file", file);
+
+        console.log(`📤 Envoi vers /upload-basic pour le fichier: ${file.name}`);
 
         // Utiliser le même endpoint que la section "Documents à traiter"
         const response = await fetch('http://localhost:8000/upload-basic', {
@@ -107,12 +114,18 @@ const AIExtractionMode = () => {
         });
         
         const result = await response.json();
+        console.log(`📥 Réponse du backend pour ${file.name}:`, result);
 
         if (result.success) {
           if (result.images) {
+            console.log(`🔄 PDF multi-pages détecté: ${result.images.length} pages`);
+            
             // Handle multi-page PDFs - même logique que useSetup
             result.images.forEach((img, index) => {
               const uniqueId = `${file.name}-${file.lastModified}-${Date.now()}-${index}`;
+              console.log(`📄 Création de la page ${index + 1}/${result.images.length} pour ${file.name}`);
+              console.log(`🆔 ID unique généré: ${uniqueId}`);
+              
               const pageFile = {
                 id: uniqueId,
                 file: file, // Garder le fichier original
@@ -125,9 +138,19 @@ const AIExtractionMode = () => {
                 preview: img, // L'image convertie par le backend
                 originalFile: file
               };
+              
+              console.log(`📋 Page ${index + 1} créée:`, {
+                id: pageFile.id,
+                pageNumber: pageFile.pageNumber,
+                totalPages: pageFile.totalPages,
+                previewLength: pageFile.preview ? pageFile.preview.length : 0
+              });
+              
               newFiles.push(pageFile);
             });
           } else {
+            console.log(`🖼️ Document simple détecté: ${file.name}`);
+            
             // Handle single page documents or images
             const uniqueId = `${file.name}-${file.lastModified}-${Date.now()}`;
             const imageFile = {
@@ -142,17 +165,32 @@ const AIExtractionMode = () => {
               preview: result.preview || URL.createObjectURL(file),
               originalFile: file
             };
+            
+            console.log(`📋 Fichier simple créé:`, {
+              id: imageFile.id,
+              type: imageFile.type,
+              previewLength: imageFile.preview ? imageFile.preview.length : 0
+            });
+            
             newFiles.push(imageFile);
           }
         }
       }
 
+      console.log(`\n📊 === RÉSUMÉ UPLOAD ===`);
+      console.log(`📁 Nouveaux fichiers créés: ${newFiles.length}`);
+      newFiles.forEach((file, index) => {
+        console.log(`  ${index + 1}. ${file.name} - Page ${file.pageNumber}/${file.totalPages} - ID: ${file.id}`);
+      });
+
       // Ajouter les nouveaux fichiers
       const updatedFiles = [...files, ...newFiles];
       setFiles(updatedFiles);
       
+      console.log(`📊 Total des fichiers après upload: ${updatedFiles.length}`);
+      
     } catch (error) {
-      console.error("Erreur lors du téléchargement des fichiers:", error);
+      console.error("❌ Erreur lors du téléchargement des fichiers:", error);
       // Fallback : créer des entrées simples
       const fallbackFiles = selectedFiles.map((file, index) => ({
         id: Date.now() + Math.random() + index,
@@ -176,11 +214,32 @@ const AIExtractionMode = () => {
   };
 
   const removeFile = (fileId) => {
+    console.log(`🗑️ Suppression du fichier avec ID: ${fileId}`);
+    
+    // Trouver le fichier avant suppression pour le log
+    const fileToRemove = files.find(f => f.id === fileId);
+    if (fileToRemove) {
+      console.log(`📄 Fichier à supprimer:`, {
+        name: fileToRemove.name,
+        pageNumber: fileToRemove.pageNumber,
+        totalPages: fileToRemove.totalPages,
+        isPDF: fileToRemove.isPDF
+      });
+    }
+    
     const updatedFiles = files.filter(f => f.id !== fileId);
     setFiles(updatedFiles);
+    
+    console.log(`📊 Fichiers restants après suppression: ${updatedFiles.length}`);
+    updatedFiles.forEach((file, index) => {
+      console.log(`  ${index + 1}. ${file.name} - Page ${file.pageNumber}/${file.totalPages} - ID: ${file.id}`);
+    });
   };
 
   const clearAllFiles = () => {
+    console.log('🧹 === SUPPRESSION DE TOUS LES FICHIERS ===');
+    console.log(`📁 Nombre de fichiers avant suppression: ${files.length}`);
+    
     files.forEach(file => {
       if (file.preview) {
         URL.revokeObjectURL(file.preview);
@@ -203,10 +262,29 @@ const AIExtractionMode = () => {
       selectedModelId: null,
       selectedModelName: null
     }));
+    
+    console.log('✅ Tous les fichiers ont été supprimés');
   };
 
   const handleExtractAll = async () => {
     if (files.length === 0) return;
+
+    console.log('🚀 === DÉBUT EXTRACTION ===');
+    console.log(`📁 Nombre de fichiers à traiter: ${files.length}`);
+    
+    // Log détaillé de chaque fichier avant envoi
+    files.forEach((file, index) => {
+      console.log(`📄 Fichier ${index + 1}:`, {
+        id: file.id,
+        name: file.name,
+        pageNumber: file.pageNumber,
+        totalPages: file.totalPages,
+        isPDF: file.isPDF,
+        hasOriginalFile: !!file.originalFile,
+        originalFileName: file.originalFile ? file.originalFile.name : 'N/A',
+        hasPreview: !!file.preview
+      });
+    });
 
     setIsExtracting(true);
     setExtractionResults(null);
@@ -219,25 +297,58 @@ const AIExtractionMode = () => {
 
     try {
       const formData = new FormData();
-      files.forEach(file => {
-        // Pour les PDFs, envoyer le fichier original avec l'information de la page
+      
+      console.log('\n📤 === PRÉPARATION DES DONNÉES POUR LE BACKEND ===');
+      
+      files.forEach((file, index) => {
         if (file.isPDF) {
-          formData.append('files', file.originalFile);
-          formData.append('page_info', JSON.stringify({
-            page: file.pageNumber,
-            total_pages: file.totalPages
-          }));
+          // ✅ NOUVEAU : Envoyer seulement la page convertie (pas le fichier original)
+          if (file.preview) {
+            console.log(`📄 PDF ${index + 1}: Envoi de la page ${file.pageNumber} convertie en image`);
+            
+            // Convertir le base64 en Blob pour l'envoi
+            const base64Data = file.preview;
+            const byteCharacters = atob(base64Data.split(',')[1]);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'image/jpeg' });
+            
+            // Créer un fichier à partir du blob
+            const pageFile = new File([blob], `${file.name}_page_${file.pageNumber}.jpg`, { type: 'image/jpeg' });
+            
+            formData.append('files', pageFile);
+            console.log(`📤 Page ${file.pageNumber} envoyée: ${pageFile.name} (${pageFile.size} bytes)`);
+          } else {
+            console.error(`❌ Pas d'aperçu disponible pour la page ${file.pageNumber} de ${file.name}`);
+          }
         } else {
+          console.log(`🖼️ Image ${index + 1}: Envoi du fichier "${file.file.name}"`);
           formData.append('files', file.file);
         }
       });
+
+      console.log(`\n📤 Envoi vers /api/ai-extract avec ${files.length} pages/images`);
+      console.log('📋 Contenu du FormData:');
+      for (let [key, value] of formData.entries()) {
+        if (key === 'files') {
+          console.log(`  ${key}: ${value.name} (${value.size} bytes)`);
+        } else {
+          console.log(`  ${key}: ${value}`);
+        }
+      }
 
       const response = await fetch('http://localhost:8000/api/ai-extract', {
         method: 'POST',
         body: formData
       });
 
+      console.log(`📥 Réponse du backend: ${response.status} ${response.statusText}`);
+
       const result = await response.json();
+      console.log('📊 Résultat de l\'extraction:', result);
 
       if (result.success) {
         setExtractionResults(result.results);
@@ -252,10 +363,15 @@ const AIExtractionMode = () => {
         
         // S'assurer que nous avons le bon nombre de résultats
         const maxLength = Math.max(result.results.length, files.length);
+        console.log(`📊 Traitement de ${maxLength} résultats (${result.results.length} du backend, ${files.length} fichiers)`);
         
         for (let index = 0; index < maxLength; index++) {
           const fileResult = result.results[index];
           const originalFile = files[index];
+          
+          console.log(`\n📄 Traitement du résultat ${index + 1}:`);
+          console.log(`  - Fichier original: ${originalFile ? originalFile.name : 'N/A'}`);
+          console.log(`  - Résultat backend:`, fileResult);
           
           if (fileResult && fileResult.success && fileResult.extracted_data) {
             // Créer un objet fichier traité avec le vrai aperçu
@@ -328,6 +444,11 @@ const AIExtractionMode = () => {
           }
         }
 
+        console.log(`\n📊 === RÉSUMÉ TRAITEMENT ===`);
+        console.log(`📁 Fichiers traités: ${processedFiles.length}`);
+        console.log(`🖼️ Aperçus: ${processedPreviews.length}`);
+        console.log(`📋 Données extraites: ${processedData.length}`);
+
         // Mettre à jour l'état d'extraction avec la structure attendue par ExtractionSidebar
         setExtractionState(prev => ({
           ...prev,
@@ -340,6 +461,7 @@ const AIExtractionMode = () => {
         }));
 
       } else {
+        console.error('❌ Erreur lors de l\'extraction:', result.error);
         setExtractionResults([{
           error: result.error || "Erreur lors de l'extraction"
         }]);
@@ -351,7 +473,7 @@ const AIExtractionMode = () => {
         }));
       }
     } catch (error) {
-      console.error('Erreur lors de l\'extraction:', error);
+      console.error('❌ Erreur lors de l\'extraction:', error);
       setExtractionResults([{
         error: "Erreur de connexion au serveur"
       }]);
