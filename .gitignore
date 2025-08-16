@@ -24,7 +24,7 @@ yarn-error.log*
 
 #debug log
 backend/invoice_debug.
-backend/.env
+
 
 # Python cache files
 __pycache__/
@@ -32,6 +32,3 @@ __pycache__/
 *.pyo
 *.pyd
 
-# Ignore all .env files
-.env
-*/.env
