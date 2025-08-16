@@ -23,7 +23,8 @@ yarn-debug.log*
 yarn-error.log*
 
 #debug log
-backend/invoice_debug.log
+backend/invoice_debug.
+backend/.env
 
 # Python cache files
 __pycache__/
