@@ -70,10 +70,9 @@ async def create_subscription(
         # Check if user already has an active subscription
         current_status = await SubscriptionService.check_subscription_status(db, user_id)
         if current_status["has_subscription"]:
-            return {
-                "success": False,
-                "message": "User already has an active subscription"
-            }
+            # Instead of blocking, allow new subscription creation
+            print(f"User {user_id} already has subscription, but allowing new one")
+            # You could also deactivate the old one here if needed
         
         # Create subscription
         result = await SubscriptionService.create_subscription(

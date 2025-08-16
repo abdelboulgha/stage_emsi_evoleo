@@ -14,6 +14,7 @@ load_dotenv()
 
 # Stripe configuration
 stripe.api_key = os.getenv("STRIPE_SECRET_KEY")
+print(f"Stripe API key loaded: {stripe.api_key[:20]}..." if stripe.api_key else "NO STRIPE API KEY FOUND!")
 
 class SubscriptionService:
     """Service for managing subscriptions and payments"""
@@ -74,6 +75,7 @@ class SubscriptionService:
         stripe_payment_intent_id = None
         if plan["amount"] > 0:
             try:
+                print(f"Creating Stripe payment intent for amount: {plan['amount']} MAD")
                 payment_intent = stripe.PaymentIntent.create(
                     amount=int(plan["amount"] * 100),  # Convert to cents
                     currency="mad",
@@ -82,8 +84,12 @@ class SubscriptionService:
                     return_url="http://localhost:3000/payment-success"
                 )
                 stripe_payment_intent_id = payment_intent.id
+                print(f"Stripe payment intent created successfully: {stripe_payment_intent_id}")
             except stripe.error.StripeError as e:
+                print(f"Stripe error: {e}")
                 raise Exception(f"Stripe payment failed: {str(e)}")
+        else:
+            print("Trial plan - no Stripe payment needed")
         
         # Create subscription in database
         subscription = Subscription(
@@ -112,6 +118,23 @@ class SubscriptionService:
             )
             db.add(payment)
             await db.commit()
+        
+        # Save user card information
+        try:
+            # Get payment method details from Stripe
+            payment_method = stripe.PaymentMethod.retrieve(payment_method_id)
+            card_details = {
+                "brand": payment_method.card.brand,
+                "last4": payment_method.card.last4,
+                "exp_month": payment_method.card.exp_month,
+                "exp_year": payment_method.card.exp_year
+            }
+            
+            # Save card to database
+            await cls.save_user_card(db, user_id, payment_method_id, card_details)
+        except Exception as e:
+            print(f"Warning: Could not save card details: {e}")
+            # Continue without failing the subscription creation
         
         return {
             "subscription_id": subscription.id,

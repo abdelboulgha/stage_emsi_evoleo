@@ -1,1 +1,38 @@
- 
+/* Styles pour le SubscriptionProvider */
+.subscription-provider {
+    /* Le provider n'a pas de styles visuels directs */
+}
+
+/* Styles pour les éléments de contexte d'abonnement */
+.subscription-context {
+    /* Styles pour le contexte d'abonnement si nécessaire */
+}
+
+/* Styles pour les états de chargement */
+.subscription-loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xl);
+    color: var(--gray-500);
+}
+
+/* Styles pour les erreurs d'abonnement */
+.subscription-error-state {
+    background-color: var(--error-lighter);
+    color: var(--error-color);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--error-lighter);
+    margin: var(--spacing-md) 0;
+}
+
+/* Styles pour les succès d'abonnement */
+.subscription-success-state {
+    background-color: var(--success-lighter);
+    color: var(--success-color);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    border: 1px solid var(--success-lighter);
+    margin: var(--spacing-md) 0;
+}

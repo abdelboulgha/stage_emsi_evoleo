@@ -7,6 +7,10 @@ import './SubscriptionModal.css';
 // Initialize Stripe (you'll need to add your publishable key to .env)
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
 
+// Debug: Log the Stripe key being used
+console.log('Stripe key:', process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY);
+console.log('Stripe promise:', stripePromise);
+
 const SubscriptionModal = ({ isOpen, onClose, onSubscriptionSuccess }) => {
   const [selectedPlan, setSelectedPlan] = useState('trial');
   const [isLoading, setIsLoading] = useState(false);
