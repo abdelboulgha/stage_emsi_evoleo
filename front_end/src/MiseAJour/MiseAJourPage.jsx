@@ -37,18 +37,20 @@ const FIELDS = [
 const MiseAJourPage = () => {
   const [factures, setFactures] = useState([]);
   const [search, setSearch] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [searchTimeout, setSearchTimeout] = useState(null);
 
   const fetchFactures = useCallback(async () => {
     try {
       const params = new URLSearchParams({
         page: page.toString(),
-        page_size: "10",
-        search: search,
+        limit: "10",
+        search: searchTerm,
       });
       const res = await fetch(`http://localhost:8000/factures?${params}`, {
         credentials: 'include',
@@ -56,15 +58,42 @@ const MiseAJourPage = () => {
       if (res.ok) {
         const data = await res.json();
         setFactures(data.factures || []);
-        setTotalPages(data.total_pages || 1);
+        const calculatedPages = Math.ceil((data.total_count || 0) / 10);
+        setTotalPages(calculatedPages > 0 ? calculatedPages : 1);
+        
+        // Reset to first page if current page is greater than total pages
+        if (page > 1 && page > calculatedPages) {
+          setPage(1);
+        }
       }
     } catch (error) {
       console.error("Erreur lors de la récupération des factures:", error);
       setFactures([]);
       setTotalPages(1);
     }
-  }, [page, search]);
+  }, [page, searchTerm]);
 
+  // Handle search input with debounce
+  useEffect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+    
+    const timeout = setTimeout(() => {
+      setSearchTerm(search);
+      setPage(1); // Reset to first page when search changes
+    }, 500); // 500ms debounce delay
+    
+    setSearchTimeout(timeout);
+    
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [search]);
+  
+  // Fetch data when page or searchTerm changes
   useEffect(() => {
     fetchFactures();
   }, [fetchFactures]);

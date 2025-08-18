@@ -140,6 +140,7 @@ const AppContent = ({ initialView = 'extractor', initialStep = 'setup' }) => {
                 <button 
                   className={`nav-button ${currentView === 'users' ? 'active' : ''}`}
                   onClick={() => setCurrentView('users')}
+                  style={{ whiteSpace: 'nowrap' }}
                 >
                   Gestion Utilisateurs
                 </button>

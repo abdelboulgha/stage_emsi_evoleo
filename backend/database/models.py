@@ -25,6 +25,8 @@ class User(Base):
     prenom: Mapped[str] = Column(String(100), nullable=False)
     mot_de_passe_hash: Mapped[str] = Column(String(255), nullable=False)
     role: Mapped[str] = Column(String(50), default="comptable", nullable=False)
+    date_creation: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, nullable=False)
+    actif: Mapped[bool] = Column(Boolean, default=True, nullable=False)
     
     # Relationships
     templates: Mapped[List["Template"]] = relationship("Template", back_populates="created_by_user")
@@ -43,17 +45,23 @@ class FieldName(Base):
     mappings: Mapped[List["Mapping"]] = relationship("Mapping", back_populates="field")
 
 
-class Template(Base):
+class Template(Base, TimestampMixin):
     """Document templates"""
     __tablename__ = "templates"
     
     id: Mapped[int] = Column(Integer, primary_key=True, index=True)
     name: Mapped[str] = Column(String(255), nullable=False)
+    serial: Mapped[str] = Column(String(9), unique=True, nullable=True)
+    fournisseur: Mapped[Optional[str]] = Column(String(255), nullable=True)
     created_by: Mapped[int] = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
     
     # Relationships
     created_by_user: Mapped["User"] = relationship("User", back_populates="templates")
     mappings: Mapped[List["Mapping"]] = relationship("Mapping", back_populates="template", cascade="all, delete-orphan")
+    
+    __table_args__ = (
+        {'extend_existing': True},
+    )
 
 
 class Mapping(Base):

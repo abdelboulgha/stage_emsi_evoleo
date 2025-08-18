@@ -61,7 +61,8 @@ logging.basicConfig(
 )
 
 # Initialize database
-init_database()
+from database.init_db import init_database
+init_database()  # Use synchronous initialization for simplicity
 
 # Include authentication routes
 app.include_router(auth_router)
@@ -94,9 +95,15 @@ class FieldCoordinates(BaseModel):
     manual: Optional[bool] = False
 
 
+class ManualInputField(BaseModel):
+    """Represents a manually input field value."""
+    manualValue: str
+    isValid: Optional[bool] = True
+
+
 class FieldMapping(BaseModel):
     """Mapping of field names to their coordinates."""
-    field_map: Dict[str, Optional[FieldCoordinates]]
+    field_map: Dict[str, Any]  # Can be FieldCoordinates or ManualInputField
 
 
 class ExtractionResult(BaseModel):
@@ -108,7 +115,7 @@ class ExtractionResult(BaseModel):
 
 class SaveMappingRequest(BaseModel):
     template_id: str = "default"
-    field_map: Dict[str, Optional[FieldCoordinates]]
+    field_map: Dict[str, Any]  # Can be FieldCoordinates or ManualInputField
 
 
 class InvoiceUpdate(BaseModel):
@@ -412,7 +419,7 @@ async def load_mapping(
 
 @app.post("/mappings")
 async def save_field_mapping(
-    request: SaveMappingRequest,
+    request: dict,  # Using dict to handle dynamic field types
     current_user = Depends(require_comptable_or_admin),
     db = Depends(get_async_db)
 ):
@@ -420,7 +427,7 @@ async def save_field_mapping(
     Save field mappings for a template using ORM
     
     Args:
-        request: SaveMappingRequest containing template_id and field_map
+        request: Dictionary containing template_id and field_map
         current_user: Authenticated user from JWT token
         db: Database session
         
@@ -430,21 +437,33 @@ async def save_field_mapping(
     try:
         template_service = TemplateService(db)
         
-        # Convert Pydantic model to dict and handle FieldCoordinates objects
-        field_map = {}
-        for field_name, coords in request.field_map.items():
-            if coords is not None:
-                if isinstance(coords, dict):
-                    field_map[field_name] = coords
-                else:
-                    field_map[field_name] = coords.dict()
+        # Extract template_id and field_map from request
+        template_id = request.get('template_id', 'default')
+        field_map = request.get('field_map', {})
         
-        print(f"Saving mapping for template: {request.template_id}")
-        logging.debug(f"Field map: {field_map}")
+        # Process the field map to handle both coordinate and manual input fields
+        processed_map = {}
+        for field_name, value in field_map.items():
+            if value is not None:
+                # Handle manual input fields (like fournisseur and serial)
+                if isinstance(value, dict) and 'manualValue' in value:
+                    processed_map[field_name] = value
+                # Handle coordinate fields
+                elif hasattr(value, 'get') and all(k in value for k in ['left', 'top', 'width', 'height']):
+                    processed_map[field_name] = {
+                        'left': value.get('left', 0),
+                        'top': value.get('top', 0),
+                        'width': value.get('width', 0),
+                        'height': value.get('height', 0),
+                        'manual': value.get('manual', False)
+                    }
+        
+        print(f"Saving mapping for template: {template_id}")
+        logging.debug(f"Processed field map: {processed_map}")
         
         success = await template_service.save_mapping(
-            template_name=request.template_id,  # template_id is actually the template name
-            field_map=field_map,
+            template_name=template_id,
+            field_map=processed_map,
             current_user_id=current_user['id']
         )
         
@@ -452,7 +471,7 @@ async def save_field_mapping(
             return {
                 "success": True,
                 "message": "Mapping saved successfully",
-                "template_id": request.template_id,
+                "template_id": template_id,
                 "fields_saved": list(field_map.keys())
             }
         else:
@@ -519,13 +538,26 @@ async def create_facture(
 async def get_factures(
     skip: int = 0,
     limit: int = 100,
+    search: Optional[str] = None,
     current_user = Depends(require_comptable_or_admin),
     db = Depends(get_async_db)
 ):
-    """Get invoices for the current user using ORM"""
+    """
+    Get invoices for the current user using ORM with optional search
+    
+    Query Parameters:
+    - skip: Number of records to skip (for pagination)
+    - limit: Maximum number of records to return (for pagination)
+    - search: Optional search term to filter invoices
+    """
     try:
         facture_service = FactureService(db)
-        result = await facture_service.get_factures(current_user["id"], skip, limit)
+        result = await facture_service.get_factures(
+            current_user["id"], 
+            skip=skip, 
+            limit=limit, 
+            search=search
+        )
         return result
         
     except Exception as e:
@@ -757,19 +789,19 @@ async def ocr_preview(
             4. Select the box with maximum overlap with the search area
             5. If no matches, fall back to vertical search
             """
-            print(f"\n{'='*40}")
-            print(f"Searching for field: {field_name}")
-            print(f"Using keyword test function: {keyword_test_fn.__name__}")
-            print("-"*40)
+            # print(f"\n{'='*40}")
+            # print(f"Searching for field: {field_name}")
+            # print(f"Using keyword test function: {keyword_test_fn.__name__}")
+            # print("-"*40)
             
             keywords = [b for b in detected_boxes if keyword_test_fn(b['text'])]
             
-            print(f"Found {len(keywords)} potential keywords:")
-            for i, kw in enumerate(keywords, 1):
-                print(f"  {i}. '{kw['text']}' (score: {kw['score']:.2f}) at ({kw['center_x']:.1f}, {kw['center_y']:.1f})")
+            # print(f"Found {len(keywords)} potential keywords:")
+            # for i, kw in enumerate(keywords, 1):
+            #     print(f"  {i}. '{kw['text']}' (score: {kw['score']:.2f}) at ({kw['center_x']:.1f}, {kw['center_y']:.1f})")
             
             if not keywords:
-                print("No matching keywords found!")
+                # print("No matching keywords found!")
                 return None
 
             total_kw = [k for k in keywords if is_total_keyword(k['text'])]
@@ -792,11 +824,11 @@ async def ocr_preview(
                             'height': kw['height'] + (2 * vertical_padding)
                         }
                         
-                        # Print search area header
-                        print(f"\n{'='*60}")
-                        print(f"🔍 SEARCHING FOR {'HT' if not is_tva else 'TVA'}")
-                        print("="*60)
-                        print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
+                        # Print search area header (commented out)
+                        # print(f"\n{'='*60}")
+                        # print(f"🔍 SEARCHING FOR {'HT' if not is_tva else 'TVA'}")
+                        # print("="*60)
+                        # print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
                         
                         # Find all boxes that overlap with the search area
                         potential_boxes = []
@@ -850,11 +882,11 @@ async def ocr_preview(
                             # Combine scores (60% overlap, 40% distance)
                             score = (overlap_pct/100 * 0.6) + (distance_score * 0.4)
                             
-                            # Print detailed match info
-                            print(f"\nText: '{ob['text']}'")
-                            print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
-                            print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_right:.0f}, {kw_center_y:.0f})")
-                            print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
+                            # Print detailed match info (commented out)
+                            # print(f"\nText: '{ob['text']}'")
+                            # print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
+                            # print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_right:.0f}, {kw_center_y:.0f})")
+                            # print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
                             
                             candidates.append({
                                 'keyword_box': kw,
@@ -876,20 +908,20 @@ async def ocr_preview(
                             # Sort by score (descending)
                             candidates.sort(key=lambda c: -c['score'])
                             
-                            print("\n" + "="*60)
-                            print("🏆 CANDIDATE SELECTION SUMMARY")
-                            print("="*60)
-                            print(f"Found {len(candidates)} valid candidates")
-                            print("\nTop 3 candidates:")
-                            for i, c in enumerate(candidates[:3], 1):
-                                print(f"{i}. '{c['value_text']}' | {c['overlap_pct']:.1f}% overlap | Score: {c['score']:.6f}")
+                            # print("\n" + "="*60)
+                            # print("🏆 CANDIDATE SELECTION SUMMARY")
+                            # print("="*60)
+                            # print(f"Found {len(candidates)} valid candidates")
+                            # print("\nTop 3 candidates:")
+                            # for i, c in enumerate(candidates[:3], 1):
+                            #     print(f"{i}. '{c['value_text']}' | {c['overlap_pct']:.1f}% overlap | Score: {c['score']:.6f}")
                             
                             best_match = candidates[0]
-                            print("\n" + "-"*60)
-                            print(f"🏆 SELECTED: '{best_match['value_text']}'")
-                            print(f"   - Overlap: {best_match['overlap_pct']:.1f}%")
-                            print(f"   - Score: {best_match['score']:.6f}")
-                            print(f"   - Position: ({best_match['value_box']['center_x']:.0f}, {best_match['value_box']['center_y']:.0f})")
+                            # print("\n" + "-"*60)
+                            # print(f"🏆 SELECTED: '{best_match['value_text']}'")
+                            # print(f"   - Overlap: {best_match['overlap_pct']:.1f}%")
+                            # print(f"   - Score: {best_match['score']:.6f}")
+                            # print(f"   - Position: ({best_match['value_box']['center_x']:.0f}, {best_match['value_box']['center_y']:.0f})")
                     
                     else:  # vertical search
                         # Calculate expanded search area 
@@ -903,11 +935,11 @@ async def ocr_preview(
                             'height': 50
                         }
                         
-                        # Print search area header
-                        print(f"\n{'='*60}")
-                        print(f"🔍 VERTICAL SEARCH FOR {'HT' if not is_tva else 'TVA'}")
-                        print("="*60)
-                        print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
+                        # Print search area header (commented out)
+                        # print(f"\n{'='*60}")
+                        # print(f"🔍 VERTICAL SEARCH FOR {'HT' if not is_tva else 'TVA'}")
+                        # print("="*60)
+                        # print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
                         
                         # Find all boxes that overlap with the search area
                         potential_boxes = []
@@ -962,11 +994,11 @@ async def ocr_preview(
                             # Combine scores (60% overlap, 40% distance)
                             score = (overlap_pct/100 * 0.6) + (distance_score * 0.4)
                             
-                            # Print detailed match info
-                            print(f"\nText: '{ob['text']}'")
-                            print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
-                            print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_center_x:.0f}, {kw_bottom:.0f})")
-                            print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
+                            # Print detailed match info (commented out)
+                            # print(f"\nText: '{ob['text']}'")
+                            # print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
+                            # print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_center_x:.0f}, {kw_bottom:.0f})")
+                            # print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
                             
                             candidates.append({
                                 'keyword_box': kw,
@@ -1763,9 +1795,7 @@ async def save_corrected_data(request: Request):
         
         # Récupérer le JSON brut pour diagnostiquer
         corrected_data = await request.json()
-        print("Payload reçu dans save_corrected_data:", corrected_data)
-        print("Type du payload:", type(corrected_data))
-        print("Clés du payload:", list(corrected_data.keys()) if isinstance(corrected_data, dict) else "Pas un dict")
+       
         
         # Utiliser la fonction save_extraction_for_foxpro pour assurer la cohérence
         save_extraction_for_foxpro(
@@ -1919,10 +1949,10 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
         # Utiliser les données corrigées si disponibles, sinon les données extraites
         if corrected_data is not None:
             data_to_use = corrected_data
-            print(f"Utilisation des données corrigées: {data_to_use}")
+          
         else:
             data_to_use = extracted_data
-            print(f"Utilisation des données extraites: {data_to_use}")
+          
         
         # Gérer les différents noms de champs possibles
         numero_facture = data_to_use.get("numeroFacture") or data_to_use.get("numFacture", "")

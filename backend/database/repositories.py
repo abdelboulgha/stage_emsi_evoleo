@@ -3,8 +3,10 @@ Repository pattern for database operations
 """
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, delete, and_, or_, func
+from sqlalchemy import select, func, delete, update, and_, or_
 from sqlalchemy.orm import selectinload
+from sqlalchemy.sql.expression import desc
+from sqlalchemy import String
 from database.models import User, Template, Mapping, FieldName, Facture
 
 
@@ -175,16 +177,44 @@ class FactureRepository(BaseRepository):
         )
         return result.scalars().all()
     
-    async def get_by_user_with_count(self, user_id: int, skip: int = 0, limit: int = 100) -> tuple[List[Facture], int]:
-        """Get invoices by user with total count"""
-        # Get total count
-        count_result = await self.session.execute(
-            select(func.count(Facture.id)).where(Facture.created_by == user_id)
-        )
+    async def get_by_user_with_count(self, user_id: int, skip: int = 0, limit: int = 100, search: str = None) -> tuple[List[Facture], int]:
+        """
+        Get invoices by user with total count and optional search
+        
+        Args:
+            user_id: ID of the user
+            skip: Number of records to skip
+            limit: Maximum number of records to return
+            search: Optional search term to filter invoices
+            
+        Returns:
+            Tuple of (list of invoices, total count)
+        """
+        # Base query
+        query = select(Facture).where(Facture.created_by == user_id)
+        
+        # Add search conditions if search term is provided
+        if search and search.strip():
+            search = f"%{search.lower()}%"
+            query = query.where(
+                or_(
+                    Facture.numFacture.ilike(f"%{search}%"),
+                    Facture.fournisseur.ilike(f"%{search}%"),
+                    Facture.montantTTC.cast(String).ilike(f"%{search}%"),
+                    Facture.montantHT.cast(String).ilike(f"%{search}%"),
+                    Facture.dateFacturation.cast(String).ilike(f"%{search}%")
+                )
+            )
+        
+        # Get total count with search conditions applied
+        count_query = select(func.count(Facture.id)).select_from(query.subquery())
+        count_result = await self.session.execute(count_query)
         total_count = count_result.scalar()
         
-        # Get invoices
-        invoices = await self.get_by_user(user_id, skip, limit)
+        # Get paginated results
+        query = query.order_by(desc(Facture.dateFacturation)).offset(skip).limit(limit)
+        result = await self.session.execute(query)
+        invoices = result.scalars().all()
         
         return invoices, total_count
     

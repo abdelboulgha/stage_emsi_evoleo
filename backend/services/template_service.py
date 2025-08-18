@@ -1,6 +1,7 @@
 """
 Template service for managing document templates and mappings
 """
+from datetime import datetime
 from typing import Dict, Any, Optional, List
 from sqlalchemy.ext.asyncio import AsyncSession
 from database.repositories import TemplateRepository, MappingRepository, FieldNameRepository
@@ -22,7 +23,7 @@ class TemplateService:
         
         Args:
             template_name: The name of the template to save mappings for
-            field_map: Dictionary of field names to their coordinate data
+            field_map: Dictionary of field names to their data (coordinates or manual values)
             current_user_id: User ID who is creating/updating the template
             
         Returns:
@@ -35,13 +36,47 @@ class TemplateService:
             # 2. If template exists, get its ID, otherwise create new template
             if template:
                 template_id = template.id
+                
+                # Update template metadata if needed
+                needs_update = False
+                
+                if 'fournisseur' in field_map and field_map['fournisseur'] and 'manualValue' in field_map['fournisseur']:
+                    template.fournisseur = field_map['fournisseur']['manualValue']
+                    needs_update = True
+                
+                if 'serial' in field_map and field_map['serial'] and 'manualValue' in field_map['serial']:
+                    serial_value = str(field_map['serial']['manualValue'])
+                    if len(serial_value) == 9:  # Only update if valid 9-digit serial
+                        template.serial = serial_value
+                        needs_update = True
+                
+                if needs_update:
+                    template.updated_at = datetime.utcnow()
+                    self.session.add(template)
+                    await self.session.commit()
             else:
-                # Create new template
-                template = await self.template_repo.create({
-                    "name": template_name,
-                    "created_by": current_user_id
-                })
+                # Create new template with initial data
+                template_data = {
+                    'name': template_name,
+                    'created_by': current_user_id
+                }
+                
+                # Add fournisseur if provided
+                if 'fournisseur' in field_map and field_map['fournisseur'] and 'manualValue' in field_map['fournisseur']:
+                    template_data['fournisseur'] = field_map['fournisseur']['manualValue']
+                
+                # Add serial if valid
+                if 'serial' in field_map and field_map['serial'] and 'manualValue' in field_map['serial']:
+                    serial_value = str(field_map['serial']['manualValue'])
+                    if len(serial_value) == 9:  # Only add if valid 9-digit serial
+                        template_data['serial'] = serial_value
+                
+                template = await self.template_repo.create(template_data)
                 template_id = template.id
+            
+            # Remove manual input fields from field_map to avoid processing as coordinates
+            for field in ['serial', 'fournisseur']:
+                field_map.pop(field, None)
             
             # 3. Delete existing mappings for this template
             await self.mapping_repo.delete_by_template_id(template_id)

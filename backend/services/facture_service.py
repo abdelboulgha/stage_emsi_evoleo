@@ -115,21 +115,22 @@ class FactureService:
                 "message": f"Error updating invoice: {str(e)}"
             }
     
-    async def get_factures(self, current_user_id: int, skip: int = 0, limit: int = 100) -> Dict[str, Any]:
+    async def get_factures(self, current_user_id: int, skip: int = 0, limit: int = 100, search: str = None) -> Dict[str, Any]:
         """
-        Get invoices for a user with pagination
+        Get invoices for a user with pagination and search
         
         Args:
             current_user_id: User ID to get invoices for
             skip: Number of records to skip
             limit: Maximum number of records to return
+            search: Optional search term to filter invoices
             
         Returns:
             Dict containing the invoices and total count
         """
         try:
             invoices, total_count = await self.facture_repo.get_by_user_with_count(
-                current_user_id, skip, limit
+                current_user_id, skip, limit, search
             )
             
             return {

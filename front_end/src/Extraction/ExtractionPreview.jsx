@@ -53,46 +53,45 @@ const ExtractionPreview = ({
     const scaleY = displayHeight / naturalHeight;
     
     // Debug logging for coordinates
-    console.log('=== DEBUG COORDINATES ===');
-    console.log('Image dimensions - Natural:', { naturalWidth, naturalHeight }, 'Display:', { displayWidth, displayHeight });
+    // console.log('=== DEBUG COORDINATES ===');
+    // console.log('Image dimensions - Natural:', { naturalWidth, naturalHeight }, 'Display:', { displayWidth, displayHeight });
     
-    if (data.boxNumFacture) {
-      console.log('Box Num Facture (original):', data.boxNumFacture);
-      console.log('Box Num Facture (scaled):', {
-        left: data.boxNumFacture.left * scaleX,
-        top: data.boxNumFacture.top * scaleY,
-        width: data.boxNumFacture.width * scaleX,
-        height: data.boxNumFacture.height * scaleY
-      });
-    }
+    // if (data.boxNumFacture) {
+    //   console.log('Box Num Facture (original):', data.boxNumFacture);
+    //   console.log('Box Num Facture (scaled):', {
+    //     left: data.boxNumFacture.left * scaleX,
+    //     top: data.boxNumFacture.top * scaleY,
+    //     width: data.boxNumFacture.width * scaleX,
+    //     height: data.boxNumFacture.height * scaleY
+    //   });
+    // }
     
-    // Draw search area first (behind other boxes)
-    if (data.boxNumFactureSearchArea) {
-      const { left, top, width, height } = data.boxNumFactureSearchArea;
-      const x = left * scaleX;
-      const y = top * scaleY;
-      const w = width * scaleX;
-      const h = height * scaleY;
+    // if (data.boxNumFactureSearchArea) {
+    //   const { left, top, width, height } = data.boxNumFactureSearchArea;
+    //   const x = left * scaleX;
+    //   const y = top * scaleY;
+    //   const w = width * scaleX;
+    //   const h = height * scaleY;
       
-      console.log('Search Area (original):', data.boxNumFactureSearchArea);
-      console.log('Search Area (scaled):', { x, y, w, h });
+    //   console.log('Search Area (original):', data.boxNumFactureSearchArea);
+    //   console.log('Search Area (scaled):', { x, y, w, h });
       
-      ctx.save();
-      ctx.strokeStyle = '#6366f166';
-      ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 1;
-      ctx.fillStyle = '#6366f122';
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeRect(x, y, w, h);
+    //   ctx.save();
+    //   ctx.strokeStyle = '#6366f166';
+    //   ctx.setLineDash([5, 5]);
+    //   ctx.lineWidth = 1;
+    //   ctx.fillStyle = '#6366f122';
+    //   ctx.fillRect(x, y, w, h);
+    //   ctx.strokeRect(x, y, w, h);
       
-      // Add label with scaled position
-      ctx.fillStyle = '#6366f1';
-      ctx.font = 'bold 11px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText('Search Area', x + 5, y + 15);
+    //   // Add label with scaled position
+    //   ctx.fillStyle = '#6366f1';
+    //   ctx.font = 'bold 11px Arial';
+    //   ctx.textAlign = 'left';
+    //   ctx.fillText('Search Area', x + 5, y + 15);
       
-      ctx.restore();
-    }
+    //   ctx.restore();
+    // }
     
     // Helper function to draw a box with consistent scaling
     const drawBox = (box, color, label, labelPosition = 'left') => {
@@ -125,133 +124,132 @@ const ExtractionPreview = ({
       ctx.restore();
     };
     
-    // Draw search areas first (behind other boxes)
-    if (data.htSearchArea) {
-      const { left, top, width, height } = data.htSearchArea;
-      const x = left * scaleX;
-      const y = top * scaleY;
-      const w = width * scaleX;
-      const h = height * scaleY;
+    // if (data.htSearchArea) {
+    //   const { left, top, width, height } = data.htSearchArea;
+    //   const x = left * scaleX;
+    //   const y = top * scaleY;
+    //   const w = width * scaleX;
+    //   const h = height * scaleY;
       
-      ctx.save();
-      ctx.strokeStyle = '#b9101066';
-      ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 1;
-      ctx.fillStyle = '#b9101122';
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeRect(x, y, w, h);
+    //   ctx.save();
+    //   ctx.strokeStyle = '#b9101066';
+    //   ctx.setLineDash([5, 5]);
+    //   ctx.lineWidth = 1;
+    //   ctx.fillStyle = '#b9101122';
+    //   ctx.fillRect(x, y, w, h);
+    //   ctx.strokeRect(x, y, w, h);
       
-      // Add label
-      ctx.fillStyle = '#b91010';
-      ctx.font = 'bold 11px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText('HT Search Area', x + 5, y + 15);
-      ctx.restore();
-    }
+    //   // Add label
+    //   ctx.fillStyle = '#b91010';
+    //   ctx.font = 'bold 11px Arial';
+    //   ctx.textAlign = 'left';
+    //   ctx.fillText('HT Search Area', x + 5, y + 15);
+    //   ctx.restore();
+    // }
     
-    if (data.tvaSearchArea) {
-      const { left, top, width, height } = data.tvaSearchArea;
-      const x = left * scaleX;
-      const y = top * scaleY;
-      const w = width * scaleX;
-      const h = height * scaleY;
+    // if (data.tvaSearchArea) {
+    //   const { left, top, width, height } = data.tvaSearchArea;
+    //   const x = left * scaleX;
+    //   const y = top * scaleY;
+    //   const w = width * scaleX;
+    //   const h = height * scaleY;
       
-      ctx.save();
-      ctx.strokeStyle = '#0b0ff566';
-      ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 1;
-      ctx.fillStyle = '#0b0ff522';
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeRect(x, y, w, h);
+    //   ctx.save();
+    //   ctx.strokeStyle = '#0b0ff566';
+    //   ctx.setLineDash([5, 5]);
+    //   ctx.lineWidth = 1;
+    //   ctx.fillStyle = '#0b0ff522';
+    //   ctx.fillRect(x, y, w, h);
+    //   ctx.strokeRect(x, y, w, h);
       
-      // Add label
-      ctx.fillStyle = '#0b0ff5';
-      ctx.font = 'bold 11px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText('TVA Search Area', x + 5, y + 15);
-      ctx.restore();
-    }
+    //   // Add label
+    //   ctx.fillStyle = '#0b0ff5';
+    //   ctx.font = 'bold 11px Arial';
+    //   ctx.textAlign = 'left';
+    //   ctx.fillText('TVA Search Area', x + 5, y + 15);
+    //   ctx.restore();
+    // }
     
-    // Draw search areas first (behind other boxes)
-    if (data.ht_match?.search_area) {
-      const { left, top, width, height } = data.ht_match.search_area;
+    // if (data.ht_match?.search_area) {
+    //   const { left, top, width, height } = data.ht_match.search_area;
       
-      // Log in the same format as other logs
-      console.log('HT Search Area (original):', { 
-        left, 
-        top, 
-        width, 
-        height,
-        type: 'search_area_ht'
-      });
+    //   // Log in the same format as other logs
+    //   console.log('HT Search Area (original):', { 
+    //     left, 
+    //     top, 
+    //     width, 
+    //     height,
+    //     type: 'search_area_ht'
+    //   });
       
-      // Log scaled coordinates in the same format
-      console.log('HT Search Area (scaled):', {
-        x: left * scaleX,
-        y: top * scaleY,
-        w: width * scaleX,
-        h: height * scaleY
-      });
-      const x = left * scaleX;
-      const y = top * scaleY;
-      const w = width * scaleX;
-      const h = height * scaleY;
+    //   // Log scaled coordinates in the same format
+    //   console.log('HT Search Area (scaled):', {
+    //     x: left * scaleX,
+    //     y: top * scaleY,
+    //     w: width * scaleX,
+    //     h: height * scaleY
+    //   });
+    //   const x = left * scaleX;
+    //   const y = top * scaleY;
+    //   const w = width * scaleX;
+    //   const h = height * scaleY;
       
-      ctx.save();
-      ctx.strokeStyle = '#b9101066';
-      ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 1;
-      ctx.fillStyle = '#b9101122';
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeRect(x, y, w, h);
+    //   ctx.save();
+    //   ctx.strokeStyle = '#b9101066';
+    //   ctx.setLineDash([5, 5]);
+    //   ctx.lineWidth = 1;
+    //   ctx.fillStyle = '#b9101122';
+    //   ctx.fillRect(x, y, w, h);
+    //   ctx.strokeRect(x, y, w, h);
+    //   ctx.strokeRect(x, y, w, h);
       
-      // Add label
-      ctx.fillStyle = '#b91010';
-      ctx.font = 'bold 11px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText('HT Search Area', x + 5, y + 15);
-      ctx.restore();
-    }
+    //   // Add label
+    //   ctx.fillStyle = '#b91010';
+    //   ctx.font = 'bold 11px Arial';
+    //   ctx.textAlign = 'left';
+    //   ctx.fillText('HT Search Area', x + 5, y + 15);
+    //   ctx.restore();
+    // }
     
-    if (data.tva_match?.search_area) {
-      const { left, top, width, height } = data.tva_match.search_area;
+    // if (data.tva_match?.search_area) {
+    //   const { left, top, width, height } = data.tva_match.search_area;
       
-      // Log in the same format as other logs
-      console.log('TVA Search Area (original):', { 
-        left, 
-        top, 
-        width, 
-        height,
-        type: 'search_area_tva'
-      });
+    //   // Log in the same format as other logs
+    //   console.log('TVA Search Area (original):', { 
+    //     left, 
+    //     top, 
+    //     width, 
+    //     height,
+    //     type: 'search_area_tva'
+    //   });
       
-      // Log scaled coordinates in the same format
-      console.log('TVA Search Area (scaled):', {
-        x: left * scaleX,
-        y: top * scaleY,
-        w: width * scaleX,
-        h: height * scaleY
-      });
-      const x = left * scaleX;
-      const y = top * scaleY;
-      const w = width * scaleX;
-      const h = height * scaleY;
+    //   // Log scaled coordinates in the same format
+    //   console.log('TVA Search Area (scaled):', {
+    //     x: left * scaleX,
+    //     y: top * scaleY,
+    //     w: width * scaleX,
+    //     h: height * scaleY
+    //   });
+    //   const x = left * scaleX;
+    //   const y = top * scaleY;
+    //   const w = width * scaleX;
+    //   const h = height * scaleY;
       
-      ctx.save();
-      ctx.strokeStyle = '#0b0ff566';
-      ctx.setLineDash([5, 5]);
-      ctx.lineWidth = 1;
-      ctx.fillStyle = '#0b0ff522';
-      ctx.fillRect(x, y, w, h);
-      ctx.strokeRect(x, y, w, h);
+    //   ctx.save();
+    //   ctx.strokeStyle = '#0b0ff566';
+    //   ctx.setLineDash([5, 5]);
+    //   ctx.lineWidth = 1;
+    //   ctx.fillStyle = '#0b0ff522';
+    //   ctx.fillRect(x, y, w, h);
+    //   ctx.strokeRect(x, y, w, h);
       
-      // Add label
-      ctx.fillStyle = '#0b0ff5';
-      ctx.font = 'bold 11px Arial';
-      ctx.textAlign = 'left';
-      ctx.fillText('TVA Search Area', x + 5, y + 15);
-      ctx.restore();
-    }
+    //   // Add label
+    //   ctx.fillStyle = '#0b0ff5';
+    //   ctx.font = 'bold 11px Arial';
+    //   ctx.textAlign = 'left';
+    //   ctx.fillText('TVA Search Area', x + 5, y + 15);
+    //   ctx.restore();
+    // }
 
     // Draw all boxes with consistent scaling (on top of search areas)
     if (data.boxDateFacturation) drawBox(data.boxDateFacturation, '#008000', 'Date', 'left');

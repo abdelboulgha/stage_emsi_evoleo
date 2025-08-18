@@ -112,8 +112,7 @@ class Facture(Base, TimestampMixin):
     montantHT: Mapped[Optional[float]] = Column(Float)
     montantTTC: Mapped[Optional[float]] = Column(Float)
     tva: Mapped[Optional[float]] = Column(Float)
-    devise: Mapped[str] = Column(String(10), default="EUR")
-    statut: Mapped[str] = Column(String(50), default="en_attente")
+   
 ```
 
 ## 🔄 Migration des Fonctions

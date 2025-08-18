@@ -2,50 +2,125 @@
   "success": true,
   "data": {},
   "corrected_data": {
-    "montantHT": 194.86,
-    "montantTVA": 34.97,
-    "montantTTC": 229.83,
-    "tauxTVA": 18,
+    "montantHT": 20895.84,
+    "montantTVA": 0,
+    "montantTTC": 20895.84,
+    "tauxTVA": 0,
+    "numFacture": "2062-018904-0046-2",
     "boxHT": {
-      "left": 1068,
-      "top": 819,
-      "width": 62,
-      "height": 22
+      "left": 812,
+      "top": 778,
+      "width": 60,
+      "height": 17
     },
     "boxTVA": {
-      "left": 1075,
-      "top": 838,
-      "width": 55,
-      "height": 25
+      "left": 964,
+      "top": 778,
+      "width": 32,
+      "height": 18
     },
-    "numFacture": "FACTURE ELECTRICITEN°2025207462845",
     "boxNumFacture": {
-      "left": 175,
-      "top": 105,
-      "width": 544,
-      "height": 31,
+      "left": 731,
+      "top": 322,
+      "width": 149,
+      "height": 16,
       "manual": false
     },
-    "dateFacturation": "2025-08-04",
-    "boxDateFacturation": {
-      "left": 895,
-      "top": 255,
-      "width": 70,
-      "height": 28
+    "boxNumFactureSearchArea": {
+      "left": 721,
+      "top": 317,
+      "width": 169,
+      "height": 26,
+      "type": "search_area"
     },
-    "template_id": "13",
-    "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
-    "fournisseur": "rademaTesthh"
+    "dateFacturation": "2024-09-12",
+    "boxDateFacturation": {
+      "left": 41,
+      "top": 678,
+      "width": 339,
+      "height": 18
+    },
+    "template_id": "2",
+    "ht_match": {
+      "search_area": {
+        "left": 759,
+        "top": 766,
+        "right": 858,
+        "bottom": 816,
+        "width": 99,
+        "height": 50
+      },
+      "keyword_box": {
+        "left": 779,
+        "top": 745,
+        "right": 838,
+        "bottom": 766,
+        "width": 59,
+        "height": 21,
+        "center_x": 808.5,
+        "center_y": 755.5,
+        "text": "total HT",
+        "score": 0.9982072114944458
+      },
+      "value_box": {
+        "left": 812,
+        "top": 778,
+        "right": 872,
+        "bottom": 795,
+        "width": 60,
+        "height": 17,
+        "center_x": 842,
+        "center_y": 786.5,
+        "text": "20895,84",
+        "score": 0.9999262690544128
+      }
+    },
+    "tva_match": {
+      "search_area": {
+        "left": 897,
+        "top": 758,
+        "right": 976,
+        "bottom": 808,
+        "width": 79,
+        "height": 50
+      },
+      "keyword_box": {
+        "left": 917,
+        "top": 736,
+        "right": 956,
+        "bottom": 758,
+        "width": 39,
+        "height": 22,
+        "center_x": 936.5,
+        "center_y": 747,
+        "text": "TVA",
+        "score": 0.9998160004615784
+      },
+      "value_box": {
+        "left": 964,
+        "top": 778,
+        "right": 996,
+        "bottom": 796,
+        "width": 32,
+        "height": 18,
+        "center_x": 980,
+        "center_y": 787,
+        "text": "0,c0",
+        "score": 0.8716167211532593
+      }
+    },
+    "numeroFacture": "2062-018904-0046-2",
+    "fournisseur": "fa2"
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-13 20:23:25.145917",
+  "timestamp": "2025-08-18 12:24:19.387933",
   "fields": {
-    "fournisseur": "rademaTesthh",
-    "dateFacturation": "2025-08-04",
-    "numeroFacture": "FACTURE ELECTRICITEN°2025207462845",
-    "tauxTVA": "18",
-    "montantHT": 194.86,
-    "montantTVA": 34.97,
-    "montantTTC": 229.83
+    "fournisseur": "fa2",
+    "dateFacturation": "2024-09-12",
+    "numeroFacture": "2062-018904-0046-2",
+    "tauxTVA": "0",
+    "montantHT": 20895.84,
+    "montantTVA": 0,
+    "montantTTC": 20895.84
   }
 }

@@ -1,7 +1,7 @@
-Date export: 2025-08-13 20:23:25
-Fournisseur: rademaTesthh
-Numéro Facture: FACTURE ELECTRICITEN°2025207462845
-Taux TVA: 18
-Montant HT: 194.86
-Montant TVA: 34.97
-Montant TTC: 229.83
+Date export: 2025-08-18 12:24:19
+Fournisseur: fa2
+Numéro Facture: 2062-018904-0046-2
+Taux TVA: 0
+Montant HT: 20895.84
+Montant TVA: 0
+Montant TTC: 20895.84

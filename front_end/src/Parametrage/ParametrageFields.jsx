@@ -25,6 +25,12 @@ const ParametrageFields = ({
       description: "Saisissez le nom du fournisseur"
     },
     { 
+      key: "serial", 
+      label: "Numéro de Série", 
+      type: "manual",
+      description: "Entrez un numéro de série à 9 chiffres"
+    },
+    { 
       key: "numeroFacture", 
       label: "Numéro de Facture", 
       type: "ocr",
@@ -46,6 +52,22 @@ const ParametrageFields = ({
         fournisseur: {
           ...prev.fieldMappings.fournisseur,
           manualValue: value,
+        },
+      },
+    }));
+  };
+
+  const handleSerialChange = (value) => {
+    // Only allow numbers and limit to 9 digits
+    const numericValue = value.replace(/\D/g, '').slice(0, 9);
+    setDataPrepState((prev) => ({
+      ...prev,
+      fieldMappings: {
+        ...prev.fieldMappings,
+        serial: {
+          ...prev.fieldMappings.serial,
+          manualValue: numericValue,
+          isValid: numericValue.length === 9 // Mark as valid only if exactly 9 digits
         },
       },
     }));
@@ -84,13 +106,39 @@ const ParametrageFields = ({
 
             {/* Fournisseur input field */}
             {field.key === "fournisseur" && (
-              <input
-                type="text"
-                value={dataPrepState.fieldMappings.fournisseur?.manualValue || ""}
-                onChange={(e) => handleFournisseurChange(e.target.value)}
-                placeholder="Saisissez le nom du fournisseur"
-                className="parametrage-input-field"
-              />
+              <div className="input-field-container">
+                <input
+                  type="text"
+                  value={dataPrepState.fieldMappings.fournisseur?.manualValue || ""}
+                  onChange={(e) => handleFournisseurChange(e.target.value)}
+                  placeholder="Saisissez le nom du fournisseur"
+                  className={`parametrage-input-field ${
+                    dataPrepState.fieldMappings.fournisseur?.manualValue?.trim() ? 'valid' : 'invalid'
+                  }`}
+                />
+                {!dataPrepState.fieldMappings.fournisseur?.manualValue?.trim() && (
+                  <div className="input-error-message">Ce champ est requis</div>
+                )}
+              </div>
+            )}
+
+            {/* Serial number input field */}
+            {field.key === "serial" && (
+              <div className="input-field-container">
+                <input
+                  type="text"
+                  value={dataPrepState.fieldMappings.serial?.manualValue || ""}
+                  onChange={(e) => handleSerialChange(e.target.value)}
+                  placeholder="Entrez un numéro de série à 9 chiffres"
+                  className={`parametrage-input-field ${
+                    dataPrepState.fieldMappings.serial?.manualValue?.length === 9 ? 'valid' : 'invalid'
+                  }`}
+                  maxLength={9}
+                />
+                {dataPrepState.fieldMappings.serial?.manualValue && dataPrepState.fieldMappings.serial.manualValue.length !== 9 && (
+                  <div className="input-error-message">Le numéro de série doit comporter exactement 9 chiffres</div>
+                )}
+              </div>
             )}
 
             {/* Display extracted value for OCR and date fields */}
@@ -127,8 +175,19 @@ const ParametrageFields = ({
       <div className="parametrage-save-section">
         <button
           onClick={saveMappings}
-          disabled={isLoading || !dataPrepState.uploadedImage}
+          disabled={
+            isLoading || 
+            !dataPrepState.uploadedImage ||
+            !dataPrepState.fieldMappings.fournisseur?.manualValue?.trim() ||
+            dataPrepState.fieldMappings.serial?.manualValue?.length !== 9
+          }
           className="parametrage-save-button"
+          title={
+            !dataPrepState.uploadedImage ? "Veuillez d'abord télécharger une image" :
+            !dataPrepState.fieldMappings.fournisseur?.manualValue?.trim() ? "Le champ Fournisseur est requis" :
+            dataPrepState.fieldMappings.serial?.manualValue?.length !== 9 ? "Le numéro de série doit comporter 9 chiffres" :
+            "Enregistrer les mappings"
+          }
         >
           {isLoading ? (
             <>
@@ -149,20 +208,24 @@ const ParametrageFields = ({
         <div className="parametrage-progress-header">
           <span>Progression</span>
           <span>
-            {Object.keys(dataPrepState.fieldMappings).filter(key => 
-              dataPrepState.fieldMappings[key] && 
-              (key === "fournisseur" ? dataPrepState.fieldMappings[key].manualValue : true)
-            ).length} / {FIELDS.length}
+            {Object.keys(dataPrepState.fieldMappings).filter(key => {
+              if (!dataPrepState.fieldMappings[key]) return false;
+              if (key === "fournisseur") return !!dataPrepState.fieldMappings[key].manualValue;
+              if (key === "serial") return dataPrepState.fieldMappings[key]?.manualValue?.length === 9;
+              return true;
+            }).length} / {FIELDS.length}
           </span>
         </div>
         <div className="parametrage-progress-bar">
           <div
             className="parametrage-progress-fill"
             style={{
-              width: `${(Object.keys(dataPrepState.fieldMappings).filter(key => 
-                dataPrepState.fieldMappings[key] && 
-                (key === "fournisseur" ? dataPrepState.fieldMappings[key].manualValue : true)
-              ).length / FIELDS.length) * 100}%`,
+              width: `${(Object.keys(dataPrepState.fieldMappings).filter(key => {
+                if (!dataPrepState.fieldMappings[key]) return false;
+                if (key === "fournisseur") return !!dataPrepState.fieldMappings[key].manualValue;
+                if (key === "serial") return dataPrepState.fieldMappings[key]?.manualValue?.length === 9;
+                return true;
+              }).length / FIELDS.length) * 100}%`
             }}
           />
         </div>

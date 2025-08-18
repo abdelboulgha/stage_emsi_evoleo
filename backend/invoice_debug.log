@@ -642,3 +642,332 @@ UnboundLocalError: cannot access local variable 'num_facture_time' where it is n
 2025-08-15 21:14:52,391 INFO Database tables created successfully
 2025-08-15 21:14:52,395 INFO Default data inserted successfully
 2025-08-15 21:14:52,396 INFO Database initialization completed successfully
+2025-08-18 00:23:43,678 INFO Database tables created successfully
+2025-08-18 00:23:43,692 INFO Default data inserted successfully
+2025-08-18 00:23:43,692 INFO Database initialization completed successfully
+2025-08-18 00:24:08,208 ERROR Erreur lors de l'inscription: 'date_creation'
+2025-08-18 00:24:10,697 ERROR Erreur lors de la connexion: 'actif'
+2025-08-18 00:24:54,415 ERROR Erreur lors de l'inscription: 'date_creation'
+2025-08-18 00:25:00,803 ERROR Erreur lors de la connexion: 'actif'
+2025-08-18 00:25:09,337 ERROR Erreur lors de la connexion: 'actif'
+2025-08-18 00:26:08,212 INFO Database tables created successfully
+2025-08-18 00:26:08,215 INFO Default data inserted successfully
+2025-08-18 00:26:08,216 INFO Database initialization completed successfully
+2025-08-18 00:26:31,888 INFO Database tables created successfully
+2025-08-18 00:26:31,890 INFO Default data inserted successfully
+2025-08-18 00:26:31,890 INFO Database initialization completed successfully
+2025-08-18 00:43:49,390 INFO Database tables created successfully
+2025-08-18 00:43:49,393 INFO Admin user created
+2025-08-18 00:43:49,400 INFO Default field names inserted
+2025-08-18 00:43:49,401 INFO Default data inserted successfully
+2025-08-18 00:43:49,402 INFO Database initialization completed successfully
+2025-08-18 00:44:53,704 ERROR Erreur lors de l'inscription: 1 validation error for UserResponse
+date_creation
+  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.11/v/datetime_type
+2025-08-18 00:51:50,994 INFO Database tables created successfully
+2025-08-18 00:51:51,048 INFO Admin user created
+2025-08-18 00:51:51,062 INFO Default field names inserted
+2025-08-18 00:51:51,073 INFO Default data inserted successfully
+2025-08-18 00:51:51,074 INFO Database initialization completed successfully
+2025-08-18 00:57:12,155 INFO Database tables created successfully
+2025-08-18 00:57:12,203 INFO Admin user created
+2025-08-18 00:57:12,217 INFO Default field names inserted
+2025-08-18 00:57:12,230 INFO Default data inserted successfully
+2025-08-18 00:57:12,230 INFO Database initialization completed successfully
+2025-08-18 00:59:10,451 INFO Database tables created successfully
+2025-08-18 00:59:10,497 INFO Default data inserted successfully
+2025-08-18 00:59:10,497 INFO Database initialization completed successfully
+2025-08-18 01:04:29,328 INFO Database tables created successfully
+2025-08-18 01:04:29,366 INFO Default data inserted successfully
+2025-08-18 01:04:29,366 INFO Database initialization completed successfully
+2025-08-18 01:14:36,151 INFO Database tables created successfully
+2025-08-18 01:14:36,199 INFO Default data inserted successfully
+2025-08-18 01:14:36,199 INFO Database initialization completed successfully
+2025-08-18 01:15:25,802 INFO Database tables created successfully
+2025-08-18 01:15:25,879 INFO Default data inserted successfully
+2025-08-18 01:15:25,879 INFO Database initialization completed successfully
+2025-08-18 01:17:55,327 INFO Database tables created successfully
+2025-08-18 01:17:55,365 INFO Default data inserted successfully
+2025-08-18 01:17:55,365 INFO Database initialization completed successfully
+2025-08-18 01:18:38,927 INFO Database tables created successfully
+2025-08-18 01:18:38,980 INFO Default data inserted successfully
+2025-08-18 01:18:38,981 INFO Database initialization completed successfully
+2025-08-18 01:19:51,501 INFO Database tables created successfully
+2025-08-18 01:19:51,540 INFO Default data inserted successfully
+2025-08-18 01:19:51,540 INFO Database initialization completed successfully
+2025-08-18 01:20:51,265 INFO Database tables created successfully
+2025-08-18 01:20:51,306 INFO Admin user created
+2025-08-18 01:20:51,320 INFO Default field names inserted
+2025-08-18 01:20:51,333 INFO Default data inserted successfully
+2025-08-18 01:20:51,334 INFO Database initialization completed successfully
+2025-08-18 01:21:29,855 INFO Database tables created successfully
+2025-08-18 01:21:29,917 INFO Default data inserted successfully
+2025-08-18 01:21:29,917 INFO Database initialization completed successfully
+2025-08-18 01:24:21,217 ERROR Unexpected error saving mapping: (asyncmy.errors.OperationalError) (1054, "Unknown column 'templates.fournisseur' in 'field list'")
+[SQL: SELECT templates.id, templates.name, templates.serial, templates.fournisseur, templates.created_by, templates.created_at, templates.updated_at 
+FROM templates 
+WHERE templates.name = %s AND templates.created_by = %s]
+[parameters: ('capi', 1)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+Traceback (most recent call last):
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\base.py", line 1961, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\default.py", line 944, in do_execute
+    cursor.execute(statement, parameters)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\connectors\asyncio.py", line 192, in execute
+    self._adapt_connection._handle_exception(error)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\dialects\mysql\asyncmy.py", line 88, in _handle_exception
+    raise error
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\connectors\asyncio.py", line 190, in execute
+    return self.await_(self._execute_async(operation, parameters))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\connectors\asyncio.py", line 213, in _execute_async
+    result = await self._cursor.execute(operation, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncmy\\cursors.pyx", line 179, in execute
+  File "asyncmy\\cursors.pyx", line 364, in _query
+  File "asyncmy\\connection.pyx", line 496, in query
+  File "asyncmy\\connection.pyx", line 684, in _read_query_result
+  File "asyncmy\\connection.pyx", line 1071, in read
+  File "asyncmy\\connection.pyx", line 646, in read_packet
+  File "asyncmy\\protocol.pyx", line 190, in asyncmy.protocol.MysqlPacket.raise_for_error
+  File "asyncmy\\protocol.pyx", line 194, in asyncmy.protocol.MysqlPacket.raise_for_error
+  File "asyncmy\\errors.pyx", line 128, in asyncmy.errors.raise_mysql_exception
+  File "asyncmy\\errors.pyx", line 137, in asyncmy.errors.raise_mysql_exception
+asyncmy.errors.OperationalError: (1054, "Unknown column 'templates.fournisseur' in 'field list'")
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 464, in save_field_mapping
+    success = await template_service.save_mapping(
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\services\template_service.py", line 111, in save_mapping
+    raise e
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\services\template_service.py", line 34, in save_mapping
+    template = await self.template_repo.get_by_name_and_user(template_name, current_user_id)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\database\repositories.py", line 49, in get_by_name_and_user
+    result = await self.session.execute(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\ext\asyncio\session.py", line 463, in execute
+    result = await greenlet_spawn(
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 201, in greenlet_spawn
+    result = context.throw(*sys.exc_info())
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\orm\session.py", line 2365, in execute
+    return self._execute_internal(
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\orm\session.py", line 2251, in _execute_internal
+    result: Result[Any] = compile_state_cls.orm_execute_statement(
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\orm\context.py", line 306, in orm_execute_statement
+    result = conn.execute(
+             ^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\base.py", line 1413, in execute
+    return meth(
+           ^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\sql\elements.py", line 526, in _execute_on_connection
+    return connection._execute_clauseelement(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\base.py", line 1635, in _execute_clauseelement
+    ret = self._execute_context(
+          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\base.py", line 1840, in _execute_context
+    return self._exec_single_context(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\base.py", line 1980, in _exec_single_context
+    self._handle_dbapi_exception(
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\base.py", line 2349, in _handle_dbapi_exception
+    raise sqlalchemy_exception.with_traceback(exc_info[2]) from e
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\base.py", line 1961, in _exec_single_context
+    self.dialect.do_execute(
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\engine\default.py", line 944, in do_execute
+    cursor.execute(statement, parameters)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\connectors\asyncio.py", line 192, in execute
+    self._adapt_connection._handle_exception(error)
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\dialects\mysql\asyncmy.py", line 88, in _handle_exception
+    raise error
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\connectors\asyncio.py", line 190, in execute
+    return self.await_(self._execute_async(operation, parameters))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 132, in await_only
+    return current.parent.switch(awaitable)  # type: ignore[no-any-return,attr-defined] # noqa: E501
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\util\_concurrency_py3k.py", line 196, in greenlet_spawn
+    value = await result
+            ^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\sqlalchemy\connectors\asyncio.py", line 213, in _execute_async
+    result = await self._cursor.execute(operation, parameters)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "asyncmy\\cursors.pyx", line 179, in execute
+  File "asyncmy\\cursors.pyx", line 364, in _query
+  File "asyncmy\\connection.pyx", line 496, in query
+  File "asyncmy\\connection.pyx", line 684, in _read_query_result
+  File "asyncmy\\connection.pyx", line 1071, in read
+  File "asyncmy\\connection.pyx", line 646, in read_packet
+  File "asyncmy\\protocol.pyx", line 190, in asyncmy.protocol.MysqlPacket.raise_for_error
+  File "asyncmy\\protocol.pyx", line 194, in asyncmy.protocol.MysqlPacket.raise_for_error
+  File "asyncmy\\errors.pyx", line 128, in asyncmy.errors.raise_mysql_exception
+  File "asyncmy\\errors.pyx", line 137, in asyncmy.errors.raise_mysql_exception
+sqlalchemy.exc.OperationalError: (asyncmy.errors.OperationalError) (1054, "Unknown column 'templates.fournisseur' in 'field list'")
+[SQL: SELECT templates.id, templates.name, templates.serial, templates.fournisseur, templates.created_by, templates.created_at, templates.updated_at 
+FROM templates 
+WHERE templates.name = %s AND templates.created_by = %s]
+[parameters: ('capi', 1)]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-18 01:25:19,576 INFO Database tables created successfully
+2025-08-18 01:25:19,610 INFO Database schema updated successfully
+2025-08-18 01:25:19,656 INFO Default data inserted successfully
+2025-08-18 01:25:19,657 INFO Database initialization completed successfully
+2025-08-18 01:25:46,331 INFO Database tables created successfully
+2025-08-18 01:25:46,412 INFO Default data inserted successfully
+2025-08-18 01:25:46,412 INFO Database initialization completed successfully
+2025-08-18 01:33:35,183 ERROR Unexpected error saving mapping: 'dict' object has no attribute 'template_id'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 474, in save_field_mapping
+    "template_id": request.template_id,
+                   ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'template_id'
+2025-08-18 01:34:02,539 INFO Database tables created successfully
+2025-08-18 01:34:02,614 INFO Default data inserted successfully
+2025-08-18 01:34:02,614 INFO Database initialization completed successfully
+2025-08-18 01:36:59,384 INFO Initializing database...
+2025-08-18 01:36:59,440 INFO Database tables created successfully
+2025-08-18 01:36:59,497 INFO Default data inserted successfully
+2025-08-18 01:36:59,497 INFO Database initialization complete
+2025-08-18 01:49:15,705 ERROR Unexpected error saving mapping: 'dict' object has no attribute 'template_id'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 474, in save_field_mapping
+    "template_id": request.template_id,
+                   ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'template_id'
+2025-08-18 01:49:31,056 ERROR Unexpected error saving mapping: 'dict' object has no attribute 'template_id'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 474, in save_field_mapping
+    "template_id": request.template_id,
+                   ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'dict' object has no attribute 'template_id'
+2025-08-18 01:51:44,397 INFO Initializing database...
+2025-08-18 01:51:44,453 INFO Database tables created successfully
+2025-08-18 01:51:44,509 INFO Default data inserted successfully
+2025-08-18 01:51:44,509 INFO Database initialization complete
+2025-08-18 01:52:11,886 INFO Initializing database...
+2025-08-18 01:52:11,937 INFO Database tables created successfully
+2025-08-18 01:52:11,990 INFO Default data inserted successfully
+2025-08-18 01:52:11,990 INFO Database initialization complete
+2025-08-18 01:52:34,744 INFO Initializing database...
+2025-08-18 01:52:34,795 INFO Database tables created successfully
+2025-08-18 01:52:34,843 INFO Default data inserted successfully
+2025-08-18 01:52:34,844 INFO Database initialization complete
+2025-08-18 12:13:12,441 INFO Initializing database...
+2025-08-18 12:13:12,529 INFO Database tables created successfully
+2025-08-18 12:13:12,627 INFO Default data inserted successfully
+2025-08-18 12:13:12,627 INFO Database initialization complete
+2025-08-18 12:15:31,111 INFO Initializing database...
+2025-08-18 12:15:31,155 INFO Database tables created successfully
+2025-08-18 12:15:31,240 INFO Default data inserted successfully
+2025-08-18 12:15:31,240 INFO Database initialization complete
+2025-08-18 12:22:34,189 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1650, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-18 12:23:01,234 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1650, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-18 12:24:19,399 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 18 bytes in 15 byte field',)
+2025-08-18 12:24:19,416 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-18 12:24:19,416 WARNING Impossible de créer le fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-18 12:32:56,790 INFO Initializing database...
+2025-08-18 12:32:56,873 INFO Database tables created successfully
+2025-08-18 12:32:56,947 INFO Default data inserted successfully
+2025-08-18 12:32:56,947 INFO Database initialization complete
+2025-08-18 13:06:47,365 INFO Initializing database...
+2025-08-18 13:06:47,442 INFO Database tables created successfully
+2025-08-18 13:06:47,508 INFO Default data inserted successfully
+2025-08-18 13:06:47,508 INFO Database initialization complete
+2025-08-18 13:07:42,667 INFO Initializing database...
+2025-08-18 13:07:42,762 INFO Database tables created successfully
+2025-08-18 13:07:42,845 INFO Default data inserted successfully
+2025-08-18 13:07:42,846 INFO Database initialization complete
+2025-08-18 13:08:33,085 INFO Initializing database...
+2025-08-18 13:08:33,177 INFO Database tables created successfully
+2025-08-18 13:08:33,257 INFO Default data inserted successfully
+2025-08-18 13:08:33,257 INFO Database initialization complete
+2025-08-18 13:10:49,455 INFO Initializing database...
+2025-08-18 13:10:49,564 INFO Database tables created successfully
+2025-08-18 13:10:49,656 INFO Default data inserted successfully
+2025-08-18 13:10:49,656 INFO Database initialization complete
+2025-08-18 13:11:22,266 INFO Initializing database...
+2025-08-18 13:11:22,342 INFO Database tables created successfully
+2025-08-18 13:11:22,416 INFO Default data inserted successfully
+2025-08-18 13:11:22,417 INFO Database initialization complete
+2025-08-18 13:12:05,527 INFO Initializing database...
+2025-08-18 13:12:05,583 INFO Database tables created successfully
+2025-08-18 13:12:05,646 INFO Default data inserted successfully
+2025-08-18 13:12:05,646 INFO Database initialization complete
+2025-08-18 13:15:59,607 INFO Initializing database...
+2025-08-18 13:15:59,678 INFO Database tables created successfully
+2025-08-18 13:15:59,752 INFO Default data inserted successfully
+2025-08-18 13:15:59,753 INFO Database initialization complete
+2025-08-18 13:19:45,058 INFO Initializing database...
+2025-08-18 13:19:45,114 INFO Database tables created successfully
+2025-08-18 13:19:45,174 INFO Default data inserted successfully
+2025-08-18 13:19:45,174 INFO Database initialization complete
+2025-08-18 13:21:07,806 INFO Initializing database...
+2025-08-18 13:21:07,863 INFO Database tables created successfully
+2025-08-18 13:21:07,946 INFO Default data inserted successfully
+2025-08-18 13:21:07,947 INFO Database initialization complete
+2025-08-18 13:21:48,724 INFO Initializing database...
+2025-08-18 13:21:48,792 INFO Database tables created successfully
+2025-08-18 13:21:48,856 INFO Default data inserted successfully
+2025-08-18 13:21:48,857 INFO Database initialization complete
+2025-08-18 13:34:14,973 INFO Initializing database...
+2025-08-18 13:34:15,128 INFO Database tables created successfully
+2025-08-18 13:34:15,199 INFO Default data inserted successfully
+2025-08-18 13:34:15,199 INFO Database initialization complete
+2025-08-18 13:34:46,947 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1650, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-18 13:34:54,156 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1650, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-18 13:41:24,222 INFO Initializing database...
+2025-08-18 13:41:24,263 INFO Database tables created successfully
+2025-08-18 13:41:24,305 INFO Default data inserted successfully
+2025-08-18 13:41:24,305 INFO Database initialization complete
+2025-08-18 13:43:22,367 INFO Initializing database...
+2025-08-18 13:43:22,441 INFO Database tables created successfully
+2025-08-18 13:43:22,505 INFO Default data inserted successfully
+2025-08-18 13:43:22,505 INFO Database initialization complete
+2025-08-18 13:44:34,725 INFO Initializing database...
+2025-08-18 13:44:34,788 INFO Database tables created successfully
+2025-08-18 13:44:34,839 INFO Default data inserted successfully
+2025-08-18 13:44:34,839 INFO Database initialization complete
+2025-08-18 13:45:10,904 INFO Initializing database...
+2025-08-18 13:45:10,979 INFO Database tables created successfully
+2025-08-18 13:45:11,064 INFO Default data inserted successfully
+2025-08-18 13:45:11,064 INFO Database initialization complete

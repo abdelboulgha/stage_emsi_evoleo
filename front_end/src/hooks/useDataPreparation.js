@@ -170,12 +170,20 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
       return;
     }
 
-    const field_map = {};
-    ['numeroFacture', 'dateFacturation'].forEach(field => {
-      if (dataPrepState.fieldMappings[field]) {
-        field_map[field] = dataPrepState.fieldMappings[field];
+    // Create a copy of fieldMappings to avoid mutating the original
+    const field_map = { ...dataPrepState.fieldMappings };
+    
+    // Handle serial number separately if it exists
+    if (field_map.serial) {
+      const serialValue = field_map.serial.manualValue || '';
+      if (serialValue.length === 9) {
+        // Keep the serial in the format expected by the backend
+        field_map.serial = { manualValue: serialValue };
+      } else {
+        // If serial is not 9 digits, remove it from the mappings
+        delete field_map.serial;
       }
-    });
+    }
 
     if (!field_map.numeroFacture && !field_map.dateFacturation) {
       showNotification("Veuillez mapper au moins le numéro de facture ou la date de facturation", "error");
