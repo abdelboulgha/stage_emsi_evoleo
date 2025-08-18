@@ -52,7 +52,6 @@ class Template(Base, TimestampMixin):
     id: Mapped[int] = Column(Integer, primary_key=True, index=True)
     name: Mapped[str] = Column(String(255), nullable=False)
     serial: Mapped[str] = Column(String(9), unique=True, nullable=True)
-    fournisseur: Mapped[Optional[str]] = Column(String(255), nullable=True)
     created_by: Mapped[int] = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
     
     # Relationships

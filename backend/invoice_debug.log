@@ -971,3 +971,69 @@ UnboundLocalError: cannot access local variable 'num_facture_time' where it is n
 2025-08-18 13:45:10,979 INFO Database tables created successfully
 2025-08-18 13:45:11,064 INFO Default data inserted successfully
 2025-08-18 13:45:11,064 INFO Database initialization complete
+2025-08-18 13:51:43,484 INFO Initializing database...
+2025-08-18 13:51:43,528 INFO Database tables created successfully
+2025-08-18 13:51:43,569 INFO Default data inserted successfully
+2025-08-18 13:51:43,569 INFO Database initialization complete
+2025-08-18 14:31:41,370 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-18 14:31:41,379 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-18 14:31:41,380 WARNING Impossible de créer le fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-18 15:44:13,884 INFO Initializing database...
+2025-08-18 15:44:13,943 INFO Database tables created successfully
+2025-08-18 15:44:14,017 INFO Default data inserted successfully
+2025-08-18 15:44:14,018 INFO Database initialization complete
+2025-08-18 16:17:07,676 INFO Initializing database...
+2025-08-18 16:17:07,721 INFO Database tables created successfully
+2025-08-18 16:17:07,770 INFO Default data inserted successfully
+2025-08-18 16:17:07,770 INFO Database initialization complete
+2025-08-18 16:18:30,686 INFO Initializing database...
+2025-08-18 16:18:30,760 INFO Database tables created successfully
+2025-08-18 16:18:30,824 INFO Default data inserted successfully
+2025-08-18 16:18:30,824 INFO Database initialization complete
+2025-08-18 16:19:49,949 INFO Initializing database...
+2025-08-18 16:19:49,992 INFO Database tables created successfully
+2025-08-18 16:19:50,041 INFO Default data inserted successfully
+2025-08-18 16:19:50,041 INFO Database initialization complete
+2025-08-18 16:22:02,522 INFO Initializing database...
+2025-08-18 16:22:02,785 INFO Database tables created successfully
+2025-08-18 16:22:02,805 ERROR Error updating database schema: (pymysql.err.OperationalError) (1060, "Duplicate column name 'created_at'")
+[SQL: 
+                    ALTER TABLE templates
+                    ADD COLUMN fournisseur VARCHAR(255) NULL AFTER serial,
+                    ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    ]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-18 16:22:02,805 ERROR Error initializing database: (pymysql.err.OperationalError) (1060, "Duplicate column name 'created_at'")
+[SQL: 
+                    ALTER TABLE templates
+                    ADD COLUMN fournisseur VARCHAR(255) NULL AFTER serial,
+                    ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                    ]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-18 16:24:07,130 INFO Initializing database...
+2025-08-18 16:24:07,188 INFO Database tables created successfully
+2025-08-18 16:24:07,230 INFO Admin user created
+2025-08-18 16:24:07,240 INFO Default field names inserted
+2025-08-18 16:24:07,251 INFO Default data inserted successfully
+2025-08-18 16:24:07,252 INFO Database initialization complete
+2025-08-18 16:34:48,952 INFO Initializing database...
+2025-08-18 16:34:48,997 INFO Database tables created successfully
+2025-08-18 16:34:49,048 INFO Default data inserted successfully
+2025-08-18 16:34:49,049 INFO Database initialization complete
+2025-08-18 16:35:06,170 INFO Initializing database...
+2025-08-18 16:35:06,212 INFO Database tables created successfully
+2025-08-18 16:35:06,252 INFO Default data inserted successfully
+2025-08-18 16:35:06,252 INFO Database initialization complete
+2025-08-18 17:11:09,126 ERROR Error in ocr_preview: cannot access local variable 'num_facture_time' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1663, in ocr_preview
+    print(f"\U0001f4c4 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'num_facture_time' where it is not associated with a value
+
+2025-08-18 18:47:37,725 INFO Initializing database...
+2025-08-18 18:47:37,981 INFO Database tables created successfully
+2025-08-18 18:47:38,155 INFO Default data inserted successfully
+2025-08-18 18:47:38,155 INFO Database initialization complete

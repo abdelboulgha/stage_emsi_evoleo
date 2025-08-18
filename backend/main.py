@@ -385,7 +385,7 @@ async def save_mapping(
     try:
         template_service = TemplateService(db)
         success = await template_service.save_mapping(
-            template_name=request.template_id,  # template_id is actually the template name
+            template_name=request.template_id,  
             field_map=request.field_map, 
             current_user_id=current_user["id"]
         )
@@ -696,7 +696,7 @@ async def ocr_preview(
                     'score': float(score)
                 })
 
-        print(f"Detected {len(detected_boxes)} boxes after filtering (conf >= {MIN_CONFIDENCE})")
+        #print(f"Detected {len(detected_boxes)} boxes after filtering (conf >= {MIN_CONFIDENCE})")
 
         # -------------------------
         # Helpers: number & keyword
@@ -1023,7 +1023,7 @@ async def ocr_preview(
                 # If we have any candidates from TOTAL keywords, return the highest scoring one
                 total_candidates = [c for c in candidates if c['is_total_keyword']]
                 if total_candidates:
-                    print(f"\n🏆 SELECTED FROM TOTAL KEYWORDS: '{total_candidates[0]['value_text']}' (Score: {total_candidates[0]['score']:.6f})")
+                    #print(f"\n🏆 SELECTED FROM TOTAL KEYWORDS: '{total_candidates[0]['value_text']}' (Score: {total_candidates[0]['score']:.6f})")
                     return total_candidates[0]
                     
                 # Otherwise return the highest scoring candidate overall
@@ -1033,48 +1033,48 @@ async def ocr_preview(
                 return None
             # First, try horizontal search for TOTAL keywords
             if total_kw:
-                print("\nTrying horizontal search for TOTAL keywords...")
+                #print("\nTrying horizontal search for TOTAL keywords...")
                 result = process_keyword_set(total_kw, 'horizontal')
                 if result:
-                    print(f"Found match from TOTAL keyword: {result['value_text']}")
+                   # print(f"Found match from TOTAL keyword: {result['value_text']}")
                     return result
             
             # Then try horizontal search for other keywords
             if other_kw:
-                print("\nTrying horizontal search for other keywords...")
+              #  print("\nTrying horizontal search for other keywords...")
                 result = process_keyword_set(other_kw, 'horizontal')
                 if result:
-                    print(f"Found match from other keyword: {result['value_text']}")
+                  #  print(f"Found match from other keyword: {result['value_text']}")
                     return result
             
             # If no horizontal matches found, try vertical search as fallback
-            print("\nNo horizontal matches found, trying vertical search...")
+           # print("\nNo horizontal matches found, trying vertical search...")
             
             # First try vertical search with TOTAL keywords
             if total_kw:
                 print("Trying vertical search for TOTAL keywords...")
                 result = process_keyword_set(total_kw, 'vertical')
                 if result:
-                    print(f"Found vertical match from TOTAL keyword: {result['value_text']}")
+                   # print(f"Found vertical match from TOTAL keyword: {result['value_text']}")
                     return result
             
             # Finally, try vertical search with other keywords
             if other_kw:
-                print("Trying vertical search for other keywords...")
+               # print("Trying vertical search for other keywords...")
                 result = process_keyword_set(other_kw, 'vertical')
                 if result:
-                    print(f"Found vertical match from other keyword: {result['value_text']}")
+                   # print(f"Found vertical match from other keyword: {result['value_text']}")
                     return result
             
-            print("No matching values found in any search direction")
+           # print("No matching values found in any search direction")
             return None
 
         # -------------------------
         # Extract HT
         # -------------------------
-        print("\n" + "="*60)
-        print("🔍 SEARCHING FOR HT (HORS TAXES)")
-        print("="*60)
+       # print("\n" + "="*60)
+       # print("🔍 SEARCHING FOR HT (HORS TAXES)")
+       # print("="*60)
         import time
         start_time = time.time()
         ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
@@ -1089,9 +1089,9 @@ async def ocr_preview(
         # -------------------------
         # Extract TVA
         # -------------------------
-        print("\n" + "="*60)
-        print("🔍 SEARCHING FOR TVA")
-        print("="*60)
+        #print("\n" + "="*60)
+       #print("🔍 SEARCHING FOR TVA")
+       # print("="*60)
         start_time = time.time()
         tva_match = find_value_for_field(is_valid_tva_keyword, is_tva=True, field_name="TVA")
         tva_time = time.time() - start_time
@@ -1104,12 +1104,12 @@ async def ocr_preview(
         # -------------------------
         # TTC and taux TVA
         # -------------------------
-        print("\n" + "="*60)
-        print("🧮 CALCULATING TTC AND TVA RATE")
-        print("="*60)
+        # print("\n" + "="*60)
+        # print("🧮 CALCULATING TTC AND TVA RATE")
+        # print("="*60)
         
         ttc_extracted = round(ht_extracted + tva_extracted, 2)
-        print(f"HT: {ht_extracted:.2f} + TVA: {tva_extracted:.2f} = TTC: {ttc_extracted:.2f}")
+       # print(f"HT: {ht_extracted:.2f} + TVA: {tva_extracted:.2f} = TTC: {ttc_extracted:.2f}")
         
         if ht_extracted != 0:
             raw_taux = (tva_extracted * 100.0) / ht_extracted
@@ -1118,7 +1118,7 @@ async def ocr_preview(
             print(f"Raw TVA rate: {raw_taux:.2f}% -> Rounded to: {taux_tva}%")
         else:
             taux_tva = 0
-            print("HT is zero, cannot calculate TVA rate")
+          #  print("HT is zero, cannot calculate TVA rate")
 
         # -------------------------
         # numFacture extraction (left as-is, minimally adapted to detected_boxes)
@@ -1159,9 +1159,9 @@ async def ocr_preview(
                         pattern_bonus = 2 if re.search(r'(n[°º]|no|num|ref|facture)\s*\d', text.lower()) else 0
                         return digit_count + max_consecutive + pattern_bonus
 
-                    print("\n" + "="*60)
-                    print("🔍 SEARCHING FOR INVOICE NUMBER")
-                    print("="*60)
+                   # print("\n" + "="*60)
+                   # print("🔍 SEARCHING FOR INVOICE NUMBER")
+                   # print("="*60)
                     numFacture_extraction_start = time.time()
                     # Define expansion amounts (in pixels)
                     expand_x = 10  # 10px horizontal expansion
@@ -1173,7 +1173,7 @@ async def ocr_preview(
                     mapped_top = float(mapping['top']) - expand_y
                     mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
                     
-                    print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, "
+                    # print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, "
                           f"right={mapped_right:.1f}, bottom={mapped_bottom:.1f}")
                     
                     def boxes_intersect(box1, box2):
@@ -1304,10 +1304,10 @@ async def ocr_preview(
                         box_center_x = (current_box['left'] + current_box['right']) / 2
                         box_center_y = (current_box['top'] + current_box['bottom']) / 2
                         
-                        print(f"\nText: '{text}'")
-                        print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
-                        print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
-                        print(f"  Valid format: {'✅' if is_valid else '❌'}")
+                      #  print(f"\nText: '{text}'")
+                      #  print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
+                      #  print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
+                      #  print(f"  Valid format: {'✅' if is_valid else '❌'}")
                         if overlap_ratio > 0:
                             print(f"  Overlap: {overlap_ratio*100:.1f}% | Score: {distance:.10f}")
                         else:
@@ -1328,20 +1328,20 @@ async def ocr_preview(
                         candidates.sort(key=lambda x: -x['distance'])  # Negative for descending sort
                         best_match = candidates[0]
                         
-                        print("\n" + "="*60)
-                        print("🏆 CANDIDATE SELECTION SUMMARY")
-                        print("="*60)
-                        print(f"Found {len(candidates)} valid candidates")
-                        print("\nTop 3 candidates:")
+                     #   print("\n" + "="*60)
+                     #   print("🏆 CANDIDATE SELECTION SUMMARY")
+                     #   print("="*60)
+                     #   print(f"Found {len(candidates)} valid candidates")
+                     #   print("\nTop 3 candidates:")
                         for i, cand in enumerate(candidates[:3], 1):
                             overlap_info = f"{cand['overlap_ratio']*100:.1f}% overlap" if cand['overlap_ratio'] > 0 else "no overlap"
-                            print(f"{i}. '{cand['text']}' | {overlap_info} | Score: {cand['distance']:.10f}")
+                       #     print(f"{i}. '{cand['text']}' | {overlap_info} | Score: {cand['distance']:.10f}")
                         
-                        print("\n" + "-"*60)
-                        print(f"🏆 SELECTED: '{best_match['text'].strip()}'")
-                        print(f"   - Overlap: {best_match['overlap_ratio']*100:.1f}%" if best_match['overlap_ratio'] > 0 else "   - No overlap")
-                        print(f"   - Score: {best_match['distance']:.10f}")
-                        print(f"   - Position: ({best_match['center_x']:.0f}, {best_match['center_y']:.0f})")
+                      #  print("\n" + "-"*60)
+                      #  print(f"🏆 SELECTED: '{best_match['text'].strip()}'")
+                      #  print(f"   - Overlap: {best_match['overlap_ratio']*100:.1f}%" if best_match['overlap_ratio'] > 0 else "   - No overlap")
+                      #  print(f"   - Score: {best_match['distance']:.10f}")
+                      #  print(f"   - Position: ({best_match['center_x']:.0f}, {best_match['center_y']:.0f})")
                         
                         # Only process best_match if we found valid candidates
                         numfacture_value = best_match["text"].strip()
@@ -1381,9 +1381,9 @@ async def ocr_preview(
         # -------------------------
         # Date extraction (using box-based matching)
         # -------------------------
-        print("\n" + "="*60)
-        print("📅 EXTRACTING INVOICE DATE")
-        print("="*60)
+        #print("\n" + "="*60)
+        #print("📅 EXTRACTING INVOICE DATE")
+        #print("="*60)
         date_extraction_start = time.time()
         datefacturation_value = None
         datefacturation_box = None
@@ -1415,7 +1415,7 @@ async def ocr_preview(
                     mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
                     mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
                     
-                    print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, right={mapped_right:.1f}, bottom={mapped_bottom:.1f}")
+                  #  print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, right={mapped_right:.1f}, bottom={mapped_bottom:.1f}")
                     
                     def parse_date_try(text):
                         text = text.strip()
@@ -1584,20 +1584,20 @@ async def ocr_preview(
                         box_center_x = (current_box['left'] + current_box['right']) / 2
                         box_center_y = (current_box['top'] + current_box['bottom']) / 2
                         
-                        print(f"\nText: '{text}'")
-                        print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
-                        print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
+                    #    print(f"\nText: '{text}'")
+                     #   print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
+                      #  print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
                         
                         if dt is None:
                             print("  ❌ Could not parse as date")
                             continue
                             
-                        print(f"  ✅ Parsed date: {dt}")
+                       # print(f"  ✅ Parsed date: {dt}")
                         
-                        if overlap_ratio > 0:
-                            print(f"  Overlap: {overlap_ratio*100:.1f}% | Score: {score:.4f}")
-                        else:
-                            print(f"  Edge distance score: {score:.4f}")
+                       # if overlap_ratio > 0:
+                       #     print(f"  Overlap: {overlap_ratio*100:.1f}% | Score: {score:.4f}")
+                       # else:
+                       #     print(f"  Edge distance score: {score:.4f}")
                         
                         candidates.append({
                             'score': score,
@@ -1613,23 +1613,23 @@ async def ocr_preview(
                     if candidates:
                         candidates.sort(key=lambda x: -x['score'])
                         
-                        print("\n" + "="*60)
-                        print("🏆 DATE CANDIDATE SELECTION SUMMARY")
-                        print("="*60)
-                        print(f"Found {len(candidates)} valid date candidates")
-                        print("\nTop 3 candidates:")
+                     #   print("\n" + "="*60)
+                     #   print("🏆 DATE CANDIDATE SELECTION SUMMARY")
+                     #   print("="*60)
+                     #   print(f"Found {len(candidates)} valid date candidates")
+                     #   print("\nTop 3 candidates:")
                         for i, cand in enumerate(candidates[:3], 1):
                             overlap_info = f"{cand['overlap_ratio']*100:.1f}% overlap" if cand['overlap_ratio'] > 0 else "no overlap"
                             print(f"{i}. '{cand['text']}' | {cand['date']} | {overlap_info} | Score: {cand['score']:.4f}")
                         
                         best_match = candidates[0]
-                        print("\n" + "-"*60)
-                        print(f"🏆 SELECTED: '{best_match['text'].strip()}'")
-                        print(f"   - Date: {best_match['date']}")
-                        if best_match['overlap_ratio'] > 0:
-                            print(f"   - Overlap: {best_match['overlap_ratio']*100:.1f}%")
-                        print(f"   - Score: {best_match['score']:.4f}")
-                        print(f"   - Position: ({best_match['center_x']:.0f}, {best_match['center_y']:.0f})")
+                      #  print("\n" + "-"*60)
+                      #  print(f"🏆 SELECTED: '{best_match['text'].strip()}'")
+                      #  print(f"   - Date: {best_match['date']}")
+                      #  if best_match['overlap_ratio'] > 0:
+                      #      print(f"   - Overlap: {best_match['overlap_ratio']*100:.1f}%")
+                      #  print(f"   - Score: {best_match['score']:.4f}")
+                      #  print(f"   - Position: ({best_match['center_x']:.0f}, {best_match['center_y']:.0f})")
                         
                         datefacturation_value = best_match['date'].strftime('%Y-%m-%d')  # normalized output
                         datefacturation_box = {
@@ -1644,7 +1644,7 @@ async def ocr_preview(
         finally:
             # Calculate the time taken for date extraction
             datefacturation_time = time.time() - date_extraction_start
-            print(f"⏱️  Date extraction took: {datefacturation_time:.4f} seconds")
+           # print(f"⏱️  Date extraction took: {datefacturation_time:.4f} seconds")
             
             if 'cursor' in locals() and cursor:
                 cursor.close()
@@ -1657,14 +1657,14 @@ async def ocr_preview(
         # -------------------------
         # Prepare response
         # -------------------------
-        print("\n" + "="*60)
-        print("📊 EXTRACTION SUMMARY")
-        print("="*60)
-        print(f"📄 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
-        print(f"📅 Invoice Date: {datefacturation_value} (took {datefacturation_time:.4f}s)")
-        print(f"💰 HT: {ht_extracted:.2f} (took {ht_time:.4f}s)")
-        print(f"💸 TVA: {tva_extracted:.2f} (took {tva_time:.4f}s)")
-        print(f"💵 TTC: {ttc_extracted:.2f} (calculated)")
+       # print("\n" + "="*60)
+       # print("📊 EXTRACTION SUMMARY")
+       # print("="*60)
+       # print(f"📄 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
+       # print(f"📅 Invoice Date: {datefacturation_value} (took {datefacturation_time:.4f}s)")
+       # print(f"💰 HT: {ht_extracted:.2f} (took {ht_time:.4f}s)")
+       # print(f"💸 TVA: {tva_extracted:.2f} (took {tva_time:.4f}s)")
+       # print(f"💵 TTC: {ttc_extracted:.2f} (calculated)")
         # Prepare response with debugging info
         result_data = {
             "montantHT": ht_extracted,

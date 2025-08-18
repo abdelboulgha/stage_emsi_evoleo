@@ -1,22 +1,15 @@
-import React, { useRef, useEffect, useCallback, useState } from "react";
-import { Eye, ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useRef, useCallback, useState } from "react";
+import { Eye, ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 
 const ExtractionPreview = ({
   extractionState,
   scrollToIndex,
-  goToPrevPdf,
-  goToNextPdf,
   hoveredIndex,
   setHoveredIndex,
-  isExtractionComplete,
-  mappings,
-  setCurrentStep,
-  setIsLoading,
-  setDataPrepState,
 }) => {
   const previewImageRef = useRef(null);
-  const extractCanvasRef = useRef(null);
   const extractionBoxesCanvasRef = useRef(null);
+  const thumbnailsContainerRef = useRef(null);
   const [hoveredThumbnail, setHoveredThumbnail] = useState(null);
   const [previewPosition, setPreviewPosition] = useState({ x: 0, y: 0 });
 
@@ -258,26 +251,49 @@ const ExtractionPreview = ({
     if (data.boxTVA) drawBox(data.boxTVA, '#0b0ff5ff', 'TVA', 'left');
   }, [extractionState.extractedDataList, extractionState.currentPdfIndex, extractionState.filePreviews]);
   
-  // Redraw when data changes
-  useEffect(() => {
-    drawExtractionBoxes();
-  }, [drawExtractionBoxes]);
-
-  // Get the current file preview
-  const getCurrentFilePreview = () => {
-    if (extractionState.filePreviews && extractionState.filePreviews.length > 0) {
-      const currentPreview = extractionState.filePreviews[extractionState.currentPdfIndex];
-      // Handle both string and object formats
-      if (typeof currentPreview === 'string') {
-        return currentPreview;
-      } else if (currentPreview && currentPreview.preview) {
-        return currentPreview.preview;
-      }
+  // Get the current file preview URL
+  const getCurrentFilePreview = useCallback(() => {
+    if (!extractionState.filePreviews || extractionState.filePreviews.length === 0) {
+      return null;
     }
-    return null;
-  };
+    const preview = extractionState.filePreviews[extractionState.currentPdfIndex];
+    return typeof preview === 'string' ? preview : preview?.preview;
+  }, [extractionState.filePreviews, extractionState.currentPdfIndex]);
 
   const currentFilePreview = getCurrentFilePreview();
+
+  // Check if the current PDF has any missing required fields
+  const hasMissingFields = (index) => {
+    const data = extractionState.extractedDataList[index];
+    if (!data) return false;
+    
+    const requiredFields = ['fournisseur', 'numeroFacture', 'dateFacturation', 'montantHT'];
+    return requiredFields.some(field => {
+      const value = data[field];
+      return value === undefined || value === null || value === '';
+    });
+  };
+
+  // Handle navigation between PDFs with auto-scroll
+  const handleThumbnailScroll = useCallback((index) => {
+    // Update the current PDF index
+    scrollToIndex(index);
+
+    // Scroll the thumbnail into view
+    setTimeout(() => {
+      const container = thumbnailsContainerRef.current;
+      if (container) {
+        const activeThumbnail = container.querySelector('.thumbnail.active');
+        if (activeThumbnail) {
+          activeThumbnail.scrollIntoView({
+            behavior: 'smooth',
+            block: 'nearest',
+            inline: 'center'
+          });
+        }
+      }
+    }, 100); // Slightly longer delay to ensure DOM is updated
+  }, [scrollToIndex]);
 
   return (
     <div className="extraction-preview">
@@ -354,30 +370,39 @@ const ExtractionPreview = ({
       {extractionState.filePreviews && extractionState.filePreviews.length > 1 && (
         <div className="extraction-navigation">
           <button
-            onClick={goToPrevPdf}
+            onClick={() => {
+              if (extractionState.currentPdfIndex > 0) {
+                handleThumbnailScroll(extractionState.currentPdfIndex - 1);
+              }
+            }}
             disabled={extractionState.currentPdfIndex === 0}
             className="extraction-nav-button"
             title="Document précédent"
           >
             <ChevronLeft className="extraction-nav-icon" />
           </button>
-          <div className="extraction-thumbnails-container">
+          <div 
+            className="extraction-thumbnails-container"
+            ref={thumbnailsContainerRef}
+          >
             {extractionState.filePreviews.map((preview, index) => {
               const previewSrc = typeof preview === 'string' ? preview : preview.preview;
               return (
                 <div
                   key={index}
-                  className={`extraction-thumbnail ${extractionState.currentPdfIndex === index ? 'active' : ''}`}
-                  onClick={() => scrollToIndex(index)}
-                  title={`Document ${index + 1}`}
+                  className={`thumbnail ${index === extractionState.currentPdfIndex ? 'active' : ''} ${hoveredIndex === index ? 'hovered' : ''}`}
+                  onClick={() => handleThumbnailScroll(index)}
+                  onMouseEnter={() => setHoveredIndex(index)}
+                  onMouseLeave={() => setHoveredIndex(null)}
+                  style={{ position: 'relative' }}
                 >
                   <div 
                     className="thumbnail-container"
                     onMouseEnter={() => setHoveredThumbnail(index)}
                     onMouseMove={(e) => {
                       setPreviewPosition({
-                        x: e.clientX - 150, // Center horizontally
-                        y: e.clientY - 600  // Position preview so bottom is at cursor
+                        x: e.clientX - 150,
+                        y: e.clientY - 600
                       });
                     }}
                     onMouseLeave={() => setHoveredThumbnail(null)}
@@ -387,13 +412,34 @@ const ExtractionPreview = ({
                       alt={`Thumbnail ${index + 1}`} 
                       className="thumbnail-image"
                     />
+                    {hasMissingFields(index) && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '2px',
+                        right: '2px',
+                        backgroundColor: 'rgba(220, 38, 38, 0.9)',
+                        borderRadius: '50%',
+                        width: '16px',
+                        height: '16px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        zIndex: 10
+                      }}>
+                        <AlertTriangle className="w-3 h-3 text-white" />
+                      </div>
+                    )}
                   </div>
                 </div>
               );
             })}
           </div>
           <button
-            onClick={goToNextPdf}
+            onClick={() => {
+              if (extractionState.currentPdfIndex < extractionState.filePreviews.length - 1) {
+                handleThumbnailScroll(extractionState.currentPdfIndex + 1);
+              }
+            }}
             disabled={extractionState.currentPdfIndex === extractionState.filePreviews.length - 1}
             className="extraction-nav-button"
             title="Document suivant"

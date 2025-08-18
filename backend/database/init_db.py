@@ -17,29 +17,29 @@ def update_database_schema():
     """Update database schema with new columns"""
     try:
         with sync_engine.connect() as conn:
-            # Check if fournisseur column exists
+            # Check and add created_at if it doesn't exist
             result = conn.execute(text(
                 """
                 SELECT COUNT(*)
                 FROM information_schema.COLUMNS
                 WHERE TABLE_SCHEMA = DATABASE()
                 AND TABLE_NAME = 'templates'
-                AND COLUMN_NAME = 'fournisseur'
+                AND COLUMN_NAME = 'created_at'
                 """
             ))
             
             if result.scalar() == 0:
-                # Add the new columns
+                # Add the timestamp columns
                 conn.execute(text(
                     """
                     ALTER TABLE templates
-                    ADD COLUMN fournisseur VARCHAR(255) NULL AFTER serial,
                     ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                     """
                 ))
                 conn.commit()
-                logger.info("Database schema updated successfully")
+                logger.info("Added timestamp columns to templates table")
+                
     except Exception as e:
         logger.error(f"Error updating database schema: {e}")
         raise
@@ -67,29 +67,29 @@ async def update_database_schema_async():
     """Update database schema with new columns asynchronously"""
     try:
         async with async_engine.connect() as conn:
-            # Check if fournisseur column exists
+            # Check and add created_at if it doesn't exist
             result = await conn.execute(text(
                 """
                 SELECT COUNT(*)
                 FROM information_schema.COLUMNS
                 WHERE TABLE_SCHEMA = DATABASE()
                 AND TABLE_NAME = 'templates'
-                AND COLUMN_NAME = 'fournisseur'
+                AND COLUMN_NAME = 'created_at'
                 """
             ))
             
             if (await result.scalar()) == 0:
-                # Add the new columns
+                # Add the timestamp columns
                 await conn.execute(text(
                     """
                     ALTER TABLE templates
-                    ADD COLUMN fournisseur VARCHAR(255) NULL AFTER serial,
                     ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                     ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
                     """
                 ))
                 await conn.commit()
-                logger.info("Database schema updated successfully")
+                logger.info("Added timestamp columns to templates table")
+                
     except Exception as e:
         logger.error(f"Error updating database schema: {e}")
         raise

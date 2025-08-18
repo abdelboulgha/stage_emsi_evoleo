@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
 import {
   Save,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 
 const InvoiceSelectionModal = ({
@@ -13,6 +14,31 @@ const InvoiceSelectionModal = ({
   toggleInvoiceSelection,
   handleSaveInvoices,
 }) => {
+  // Check for invoices with missing required fields
+  const hasMissingFields = (invoiceData) => {
+    const requiredFields = ['fournisseur', 'numeroFacture', 'dateFacturation', 'montantHT'];
+    return requiredFields.some(field => {
+      const value = invoiceData[field];
+      return value === undefined || value === null || value === '';
+    });
+  };
+
+  // Deselect any invoices with missing fields when modal opens
+  useEffect(() => {
+    const invoicesWithMissingFields = extractionState.extractedDataList
+      .map((data, index) => hasMissingFields(data) ? index : null)
+      .filter(index => index !== null);
+    
+    if (invoicesWithMissingFields.length > 0) {
+      setInvoiceSelection(prev => ({
+        ...prev,
+        selectedInvoices: prev.selectedInvoices.filter(
+          idx => !invoicesWithMissingFields.includes(idx)
+        )
+      }));
+    }
+  }, [extractionState.extractedDataList]);
+
   if (!invoiceSelection.isOpen) return null;
 
   return createPortal(
@@ -61,22 +87,27 @@ const InvoiceSelectionModal = ({
                   <input
                     type="checkbox"
                     id={`invoice-${index}`}
-                    checked={invoiceSelection.selectedInvoices.includes(
-                      index
-                    )}
-                    onChange={() =>
-                      toggleInvoiceSelection(index)
-                    }
-                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={invoiceSelection.selectedInvoices.includes(index)}
+                    onChange={() => toggleInvoiceSelection(index)}
+                    disabled={hasMissingFields(data)}
+                    className={`h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500 ${
+                      hasMissingFields(data) ? 'opacity-50 cursor-not-allowed' : ''
+                    }`}
                   />
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium text-gray-900 truncate">
-                      {data.fournisseur ||
-                        `Facture ${index + 1}`}
+                    <div className="flex items-center gap-2">
+                      {hasMissingFields(data) && (
+                        <span className="text-yellow-600" title="Champs manquants">
+                          <AlertTriangle className="w-4 h-4" />
+                        </span>
+                      )}
+                      <span className="text-sm font-medium text-gray-900 truncate">
+                        {data.fournisseur || `Facture ${index + 1}`}
+                      </span>
                     </div>
                     <div className="text-xs text-gray-500">
-                      {data.numeroFacture &&
-                        `N°${data.numeroFacture} • `}
+                      {data.numeroFacture && `N°${data.numeroFacture} • `}
+                      {hasMissingFields(data) && 'Champs manquants'}
                     </div>
                   </div>
                 </div>

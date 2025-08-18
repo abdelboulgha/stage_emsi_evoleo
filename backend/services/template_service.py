@@ -40,10 +40,6 @@ class TemplateService:
                 # Update template metadata if needed
                 needs_update = False
                 
-                if 'fournisseur' in field_map and field_map['fournisseur'] and 'manualValue' in field_map['fournisseur']:
-                    template.fournisseur = field_map['fournisseur']['manualValue']
-                    needs_update = True
-                
                 if 'serial' in field_map and field_map['serial'] and 'manualValue' in field_map['serial']:
                     serial_value = str(field_map['serial']['manualValue'])
                     if len(serial_value) == 9:  # Only update if valid 9-digit serial
@@ -61,10 +57,6 @@ class TemplateService:
                     'created_by': current_user_id
                 }
                 
-                # Add fournisseur if provided
-                if 'fournisseur' in field_map and field_map['fournisseur'] and 'manualValue' in field_map['fournisseur']:
-                    template_data['fournisseur'] = field_map['fournisseur']['manualValue']
-                
                 # Add serial if valid
                 if 'serial' in field_map and field_map['serial'] and 'manualValue' in field_map['serial']:
                     serial_value = str(field_map['serial']['manualValue'])
@@ -75,8 +67,7 @@ class TemplateService:
                 template_id = template.id
             
             # Remove manual input fields from field_map to avoid processing as coordinates
-            for field in ['serial', 'fournisseur']:
-                field_map.pop(field, None)
+            field_map.pop('serial', None)
             
             # 3. Delete existing mappings for this template
             await self.mapping_repo.delete_by_template_id(template_id)

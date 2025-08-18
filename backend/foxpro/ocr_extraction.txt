@@ -1,7 +1,7 @@
-Date export: 2025-08-18 12:24:19
-Fournisseur: fa2
-Numéro Facture: 2062-018904-0046-2
-Taux TVA: 0
-Montant HT: 20895.84
-Montant TVA: 0
-Montant TTC: 20895.84
+Date export: 2025-08-18 14:31:41
+Fournisseur: capi
+Numéro Facture: Facture IN8411-0501
+Taux TVA: 4
+Montant HT: 7275
+Montant TVA: 255
+Montant TTC: 7530

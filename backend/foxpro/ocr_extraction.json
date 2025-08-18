@@ -2,125 +2,125 @@
   "success": true,
   "data": {},
   "corrected_data": {
-    "montantHT": 20895.84,
-    "montantTVA": 0,
-    "montantTTC": 20895.84,
-    "tauxTVA": 0,
-    "numFacture": "2062-018904-0046-2",
+    "montantHT": 7275,
+    "montantTVA": 255,
+    "montantTTC": 7530,
+    "tauxTVA": 4,
+    "numFacture": "Facture IN8411-0501",
     "boxHT": {
-      "left": 812,
-      "top": 778,
-      "width": 60,
-      "height": 17
+      "left": 1071,
+      "top": 1250,
+      "width": 68,
+      "height": 26
     },
     "boxTVA": {
-      "left": 964,
-      "top": 778,
-      "width": 32,
-      "height": 18
+      "left": 1081,
+      "top": 1275,
+      "width": 58,
+      "height": 22
     },
     "boxNumFacture": {
-      "left": 731,
-      "top": 322,
-      "width": 149,
-      "height": 16,
+      "left": 877,
+      "top": 58,
+      "width": 248,
+      "height": 24,
       "manual": false
     },
     "boxNumFactureSearchArea": {
-      "left": 721,
-      "top": 317,
-      "width": 169,
-      "height": 26,
+      "left": 867,
+      "top": 53,
+      "width": 268,
+      "height": 34,
       "type": "search_area"
     },
-    "dateFacturation": "2024-09-12",
+    "dateFacturation": "2024-11-21",
     "boxDateFacturation": {
-      "left": 41,
-      "top": 678,
-      "width": 339,
-      "height": 18
+      "left": 921,
+      "top": 96,
+      "width": 207,
+      "height": 16
     },
-    "template_id": "2",
+    "template_id": "1",
     "ht_match": {
       "search_area": {
-        "left": 759,
-        "top": 766,
-        "right": 858,
-        "bottom": 816,
-        "width": 99,
-        "height": 50
+        "left": 684,
+        "top": 1256,
+        "right": 1206,
+        "bottom": 1269,
+        "width": 522,
+        "height": 13
       },
       "keyword_box": {
-        "left": 779,
-        "top": 745,
-        "right": 838,
-        "bottom": 766,
-        "width": 59,
-        "height": 21,
-        "center_x": 808.5,
-        "center_y": 755.5,
-        "text": "total HT",
-        "score": 0.9982072114944458
+        "left": 684,
+        "top": 1251,
+        "right": 756,
+        "bottom": 1274,
+        "width": 72,
+        "height": 23,
+        "center_x": 720,
+        "center_y": 1262.5,
+        "text": "Total HT",
+        "score": 0.9999030828475952
       },
       "value_box": {
-        "left": 812,
-        "top": 778,
-        "right": 872,
-        "bottom": 795,
-        "width": 60,
-        "height": 17,
-        "center_x": 842,
-        "center_y": 786.5,
-        "text": "20895,84",
-        "score": 0.9999262690544128
+        "left": 1071,
+        "top": 1250,
+        "right": 1139,
+        "bottom": 1276,
+        "width": 68,
+        "height": 26,
+        "center_x": 1105,
+        "center_y": 1263,
+        "text": "7275,00",
+        "score": 0.9998648762702942
       }
     },
     "tva_match": {
       "search_area": {
-        "left": 897,
-        "top": 758,
-        "right": 976,
-        "bottom": 808,
-        "width": 79,
-        "height": 50
+        "left": 683,
+        "top": 1279,
+        "right": 1257,
+        "bottom": 1291,
+        "width": 574,
+        "height": 12
       },
       "keyword_box": {
-        "left": 917,
-        "top": 736,
-        "right": 956,
-        "bottom": 758,
-        "width": 39,
+        "left": 683,
+        "top": 1274,
+        "right": 807,
+        "bottom": 1296,
+        "width": 124,
         "height": 22,
-        "center_x": 936.5,
-        "center_y": 747,
-        "text": "TVA",
-        "score": 0.9998160004615784
+        "center_x": 745,
+        "center_y": 1285,
+        "text": "Total TVA 25%",
+        "score": 0.9999595880508423
       },
       "value_box": {
-        "left": 964,
-        "top": 778,
-        "right": 996,
-        "bottom": 796,
-        "width": 32,
-        "height": 18,
-        "center_x": 980,
-        "center_y": 787,
-        "text": "0,c0",
-        "score": 0.8716167211532593
+        "left": 1081,
+        "top": 1275,
+        "right": 1139,
+        "bottom": 1297,
+        "width": 58,
+        "height": 22,
+        "center_x": 1110,
+        "center_y": 1286,
+        "text": "255,00",
+        "score": 0.9999832510948181
       }
     },
-    "numeroFacture": "2062-018904-0046-2",
-    "fournisseur": "fa2"
+    "numeroFacture": "Facture IN8411-0501",
+    "fournisseur": "capi"
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-18 12:24:19.387933",
+  "timestamp": "2025-08-18 14:31:41.352643",
   "fields": {
-    "fournisseur": "fa2",
-    "dateFacturation": "2024-09-12",
-    "numeroFacture": "2062-018904-0046-2",
-    "tauxTVA": "0",
-    "montantHT": 20895.84,
-    "montantTVA": 0,
-    "montantTTC": 20895.84
+    "fournisseur": "capi",
+    "dateFacturation": "2024-11-21",
+    "numeroFacture": "Facture IN8411-0501",
+    "tauxTVA": "4",
+    "montantHT": 7275,
+    "montantTVA": 255,
+    "montantTTC": 7530
   }
 }
