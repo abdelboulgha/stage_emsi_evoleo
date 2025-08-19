@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import {
   ChevronLeft,
   Eye,
@@ -36,6 +36,27 @@ const ExtractionMain = ({
   setIsLoading,
   setDataPrepState,
 }) => {
+  const hasTriggeredExtraction = useRef(false);
+  
+  useEffect(() => {
+    if (hasTriggeredExtraction.current) return;
+    
+    if (extractionState?.filePreviews?.length > 0) {
+      hasTriggeredExtraction.current = true;
+      
+      try {
+        extractAllPdfs();
+      } catch (error) {
+        console.error('Error in auto-extraction:', error);
+        hasTriggeredExtraction.current = false;
+      }
+    }
+    
+    return () => {
+      hasTriggeredExtraction.current = false;
+    };
+  }, []);
+
   return (
     <div className="extraction-container">
       <div className="extraction-content">

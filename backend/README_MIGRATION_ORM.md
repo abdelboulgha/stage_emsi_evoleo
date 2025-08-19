@@ -198,7 +198,7 @@ python main_refactored.py
 - `POST /save-mapping` - Sauvegarder un mapping
 - `GET /load-mapping/{template_id}` - Charger un mapping
 - `DELETE /mappings/{template_id}` - Supprimer un mapping
-- `POST /create-facture` - Créer une facture
+- `POST /ajouter-facture` - Créer une facture
 - `GET /factures` - Lister les factures
 - `PUT /factures/{facture_id}` - Modifier une facture
 - `DELETE /factures/{facture_id}` - Supprimer une facture

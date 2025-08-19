@@ -4,6 +4,7 @@ import {
   Save,
   Loader2,
   AlertTriangle,
+  XCircle,
 } from "lucide-react";
 
 const InvoiceSelectionModal = ({
@@ -23,20 +24,24 @@ const InvoiceSelectionModal = ({
     });
   };
 
-  // Deselect any invoices with missing fields when modal opens
+  // Initialize selection when modal opens
   useEffect(() => {
-    const invoicesWithMissingFields = extractionState.extractedDataList
-      .map((data, index) => hasMissingFields(data) ? index : null)
-      .filter(index => index !== null);
+    const selectedInvoices = [];
     
-    if (invoicesWithMissingFields.length > 0) {
-      setInvoiceSelection(prev => ({
-        ...prev,
-        selectedInvoices: prev.selectedInvoices.filter(
-          idx => !invoicesWithMissingFields.includes(idx)
-        )
-      }));
-    }
+    extractionState.extractedDataList.forEach((data, index) => {
+      // Don't select invoices with missing fields
+      if (hasMissingFields(data)) return;
+      
+      // Select non-duplicate invoices by default
+      if (!data.isDuplicate) {
+        selectedInvoices.push(index);
+      }
+    });
+    
+    setInvoiceSelection(prev => ({
+      ...prev,
+      selectedInvoices
+    }));
   }, [extractionState.extractedDataList]);
 
   if (!invoiceSelection.isOpen) return null;
@@ -105,9 +110,20 @@ const InvoiceSelectionModal = ({
                         {data.fournisseur || `Facture ${index + 1}`}
                       </span>
                     </div>
-                    <div className="text-xs text-gray-500">
+                    <div className="text-xs text-gray-500 flex items-center gap-1">
                       {data.numeroFacture && `N°${data.numeroFacture} • `}
-                      {hasMissingFields(data) && 'Champs manquants'}
+                      {hasMissingFields(data) && (
+                        <span className="flex items-center gap-1">
+                          <AlertTriangle className="w-3 h-3 inline" />
+                          Champs manquants • 
+                        </span>
+                      )}
+                      {data.isDuplicate && (
+                        <span className="text-red-600 flex items-center gap-1">
+                          <XCircle className="w-3 h-3 inline" />
+                          Cette facture est déjà enregistrée
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

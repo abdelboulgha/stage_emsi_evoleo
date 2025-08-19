@@ -110,10 +110,11 @@
       }
     },
     "numeroFacture": "Facture IN8411-0501",
-    "fournisseur": "capi"
+    "fournisseur": "capi",
+    "isDuplicate": false
   },
   "confidence_scores": {},
-  "timestamp": "2025-08-18 14:31:41.352643",
+  "timestamp": "2025-08-19 02:10:34.752306",
   "fields": {
     "fournisseur": "capi",
     "dateFacturation": "2024-11-21",

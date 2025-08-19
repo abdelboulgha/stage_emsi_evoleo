@@ -517,21 +517,6 @@ async def delete_mapping(
         raise HTTPException(status_code=500, detail=f"Error deleting mapping: {str(e)}")
 
 
-@app.post("/create-facture")
-async def create_facture(
-    facture_data: dict,
-    current_user = Depends(require_comptable_or_admin),
-    db = Depends(get_async_db)
-):
-    """Create a new invoice using ORM"""
-    try:
-        facture_service = FactureService(db)
-        result = await facture_service.create_facture(facture_data, current_user["id"])
-        return result
-        
-    except Exception as e:
-        logging.error(f"Error creating invoice: {e}")
-        raise HTTPException(status_code=500, detail=f"Error creating invoice: {str(e)}")
 
 
 @app.get("/factures")
@@ -1082,8 +1067,8 @@ async def ocr_preview(
         if not ht_match:
             return {"success": False, "data": {}, "message": "Aucun mot-clé HT trouvé"}
         ht_extracted = ht_match['value']
-        print(f"\n✅ SELECTED HT: {ht_extracted} (from '{ht_match['value_text']}', keyword: '{ht_match['keyword_text']}')")
-        print(f"⏱️  HT extraction took: {ht_time:.4f} seconds")
+        #print(f"\n✅ SELECTED HT: {ht_extracted} (from '{ht_match['value_text']}', keyword: '{ht_match['keyword_text']}')")
+        #print(f"⏱️  HT extraction took: {ht_time:.4f} seconds")
 
        
         # -------------------------
@@ -1098,8 +1083,8 @@ async def ocr_preview(
         if not tva_match:
             return {"success": False, "data": {}, "message": "Aucun mot-clé TVA trouvé"}
         tva_extracted = tva_match['value']
-        print(f"\n✅ SELECTED TVA: {tva_extracted} (from '{tva_match['value_text']}', keyword: '{tva_match['keyword_text']}')")
-        print(f"⏱️  TVA extraction took: {tva_time:.4f} seconds")
+        #print(f"\n✅ SELECTED TVA: {tva_extracted} (from '{tva_match['value_text']}', keyword: '{tva_match['keyword_text']}')")
+        #print(f"⏱️  TVA extraction took: {tva_time:.4f} seconds")
 
         # -------------------------
         # TTC and taux TVA
@@ -1115,7 +1100,7 @@ async def ocr_preview(
             raw_taux = (tva_extracted * 100.0) / ht_extracted
             # Round to nearest integer (0.5 rounds up)
             taux_tva = int(round(raw_taux))
-            print(f"Raw TVA rate: {raw_taux:.2f}% -> Rounded to: {taux_tva}%")
+            #print(f"Raw TVA rate: {raw_taux:.2f}% -> Rounded to: {taux_tva}%")
         else:
             taux_tva = 0
           #  print("HT is zero, cannot calculate TVA rate")
@@ -1173,8 +1158,8 @@ async def ocr_preview(
                     mapped_top = float(mapping['top']) - expand_y
                     mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
                     
-                    # print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, "
-                          f"right={mapped_right:.1f}, bottom={mapped_bottom:.1f}")
+                    # print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, f"right={mapped_right:.1f}, bottom={mapped_bottom:.1f}") "
+                         
                     
                     def boxes_intersect(box1, box2):
                         """Check if two boxes intersect or touch each other."""
@@ -1239,7 +1224,7 @@ async def ocr_preview(
                             # 2. Calculate aspect ratio similarity (prefer boxes with similar aspect ratio to mapped box)
                             mapped_ar = (mapped_box['right'] - mapped_box['left']) / max(1, (mapped_box['bottom'] - mapped_box['top']))
                             box_ar = (box2['right'] - box2['left']) / max(1, (box2['bottom'] - box2['top']))
-                            ar_similarity = 1 - (abs(mapped_ar - box_ar) / max(mapped_ar, box_ar))
+                           
                             
                             # 3. Position within mapped area (prefer boxes closer to the center)
                             mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
@@ -1308,10 +1293,10 @@ async def ocr_preview(
                       #  print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
                       #  print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
                       #  print(f"  Valid format: {'✅' if is_valid else '❌'}")
-                        if overlap_ratio > 0:
-                            print(f"  Overlap: {overlap_ratio*100:.1f}% | Score: {distance:.10f}")
-                        else:
-                            print(f"  Edge distance: {distance:.1f} px")
+                      #  if overlap_ratio > 0:
+                       #     print(f"  Overlap: {overlap_ratio*100:.1f}% | Score: {distance:.10f}")
+                        #else:
+                         #   print(f"  Edge distance: {distance:.1f} px")
                         
                         if is_valid:
                             candidates.append({
@@ -1579,8 +1564,7 @@ async def ocr_preview(
                         dt = parse_date_try(text)
                         
                         # Calculate box centers for reference
-                        mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
-                        mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
+                   
                         box_center_x = (current_box['left'] + current_box['right']) / 2
                         box_center_y = (current_box['top'] + current_box['bottom']) / 2
                         
@@ -1620,7 +1604,7 @@ async def ocr_preview(
                      #   print("\nTop 3 candidates:")
                         for i, cand in enumerate(candidates[:3], 1):
                             overlap_info = f"{cand['overlap_ratio']*100:.1f}% overlap" if cand['overlap_ratio'] > 0 else "no overlap"
-                            print(f"{i}. '{cand['text']}' | {cand['date']} | {overlap_info} | Score: {cand['score']:.4f}")
+                           #print(f"{i}. '{cand['text']}' | {cand['date']} | {overlap_info} | Score: {cand['score']:.4f}")
                         
                         best_match = candidates[0]
                       #  print("\n" + "-"*60)
@@ -1643,7 +1627,7 @@ async def ocr_preview(
             print(traceback.format_exc())
         finally:
             # Calculate the time taken for date extraction
-            datefacturation_time = time.time() - date_extraction_start
+            #datefacturation_time = time.time() - date_extraction_start
            # print(f"⏱️  Date extraction took: {datefacturation_time:.4f} seconds")
             
             if 'cursor' in locals() and cursor:
@@ -1717,6 +1701,34 @@ async def ocr_preview(
             "data": {"error": str(e), "traceback": error_details},
             "message": f"Erreur lors de l'extraction: {str(e)}"
         }
+
+
+class CheckDuplicateRequest(BaseModel):
+    """Request model for checking duplicate invoices"""
+    invoices: List[Dict[str, Any]]
+
+
+@app.post("/check-duplicate-invoices")
+async def check_duplicate_invoices(
+    request: CheckDuplicateRequest,
+    current_user = Depends(require_comptable_or_admin),
+    db = Depends(get_async_db)
+):
+    """
+    Check if any of the provided invoices already exist in the database
+    
+    Returns:
+        List of indices of duplicate invoices
+    """
+    try:
+        facture_service = FactureService(db)
+        duplicate_indices = await facture_service.check_duplicate_invoices(
+            request.invoices, current_user["id"]
+        )
+        return {"duplicates": duplicate_indices}
+    except Exception as e:
+        logging.error(f"Error checking for duplicate invoices: {e}")
+        return {"duplicates": []}
 
 
 @app.post("/ajouter-facture", response_model=InvoiceResponse)

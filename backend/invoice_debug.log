@@ -1037,3 +1037,66 @@ UnboundLocalError: cannot access local variable 'num_facture_time' where it is n
 2025-08-18 18:47:37,981 INFO Database tables created successfully
 2025-08-18 18:47:38,155 INFO Default data inserted successfully
 2025-08-18 18:47:38,155 INFO Database initialization complete
+2025-08-18 19:14:54,259 INFO Initializing database...
+2025-08-18 19:14:54,346 INFO Database tables created successfully
+2025-08-18 19:14:54,453 INFO Default data inserted successfully
+2025-08-18 19:14:54,453 INFO Database initialization complete
+2025-08-19 01:14:38,068 INFO Initializing database...
+2025-08-19 01:14:38,191 INFO Database tables created successfully
+2025-08-19 01:14:38,375 INFO Default data inserted successfully
+2025-08-19 01:14:38,375 INFO Database initialization complete
+2025-08-19 01:19:31,835 INFO Initializing database...
+2025-08-19 01:19:31,877 INFO Database tables created successfully
+2025-08-19 01:19:31,917 INFO Default data inserted successfully
+2025-08-19 01:19:31,917 INFO Database initialization complete
+2025-08-19 02:04:15,197 INFO Initializing database...
+2025-08-19 02:04:15,246 INFO Database tables created successfully
+2025-08-19 02:04:15,301 INFO Default data inserted successfully
+2025-08-19 02:04:15,301 INFO Database initialization complete
+2025-08-19 02:04:34,904 INFO Initializing database...
+2025-08-19 02:04:34,946 INFO Database tables created successfully
+2025-08-19 02:04:34,987 INFO Default data inserted successfully
+2025-08-19 02:04:34,987 INFO Database initialization complete
+2025-08-19 02:08:12,639 INFO Initializing database...
+2025-08-19 02:08:12,688 INFO Database tables created successfully
+2025-08-19 02:08:12,731 INFO Default data inserted successfully
+2025-08-19 02:08:12,731 INFO Database initialization complete
+2025-08-19 02:10:34,762 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-19 02:10:34,778 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-19 02:10:34,778 WARNING Impossible de créer le fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-08-19 02:13:33,908 INFO Initializing database...
+2025-08-19 02:13:33,954 INFO Database tables created successfully
+2025-08-19 02:13:33,999 INFO Default data inserted successfully
+2025-08-19 02:13:33,999 INFO Database initialization complete
+2025-08-19 02:22:09,901 INFO Initializing database...
+2025-08-19 02:22:09,950 INFO Database tables created successfully
+2025-08-19 02:22:09,998 INFO Default data inserted successfully
+2025-08-19 02:22:09,999 INFO Database initialization complete
+2025-08-19 02:23:06,259 INFO Initializing database...
+2025-08-19 02:23:06,307 INFO Database tables created successfully
+2025-08-19 02:23:06,355 INFO Default data inserted successfully
+2025-08-19 02:23:06,356 INFO Database initialization complete
+2025-08-19 02:26:23,169 INFO Initializing database...
+2025-08-19 02:26:23,211 INFO Database tables created successfully
+2025-08-19 02:26:23,253 INFO Default data inserted successfully
+2025-08-19 02:26:23,253 INFO Database initialization complete
+2025-08-19 02:26:40,932 INFO Initializing database...
+2025-08-19 02:26:40,976 INFO Database tables created successfully
+2025-08-19 02:26:41,021 INFO Default data inserted successfully
+2025-08-19 02:26:41,021 INFO Database initialization complete
+2025-08-19 02:27:26,589 INFO Initializing database...
+2025-08-19 02:27:26,633 INFO Database tables created successfully
+2025-08-19 02:27:26,675 INFO Default data inserted successfully
+2025-08-19 02:27:26,675 INFO Database initialization complete
+2025-08-19 02:28:54,330 INFO Initializing database...
+2025-08-19 02:28:54,375 INFO Database tables created successfully
+2025-08-19 02:28:54,416 INFO Default data inserted successfully
+2025-08-19 02:28:54,416 INFO Database initialization complete
+2025-08-19 02:31:19,719 INFO Initializing database...
+2025-08-19 02:31:19,763 INFO Database tables created successfully
+2025-08-19 02:31:19,803 INFO Default data inserted successfully
+2025-08-19 02:31:19,803 INFO Database initialization complete
+2025-08-19 02:39:09,937 INFO Initializing database...
+2025-08-19 02:39:10,025 INFO Database tables created successfully
+2025-08-19 02:39:10,093 INFO Default data inserted successfully
+2025-08-19 02:39:10,094 INFO Database initialization complete

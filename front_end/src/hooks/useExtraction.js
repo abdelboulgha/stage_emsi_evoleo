@@ -2,6 +2,75 @@ import { useCallback } from 'react';
 
 const API_BASE_URL = "http://localhost:8000";
 
+// Function to check for duplicate invoices
+const checkForDuplicates = async (invoices, showNotification) => {
+  try {
+    // Create a temporary filterValue function that matches the one in useExtraction
+    const filterValue = (val, fieldKey) => {
+      if (val === undefined || val === null) return "";
+      if (fieldKey === "fournisseur") return val;
+      
+      if (fieldKey === 'dateFacturation') {
+        const dateMatch = val.toString().match(/\b(\d{1,2})[/\- .](\d{1,2})[/\- .](\d{2,4})\b/);
+        if (dateMatch) {
+          const [, day, month, year] = dateMatch;
+          const fullYear = year.length === 2 ? `20${year}` : year;
+          return `${fullYear}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+        }
+        return val;
+      }
+      
+      // For numeroFacture, clean it the same way as in the UI
+      if (fieldKey === "numeroFacture" || fieldKey === "numFacture") {
+        // Split by space or colon
+        const parts = val.toString().split(/[\s:]+/);
+        // Find the first part containing a digit
+        let candidate = parts.find(p => /\d/.test(p)) || val.toString();
+        // Find the index of the first digit
+        const firstDigit = candidate.search(/\d/);
+        // If there are more than 4 letters before the first digit, remove them
+        if (firstDigit > 4) {
+          candidate = candidate.slice(firstDigit);
+        }
+        return candidate;
+      }
+      
+      return val.toString().trim();
+    };
+
+    // Apply filtering to each invoice
+    const filteredInvoices = invoices.map(invoice => {
+      const numFacture = filterValue(invoice.numeroFacture || invoice.numFacture || '', 'numeroFacture');
+      const fournisseur = filterValue(invoice.fournisseur || '', 'fournisseur');
+      return { numFacture, fournisseur };
+    });
+
+    console.log("[DEBUG] Checking for duplicates with filtered data:", filteredInvoices);
+
+    const response = await fetch(`${API_BASE_URL}/check-duplicate-invoices`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: 'include',
+      body: JSON.stringify({ invoices: filteredInvoices })
+    });
+    
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Failed to check for duplicates: ${error}`);
+    }
+    
+    const { duplicates } = await response.json();
+    console.log("[DEBUG] Duplicate indices:", duplicates);
+    return new Set(duplicates);
+  } catch (error) {
+    console.error("Error checking for duplicates:", error);
+    showNotification("Erreur lors de la vérification des doublons", "error");
+    return new Set();
+  }
+};
+
 export const useExtraction = (extractionState, setExtractionState, showNotification) => {
   const filterValue = useCallback((val, fieldKey) => {
     // Explicitly check for undefined or null, but allow 0 and '0'
@@ -64,7 +133,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
     
     setExtractionState((prev) => ({ ...prev, isProcessing: true }));
     
-    const results = [];
+    let results = [];
     const confidenceScores = [];
     const extractionBoxes = [];
     
@@ -109,6 +178,19 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         confidenceScores[i] = {};
         extractionBoxes[i] = {};
       }
+      // After all extractions, check for duplicates
+      if (i === extractionState.filePreviews.length - 1) {
+        try {
+          const duplicateIndices = await checkForDuplicates(results, showNotification);
+          results = results.map((result, idx) => ({
+            ...result,
+            isDuplicate: duplicateIndices.has(idx)
+          }));
+        } catch (error) {
+          console.error("Error checking duplicates:", error);
+        }
+      }
+
       setExtractionState((prev) => ({
         ...prev,
         extractedDataList: [...results],
@@ -155,13 +237,14 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       });
       const result = await response.json();
       
+      // First, update the data with the extracted information
+      let data = result.data || {};
+      if (data.numFacture && !data.numeroFacture) {
+        data.numeroFacture = data.numFacture;
+      }
+      
       setExtractionState((prev) => {
         const newExtracted = [...prev.extractedDataList];
-        let data = result.data || {};
-        // Map backend numFacture to frontend numeroFacture
-        if (data.numFacture && !data.numeroFacture) {
-          data.numeroFacture = data.numFacture;
-        }
         newExtracted[idx] = data;
         
         const newConfidence = [...prev.confidenceScores];
@@ -186,6 +269,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       console.error("Erreur lors de l'extraction:", error);
       showNotification("Erreur lors de l'extraction", "error");
       setExtractionState((prev) => ({ ...prev, isProcessing: false }));
+      throw error; // Re-throw to handle in the caller if needed
     }
   }, [extractionState, setExtractionState, showNotification]);
 
