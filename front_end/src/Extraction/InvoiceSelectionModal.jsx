@@ -1,11 +1,6 @@
 import React, { useEffect } from "react";
 import { createPortal } from "react-dom";
-import {
-  Save,
-  Loader2,
-  AlertTriangle,
-  XCircle,
-} from "lucide-react";
+import { Save, Loader2, AlertTriangle, XCircle } from "lucide-react";
 
 const InvoiceSelectionModal = ({
   invoiceSelection,

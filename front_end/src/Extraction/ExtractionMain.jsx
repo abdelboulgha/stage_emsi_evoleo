@@ -1,13 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import {
-  ChevronLeft,
-  Eye,
-  Search,
-  Loader2,
-  Save,
-  Database,
-  ZoomIn,
-} from "lucide-react";
+// Icons are used in child components
 import ExtractionSidebar from "./ExtractionSidebar";
 import ExtractionPreview from "./ExtractionPreview";
 import InvoiceSelectionModal from "./InvoiceSelectionModal";

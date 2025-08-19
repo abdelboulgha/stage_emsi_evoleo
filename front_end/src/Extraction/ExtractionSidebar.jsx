@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Search,
-  Loader2,
-  Save,
-  Database,
- 
-} from "lucide-react";
+import { Search, Loader2, Save, Database } from "lucide-react";
 import { useExtraction } from "../hooks/useExtraction";
 
 const ExtractionSidebar = ({
@@ -20,7 +14,7 @@ const ExtractionSidebar = ({
   setExtractDrawState,
   showNotification,
 }) => {
-  // Récupère la fonction du hook
+  // Get the function from the hook
   const { saveAllCorrectedDataAndLaunchFoxPro } = useExtraction(extractionState, setExtractionState, showNotification);
  
   return (

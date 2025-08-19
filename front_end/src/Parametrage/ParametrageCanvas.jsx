@@ -61,12 +61,12 @@ const ParametrageCanvas = ({
   drawOcrBox,
   handleDataPrepFileUpload,
   handleZoomChange,
-  getPagePreviews,
   showNotification,
+  getPagePreviews,
 }) => {
-  const fileInputRef = useRef(null);
   const [showPageModal, setShowPageModal] = useState(false);
   const [pdfPages, setPdfPages] = useState([]);
+  const fileInputRef = useRef(null);
   const [pendingFile, setPendingFile] = useState(null);
 
   // Handler to trigger file input

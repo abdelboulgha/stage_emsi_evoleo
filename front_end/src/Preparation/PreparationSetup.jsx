@@ -1,18 +1,5 @@
 import React, { useState } from "react";
-import {
-  Upload,
-  FileText,
-  Receipt,
-  ShoppingCart,
-  Building2,
-  Plus,
-  ArrowRight,
-  X,
-  CheckCircle,
-  Loader2,
-  DollarSign,
-  AlertTriangle,
-} from "lucide-react";
+import { Upload, Plus, ArrowRight, AlertTriangle, X, Loader2, CheckCircle } from "lucide-react";
 import { createPortal } from "react-dom";
 import "./PreparationSetup.css";
 
@@ -32,7 +19,6 @@ const PageSelectionModal = ({ isOpen, onClose, pages, onSelectPage }) => {
               key={index}
               className="preparation-modal-page-item"
               onClick={() => {
-              
                 onSelectPage(index);
               }}
             >

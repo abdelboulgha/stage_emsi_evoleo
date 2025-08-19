@@ -1572,10 +1572,7 @@ async def ocr_preview(
                      #   print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
                       #  print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
                         
-                        if dt is None:
-                            print("  ❌ Could not parse as date")
-                            continue
-                            
+                     
                        # print(f"  ✅ Parsed date: {dt}")
                         
                        # if overlap_ratio > 0:

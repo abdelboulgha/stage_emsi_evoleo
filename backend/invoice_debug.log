@@ -1100,3 +1100,542 @@ UnboundLocalError: cannot access local variable 'num_facture_time' where it is n
 2025-08-19 02:39:10,025 INFO Database tables created successfully
 2025-08-19 02:39:10,093 INFO Default data inserted successfully
 2025-08-19 02:39:10,094 INFO Database initialization complete
+2025-08-19 13:13:33,109 INFO Initializing database...
+2025-08-19 13:13:33,183 INFO Database tables created successfully
+2025-08-19 13:13:33,280 INFO Default data inserted successfully
+2025-08-19 13:13:33,280 INFO Database initialization complete
+2025-08-19 13:14:04,316 INFO Initializing database...
+2025-08-19 13:14:04,366 INFO Database tables created successfully
+2025-08-19 13:14:04,413 INFO Default data inserted successfully
+2025-08-19 13:14:04,413 INFO Database initialization complete
+2025-08-19 13:23:34,105 INFO Initializing database...
+2025-08-19 13:23:34,143 INFO Database tables created successfully
+2025-08-19 13:23:34,185 INFO Default data inserted successfully
+2025-08-19 13:23:34,185 INFO Database initialization complete
+2025-08-19 13:26:49,340 ERROR Error in ocr_preview: 'dict' object has no attribute 'predict'
+2025-08-19 13:26:49,553 ERROR Error in ocr_preview: 'dict' object has no attribute 'predict'
+2025-08-19 13:26:49,601 ERROR Error in ocr_preview: 'dict' object has no attribute 'predict'
+2025-08-19 13:36:26,228 INFO Initializing database...
+2025-08-19 13:36:26,275 INFO Database tables created successfully
+2025-08-19 13:36:26,464 INFO Default data inserted successfully
+2025-08-19 13:36:26,464 INFO Database initialization complete
+2025-08-19 13:36:26,640 DEBUG https://huggingface.co:443 "GET /api/models/PaddlePaddle/PP-OCRv5_server_det/revision/main HTTP/1.1" 200 988
+2025-08-19 13:36:26,645 DEBUG Attempting to acquire lock 2717533626704 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:26,647 DEBUG Lock 2717533626704 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:26,648 DEBUG Attempting to acquire lock 2717533631248 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:26,648 DEBUG Attempting to acquire lock 2717533632016 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:26,649 DEBUG Attempting to release lock 2717533626704 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:26,649 DEBUG Lock 2717533631248 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:26,650 DEBUG Lock 2717533626704 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:26,650 DEBUG Lock 2717533632016 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:26,651 DEBUG Attempting to acquire lock 2717533630352 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:26,651 DEBUG Attempting to release lock 2717533631248 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:26,652 DEBUG Attempting to release lock 2717533632016 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:26,652 DEBUG Lock 2717533630352 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:26,652 DEBUG Attempting to acquire lock 2717533702352 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:26,652 DEBUG Lock 2717533632016 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:26,652 DEBUG Lock 2717533631248 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:26,653 DEBUG Attempting to acquire lock 2717533702224 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:26,653 DEBUG Attempting to release lock 2717533630352 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:26,654 DEBUG Lock 2717533702352 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:26,654 DEBUG Lock 2717533630352 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:26,654 DEBUG Lock 2717533702224 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:26,654 DEBUG Attempting to release lock 2717533702352 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:26,654 DEBUG Attempting to release lock 2717533702224 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:26,654 DEBUG Lock 2717533702352 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:26,655 DEBUG Lock 2717533702224 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:30,541 DEBUG https://huggingface.co:443 "GET /api/models/PaddlePaddle/latin_PP-OCRv5_mobile_rec/revision/main HTTP/1.1" 200 983
+2025-08-19 13:36:30,546 DEBUG Attempting to acquire lock 2717533623952 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:30,548 DEBUG Lock 2717533623952 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:30,548 DEBUG Attempting to acquire lock 2717533617360 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:30,549 DEBUG Attempting to release lock 2717533623952 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:30,549 DEBUG Attempting to acquire lock 2717533700624 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:30,550 DEBUG Lock 2717533617360 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:30,551 DEBUG Lock 2717533623952 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:36:30,551 DEBUG Attempting to acquire lock 2717533705232 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:30,552 DEBUG Lock 2717533700624 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:30,552 DEBUG Attempting to release lock 2717533617360 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:30,553 DEBUG Attempting to acquire lock 2717533706128 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:30,553 DEBUG Lock 2717533617360 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:36:30,553 DEBUG Attempting to acquire lock 2717533705872 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:30,553 DEBUG Lock 2717533705232 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:30,553 DEBUG Attempting to release lock 2717533700624 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:30,554 DEBUG Lock 2717533706128 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:30,554 DEBUG Lock 2717533700624 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:36:30,555 DEBUG Attempting to release lock 2717533705232 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:30,555 DEBUG Lock 2717533705872 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:30,555 DEBUG Attempting to release lock 2717533706128 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:30,555 DEBUG Lock 2717533705232 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:36:30,555 DEBUG Attempting to release lock 2717533705872 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:30,556 DEBUG Lock 2717533706128 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:36:30,556 DEBUG Lock 2717533705872 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:36:56,580 DEBUG Calling on_part_begin with no data
+2025-08-19 13:36:56,580 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:36:56,580 DEBUG Calling on_header_value with data[63:113]
+2025-08-19 13:36:56,581 DEBUG Calling on_header_end with no data
+2025-08-19 13:36:56,581 DEBUG Calling on_header_field with data[115:127]
+2025-08-19 13:36:56,581 DEBUG Calling on_header_value with data[129:144]
+2025-08-19 13:36:56,581 DEBUG Calling on_header_end with no data
+2025-08-19 13:36:56,581 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:36:56,582 DEBUG Calling on_part_data with data[148:26274]
+2025-08-19 13:36:56,582 DEBUG Calling on_part_end with no data
+2025-08-19 13:36:56,582 DEBUG Calling on_end with no data
+2025-08-19 13:36:56,680 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:36:56,680 DEBUG STREAM b'pHYs' 41 9
+2025-08-19 13:36:56,680 DEBUG STREAM b'IDAT' 62 114129
+2025-08-19 13:36:56,784 DEBUG Calling on_part_begin with no data
+2025-08-19 13:36:56,785 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:36:56,785 DEBUG Calling on_header_value with data[63:106]
+2025-08-19 13:36:56,785 DEBUG Calling on_header_end with no data
+2025-08-19 13:36:56,785 DEBUG Calling on_header_field with data[108:120]
+2025-08-19 13:36:56,785 DEBUG Calling on_header_value with data[122:137]
+2025-08-19 13:36:56,785 DEBUG Calling on_header_end with no data
+2025-08-19 13:36:56,785 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:36:56,785 DEBUG Calling on_part_data with data[141:26267]
+2025-08-19 13:36:56,786 DEBUG Calling on_part_end with no data
+2025-08-19 13:36:56,786 DEBUG Calling on_end with no data
+2025-08-19 13:36:56,865 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:36:56,865 DEBUG STREAM b'pHYs' 41 9
+2025-08-19 13:36:56,865 DEBUG STREAM b'IDAT' 62 114129
+2025-08-19 13:36:57,960 DEBUG Calling on_part_begin with no data
+2025-08-19 13:36:57,960 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:36:57,961 DEBUG Calling on_header_value with data[63:108]
+2025-08-19 13:36:57,961 DEBUG Calling on_header_end with no data
+2025-08-19 13:36:57,961 DEBUG Calling on_header_field with data[110:122]
+2025-08-19 13:36:57,962 DEBUG Calling on_header_value with data[124:133]
+2025-08-19 13:36:57,962 DEBUG Calling on_header_end with no data
+2025-08-19 13:36:57,962 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:36:57,962 DEBUG Calling on_part_data with data[137:128538]
+2025-08-19 13:36:57,963 DEBUG Calling on_part_end with no data
+2025-08-19 13:36:57,963 DEBUG Calling on_part_begin with no data
+2025-08-19 13:36:57,963 DEBUG Calling on_header_field with data[128582:128601]
+2025-08-19 13:36:57,963 DEBUG Calling on_header_value with data[128603:128632]
+2025-08-19 13:36:57,963 DEBUG Calling on_header_end with no data
+2025-08-19 13:36:57,964 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:36:57,964 DEBUG Calling on_part_data with data[128636:128637]
+2025-08-19 13:36:57,964 DEBUG Calling on_part_end with no data
+2025-08-19 13:36:57,964 DEBUG Calling on_end with no data
+2025-08-19 13:36:57,965 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:36:57,965 DEBUG STREAM b'IDAT' 41 65536
+2025-08-19 13:37:02,271 DEBUG Calling on_part_begin with no data
+2025-08-19 13:37:02,272 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:37:02,272 DEBUG Calling on_header_value with data[63:108]
+2025-08-19 13:37:02,272 DEBUG Calling on_header_end with no data
+2025-08-19 13:37:02,272 DEBUG Calling on_header_field with data[110:122]
+2025-08-19 13:37:02,272 DEBUG Calling on_header_value with data[124:133]
+2025-08-19 13:37:02,272 DEBUG Calling on_header_end with no data
+2025-08-19 13:37:02,272 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:37:02,272 DEBUG Calling on_part_data with data[137:128538]
+2025-08-19 13:37:02,272 DEBUG Calling on_part_end with no data
+2025-08-19 13:37:02,273 DEBUG Calling on_part_begin with no data
+2025-08-19 13:37:02,273 DEBUG Calling on_header_field with data[128582:128601]
+2025-08-19 13:37:02,273 DEBUG Calling on_header_value with data[128603:128632]
+2025-08-19 13:37:02,273 DEBUG Calling on_header_end with no data
+2025-08-19 13:37:02,273 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:37:02,273 DEBUG Calling on_part_data with data[128636:128637]
+2025-08-19 13:37:02,273 DEBUG Calling on_part_end with no data
+2025-08-19 13:37:02,273 DEBUG Calling on_end with no data
+2025-08-19 13:37:02,274 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:37:02,274 DEBUG STREAM b'IDAT' 41 65536
+2025-08-19 13:38:37,446 INFO Initializing database...
+2025-08-19 13:38:37,484 INFO Database tables created successfully
+2025-08-19 13:38:37,677 INFO Default data inserted successfully
+2025-08-19 13:38:37,677 INFO Database initialization complete
+2025-08-19 13:38:37,861 DEBUG https://huggingface.co:443 "GET /api/models/PaddlePaddle/PP-OCRv5_server_det/revision/main HTTP/1.1" 200 988
+2025-08-19 13:38:37,866 DEBUG Attempting to acquire lock 1682400240656 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:37,867 DEBUG Lock 1682400240656 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:37,868 DEBUG Attempting to acquire lock 1682400243920 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:37,869 DEBUG Attempting to release lock 1682400240656 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:37,870 DEBUG Attempting to acquire lock 1682400247440 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:37,870 DEBUG Lock 1682400243920 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:37,870 DEBUG Lock 1682400240656 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:37,872 DEBUG Attempting to acquire lock 1682400244240 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:37,872 DEBUG Lock 1682400247440 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:37,872 DEBUG Attempting to release lock 1682400243920 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:37,873 DEBUG Attempting to acquire lock 1682400330960 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:37,873 DEBUG Attempting to release lock 1682400247440 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:37,873 DEBUG Lock 1682400243920 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:37,873 DEBUG Lock 1682400244240 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:37,874 DEBUG Attempting to acquire lock 1682400242640 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:38:37,874 DEBUG Lock 1682400247440 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:37,875 DEBUG Lock 1682400330960 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:37,875 DEBUG Attempting to release lock 1682400244240 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:37,875 DEBUG Attempting to release lock 1682400330960 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:37,875 DEBUG Lock 1682400244240 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:37,876 DEBUG Lock 1682400242640 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:38:37,876 DEBUG Lock 1682400330960 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:37,876 DEBUG Attempting to release lock 1682400242640 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:38:37,877 DEBUG Lock 1682400242640 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:38:41,580 DEBUG https://huggingface.co:443 "GET /api/models/PaddlePaddle/latin_PP-OCRv5_mobile_rec/revision/main HTTP/1.1" 200 983
+2025-08-19 13:38:41,584 DEBUG Attempting to acquire lock 1682400240592 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:41,586 DEBUG Attempting to acquire lock 1682400246800 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:41,586 DEBUG Lock 1682400240592 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:41,588 DEBUG Attempting to acquire lock 1682400332816 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:41,588 DEBUG Lock 1682400246800 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:41,589 DEBUG Attempting to release lock 1682400240592 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:41,590 DEBUG Attempting to release lock 1682400246800 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:41,591 DEBUG Lock 1682400332816 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:41,591 DEBUG Attempting to acquire lock 1682400336208 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:41,592 DEBUG Attempting to acquire lock 1682400337360 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:41,592 DEBUG Lock 1682400240592 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:38:41,592 DEBUG Lock 1682400246800 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:38:41,593 DEBUG Attempting to release lock 1682400332816 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:41,593 DEBUG Lock 1682400336208 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:41,593 DEBUG Attempting to acquire lock 1682400237008 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:38:41,593 DEBUG Lock 1682400337360 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:41,594 DEBUG Lock 1682400332816 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:38:41,594 DEBUG Attempting to release lock 1682400336208 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:41,594 DEBUG Attempting to release lock 1682400337360 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:41,594 DEBUG Lock 1682400237008 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:38:41,594 DEBUG Lock 1682400336208 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:38:41,595 DEBUG Lock 1682400337360 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:38:41,595 DEBUG Attempting to release lock 1682400237008 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:38:41,595 DEBUG Lock 1682400237008 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:17,867 INFO Initializing database...
+2025-08-19 13:39:17,906 INFO Database tables created successfully
+2025-08-19 13:39:18,089 INFO Default data inserted successfully
+2025-08-19 13:39:18,089 INFO Database initialization complete
+2025-08-19 13:39:18,277 DEBUG https://huggingface.co:443 "GET /api/models/PaddlePaddle/PP-OCRv5_server_det/revision/main HTTP/1.1" 200 988
+2025-08-19 13:39:18,282 DEBUG Attempting to acquire lock 2375452085840 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:18,284 DEBUG Attempting to acquire lock 2375452094992 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:18,284 DEBUG Lock 2375452085840 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:18,285 DEBUG Lock 2375452094992 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:18,286 DEBUG Attempting to acquire lock 2375452098384 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:18,286 DEBUG Attempting to release lock 2375452085840 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:18,288 DEBUG Lock 2375452085840 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:18,288 DEBUG Attempting to acquire lock 2375452089808 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:18,290 DEBUG Lock 2375452098384 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:18,290 DEBUG Attempting to release lock 2375452094992 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:18,291 DEBUG Attempting to acquire lock 2375452165648 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:18,291 DEBUG Lock 2375452094992 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:18,291 DEBUG Lock 2375452089808 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:18,291 DEBUG Attempting to release lock 2375452098384 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:18,291 DEBUG Attempting to acquire lock 2375452166032 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:18,292 DEBUG Lock 2375452165648 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:18,292 DEBUG Attempting to release lock 2375452089808 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:18,292 DEBUG Lock 2375452098384 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:18,292 DEBUG Lock 2375452166032 acquired on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:18,292 DEBUG Lock 2375452089808 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:18,292 DEBUG Attempting to release lock 2375452165648 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:18,293 DEBUG Attempting to release lock 2375452166032 on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:18,293 DEBUG Lock 2375452165648 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:18,293 DEBUG Lock 2375452166032 released on C:\Users\wadii\.paddlex\official_models\PP-OCRv5_server_det\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:21,962 DEBUG https://huggingface.co:443 "GET /api/models/PaddlePaddle/latin_PP-OCRv5_mobile_rec/revision/main HTTP/1.1" 200 983
+2025-08-19 13:39:21,967 DEBUG Attempting to acquire lock 2375452096912 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:21,969 DEBUG Lock 2375452096912 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:21,969 DEBUG Attempting to acquire lock 2375452098384 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:21,971 DEBUG Attempting to release lock 2375452096912 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:21,971 DEBUG Lock 2375452098384 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:21,971 DEBUG Attempting to acquire lock 2375452167824 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:21,972 DEBUG Lock 2375452096912 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\.gitattributes.lock
+2025-08-19 13:39:21,973 DEBUG Attempting to release lock 2375452098384 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:21,974 DEBUG Attempting to acquire lock 2375452089744 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:21,974 DEBUG Lock 2375452167824 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:21,974 DEBUG Lock 2375452098384 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\README.md.lock
+2025-08-19 13:39:21,975 DEBUG Attempting to acquire lock 2375452094096 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:21,975 DEBUG Lock 2375452089744 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:21,975 DEBUG Attempting to release lock 2375452167824 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:21,975 DEBUG Lock 2375452094096 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:21,976 DEBUG Attempting to acquire lock 2375452168784 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:21,976 DEBUG Attempting to release lock 2375452089744 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:21,976 DEBUG Lock 2375452167824 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\config.json.lock
+2025-08-19 13:39:21,976 DEBUG Attempting to release lock 2375452094096 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:21,977 DEBUG Lock 2375452089744 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.json.lock
+2025-08-19 13:39:21,977 DEBUG Lock 2375452168784 acquired on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:21,977 DEBUG Lock 2375452094096 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.pdiparams.lock
+2025-08-19 13:39:21,977 DEBUG Attempting to release lock 2375452168784 on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:21,978 DEBUG Lock 2375452168784 released on C:\Users\wadii\.paddlex\official_models\latin_PP-OCRv5_mobile_rec\.cache\huggingface\download\inference.yml.lock
+2025-08-19 13:39:29,460 DEBUG Calling on_part_begin with no data
+2025-08-19 13:39:29,460 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:39:29,460 DEBUG Calling on_header_value with data[63:106]
+2025-08-19 13:39:29,460 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:29,460 DEBUG Calling on_header_field with data[108:120]
+2025-08-19 13:39:29,460 DEBUG Calling on_header_value with data[122:137]
+2025-08-19 13:39:29,461 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:29,461 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:39:29,461 DEBUG Calling on_part_data with data[141:26267]
+2025-08-19 13:39:29,461 DEBUG Calling on_part_end with no data
+2025-08-19 13:39:29,461 DEBUG Calling on_end with no data
+2025-08-19 13:39:29,549 DEBUG Calling on_part_begin with no data
+2025-08-19 13:39:29,550 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:39:29,550 DEBUG Calling on_header_value with data[63:106]
+2025-08-19 13:39:29,550 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:29,550 DEBUG Calling on_header_field with data[108:120]
+2025-08-19 13:39:29,551 DEBUG Calling on_header_value with data[122:137]
+2025-08-19 13:39:29,551 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:29,551 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:39:29,551 DEBUG Calling on_part_data with data[141:26267]
+2025-08-19 13:39:29,552 DEBUG Calling on_part_end with no data
+2025-08-19 13:39:29,552 DEBUG Calling on_part_begin with no data
+2025-08-19 13:39:29,552 DEBUG Calling on_header_field with data[26311:26330]
+2025-08-19 13:39:29,553 DEBUG Calling on_header_value with data[26332:26360]
+2025-08-19 13:39:29,553 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:29,554 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:39:29,554 DEBUG Calling on_part_data with data[26364:26365]
+2025-08-19 13:39:29,554 DEBUG Calling on_part_end with no data
+2025-08-19 13:39:29,554 DEBUG Calling on_end with no data
+2025-08-19 13:39:52,012 DEBUG Calling on_part_begin with no data
+2025-08-19 13:39:52,012 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:39:52,012 DEBUG Calling on_header_value with data[63:117]
+2025-08-19 13:39:52,012 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:52,012 DEBUG Calling on_header_field with data[119:131]
+2025-08-19 13:39:52,012 DEBUG Calling on_header_value with data[133:148]
+2025-08-19 13:39:52,013 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:52,013 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:39:52,013 DEBUG Calling on_part_data with data[152:16384]
+2025-08-19 13:39:52,013 DEBUG Calling on_part_data with data[0:65536]
+2025-08-19 13:39:52,014 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,014 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,015 DEBUG Calling on_part_data with data[0:32768]
+2025-08-19 13:39:52,016 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,016 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,017 DEBUG Calling on_part_data with data[0:32768]
+2025-08-19 13:39:52,017 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,018 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,018 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,018 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,019 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,019 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,019 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,019 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,020 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,021 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,021 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,022 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,022 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,022 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,023 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,023 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,024 DEBUG Calling on_part_data with data[0:32768]
+2025-08-19 13:39:52,025 DEBUG Calling on_part_data with data[0:32768]
+2025-08-19 13:39:52,025 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,026 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,026 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,027 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,027 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,028 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,028 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,028 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,029 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,029 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,030 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,030 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,031 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,031 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,032 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,033 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,033 DEBUG Calling on_part_data with data[0:9943]
+2025-08-19 13:39:52,033 DEBUG Calling on_part_end with no data
+2025-08-19 13:39:52,034 DEBUG Calling on_end with no data
+2025-08-19 13:39:52,151 DEBUG Calling on_part_begin with no data
+2025-08-19 13:39:52,152 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:39:52,152 DEBUG Calling on_header_value with data[63:117]
+2025-08-19 13:39:52,152 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:52,153 DEBUG Calling on_header_field with data[119:131]
+2025-08-19 13:39:52,153 DEBUG Calling on_header_value with data[133:148]
+2025-08-19 13:39:52,153 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:52,153 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:39:52,154 DEBUG Calling on_part_data with data[152:229376]
+2025-08-19 13:39:52,157 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:39:52,158 DEBUG Calling on_part_data with data[0:98304]
+2025-08-19 13:39:52,159 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,161 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:39:52,162 DEBUG Calling on_part_data with data[0:32768]
+2025-08-19 13:39:52,163 DEBUG Calling on_part_data with data[0:32768]
+2025-08-19 13:39:52,164 DEBUG Calling on_part_data with data[0:98304]
+2025-08-19 13:39:52,165 DEBUG Calling on_part_data with data[0:26327]
+2025-08-19 13:39:52,165 DEBUG Calling on_part_end with no data
+2025-08-19 13:39:52,165 DEBUG Calling on_part_begin with no data
+2025-08-19 13:39:52,165 DEBUG Calling on_header_field with data[26371:26390]
+2025-08-19 13:39:52,166 DEBUG Calling on_header_value with data[26392:26420]
+2025-08-19 13:39:52,166 DEBUG Calling on_header_end with no data
+2025-08-19 13:39:52,166 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:39:52,167 DEBUG Calling on_part_data with data[26424:26425]
+2025-08-19 13:39:52,167 DEBUG Calling on_part_end with no data
+2025-08-19 13:39:52,167 DEBUG Calling on_end with no data
+2025-08-19 13:40:09,437 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:09,437 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:40:09,437 DEBUG Calling on_header_value with data[63:117]
+2025-08-19 13:40:09,437 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:09,437 DEBUG Calling on_header_field with data[119:131]
+2025-08-19 13:40:09,438 DEBUG Calling on_header_value with data[133:148]
+2025-08-19 13:40:09,438 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:09,438 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:09,438 DEBUG Calling on_part_data with data[152:180224]
+2025-08-19 13:40:09,439 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:09,440 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:09,440 DEBUG Calling on_part_data with data[0:108247]
+2025-08-19 13:40:09,440 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:09,440 DEBUG Calling on_end with no data
+2025-08-19 13:40:09,522 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:09,522 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:40:09,522 DEBUG Calling on_header_value with data[63:117]
+2025-08-19 13:40:09,523 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:09,523 DEBUG Calling on_header_field with data[119:131]
+2025-08-19 13:40:09,523 DEBUG Calling on_header_value with data[133:148]
+2025-08-19 13:40:09,523 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:09,523 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:09,523 DEBUG Calling on_part_data with data[152:16384]
+2025-08-19 13:40:09,525 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:09,525 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:09,526 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:09,527 DEBUG Calling on_part_data with data[0:9943]
+2025-08-19 13:40:09,527 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:09,527 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:09,528 DEBUG Calling on_header_field with data[9987:10006]
+2025-08-19 13:40:09,528 DEBUG Calling on_header_value with data[10008:10036]
+2025-08-19 13:40:09,528 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:09,528 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:09,529 DEBUG Calling on_part_data with data[10040:10041]
+2025-08-19 13:40:09,529 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:09,529 DEBUG Calling on_end with no data
+2025-08-19 13:40:23,556 DEBUG Processed field map: {'fournisseur': {'manualValue': 'radeema'}, 'serial': {'manualValue': '169519784'}, 'numeroFacture': {'left': 28, 'top': 102, 'width': 671, 'height': 43, 'manual': False}, 'dateFacturation': {'left': 872, 'top': 260, 'width': 65, 'height': 21, 'manual': False}}
+2025-08-19 13:40:31,735 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:31,735 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:40:31,735 DEBUG Calling on_header_value with data[63:117]
+2025-08-19 13:40:31,735 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:31,736 DEBUG Calling on_header_field with data[119:131]
+2025-08-19 13:40:31,736 DEBUG Calling on_header_value with data[133:148]
+2025-08-19 13:40:31,736 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:31,736 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:31,736 DEBUG Calling on_part_data with data[152:229376]
+2025-08-19 13:40:31,737 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:31,737 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:31,738 DEBUG Calling on_part_data with data[0:59095]
+2025-08-19 13:40:31,738 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:31,738 DEBUG Calling on_end with no data
+2025-08-19 13:40:31,979 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:40:31,979 DEBUG STREAM b'pHYs' 41 9
+2025-08-19 13:40:31,979 DEBUG STREAM b'IDAT' 62 1137558
+2025-08-19 13:40:32,255 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:32,255 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:40:32,255 DEBUG Calling on_header_value with data[63:116]
+2025-08-19 13:40:32,255 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:32,255 DEBUG Calling on_header_field with data[118:130]
+2025-08-19 13:40:32,255 DEBUG Calling on_header_value with data[132:147]
+2025-08-19 13:40:32,256 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:32,256 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:32,256 DEBUG Calling on_part_data with data[151:16384]
+2025-08-19 13:40:32,256 DEBUG Calling on_part_data with data[0:49152]
+2025-08-19 13:40:32,257 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,257 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,257 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,258 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,258 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,259 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,259 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,259 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,260 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,260 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,260 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,261 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,261 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,261 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,262 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,262 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,263 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,263 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,263 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,264 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,264 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,264 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,265 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,265 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,265 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,266 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,266 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,267 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,268 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,268 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,268 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,269 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,269 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,270 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,270 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,270 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,270 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,271 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,271 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,272 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,272 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,273 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,274 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,274 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,279 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,295 DEBUG Calling on_part_data with data[0:16384]
+2025-08-19 13:40:32,305 DEBUG Calling on_part_data with data[0:11444]
+2025-08-19 13:40:32,305 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:32,305 DEBUG Calling on_end with no data
+2025-08-19 13:40:32,534 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:40:32,534 DEBUG STREAM b'pHYs' 41 9
+2025-08-19 13:40:32,534 DEBUG STREAM b'IDAT' 62 1112649
+2025-08-19 13:40:33,944 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:33,944 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:40:33,945 DEBUG Calling on_header_value with data[63:108]
+2025-08-19 13:40:33,945 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:33,945 DEBUG Calling on_header_field with data[110:122]
+2025-08-19 13:40:33,945 DEBUG Calling on_header_value with data[124:133]
+2025-08-19 13:40:33,945 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:33,946 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:33,946 DEBUG Calling on_part_data with data[137:32768]
+2025-08-19 13:40:33,947 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:33,948 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:33,950 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:33,951 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:33,957 DEBUG Calling on_part_data with data[0:24589]
+2025-08-19 13:40:33,957 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:33,958 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:33,958 DEBUG Calling on_header_field with data[24633:24652]
+2025-08-19 13:40:33,958 DEBUG Calling on_header_value with data[24654:24683]
+2025-08-19 13:40:33,958 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:33,959 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:33,959 DEBUG Calling on_part_data with data[24687:24688]
+2025-08-19 13:40:33,959 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:33,959 DEBUG Calling on_end with no data
+2025-08-19 13:40:33,963 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:40:33,963 DEBUG STREAM b'IDAT' 41 65536
+2025-08-19 13:40:38,059 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:38,059 DEBUG Calling on_header_field with data[42:61]
+2025-08-19 13:40:38,059 DEBUG Calling on_header_value with data[63:108]
+2025-08-19 13:40:38,059 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:38,059 DEBUG Calling on_header_field with data[110:122]
+2025-08-19 13:40:38,059 DEBUG Calling on_header_value with data[124:133]
+2025-08-19 13:40:38,059 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:38,059 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:38,060 DEBUG Calling on_part_data with data[137:16384]
+2025-08-19 13:40:38,060 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:38,061 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:38,062 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:38,062 DEBUG Calling on_part_data with data[0:262144]
+2025-08-19 13:40:38,065 DEBUG Calling on_part_data with data[0:36224]
+2025-08-19 13:40:38,065 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:38,065 DEBUG Calling on_part_begin with no data
+2025-08-19 13:40:38,065 DEBUG Calling on_header_field with data[36268:36287]
+2025-08-19 13:40:38,065 DEBUG Calling on_header_value with data[36289:36318]
+2025-08-19 13:40:38,065 DEBUG Calling on_header_end with no data
+2025-08-19 13:40:38,065 DEBUG Calling on_headers_finished with no data
+2025-08-19 13:40:38,065 DEBUG Calling on_part_data with data[36322:36323]
+2025-08-19 13:40:38,066 DEBUG Calling on_part_end with no data
+2025-08-19 13:40:38,066 DEBUG Calling on_end with no data
+2025-08-19 13:40:38,068 DEBUG STREAM b'IHDR' 16 13
+2025-08-19 13:40:38,068 DEBUG STREAM b'IDAT' 41 65536
+2025-08-19 13:52:15,587 INFO Initializing database...
+2025-08-19 13:52:15,629 INFO Database tables created successfully
+2025-08-19 13:52:15,671 INFO Default data inserted successfully
+2025-08-19 13:52:15,671 INFO Database initialization complete
+2025-08-19 13:52:55,159 INFO Initializing database...
+2025-08-19 13:52:55,221 INFO Database tables created successfully
+2025-08-19 13:52:55,274 INFO Default data inserted successfully
+2025-08-19 13:52:55,274 INFO Database initialization complete
+2025-08-19 14:30:57,751 INFO Initializing database...
+2025-08-19 14:30:57,824 INFO Database tables created successfully
+2025-08-19 14:30:57,909 INFO Default data inserted successfully
+2025-08-19 14:30:57,909 INFO Database initialization complete
+2025-08-19 15:00:43,792 INFO Initializing database...
+2025-08-19 15:00:43,863 INFO Database tables created successfully
+2025-08-19 15:00:43,937 INFO Default data inserted successfully
+2025-08-19 15:00:43,937 INFO Database initialization complete
+2025-08-19 15:04:36,957 INFO Initializing database...
+2025-08-19 15:04:37,047 INFO Database tables created successfully
+2025-08-19 15:04:37,131 INFO Default data inserted successfully
+2025-08-19 15:04:37,131 INFO Database initialization complete

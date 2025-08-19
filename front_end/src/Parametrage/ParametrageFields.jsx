@@ -1,10 +1,5 @@
 import React from "react";
-import {
-  Save,
-  Loader2,
-  CheckCircle,
-  AlertCircle,
-} from "lucide-react";
+import { CheckCircle, AlertCircle, Loader2, Save } from "lucide-react";
 
 const ParametrageFields = ({
   dataPrepState,
