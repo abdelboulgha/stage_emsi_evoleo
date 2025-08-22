@@ -2,8 +2,9 @@ import { useCallback } from 'react';
 
 const API_BASE_URL = "http://localhost:8000";
 
-export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoiceSelection, showNotification, filterValue) => {
+export const useInvoiceSelection = (extractionState, setExtractionState, invoiceSelection, setInvoiceSelection, showNotification, filterValue) => {
   const handleSaveInvoices = useCallback(async () => {
+    const savedIndices = [];
     try {
       setInvoiceSelection((prev) => ({ ...prev, isSaving: true }));
       
@@ -76,7 +77,8 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
 
       // Save each invoice one by one
       const results = [];
-      for (const invoice of invoicesToSave) {
+      for (let i = 0; i < invoicesToSave.length; i++) {
+        const invoice = invoicesToSave[i];
         try {
           console.log("Sending invoice data:", invoice); // Debug log
 
@@ -101,7 +103,9 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
           console.log("Success response:", result); // Debug log
           results.push({ success: result.success, message: result.message });
           
-          if (!result.success) {
+          if (result.success) {
+            savedIndices.push(i); // Track successfully saved invoice index
+          } else {
             console.error("Error saving invoice:", result.message);
           }
         } catch (error) {
@@ -130,6 +134,40 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
         );
       }
       
+      // Remove saved invoices from the extraction state
+      if (savedIndices.length > 0) {
+        setExtractionState(prev => {
+          const newExtractedDataList = [...prev.extractedDataList];
+          const newFilePreviews = [...prev.filePreviews];
+          
+          // Remove in reverse order to avoid index shifting issues
+          savedIndices.sort((a, b) => b - a).forEach(index => {
+            newExtractedDataList.splice(index, 1);
+            newFilePreviews.splice(index, 1);
+          });
+          
+          // Update currentPdfIndex if needed
+          let newCurrentPdfIndex = prev.currentPdfIndex;
+          if (savedIndices.includes(prev.currentPdfIndex) || 
+              prev.currentPdfIndex >= newExtractedDataList.length) {
+            newCurrentPdfIndex = Math.max(0, newExtractedDataList.length - 1);
+          } else {
+            // Adjust currentPdfIndex if needed
+            const numRemovedBefore = savedIndices.filter(i => i < prev.currentPdfIndex).length;
+            if (numRemovedBefore > 0) {
+              newCurrentPdfIndex = prev.currentPdfIndex - numRemovedBefore;
+            }
+          }
+          
+          return {
+            ...prev,
+            extractedDataList: newExtractedDataList,
+            filePreviews: newFilePreviews,
+            currentPdfIndex: newCurrentPdfIndex
+          };
+        });
+      }
+      
       // Close the modal and reset state
       setInvoiceSelection((prev) => ({
         ...prev,
@@ -147,6 +185,7 @@ export const useInvoiceSelection = (extractionState, invoiceSelection, setInvoic
     }
   }, [
     extractionState,
+    setExtractionState,
     invoiceSelection.selectedInvoices,
     showNotification,
     filterValue,

@@ -1639,3 +1639,15 @@ UnboundLocalError: cannot access local variable 'num_facture_time' where it is n
 2025-08-19 15:04:37,047 INFO Database tables created successfully
 2025-08-19 15:04:37,131 INFO Default data inserted successfully
 2025-08-19 15:04:37,131 INFO Database initialization complete
+2025-08-19 15:06:16,982 INFO Initializing database...
+2025-08-19 15:06:17,113 INFO Database tables created successfully
+2025-08-19 15:06:17,224 INFO Default data inserted successfully
+2025-08-19 15:06:17,225 INFO Database initialization complete
+2025-08-21 12:34:13,538 INFO Initializing database...
+2025-08-21 12:34:13,658 INFO Database tables created successfully
+2025-08-21 12:34:13,847 INFO Default data inserted successfully
+2025-08-21 12:34:13,847 INFO Database initialization complete
+2025-08-21 13:46:12,141 INFO Initializing database...
+2025-08-21 13:46:12,216 INFO Database tables created successfully
+2025-08-21 13:46:12,296 INFO Default data inserted successfully
+2025-08-21 13:46:12,296 INFO Database initialization complete

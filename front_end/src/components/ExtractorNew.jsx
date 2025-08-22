@@ -100,7 +100,7 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
     toggleSelectAllInvoices,
     toggleInvoiceSelection,
     openSaveModal,
-  } = useInvoiceSelection(extractionState, invoiceSelection, setInvoiceSelection, showNotification, filterValue);
+  } = useInvoiceSelection(extractionState, setExtractionState, invoiceSelection, setInvoiceSelection, showNotification, filterValue);
 
   const {
     handleCanvasMouseDown,
