@@ -29,13 +29,25 @@ const ParametrageFields = ({
       key: "numeroFacture", 
       label: "Numéro de Facture", 
       type: "ocr",
-      description: ""
+      description: "Sélectionnez le numéro de facture sur l'image"
     },{ 
       key: "dateFacturation", 
       label: "Date de Facturation", 
       type: "date",
       description: "",
       format: "dd/MM/yyyy"  
+    },
+    { 
+      key: "montantht", 
+      label: "Montant HT", 
+      type: "ocr",
+      description: "Sélectionnez le montant HT sur l'image"
+    },
+    { 
+      key: "tva", 
+      label: "Montant TVA", 
+      type: "ocr",
+      description: "Sélectionnez le montant TVA sur l'image"
     },
   ];
 

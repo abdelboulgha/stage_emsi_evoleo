@@ -8,6 +8,7 @@ from io import BytesIO
 from typing import Any, Dict, List, Optional, Union
 import math
 import dateparser
+import time
 
 # Third-party imports
 import base64
@@ -632,6 +633,7 @@ async def ocr_preview(
     file: UploadFile = File(...),
     template_id: str = Form(None),
 ):
+    import time  # Ensure time module is available in this function
     MIN_CONFIDENCE = 0.8
    
     try:
@@ -681,7 +683,6 @@ async def ocr_preview(
                     'score': float(score)
                 })
 
-        #print(f"Detected {len(detected_boxes)} boxes after filtering (conf >= {MIN_CONFIDENCE})")
 
         # -------------------------
         # Helpers: number & keyword
@@ -1055,36 +1056,288 @@ async def ocr_preview(
             return None
 
         # -------------------------
-        # Extract HT
+        # Extract HT using position-based mapping
         # -------------------------
-       # print("\n" + "="*60)
-       # print("🔍 SEARCHING FOR HT (HORS TAXES)")
-       # print("="*60)
-        import time
-        start_time = time.time()
-        ht_match = find_value_for_field(is_valid_ht_keyword, is_tva=False, field_name="HT (Hors Taxes)")
-        ht_time = time.time() - start_time
-        if not ht_match:
-            return {"success": False, "data": {}, "message": "Aucun mot-clé HT trouvé"}
-        ht_extracted = ht_match['value']
-        #print(f"\n✅ SELECTED HT: {ht_extracted} (from '{ht_match['value_text']}', keyword: '{ht_match['keyword_text']}')")
-        #print(f"⏱️  HT extraction took: {ht_time:.4f} seconds")
+        ht_extracted = None
+        ht_box = None
+        ht_match = {'value_box': {'left': 0, 'top': 0, 'width': 0, 'height': 0}}
+        try:
+            # Get database connection and cursor
+            connection = get_connection()
+            cursor = connection.cursor(dictionary=True)
+            
+            # Get field ID for montantht
+            cursor.execute("SELECT id FROM field_name WHERE name = 'montantht'")
+            row = cursor.fetchone()
+            if row:
+                ht_field_id = row['id']
+                cursor.execute("""
+                    SELECT `left`, `top`, `width`, `height`
+                    FROM Mappings
+                    WHERE template_id = %s AND field_id = %s
+                    LIMIT 1
+                """, (template_id, ht_field_id))
+                mapping = cursor.fetchone()
+                if mapping:
+                    # Define expansion amounts (in pixels)
+                    expand_x = 100  # Increased from 10 to 100px for better detection
+                    expand_y = 20    # Increased from 5 to 20px for better detection
+                    
+                    # Calculate expanded mapped box coordinates
+                    mapped_left = float(mapping['left']) - expand_x
+                    mapped_right = float(mapping['left']) + float(mapping['width']) + expand_x
+                    mapped_top = float(mapping['top']) - expand_y
+                    mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
+                    
+                    mapped_box = {
+                        'left': mapped_left,
+                        'top': mapped_top,
+                        'right': mapped_right,
+                        'bottom': mapped_bottom
+                    }
+                    
+                    # Find the best matching box in the mapped area
+                    best_match = None
+                    best_score = -1
+                    
+                    for box in detected_boxes:
+                        current_box = {
+                            'left': box['left'],
+                            'top': box['top'],
+                            'right': box['left'] + box['width'],
+                            'bottom': box['top'] + box['height']
+                        }
+                        
+                        # Calculate overlap
+                        x_overlap = max(0, min(mapped_box['right'], current_box['right']) - max(mapped_box['left'], current_box['left']))
+                        y_overlap = max(0, min(mapped_box['bottom'], current_box['bottom']) - max(mapped_box['top'], current_box['top']))
+                        overlap_area = x_overlap * y_overlap
+                        
+                        # Calculate area of current box
+                        box_area = (current_box['right'] - current_box['left']) * (current_box['bottom'] - current_box['top'])
+                        
+                        # Calculate overlap ratio (how much of the box is within the mapped area)
+                        if box_area > 0:
+                            overlap_ratio = overlap_area / box_area
+                            
+                            # Try to extract a number from the box text
+                            val = extract_number(box['text'])
+                            if val is not None and overlap_ratio > 0.3:  # At least 30% overlap
+                                # Calculate center distance for scoring
+                                mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
+                                mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
+                                box_center_x = (current_box['left'] + current_box['right']) / 2
+                                box_center_y = (current_box['top'] + current_box['bottom']) / 2
+                                
+                                # Calculate distance between centers
+                                dx = box_center_x - mapped_center_x
+                                dy = box_center_y - mapped_center_y
+                                distance = (dx**2 + dy**2) ** 0.5
+                                
+                                # Calculate score (higher is better)
+                                score = (overlap_ratio * 0.7) + (1 / (1 + distance) * 0.3)
+                                
+                                if score > best_score:
+                                    best_score = score
+                                    best_match = box
+                                    ht_extracted = val
+                                    ht_box = {
+                                        "left": box['left'],
+                                        "top": box['top'],
+                                        "width": box['width'],
+                                        "height": box['height'],
+                                        "manual": False
+                                    }
+                                    # Update ht_match with the found coordinates
+                                    ht_match['value_box'].update({
+                                        'left': float(box['left']),
+                                        'top': float(box['top']),
+                                        'width': float(box['width']),
+                                        'height': float(box['height'])
+                                    })
+                    
+                    if not best_match:
+                        print("\n=== DEBUG: No valid HT value found in mapped area ===")
+                        print(f"Best score achieved: {best_score}")
+                        print(f"Number of boxes checked: {len(detected_boxes)}")
+                        print(f"Mapped box area: {mapped_box}")
+                        print("Potential issues:")
+                        print("1. No boxes with numeric values found in the mapped area")
+                        print("2. Boxes found but overlap ratio too low (needs >30%)")
+                        print("3. OCR might not have detected text in this area")
+        except Exception as e:
+            print(f"Error extracting HT: {e}")
+            import traceback
+            print(traceback.format_exc())
+        finally:
+            # Ensure cursor and connection are properly closed
+            if 'cursor' in locals():
+                cursor.close()
+            if 'connection' in locals() and connection.is_connected():
+                connection.close()
+        
+        if ht_extracted is None:
+            return {"success": False, "data": {}, "message": "Aucune valeur HT trouvée dans la zone mappée"}
 
-       
         # -------------------------
-        # Extract TVA
+        # Extract TVA using position-based mapping
         # -------------------------
-        #print("\n" + "="*60)
-       #print("🔍 SEARCHING FOR TVA")
-       # print("="*60)
-        start_time = time.time()
-        tva_match = find_value_for_field(is_valid_tva_keyword, is_tva=True, field_name="TVA")
-        tva_time = time.time() - start_time
-        if not tva_match:
-            return {"success": False, "data": {}, "message": "Aucun mot-clé TVA trouvé"}
-        tva_extracted = tva_match['value']
-        #print(f"\n✅ SELECTED TVA: {tva_extracted} (from '{tva_match['value_text']}', keyword: '{tva_match['keyword_text']}')")
-        #print(f"⏱️  TVA extraction took: {tva_time:.4f} seconds")
+        tva_extracted = None
+        tva_box = None
+        tva_match = {'value_box': {'left': 0, 'top': 0, 'width': 0, 'height': 0}}
+        tva_connection = None
+        tva_cursor = None
+        
+        try:
+            # Create new connection and cursor for TVA extraction
+            tva_connection = get_connection()
+            tva_cursor = tva_connection.cursor(dictionary=True, buffered=True)  # Use buffered cursor
+            
+            # Get field ID for tva
+            tva_cursor.execute("SELECT id FROM field_name WHERE name = 'tva'")
+            try:
+                row = tva_cursor.fetchone()
+                    
+                if row and 'id' in row:
+                    tva_field_id = row['id']
+                    # Make sure to consume any remaining results
+                    while tva_cursor.nextset():
+                        pass
+                    
+                    # Execute mapping query
+                    tva_cursor.execute("""
+                        SELECT `left`, `top`, `width`, `height`
+                        FROM Mappings
+                        WHERE template_id = %s AND field_id = %s
+                        LIMIT 1
+                    """, (template_id, tva_field_id))
+                    
+                    # Fetch the mapping result
+                    mapping = tva_cursor.fetchone()
+                        
+                    # Consume any remaining results
+                    while tva_cursor.nextset():
+                        pass
+                if mapping:
+                    # Define expansion amounts (in pixels)
+                    expand_x = 10  # 10px horizontal expansion
+                    expand_y = 5    # 5px vertical expansion
+                    
+                    # Calculate expanded mapped box coordinates
+                    mapped_left = float(mapping['left']) - expand_x
+                    mapped_right = float(mapping['left']) + float(mapping['width']) + expand_x
+                    mapped_top = float(mapping['top']) - expand_y
+                    mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
+                    
+                    mapped_box = {
+                        'left': mapped_left,
+                        'top': mapped_top,
+                        'right': mapped_right,
+                        'bottom': mapped_bottom
+                    }
+                    
+                    # Find the best matching box in the mapped area
+                    best_match = None
+                    best_score = -1
+                    
+                    for box in detected_boxes:
+                        current_box = {
+                            'left': box['left'],
+                            'top': box['top'],
+                            'right': box['left'] + box['width'],
+                            'bottom': box['top'] + box['height']
+                        }
+                        
+                        # Skip if this is a percentage (TVA rate, not amount)
+                        if '%' in box['text']:
+                            continue
+                            
+                        # Calculate overlap
+                        x_overlap = max(0, min(mapped_box['right'], current_box['right']) - max(mapped_box['left'], current_box['left']))
+                        y_overlap = max(0, min(mapped_box['bottom'], current_box['bottom']) - max(mapped_box['top'], current_box['top']))
+                        overlap_area = x_overlap * y_overlap
+                        
+                        # Calculate area of current box
+                        box_area = (current_box['right'] - current_box['left']) * (current_box['bottom'] - current_box['top'])
+                        
+                        # Calculate overlap ratio (how much of the box is within the mapped area)
+                        if box_area > 0:
+                            overlap_ratio = overlap_area / box_area
+                            
+                            # Try to extract a number from the box text
+                            val = extract_number(box['text'])
+                            if val is not None and overlap_ratio > 0.3:  # At least 30% overlap
+                                # Calculate center distance for scoring
+                                mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
+                                mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
+                                box_center_x = (current_box['left'] + current_box['right']) / 2
+                                box_center_y = (current_box['top'] + current_box['bottom']) / 2
+                                
+                                # Calculate distance between centers
+                                dx = box_center_x - mapped_center_x
+                                dy = box_center_y - mapped_center_y
+                                distance = (dx**2 + dy**2) ** 0.5
+                                
+                                # Calculate score (higher is better)
+                                score = (overlap_ratio * 0.7) + (1 / (1 + distance) * 0.3)
+                                
+                                if score > best_score:
+                                    best_score = score
+                                    best_match = box
+                                    tva_extracted = val
+                                    tva_box = {
+                                        "left": box['left'],
+                                        "top": box['top'],
+                                        "width": box['width'],
+                                        "height": box['height'],
+                                        "manual": False
+                                    }
+                                    # Update tva_match with the found coordinates
+                                    tva_match['value_box'].update({
+                                        'left': float(box['left']),
+                                        'top': float(box['top']),
+                                        'width': float(box['width']),
+                                        'height': float(box['height'])
+                                    })
+                    
+                    if not best_match:
+                        print("No valid TVA value found in mapped area")
+            except Exception as e:
+                print(f"Error in TVA field ID query: {e}")
+                import traceback
+                traceback.print_exc()
+                return {"success": False, "data": {}, "message": f"Erreur lors de l'extraction TVA: {str(e)}"}
+                
+        except Exception as e:
+            print(f"Error extracting TVA: {e}")
+            import traceback
+            traceback.print_exc()
+            return {"success": False, "data": {}, "message": f"Erreur lors de l'extraction TVA: {str(e)}"}
+            
+        finally:
+            # Clean up resources
+            if 'tva_cursor' in locals() and tva_cursor is not None:
+                try:
+                    # Consume any remaining results
+                    while tva_cursor.nextset():
+                        pass
+                except:
+                    pass
+                finally:
+                    try:
+                        tva_cursor.close()
+                    except:
+                        pass
+            
+            if 'tva_connection' in locals() and tva_connection is not None:
+                try:
+                    if tva_connection.is_connected():
+                        tva_connection.close()
+                except:
+                    pass
+        
+        if tva_extracted is None:
+            return {"success": False, "data": {}, "message": "Aucune valeur TVA trouvée dans la zone mappée"}
 
         # -------------------------
         # TTC and taux TVA
@@ -1103,27 +1356,30 @@ async def ocr_preview(
             #print(f"Raw TVA rate: {raw_taux:.2f}% -> Rounded to: {taux_tva}%")
         else:
             taux_tva = 0
-          #  print("HT is zero, cannot calculate TVA rate")
 
         # -------------------------
-        # numFacture extraction (left as-is, minimally adapted to detected_boxes)
+        # Extract numFacture using position-based mapping
         # -------------------------
         numfacture_value = None
         numfacture_box = None
+        numfacture_search_area = None
+        numfacture_cursor = None
         try:
-            connection = get_connection()
-            cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
-            row = cursor.fetchone()
+            # Create new connection and cursor for numFacture extraction
+            numfacture_connection = get_connection()
+            numfacture_cursor = numfacture_connection.cursor(dictionary=True)
+            
+            numfacture_cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
+            row = numfacture_cursor.fetchone()
             if row:
                 numfacture_field_id = row['id']
-                cursor.execute("""
+                numfacture_cursor.execute("""
                     SELECT `left`, `top`, `width`, `height`
                     FROM Mappings
                     WHERE template_id = %s AND field_id = %s
                     LIMIT 1
                 """, (template_id, numfacture_field_id))
-                mapping = cursor.fetchone()
+                mapping = numfacture_cursor.fetchone()
                 if mapping:
                     mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
                     mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
@@ -1620,25 +1876,48 @@ async def ocr_preview(
                             "height": best_match["box"]["height"],
                         }
         except Exception as e:
-            print(f"Error extracting dateFacturation: {e}")
-            print(traceback.format_exc())
-        finally:
-            # Calculate the time taken for date extraction
-            #datefacturation_time = time.time() - date_extraction_start
-           # print(f"⏱️  Date extraction took: {datefacturation_time:.4f} seconds")
+            print(f"\n=== ERROR in dateFacturation extraction ===")
+            print(f"Error type: {type(e).__name__}")
+            print(f"Error message: {str(e)}")
+            import traceback
+            traceback.print_exc()
             
+            # Log the current state of variables
+            print("\n=== DEBUG: dateFacturation extraction state ===")
+            print(f"Template ID: {template_id}")
+            print(f"Connection active: {'connection' in locals() and connection and getattr(connection, 'is_connected', lambda: False)()}")
+            print(f"Cursor exists: {'cursor' in locals() and cursor is not None}")
             if 'cursor' in locals() and cursor:
-                cursor.close()
-            if 'connection' in locals() and connection and getattr(connection, 'is_connected', lambda: True)():
                 try:
-                    connection.close()
-                except Exception:
-                    pass
+                    print(f"Cursor has results: {cursor.with_rows}")
+                except:
+                    print("Could not check cursor status")
+        finally:
+            # Clean up resources
+            if 'cursor' in locals() and cursor:
+                try:
+                    # Consume any remaining results
+                    while cursor.nextset():
+                        pass
+                except Exception as e:
+                    print(f"Error consuming cursor results: {e}")
+                try:
+                    cursor.close()
+                except Exception as e:
+                    print(f"Error closing cursor: {e}")
+                    
+            if 'connection' in locals() and connection:
+                try:
+                    if getattr(connection, 'is_connected', lambda: False)():
+                        connection.close()
+                except Exception as e:
+                    print(f"Error closing connection: {e}")
 
         # -------------------------
         # Prepare response
         # -------------------------
        # print("\n" + "="*60)
+       # print(" EXTRACTION SUMMARY")
        # print("📊 EXTRACTION SUMMARY")
        # print("="*60)
        # print(f"📄 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")

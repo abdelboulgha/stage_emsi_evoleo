@@ -193,10 +193,7 @@ class FactureService:
             List of indices of duplicate invoices
         """
         try:
-            print(f"[DEBUG] Checking for duplicates among {len(invoices_data)} invoices for user {user_id}")
-            
             if not invoices_data:
-                print("[DEBUG] No invoices provided to check")
                 return []
                 
             # Extract invoice numbers and suppliers (already cleaned by frontend)
@@ -208,12 +205,8 @@ class FactureService:
                 
                 if num_facture and fournisseur:
                     invoice_identifiers.append((i, num_facture, fournisseur))
-                    print(f"[DEBUG] Invoice {i}: numFacture='{num_facture}', fournisseur='{fournisseur}'")
-                else:
-                    print(f"[DEBUG] Invoice {i}: Missing numFacture or fournisseur")
             
             if not invoice_identifiers:
-                print("[DEBUG] No valid invoices to check (missing numFacture or fournisseur)")
                 return []
             
             # Get all existing invoices for this user to check against
@@ -222,10 +215,8 @@ class FactureService:
                 .where(Facture.created_by == user_id)
             )
             
-            print(f"[DEBUG] Fetching all invoices for user {user_id}")
             result = await self.session.execute(stmt)
             existing_invoices = result.all()
-            print(f"[DEBUG] Found {len(existing_invoices)} existing invoices in database")
             
             # Create a set of (numFacture, fournisseur) tuples for quick lookup
             existing_set = {
@@ -242,10 +233,8 @@ class FactureService:
                 norm_four = str(four).strip().lower()
                 
                 if (norm_num, norm_four) in existing_set:
-                    print(f"[DEBUG] Found duplicate: numFacture='{norm_num}', fournisseur='{norm_four}'")
                     duplicate_indices.append(idx)
             
-            print(f"[DEBUG] Found {len(duplicate_indices)} duplicates: {duplicate_indices}")
             return duplicate_indices
             
         except Exception as e:
