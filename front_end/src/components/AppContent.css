@@ -2,6 +2,8 @@
     min-height: 100vh;
     background: var(--white);
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    display: flex;
+    flex-direction: column;
 }
 
 .app-header {
@@ -223,6 +225,25 @@
     padding: var(--spacing-xl);
     background: var(--gray-50);
     min-height: calc(100vh - 80px);
+    position: relative;
+    z-index: 1;
+    overflow-x: hidden;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Ensure content takes only the space it needs */
+.app-main > * {
+    flex-shrink: 0;
+}
+
+/* Add a small buffer at the bottom of scrollable content */
+.app-main::after {
+    content: '';
+    display: block;
+    height: 20px;
+    flex-shrink: 0;
 }
 
 .step-navigation {

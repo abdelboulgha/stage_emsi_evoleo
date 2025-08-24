@@ -1993,3 +1993,99 @@ NameError: name 'ht_match' is not defined
 2025-08-23 12:43:56,880 INFO Database tables created successfully
 2025-08-23 12:43:57,034 INFO Default data inserted successfully
 2025-08-23 12:43:57,034 INFO Database initialization complete
+2025-08-23 12:48:16,196 INFO Initializing database...
+2025-08-23 12:48:16,265 INFO Database tables created successfully
+2025-08-23 12:48:16,351 INFO Default data inserted successfully
+2025-08-23 12:48:16,352 INFO Database initialization complete
+2025-08-23 15:01:51,363 INFO Initializing database...
+2025-08-23 15:01:51,424 INFO Database tables created successfully
+2025-08-23 15:01:51,476 INFO Default data inserted successfully
+2025-08-23 15:01:51,477 INFO Database initialization complete
+2025-08-23 20:36:39,335 INFO Initializing database...
+2025-08-23 20:36:39,519 INFO Database tables created successfully
+2025-08-23 20:36:39,608 INFO Default data inserted successfully
+2025-08-23 20:36:39,608 INFO Database initialization complete
+2025-08-24 03:33:22,702 INFO Initializing database...
+2025-08-24 03:33:22,947 INFO Database tables created successfully
+2025-08-24 03:33:23,146 INFO Default data inserted successfully
+2025-08-24 03:33:23,147 INFO Database initialization complete
+2025-08-24 13:22:44,706 INFO Initializing database...
+2025-08-24 13:22:44,769 INFO Database tables created successfully
+2025-08-24 13:22:44,843 INFO Default data inserted successfully
+2025-08-24 13:22:44,843 INFO Database initialization complete
+2025-08-24 13:32:43,046 INFO Initializing database...
+2025-08-24 13:32:43,106 INFO Database tables created successfully
+2025-08-24 13:32:43,174 INFO Default data inserted successfully
+2025-08-24 13:32:43,174 INFO Database initialization complete
+2025-08-24 13:33:18,169 INFO Initializing database...
+2025-08-24 13:33:18,215 INFO Database tables created successfully
+2025-08-24 13:33:18,265 INFO Default data inserted successfully
+2025-08-24 13:33:18,265 INFO Database initialization complete
+2025-08-24 13:44:40,648 INFO Initializing database...
+2025-08-24 13:44:40,696 INFO Database tables created successfully
+2025-08-24 13:44:40,749 INFO Default data inserted successfully
+2025-08-24 13:44:40,749 INFO Database initialization complete
+2025-08-24 14:12:03,067 INFO Initializing database...
+2025-08-24 14:12:03,196 INFO Database tables created successfully
+2025-08-24 14:12:03,298 INFO Default data inserted successfully
+2025-08-24 14:12:03,299 INFO Database initialization complete
+2025-08-24 14:12:55,725 INFO Initializing database...
+2025-08-24 14:12:55,791 INFO Database tables created successfully
+2025-08-24 14:12:55,850 INFO Default data inserted successfully
+2025-08-24 14:12:55,850 INFO Database initialization complete
+2025-08-24 14:33:52,900 INFO Initializing database...
+2025-08-24 14:33:52,949 INFO Database tables created successfully
+2025-08-24 14:33:53,007 INFO Default data inserted successfully
+2025-08-24 14:33:53,007 INFO Database initialization complete
+2025-08-24 14:34:36,202 INFO Initializing database...
+2025-08-24 14:34:36,288 INFO Database tables created successfully
+2025-08-24 14:34:36,376 INFO Default data inserted successfully
+2025-08-24 14:34:36,376 INFO Database initialization complete
+2025-08-24 14:36:53,408 INFO Initializing database...
+2025-08-24 14:36:53,456 INFO Database tables created successfully
+2025-08-24 14:36:53,507 INFO Default data inserted successfully
+2025-08-24 14:36:53,507 INFO Database initialization complete
+2025-08-24 15:23:41,267 INFO Initializing database...
+2025-08-24 15:23:41,317 INFO Database tables created successfully
+2025-08-24 15:23:41,391 INFO Default data inserted successfully
+2025-08-24 15:23:41,391 INFO Database initialization complete
+2025-08-24 16:29:45,204 INFO Initializing database...
+2025-08-24 16:29:45,267 INFO Database tables created successfully
+2025-08-24 16:29:45,323 INFO Default data inserted successfully
+2025-08-24 16:29:45,323 INFO Database initialization complete
+2025-08-24 20:16:00,349 INFO Initializing database...
+2025-08-24 20:16:00,439 INFO Database tables created successfully
+2025-08-24 20:16:00,524 INFO Default data inserted successfully
+2025-08-24 20:16:00,525 INFO Database initialization complete
+2025-08-24 20:16:48,855 INFO Initializing database...
+2025-08-24 20:16:48,919 INFO Database tables created successfully
+2025-08-24 20:16:48,991 INFO Default data inserted successfully
+2025-08-24 20:16:48,991 INFO Database initialization complete
+2025-08-24 20:24:55,358 INFO Initializing database...
+2025-08-24 20:24:55,413 INFO Database tables created successfully
+2025-08-24 20:24:55,468 INFO Default data inserted successfully
+2025-08-24 20:24:55,469 INFO Database initialization complete
+2025-08-24 22:37:22,400 INFO Initializing database...
+2025-08-24 22:37:22,477 INFO Database tables created successfully
+2025-08-24 22:37:22,537 INFO Default data inserted successfully
+2025-08-24 22:37:22,538 INFO Database initialization complete
+2025-08-24 22:52:41,238 INFO Initializing database...
+2025-08-24 22:52:41,285 INFO Database tables created successfully
+2025-08-24 22:52:41,364 INFO Default data inserted successfully
+2025-08-24 22:52:41,365 INFO Database initialization complete
+2025-08-24 22:53:03,682 INFO Initializing database...
+2025-08-24 22:53:03,721 INFO Database tables created successfully
+2025-08-24 22:53:03,763 INFO Default data inserted successfully
+2025-08-24 22:53:03,763 INFO Database initialization complete
+2025-08-24 22:59:18,863 INFO Initializing database...
+2025-08-24 22:59:18,914 INFO Database tables created successfully
+2025-08-24 22:59:18,962 INFO Default data inserted successfully
+2025-08-24 22:59:18,962 INFO Database initialization complete
+2025-08-24 22:59:39,656 INFO Initializing database...
+2025-08-24 22:59:39,707 INFO Database tables created successfully
+2025-08-24 22:59:39,759 INFO Default data inserted successfully
+2025-08-24 22:59:39,759 INFO Database initialization complete
+2025-08-24 23:12:52,158 INFO Initializing database...
+2025-08-24 23:12:52,211 INFO Database tables created successfully
+2025-08-24 23:12:52,257 INFO Default data inserted successfully
+2025-08-24 23:12:52,258 INFO Database initialization complete

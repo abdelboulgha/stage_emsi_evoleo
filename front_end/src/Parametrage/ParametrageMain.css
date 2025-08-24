@@ -4,7 +4,7 @@
     width: 100%;
     background: var(--white);
     position: relative;
-    padding: var(--spacing-xl);
+    padding: 0 var(--spacing-xl) var(--spacing-xl);
 }
 
 .parametrage-container::before {
@@ -565,7 +565,6 @@
     position: relative;
     overflow-x: auto;
     overflow-y: hidden;
-    padding: 20px;
     width: 100%;
     box-sizing: border-box;
 }
@@ -618,7 +617,7 @@
     transition: transform 0.1s ease;
     position: relative;
     overflow: auto;
-    max-height: 70vh;
+    max-height:100vh;
 }
 
 .parametrage-canvas {

@@ -1,4 +1,23 @@
 /* Reset et styles de base */
+:root {
+  --scale-factor: 0.75;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+  position: relative;
+}
+
+html {
+  font-size: calc(16px * var(--scale-factor));
+  transform-origin: top left;
+  overflow-x: hidden;
+  height: 100%;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -10,6 +29,11 @@ body {
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--white);
   color: var(--gray-800);

@@ -29,10 +29,6 @@ const ParametrageMain = ({
   return (
     <div className="parametrage-container">
       <div className="parametrage-content">
-        <div className="parametrage-header">
-          <h1 className="parametrage-title">Paramétrage des Champs</h1>
-       
-        </div>
 
         <div className="parametrage-grid">
           {/* Left sidebar - Field mappings */}

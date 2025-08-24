@@ -523,20 +523,26 @@ async def delete_mapping(
 @app.get("/factures")
 async def get_factures(
     skip: int = 0,
-    limit: int = 100,
+    limit: int = 10,  # Default to 10 items per page
+    page: Optional[int] = None,
     search: Optional[str] = None,
     current_user = Depends(require_comptable_or_admin),
     db = Depends(get_async_db)
 ):
     """
-    Get invoices for the current user using ORM with optional search
+    Get invoices for the current user using ORM with optional search and pagination
     
     Query Parameters:
+    - page: Page number (1-based). If provided, overrides 'skip'
     - skip: Number of records to skip (for pagination)
-    - limit: Maximum number of records to return (for pagination)
+    - limit: Maximum number of records to return per page (default: 10)
     - search: Optional search term to filter invoices
     """
     try:
+        # Calculate skip based on page number if provided
+        if page is not None and page > 0:
+            skip = (page - 1) * limit
+            
         facture_service = FactureService(db)
         result = await facture_service.get_factures(
             current_user["id"], 
@@ -544,6 +550,21 @@ async def get_factures(
             limit=limit, 
             search=search
         )
+        
+        # Add pagination metadata
+        if result["success"]:
+            total_items = result.get("total_count", 0)
+            total_pages = max(1, (total_items + limit - 1) // limit)
+            
+            result["pagination"] = {
+                "current_page": page if page is not None else (skip // limit) + 1,
+                "total_pages": total_pages,
+                "total_items": total_items,
+                "items_per_page": limit,
+                "has_next": (skip + limit) < total_items,
+                "has_previous": skip > 0
+            }
+            
         return result
         
     except Exception as e:

@@ -2,7 +2,7 @@ import React, { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 // Import des composants modulaires
-import Notifications from "../NavBar/Notifications";
+import Notifications from "../Notif/Notifications";
 import PreparationSetup from "../Preparation/PreparationSetup";
 import ExtractionMain from "../Extraction/ExtractionMain";
 import InvoiceSelectionModal from "../Extraction/InvoiceSelectionModal";

@@ -110,7 +110,7 @@ class Facture(Base):
             "tauxTVA": float(self.tauxTVA) if self.tauxTVA else 0.0,
             "montantHT": float(self.montantHT) if self.montantHT else 0.0,
             "montantTVA": float(self.montantTVA) if self.montantTVA else 0.0,
-            "montantTTC": float(self.montantTVA) if self.montantTTC else 0.0,
+            "montantTTC": float(self.montantTTC) if self.montantTTC else 0.0,
             "dateFacturation": self.dateFacturation.isoformat() if self.dateFacturation else None,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "created_by": self.created_by

@@ -117,11 +117,6 @@ const PreparationSetup = (props) => {
 
   return (
     <div className="preparation-setup">
-      <div className="preparation-setup-header">
-        <h1 className="preparation-setup-title">Configuration de l'Extraction</h1>
-     
-      </div>
-
       <div className="preparation-steps">
         {/* Étape 1: Configuration du fournisseur */}
         {setupState.invoiceType && (
@@ -153,8 +148,7 @@ const PreparationSetup = (props) => {
                     <Plus className="w-8 h-8" />
                   </div>
                   <div className="preparation-upload-text">
-                    Paramétrer une nouvelle facture{" "}
-                    {setupState.invoiceType === "achat" ? "d'achat" : "de vente"}
+                    Paramétrer une nouvelle facture
                   </div>
                   <div className="preparation-upload-subtext">
                     Cliquez pour sélectionner un fichier PDF ou image de référence

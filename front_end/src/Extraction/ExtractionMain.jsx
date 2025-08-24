@@ -52,11 +52,6 @@ const ExtractionMain = ({
   return (
     <div className="extraction-container">
       <div className="extraction-content">
-        <div className="extraction-header">
-          <h1 className="extraction-title">Extraction de Données</h1>
-          
-        </div>
-
         <div className="extraction-grid">
           {/* Sidebar with extracted data */}
           <ExtractionSidebar

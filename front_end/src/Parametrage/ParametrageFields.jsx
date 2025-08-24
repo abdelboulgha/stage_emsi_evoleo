@@ -16,38 +16,35 @@ const ParametrageFields = ({
     { 
       key: "fournisseur", 
       label: "Fournisseur", 
-      type: "manual",
-      description: "Saisissez le nom du fournisseur"
+      type: "manual"
+     
     },
     { 
       key: "serial", 
       label: "Numéro de Série", 
-      type: "manual",
-      description: "Entrez un numéro de série à 9 chiffres"
+      type: "manual"
     },
     { 
       key: "numeroFacture", 
       label: "Numéro de Facture", 
-      type: "ocr",
-      description: "Sélectionnez le numéro de facture sur l'image"
+      type: "ocr"
     },{ 
       key: "dateFacturation", 
       label: "Date de Facturation", 
       type: "date",
-      description: "",
       format: "dd/MM/yyyy"  
     },
     { 
       key: "montantht", 
       label: "Montant HT", 
       type: "ocr",
-      description: "Sélectionnez le montant HT sur l'image"
+  
     },
     { 
       key: "tva", 
       label: "Montant TVA", 
       type: "ocr",
-      description: "Sélectionnez le montant TVA sur l'image"
+    
     },
   ];
 
@@ -123,9 +120,7 @@ const ParametrageFields = ({
                     dataPrepState.fieldMappings.fournisseur?.manualValue?.trim() ? 'valid' : 'invalid'
                   }`}
                 />
-                {!dataPrepState.fieldMappings.fournisseur?.manualValue?.trim() && (
-                  <div className="input-error-message">Ce champ est requis</div>
-                )}
+           
               </div>
             )}
 

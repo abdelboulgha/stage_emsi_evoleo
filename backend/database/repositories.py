@@ -190,29 +190,125 @@ class FactureRepository(BaseRepository):
         Returns:
             Tuple of (list of invoices, total count)
         """
+        
         # Base query
         query = select(Facture).where(Facture.created_by == user_id)
         
         # Add search conditions if search term is provided
         if search and search.strip():
-            search = f"%{search.lower()}%"
-            query = query.where(
-                or_(
-                    Facture.numFacture.ilike(f"%{search}%"),
-                    Facture.fournisseur.ilike(f"%{search}%"),
-                    Facture.montantTTC.cast(String).ilike(f"%{search}%"),
-                    Facture.montantHT.cast(String).ilike(f"%{search}%"),
-                    Facture.dateFacturation.cast(String).ilike(f"%{search}%")
+            search_terms = search.strip()
+            
+            # Initialize date filters
+            date_facturation_filter = None
+            date_ajout_filter = None
+            
+            # Check for date filters
+            if 'date:' in search_terms:
+                try:
+                    date_part = search_terms.split('date:')[1].split()[0]  # Get the date part
+                    from datetime import datetime
+                    date_facturation_filter = datetime.strptime(date_part, '%Y-%m-%d').date()
+                    search_terms = search_terms.replace(f'date:{date_part}', '').strip()
+                except (ValueError, IndexError):
+                    pass
+                    
+            if 'date_ajout:' in search_terms:
+                try:
+                    date_part = search_terms.split('date_ajout:')[1].split()[0]  # Get the date part
+                    from datetime import datetime
+                    date_ajout_filter = datetime.strptime(date_part, '%Y-%m-%d').date()
+                    search_terms = search_terms.replace(f'date_ajout:{date_part}', '').strip()
+                except (ValueError, IndexError):
+                    pass
+            
+            # Build search conditions
+            conditions = []
+            
+            # Add date filters if we have valid dates
+            if date_facturation_filter is not None:
+                conditions.append(Facture.dateFacturation == date_facturation_filter)
+                
+            if date_ajout_filter is not None:
+                conditions.append(func.date(Facture.date_creation) == date_ajout_filter)
+            
+            # Add text search conditions if search term is not empty after removing date filters
+            if search_terms:
+                text_conditions = or_(
+                    Facture.numFacture.ilike(f"%{search_terms}%"),
+                    Facture.fournisseur.ilike(f"%{search_terms}%"),
+                    Facture.montantTTC.cast(String).ilike(f"%{search_terms}%"),
+                    Facture.montantHT.cast(String).ilike(f"%{search_terms}%"),
+                    Facture.montantTVA.cast(String).ilike(f"%{search_terms}%"),
+                    Facture.tauxTVA.cast(String).ilike(f"%{search_terms}%")
                 )
-            )
+                conditions.append(text_conditions)
+            
+            # Apply all conditions with AND between them
+            if conditions:
+                query = query.where(and_(*conditions))
         
         # Get total count with search conditions applied
-        count_query = select(func.count(Facture.id)).select_from(query.subquery())
+        # Create a base query for counting
+        count_query = select(func.count(Facture.id)).where(Facture.created_by == user_id)
+        
+        # Apply the same search conditions to the count query
+        if search and search.strip():
+            search_terms = search.strip()
+            
+            # Initialize date filters for count query
+            date_facturation_filter = None
+            date_ajout_filter = None
+            
+            # Check for date filters in count query
+            if 'date:' in search_terms:
+                try:
+                    date_part = search_terms.split('date:')[1].split()[0]
+                    from datetime import datetime
+                    date_facturation_filter = datetime.strptime(date_part, '%Y-%m-%d').date()
+                    search_terms = search_terms.replace(f'date:{date_part}', '').strip()
+                except (ValueError, IndexError):
+                    pass
+                    
+            if 'date_ajout:' in search_terms:
+                try:
+                    date_part = search_terms.split('date_ajout:')[1].split()[0]
+                    from datetime import datetime
+                    date_ajout_filter = datetime.strptime(date_part, '%Y-%m-%d').date()
+                    search_terms = search_terms.replace(f'date_ajout:{date_part}', '').strip()
+                except (ValueError, IndexError):
+                    pass
+            
+            # Build search conditions for count query
+            count_conditions = []
+            
+            # Add date filters if we have valid dates
+            if date_facturation_filter is not None:
+                count_conditions.append(Facture.dateFacturation == date_facturation_filter)
+                
+            if date_ajout_filter is not None:
+                count_conditions.append(func.date(Facture.date_creation) == date_ajout_filter)
+            
+            # Add text search conditions if search term is not empty after removing date filters
+            if search_terms:
+                text_conditions = or_(
+                    Facture.numFacture.ilike(f"%{search_terms}%"),
+                    Facture.fournisseur.ilike(f"%{search_terms}%"),
+                    Facture.montantTTC.cast(String).ilike(f"%{search_terms}%"),
+                    Facture.montantHT.cast(String).ilike(f"%{search_terms}%"),
+                    Facture.montantTVA.cast(String).ilike(f"%{search_terms}%"),
+                    Facture.tauxTVA.cast(String).ilike(f"%{search_terms}%")
+                )
+                count_conditions.append(text_conditions)
+            
+            # Apply all conditions with AND between them
+            if count_conditions:
+                count_query = count_query.where(and_(*count_conditions))
+        
         count_result = await self.session.execute(count_query)
         total_count = count_result.scalar()
-        
         # Get paginated results
         query = query.order_by(desc(Facture.dateFacturation)).offset(skip).limit(limit)
+        
         result = await self.session.execute(query)
         invoices = result.scalars().all()
         
