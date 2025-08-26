@@ -94,6 +94,9 @@ class Facture(Base):
     montantHT: Mapped[float] = Column(DECIMAL(15,2), nullable=False)  
     montantTVA: Mapped[float] = Column(DECIMAL(15,2), nullable=False) 
     montantTTC: Mapped[float] = Column(DECIMAL(15,2), nullable=False)  
+    sous_HT: Mapped[float] = Column(DECIMAL(15,2), nullable=True)
+    sous_TVA: Mapped[float] = Column(DECIMAL(15,2), nullable=True)
+    sous_TTC: Mapped[float] = Column(DECIMAL(15,2), nullable=True)
     dateFacturation: Mapped[datetime] = Column(Date, nullable=False)  
     date_creation: Mapped[datetime] = Column(TIMESTAMP, nullable=False, default=datetime.utcnow) 
     created_by: Mapped[int] = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
@@ -111,6 +114,9 @@ class Facture(Base):
             "montantHT": float(self.montantHT) if self.montantHT else 0.0,
             "montantTVA": float(self.montantTVA) if self.montantTVA else 0.0,
             "montantTTC": float(self.montantTTC) if self.montantTTC else 0.0,
+            "sous_HT": float(self.sous_HT) if self.sous_HT is not None else None,
+            "sous_TVA": float(self.sous_TVA) if self.sous_TVA is not None else None,
+            "sous_TTC": float(self.sous_TTC) if self.sous_TTC is not None else None,
             "dateFacturation": self.dateFacturation.isoformat() if self.dateFacturation else None,
             "date_creation": self.date_creation.isoformat() if self.date_creation else None,
             "created_by": self.created_by

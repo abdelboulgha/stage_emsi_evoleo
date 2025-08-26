@@ -26,7 +26,7 @@ from pydantic import BaseModel, Field, field_validator
 from dotenv import load_dotenv
 
 # Database and ORM imports
-from database.config import get_async_db, init_database
+from database.config import get_async_db, init_database, AsyncSessionLocal
 from database.models import Base
 from services.template_service import TemplateService
 from services.facture_service import FactureService
@@ -372,33 +372,8 @@ async def pdf_page_previews(
         }
         
     except Exception as e:
-        logging.error(f"Erreur lors de la génération des aperçus: {e}")
-        raise HTTPException(status_code=500, detail=f"Erreur lors de la génération des aperçus: {str(e)}")
-
-
-@app.post("/save-mapping")
-async def save_mapping(
-    request: SaveMappingRequest,
-    current_user = Depends(require_comptable_or_admin),
-    db = Depends(get_async_db)
-):
-    """Save field mappings to the database using ORM"""
-    try:
-        template_service = TemplateService(db)
-        success = await template_service.save_mapping(
-            template_name=request.template_id,  
-            field_map=request.field_map, 
-            current_user_id=current_user["id"]
-        )
-        
-        if success:
-            return {"success": True, "message": "Mapping saved successfully"}
-        else:
-            return {"success": False, "message": "Failed to save mapping"}
-            
-    except Exception as e:
-        logging.error(f"Error saving mapping: {e}")
-        raise HTTPException(status_code=500, detail=f"Error saving mapping: {str(e)}")
+        logging.error(f"Error generating PDF page previews: {e}")
+        raise HTTPException(status_code=500, detail=f"Error generating PDF page previews: {str(e)}")
 
 
 @app.get("/load-mapping/{template_id}")
@@ -409,9 +384,11 @@ async def load_mapping(
 ):
     """Load field mappings from the database using ORM"""
     try:
-        template_service = TemplateService(db)
-        result = await template_service.load_mapping(template_id)
-        return result
+        # Get the async session from the database dependency
+        async with db as session:
+            template_service = TemplateService(session)
+            result = await template_service.load_mapping(template_id)
+            return result
         
     except Exception as e:
         logging.error(f"Error loading mapping: {e}")
@@ -632,15 +609,16 @@ async def upload_basic(file: UploadFile = File(...)):
             }
         elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             img = Image.open(BytesIO(file_content)).convert('RGB')
-            return {
+            response = {
                 "success": True,
-                "image": image_to_base64(img),
+                "boxes": detected_boxes,
                 "width": img.width,
                 "height": img.height,
-                "images": [image_to_base64(img)],
-                "widths": [img.width],
-                "heights": [img.height]
+                "image": f"data:image/jpeg;base64,{image_to_base64(img)}",
+                "zone_ht_boxes": [{"text": box['text'], "score": box['score']} for box in zone_ht_boxes],
+                "zone_tva_boxes": [{"text": box['text'], "score": box['score']} for box in zone_tva_boxes]
             }
+            return response
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
     except Exception as e:
@@ -657,6 +635,9 @@ async def ocr_preview(
     import time  # Ensure time module is available in this function
     MIN_CONFIDENCE = 0.8
    
+    # Initialize field_map at the beginning
+    field_map = {}
+    
     try:
         # --- Read file to PIL image ---
         file_content = await file.read()
@@ -703,6 +684,122 @@ async def ocr_preview(
                     'text': text.strip(),
                     'score': float(score)
                 })
+        
+        # Helper function to find boxes within a zone
+        def find_boxes_in_zone(boxes, zone_coords, min_overlap=0.5):
+            if not zone_coords or 'left' not in zone_coords:
+                return []
+                
+            zone_left = zone_coords.get('left', 0)
+            zone_top = zone_coords.get('top', 0)
+            zone_right = zone_left + zone_coords.get('width', 0)
+            zone_bottom = zone_top + zone_coords.get('height', 0)
+            
+            zone_area = zone_coords.get('width', 0) * zone_coords.get('height', 0)
+            if zone_area == 0:
+                return []
+                
+            result_boxes = []
+            
+            for box in boxes:
+                box_left = box['left']
+                box_top = box['top']
+                box_right = box['right']
+                box_bottom = box['bottom']
+                
+                # Calculate intersection
+                inter_left = max(zone_left, box_left)
+                inter_top = max(zone_top, box_top)
+                inter_right = min(zone_right, box_right)
+                inter_bottom = min(zone_bottom, box_bottom)
+                
+                if inter_right <= inter_left or inter_bottom <= inter_top:
+                    continue  # No overlap
+                    
+                inter_area = (inter_right - inter_left) * (inter_bottom - inter_top)
+                box_area = (box_right - box_left) * (box_bottom - box_top)
+                
+                # Calculate overlap ratio
+                overlap_ratio = inter_area / box_area if box_area > 0 else 0
+                
+                if overlap_ratio >= min_overlap:
+                    result_boxes.append(box)
+            
+            # Sort boxes by Y position (top to bottom) and then X position (left to right)
+            result_boxes.sort(key=lambda b: (b['top'], b['left']))
+            return result_boxes
+        
+        # Get template mappings if template_id is provided
+        zone_ht_boxes = []
+        zone_tva_boxes = []
+        
+        if template_id:
+            try:
+                print(f"[DEBUG] Loading template with ID: {template_id}")
+                # Get the database session
+                async with AsyncSessionLocal() as session:
+                    try:
+                        template_service = TemplateService(session)
+                        template_response = await template_service.load_mapping(template_id)
+                        await session.commit()
+                    except Exception as e:
+                        await session.rollback()
+                        raise e
+                
+                print(f"[DEBUG] Template response type: {type(template_response)}")
+                print(f"[DEBUG] Template response content: {json.dumps(template_response, default=str, indent=2)}")
+                
+                if template_response and template_response.get('status') == 'success':
+                    # Get the mappings from the response
+                    mappings = template_response.get('mappings', {})
+                    print(f"[DEBUG] Mappings type: {type(mappings)}")
+                    print(f"[DEBUG] Mappings content: {json.dumps(mappings, default=str, indent=2)}")
+                    
+                    # Extract field map correctly
+                    if mappings and isinstance(mappings, dict):
+                        # Get the first mapping (assuming it's the correct one)
+                        field_map = list(mappings.values())[0] if mappings else {}
+                        
+                        print(f"[DEBUG] Field map: {json.dumps(field_map, default=str, indent=2)}")
+                        print(f"[DEBUG] Field map keys: {list(field_map.keys())}")
+                        
+                        # Process zone_ht
+                        if 'zone_ht' in field_map and field_map['zone_ht']:
+                            zone_ht_coords = field_map['zone_ht']
+                            print(f"[DEBUG] zone_ht coordinates: {zone_ht_coords}")
+                            print(f"[DEBUG] Type of zone_ht_coords: {type(zone_ht_coords)}")
+                            
+                            if isinstance(zone_ht_coords, dict) and all(k in zone_ht_coords for k in ['left', 'top', 'width', 'height']):
+                                zone_ht_boxes = find_boxes_in_zone(detected_boxes, zone_ht_coords)
+                                print(f"[DEBUG] Found {len(zone_ht_boxes)} boxes in zone_ht")
+                            else:
+                                print(f"[ERROR] Invalid zone_ht coordinates: {zone_ht_coords}")
+                        else:
+                            print("[DEBUG] zone_ht not found in template or has no coordinates")
+                    
+                    # Process zone_tva
+                    if 'zone_tva' in field_map and field_map['zone_tva']:
+                        zone_tva_coords = field_map['zone_tva']
+                        print(f"[DEBUG] zone_tva coordinates: {zone_tva_coords}")
+                        print(f"[DEBUG] Type of zone_tva_coords: {type(zone_tva_coords)}")
+                        
+                        if isinstance(zone_tva_coords, dict) and all(k in zone_tva_coords for k in ['left', 'top', 'width', 'height']):
+                            zone_tva_boxes = find_boxes_in_zone(detected_boxes, zone_tva_coords)
+                            print(f"[DEBUG] Found {len(zone_tva_boxes)} boxes in zone_tva")
+                            for i, box in enumerate(zone_tva_boxes):
+                                print(f"[DEBUG] zone_tva box {i+1}: {box['text']} (conf: {box.get('score', 'N/A')})")
+                        else:
+                            print(f"[ERROR] Invalid zone_tva coordinates: {zone_tva_coords}")
+                    else:
+                        print("[DEBUG] zone_tva not found in template or has no coordinates")
+                        print("[DEBUG] zone_tva not found in template or has no coordinates")
+            except Exception as e:
+                error_msg = f"Error processing template zones: {str(e)}"
+                print(f"[ERROR] {error_msg}")
+                logging.warning(error_msg, exc_info=True)
+                
+        print(f"[DEBUG] Final zone_ht_boxes count: {len(zone_ht_boxes)}")
+        print(f"[DEBUG] Final zone_tva_boxes count: {len(zone_tva_boxes)}")
 
 
         # -------------------------
@@ -1946,48 +2043,65 @@ async def ocr_preview(
        # print(f"💰 HT: {ht_extracted:.2f} (took {ht_time:.4f}s)")
        # print(f"💸 TVA: {tva_extracted:.2f} (took {tva_time:.4f}s)")
        # print(f"💵 TTC: {ttc_extracted:.2f} (calculated)")
-        # Prepare response with debugging info
+        # Get zone mappings from field_map if available
+        zone_HT_mapping = {}
+        zone_tva_mapping = {}
+        
+        if field_map:
+            if 'zone_ht' in field_map and field_map['zone_ht']:
+                zone_HT_mapping = {
+                    'left': field_map['zone_ht'].get('left', 0),
+                    'top': field_map['zone_ht'].get('top', 0),
+                    'width': field_map['zone_ht'].get('width', 0),
+                    'height': field_map['zone_ht'].get('height', 0)
+                }
+            if 'zone_tva' in field_map and field_map['zone_tva']:
+                zone_tva_mapping = {
+                    'left': field_map['zone_tva'].get('left', 0),
+                    'top': field_map['zone_tva'].get('top', 0),
+                    'width': field_map['zone_tva'].get('width', 0),
+                    'height': field_map['zone_tva'].get('height', 0)
+                }
+
+        # Prepare response with extracted data
         result_data = {
-            "montantHT": ht_extracted,
-            "montantTVA": tva_extracted,
-            "montantTTC": ttc_extracted,
-            "tauxTVA": taux_tva,
+            "montantHT": float(ht_extracted) if ht_extracted is not None else None,
+            "montantTVA": float(tva_extracted) if tva_extracted is not None else None,
+            "montantTTC": float(ttc_extracted) if ttc_extracted is not None else None,
+            "tauxTVA": float(taux_tva) if taux_tva is not None else None,
             "numFacture": numfacture_value,
             "boxHT": {
-                "left": ht_match['value_box']['left'],
-                "top": ht_match['value_box']['top'],
-                "width": ht_match['value_box']['width'],
-                "height": ht_match['value_box']['height']
+                "left": ht_match['value_box'].get('left', 0),
+                "top": ht_match['value_box'].get('top', 0),
+                "width": ht_match['value_box'].get('width', 0),
+                "height": ht_match['value_box'].get('height', 0)
             },
             "boxTVA": {
-                "left": tva_match['value_box']['left'],
-                "top": tva_match['value_box']['top'],
-                "width": tva_match['value_box']['width'],
-                "height": tva_match['value_box']['height']
+                "left": tva_match['value_box'].get('left', 0),
+                "top": tva_match['value_box'].get('top', 0),
+                "width": tva_match['value_box'].get('width', 0),
+                "height": tva_match['value_box'].get('height', 0)
             },
-            "boxNumFacture": numfacture_box,
-            "boxNumFactureSearchArea": numfacture_search_area,
+            "boxNumFacture": numfacture_box or {},
+            "boxNumFactureSearchArea": numfacture_search_area or {},
             "dateFacturation": datefacturation_value,
-            "boxDateFacturation": datefacturation_box,
+            "boxDateFacturation": datefacturation_box or {},
             "template_id": template_id,
-            # Debug info
-            "ht_match": {
-                "search_area": ht_match.get('search_area'),
-                "keyword_box": ht_match.get('keyword_box'),
-                "value_box": ht_match.get('value_box')
-            },
-            "tva_match": {
-                "search_area": tva_match.get('search_area'),
-                "keyword_box": tva_match.get('keyword_box'),
-                "value_box": tva_match.get('value_box')
-            }
+            "zone_HT_mapping": zone_HT_mapping,
+            "zone_tva_mapping": zone_tva_mapping
         }
-
-        return {
+        
+        # Add zone boxes to the response
+        response_data = {
             "success": True,
             "data": result_data,
-            "message": "Extraction réussie"
+            "message": "Extraction réussie",
+            "zone_results": {
+                "zone_ht_boxes": zone_ht_boxes,
+                "zone_tva_boxes": zone_tva_boxes
+            }
         }
+        return response_data
 
     except Exception as e:
         import traceback

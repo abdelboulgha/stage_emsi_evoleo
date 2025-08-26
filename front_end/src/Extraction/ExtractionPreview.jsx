@@ -215,14 +215,19 @@ const ExtractionPreview = ({
     if (data.boxDateFacturation) drawBox(data.boxDateFacturation, '#008000', 'Date', 'left');
     if (data.boxNumFacture) drawBox(data.boxNumFacture, '#6366f1', 'N° Facture', 'top');
     
-    // Draw HT and TVA boxes using search areas since value_boxes are empty
-    if (data.ht_match?.search_area) {
+    // Draw HT and TVA zone mappings from template
+    if (data.zone_HT_mapping?.width > 0) {
+      drawBox(data.zone_HT_mapping, '#00ffff', 'HT Zone', 'left');
+    } else if (data.ht_match?.search_area) {
       drawBox(data.ht_match.search_area, '#b9101066', 'HT Area', 'left');
     } else if (data.boxHT?.width > 0) {
       drawBox(data.boxHT, '#b91010ff', 'HT', 'left');
     }
     
-    if (data.tva_match?.search_area) {
+    // Draw TVA zone mapping from template
+    if (data.zone_tva_mapping?.width > 0) {
+      drawBox(data.zone_tva_mapping, '#00ffff', 'TVA Zone', 'left');
+    } else if (data.tva_match?.search_area) {
       drawBox(data.tva_match.search_area, '#0b0ff566', 'TVA Area', 'left');
     } else if (data.boxTVA?.width > 0) {
       drawBox(data.boxTVA, '#0b0ff5ff', 'TVA', 'left');

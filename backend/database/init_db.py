@@ -44,25 +44,6 @@ def update_database_schema():
         logger.error(f"Error updating database schema: {e}")
         raise
 
-def init_sync_database():
-    """Initialize database tables synchronously"""
-    try:
-        # Create all tables
-        Base.metadata.create_all(bind=sync_engine)
-        logger.info("Database tables created successfully")
-        
-        # Update schema if needed
-        update_database_schema()
-        
-        # Insert default data
-        insert_default_data()
-        logger.info("Default data inserted successfully")
-        
-    except Exception as e:
-        logger.error(f"Error initializing database: {e}")
-        raise
-
-
 async def update_database_schema_async():
     """Update database schema with new columns asynchronously"""
     try:
@@ -95,20 +76,37 @@ async def update_database_schema_async():
         raise
 
 
+def init_sync_database():
+    """Initialize database tables synchronously"""
+    try:
+        # Create all tables
+        Base.metadata.create_all(bind=sync_engine) 
+        logger.info("Database tables created")
+        
+        # Update schema if needed
+        update_database_schema()
+        
+        # Insert default data
+        insert_default_data()
+        
+    except Exception as e:
+        logger.error(f"Error initializing database: {e}")
+        raise
+
+
 async def init_async_database():
     """Initialize database tables asynchronously"""
     try:
         # Create all tables
         async with async_engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-        logger.info("Database tables created successfully")
+        logger.info("Database tables created")
         
         # Update schema if needed
         await update_database_schema_async()
         
         # Insert default data
         await insert_default_data_async()
-        logger.info("Default data inserted successfully")
         
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
@@ -143,7 +141,8 @@ def insert_default_data():
                 # Insert default field names
                 field_names = [
                     "numerofacture", "datefacturation", "fournisseur", 
-                    "montantht", "montantttc", "tva"
+                    "montantht", "montantttc", "tva",
+                    "zone_ht", "zone_tva"
                 ]
                 
                 for field_name in field_names:
@@ -190,7 +189,8 @@ async def insert_default_data_async():
                 # Insert default field names
                 field_names = [
                     "numerofacture", "datefacturation", "fournisseur", 
-                    "montantht", "montantttc", "tva"
+                    "montantht", "montantttc", "tva",
+                    "zone_ht", "zone_tva"
                 ]
                 
                 for field_name in field_names:

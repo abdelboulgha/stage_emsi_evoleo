@@ -27,7 +27,12 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
   const handleCanvasMouseDown = useCallback(
     (event, canvasRef) => {
-      if (!canvasRef.current) return;
+      console.log('Mouse down event', { event, manualDrawState, dataPrepState });
+      
+      if (!canvasRef.current) {
+        console.log('No canvas ref');
+        return;
+      }
 
       const rect = canvasRef.current.getBoundingClientRect();
       const xAffiche = (event.clientX - rect.left);
@@ -54,12 +59,14 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
       const y = yCanvas * (imageHeight / canvasHeight);
 
       // Mode dessin manuel
-      if (manualDrawState.isDrawing) {
-        setManualDrawState((prev) => ({
-          ...prev,
+      if (manualDrawState.isDrawing || dataPrepState.isDrawing) {
+        console.log('Starting manual draw at:', { x, y, manualDrawState, dataPrepState });
+        setManualDrawState({
+          isDrawing: true,
+          fieldKey: dataPrepState.selectedField || dataPrepState.drawingField,
           start: { x, y },
-          rect: null,
-        }));
+          rect: null
+        });
         return;
       }
 
@@ -128,33 +135,43 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
   const handleCanvasMouseMove = useCallback(
     (event, canvasRef) => {
-      if (manualDrawState.isDrawing && manualDrawState.start) {
+      if ((manualDrawState.isDrawing || dataPrepState.isDrawing) && (manualDrawState.start || dataPrepState.drawingStart)) {
+        console.log('Mouse move in drawing mode');
         const rect = canvasRef.current.getBoundingClientRect();
         const x = (event.clientX - rect.left) / dataPrepState.currentZoom;
         const y = (event.clientY - rect.top) / dataPrepState.currentZoom;
-        const left = Math.min(manualDrawState.start.x, x);
-        const top = Math.min(manualDrawState.start.y, y);
-        const width = Math.abs(x - manualDrawState.start.x);
-        const height = Math.abs(y - manualDrawState.start.y);
-        setManualDrawState((prev) => ({
+        const start = manualDrawState.start || dataPrepState.drawingStart;
+        const left = Math.min(start.x, x);
+        const top = Math.min(start.y, y);
+        const width = Math.abs(x - start.x);
+        const height = Math.abs(y - start.y);
+        
+        console.log('Updating drawing rect:', { left, top, width, height });
+        
+        setManualDrawState(prev => ({
           ...prev,
+          isDrawing: true,
+          fieldKey: manualDrawState.fieldKey || dataPrepState.selectedField || dataPrepState.drawingField,
+          start: manualDrawState.start || dataPrepState.drawingStart,
           rect: { left, top, width, height },
         }));
       }
     },
-    [manualDrawState, dataPrepState.currentZoom, setManualDrawState]
+    [manualDrawState, dataPrepState.currentZoom, dataPrepState.isDrawing, dataPrepState.drawingStart, dataPrepState.selectedField, dataPrepState.drawingField, setManualDrawState]
   );
 
   const handleCanvasMouseUp = useCallback(
     (event) => {
+      console.log('Mouse up event', { manualDrawState, dataPrepState });
       const MIN_WIDTH = 30;
       const MIN_HEIGHT = 15;
       
       if (
-        manualDrawState.isDrawing &&
-        manualDrawState.start &&
-        manualDrawState.rect
+        (manualDrawState.isDrawing || dataPrepState.isDrawing) &&
+        (manualDrawState.start || dataPrepState.drawingStart) &&
+        (manualDrawState.rect || dataPrepState.drawingRect)
       ) {
+        console.log('Finalizing drawing', { manualDrawState, dataPrepState });
         const fieldKey = manualDrawState.fieldKey;
         const rect = manualDrawState.rect;
         // Vérifie la taille minimale
@@ -185,20 +202,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
           start: null,
           rect: null,
         });
-        // --- OCR Preview Call ---
-        if (dataPrepState.uploadedImage) {
-          ocrPreviewManual(rect, dataPrepState.uploadedImage, dataPrepState).then(result => {
-            if (result.success) {
-              showNotification(`Texte extrait: ${result.text}`, "success");
-              setOcrPreviewFields(prev => ({
-                ...prev,
-                [fieldKey]: result.text
-              }));
-            } else {
-              showNotification("Erreur OCR: " + result.text, "error");
-            }
-          });
-        }
+        showNotification(`Zone enregistrée pour ${fieldKey}`, "success");
       }
     },
     [manualDrawState, dataPrepState.uploadedImage, setDataPrepState, setManualDrawState, showNotification, ocrPreviewManual, setOcrPreviewFields]
@@ -235,65 +239,139 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
   );
 
   const redrawCanvas = useCallback((canvasRef, imageRef) => {
+    console.log('Redrawing canvas', { manualDrawState, dataPrepState });
     const canvas = canvasRef.current;
-    if (!canvas || !dataPrepState.uploadedImage) return;
+    if (!canvas || !dataPrepState.uploadedImage) {
+      console.log('Canvas or image not ready');
+      return;
+    }
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (imageRef.current && imageRef.current.complete) {
- 
-      
-      
       const scaledWidth = dataPrepState.imageDimensions.width * dataPrepState.currentZoom;
       const scaledHeight = dataPrepState.imageDimensions.height * dataPrepState.currentZoom;
-      
-
       
       canvas.width = scaledWidth;
       canvas.height = scaledHeight;
       ctx.drawImage(imageRef.current, 0, 0, scaledWidth, scaledHeight);
-      // Only draw OCR boxes and saved rectangles if not drawing
+      
+      // Draw saved manual rectangles first (behind everything)
+      Object.entries(dataPrepState.fieldMappings).forEach(
+        ([field, coords]) => {
+          if (coords && coords.manual) {
+            ctx.save();
+            // Fill with semi-transparent color
+            ctx.fillStyle = 'rgba(251, 191, 36, 0.2)';
+            ctx.fillRect(
+              coords.left * dataPrepState.currentZoom,
+              coords.top * dataPrepState.currentZoom,
+              coords.width * dataPrepState.currentZoom,
+              coords.height * dataPrepState.currentZoom
+            );
+            // Draw border
+            ctx.strokeStyle = "#fbbf24";
+            ctx.lineWidth = 2;
+            ctx.setLineDash([2, 2]);
+            ctx.strokeRect(
+              coords.left * dataPrepState.currentZoom,
+              coords.top * dataPrepState.currentZoom,
+              coords.width * dataPrepState.currentZoom,
+              coords.height * dataPrepState.currentZoom
+            );
+            
+            // Add field name label
+            const fieldName = field === 'zone_ht' ? 'Zone HT' : field === 'zone_tva' ? 'Zone TVA' : field;
+            ctx.font = '12px Arial';
+            const textWidth = ctx.measureText(fieldName).width;
+            const labelX = Math.min(
+              (coords.left + coords.width - 5) * dataPrepState.currentZoom,
+              (scaledWidth - textWidth - 5)
+            );
+            const labelY = (coords.top * dataPrepState.currentZoom) - 5;
+            
+            // Background for text
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(
+              labelX - 5,
+              labelY - 15,
+              textWidth + 10,
+              15
+            );
+            
+            // Text
+            ctx.fillStyle = '#ffffff';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(fieldName, labelX, labelY);
+            
+            ctx.restore();
+          }
+        }
+      );
+      
+      // Draw OCR boxes (on top of manual drawings)
       if (!manualDrawState.isDrawing) {
         dataPrepState.ocrBoxes.forEach((box) => {
           const isSelected = Object.values(dataPrepState.selectedBoxes).some(
             (selectedBox) => selectedBox.id === box.id
           );
-          const isSelecting =
-            dataPrepState.isSelecting && dataPrepState.selectedField;
+          const isSelecting = dataPrepState.isSelecting && dataPrepState.selectedField;
           drawOcrBox(ctx, box, isSelected, isSelecting);
         });
-        // Draw saved manual rectangles
-        Object.entries(dataPrepState.fieldMappings).forEach(
-          ([field, coords]) => {
-            if (coords && coords.manual) {
-              ctx.save();
-              ctx.strokeStyle = "#fbbf24";
-              ctx.lineWidth = 2;
-              ctx.setLineDash([2, 2]);
-              ctx.strokeRect(
-                coords.left * dataPrepState.currentZoom,
-                coords.top * dataPrepState.currentZoom,
-                coords.width * dataPrepState.currentZoom,
-                coords.height * dataPrepState.currentZoom
-              );
-              ctx.restore();
-            }
-          }
-        );
       }
     }
-    // Only show the in-progress rectangle if drawing
+    
+    // Draw the in-progress rectangle (on top of everything)
     if (manualDrawState.isDrawing && manualDrawState.rect) {
-      ctx.save();
-      ctx.strokeStyle = "#fbbf24";
-      ctx.lineWidth = 3;
-      ctx.setLineDash([4, 2]);
       const { left, top, width, height } = manualDrawState.rect;
+      const fieldName = manualDrawState.fieldKey === 'zone_ht' ? 'Zone HT' : 
+                       manualDrawState.fieldKey === 'zone_tva' ? 'Zone TVA' : 'Zone';
+      
+      ctx.save();
+      
+      // Draw semi-transparent fill
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.2)';
+      ctx.fillRect(
+        left * dataPrepState.currentZoom,
+        top * dataPrepState.currentZoom,
+        width * dataPrepState.currentZoom,
+        height * dataPrepState.currentZoom
+      );
+      
+      // Draw border
+      ctx.strokeStyle = "#3b82f6";
+      ctx.lineWidth = 2;
+      ctx.setLineDash([4, 2]);
       ctx.strokeRect(
         left * dataPrepState.currentZoom,
         top * dataPrepState.currentZoom,
         width * dataPrepState.currentZoom,
         height * dataPrepState.currentZoom
       );
+      
+      // Draw field name label
+      ctx.font = 'bold 12px Arial';
+      const text = `${fieldName} (${Math.round(width)}×${Math.round(height)})`;
+      const textWidth = ctx.measureText(text).width;
+      const labelX = Math.min(
+        (left + width - 5) * dataPrepState.currentZoom,
+        (canvas.width - textWidth - 5)
+      );
+      const labelY = (top * dataPrepState.currentZoom) - 5;
+      
+      // Background for text
+      ctx.fillStyle = 'rgba(59, 130, 246, 0.9)';
+      ctx.fillRect(
+        labelX - 5,
+        labelY - 15,
+        textWidth + 10,
+        15
+      );
+      
+      // Text
+      ctx.fillStyle = '#ffffff';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(text, labelX, labelY);
+      
       ctx.restore();
     }
   }, [dataPrepState, manualDrawState, drawOcrBox]);

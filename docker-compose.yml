@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: emsi_mysql
+    environment:
+      MYSQL_DATABASE: emsi_evoleo
+      MYSQL_USER: emsi_user
+      MYSQL_PASSWORD: root
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - emsi-network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: emsi_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - MYSQL_HOST=db
+      - MYSQL_USER=emsi_user
+      - MYSQL_PASSWORD=root
+      - MYSQL_DATABASE=emsi_evoleo
+      - DATABASE_URL=mysql+pymysql://emsi_user:root@db:3306/emsi_evoleo
+      - SECRET_KEY=your-secret-key-here
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY:-sk_test_default}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_default}
+      - PYTHONPATH=/app
+    volumes:
+      - ./backend:/app
+      - ./backend/.env:/app/.env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - emsi-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: emsi_frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+    volumes:
+      - ./front_end:/app
+      - /app/node_modules
+    depends_on:
+      - backend
+    networks:
+      - emsi-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: emsi_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./front_end/build:/usr/share/nginx/html
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - emsi-network
+
+networks:
+  emsi-network:
+    driver: bridge
+
+volumes:
+  mysql_data:

@@ -2089,3 +2089,231 @@ NameError: name 'ht_match' is not defined
 2025-08-24 23:12:52,211 INFO Database tables created successfully
 2025-08-24 23:12:52,257 INFO Default data inserted successfully
 2025-08-24 23:12:52,258 INFO Database initialization complete
+2025-08-25 14:12:03,830 INFO Initializing database...
+2025-08-25 14:12:03,910 INFO Database tables created successfully
+2025-08-25 14:12:04,016 INFO Default data inserted successfully
+2025-08-25 14:12:04,017 INFO Database initialization complete
+2025-08-25 18:02:10,735 INFO Initializing database...
+2025-08-25 18:02:10,798 INFO Database tables created successfully
+2025-08-25 18:02:10,856 INFO Default data inserted successfully
+2025-08-25 18:02:10,857 INFO Database initialization complete
+2025-08-25 18:13:00,692 INFO Initializing database...
+2025-08-25 18:13:00,734 INFO Database tables created successfully
+2025-08-25 18:13:00,778 INFO Default data inserted successfully
+2025-08-25 18:13:00,778 INFO Database initialization complete
+2025-08-25 18:13:17,899 INFO Initializing database...
+2025-08-25 18:13:17,941 INFO Database tables created successfully
+2025-08-25 18:13:17,985 INFO Default data inserted successfully
+2025-08-25 18:13:17,985 INFO Database initialization complete
+2025-08-25 18:19:33,959 INFO Initializing database...
+2025-08-25 18:19:34,018 INFO Database tables created successfully
+2025-08-25 18:19:34,069 INFO Default data inserted successfully
+2025-08-25 18:19:34,069 INFO Database initialization complete
+2025-08-25 18:24:18,967 INFO Initializing database...
+2025-08-25 18:24:19,017 INFO Database tables created successfully
+2025-08-25 18:24:19,059 INFO Default data inserted successfully
+2025-08-25 18:24:19,059 INFO Database initialization complete
+2025-08-25 18:24:37,396 INFO Initializing database...
+2025-08-25 18:24:37,437 INFO Database tables created successfully
+2025-08-25 18:24:37,476 INFO Default data inserted successfully
+2025-08-25 18:24:37,476 INFO Database initialization complete
+2025-08-25 18:25:20,868 INFO Initializing database...
+2025-08-25 18:25:20,909 INFO Database tables created successfully
+2025-08-25 18:25:20,952 INFO Default data inserted successfully
+2025-08-25 18:25:20,952 INFO Database initialization complete
+2025-08-25 18:34:03,820 INFO Initializing database...
+2025-08-25 18:34:03,867 INFO Database tables created successfully
+2025-08-25 18:34:03,895 INFO Added sous_HT, sous_TVA, sous_TTC columns to facture table
+2025-08-25 18:34:03,927 INFO Database initialization completed successfully
+2025-08-25 18:34:03,927 INFO Database initialization complete
+2025-08-25 18:35:05,860 INFO Initializing database...
+2025-08-25 18:35:05,906 INFO Database tables created successfully
+2025-08-25 18:35:05,952 INFO Default data inserted successfully
+2025-08-25 18:35:05,952 INFO Database initialization complete
+2025-08-25 18:38:01,342 INFO Initializing database...
+2025-08-25 18:38:01,393 INFO Database tables created successfully
+2025-08-25 18:38:01,449 INFO Default data inserted successfully
+2025-08-25 18:38:01,450 INFO Database initialization complete
+2025-08-25 18:38:28,736 INFO Initializing database...
+2025-08-25 18:38:28,798 INFO Database tables created successfully
+2025-08-25 18:38:28,861 INFO Default data inserted successfully
+2025-08-25 18:38:28,861 INFO Database initialization complete
+2025-08-25 18:45:41,879 INFO Initializing database...
+2025-08-25 18:45:41,937 INFO Database tables created successfully
+2025-08-25 18:45:41,963 ERROR Error running migrations: unterminated triple-quoted string literal (detected at line 7) (__init__.py, line 5)
+2025-08-25 18:45:41,963 ERROR Error initializing database: unterminated triple-quoted string literal (detected at line 7) (__init__.py, line 5)
+2025-08-25 18:47:13,220 INFO Initializing database...
+2025-08-25 18:47:13,270 INFO Database tables created successfully
+2025-08-25 18:47:13,287 ERROR Error running migrations: unterminated triple-quoted string literal (detected at line 7) (__init__.py, line 5)
+2025-08-25 18:47:13,287 ERROR Error initializing database: unterminated triple-quoted string literal (detected at line 7) (__init__.py, line 5)
+2025-08-25 18:48:03,695 INFO Initializing database...
+2025-08-25 18:48:03,739 INFO Database tables created successfully
+2025-08-25 18:48:03,754 ERROR Error running migrations: unterminated triple-quoted string literal (detected at line 7) (__init__.py, line 5)
+2025-08-25 18:48:03,754 ERROR Error initializing database: unterminated triple-quoted string literal (detected at line 7) (__init__.py, line 5)
+2025-08-25 18:53:20,836 INFO Initializing database...
+2025-08-25 18:53:21,067 INFO Database tables created successfully
+2025-08-25 18:53:21,086 ERROR Error running migrations: No module named 'database.migrations.add_sous_fields'
+2025-08-25 18:53:21,086 ERROR Error initializing database: No module named 'database.migrations.add_sous_fields'
+2025-08-25 18:54:34,867 INFO Initializing database...
+2025-08-25 18:54:34,916 INFO Database tables created
+2025-08-25 18:54:34,965 INFO Admin user created
+2025-08-25 18:54:34,975 INFO Default field names inserted
+2025-08-25 18:54:34,986 INFO Database initialization complete
+2025-08-25 19:04:33,781 INFO Initializing database...
+2025-08-25 19:04:33,846 INFO Database tables created
+2025-08-25 19:04:33,891 INFO Database initialization complete
+2025-08-25 19:05:23,800 INFO Initializing database...
+2025-08-25 19:05:24,005 INFO Database tables created
+2025-08-25 19:05:24,043 INFO Admin user created
+2025-08-25 19:05:24,050 INFO Default field names inserted
+2025-08-25 19:05:24,058 INFO Database initialization complete
+2025-08-25 20:57:48,247 INFO Initializing database...
+2025-08-25 20:57:48,303 INFO Database tables created
+2025-08-25 20:57:48,377 INFO Database initialization complete
+2025-08-25 23:54:25,937 INFO Initializing database...
+2025-08-25 23:54:26,009 INFO Database tables created
+2025-08-25 23:54:26,096 INFO Database initialization complete
+2025-08-25 23:54:56,197 INFO Initializing database...
+2025-08-25 23:54:56,258 INFO Database tables created
+2025-08-25 23:54:56,323 INFO Database initialization complete
+2025-08-26 00:22:41,049 INFO Initializing database...
+2025-08-26 00:22:41,249 INFO Database tables created
+2025-08-26 00:22:41,400 INFO Database initialization complete
+2025-08-26 00:42:52,232 INFO Initializing database...
+2025-08-26 00:42:52,333 INFO Database tables created
+2025-08-26 00:42:52,427 INFO Database initialization complete
+2025-08-26 00:58:39,784 INFO Initializing database...
+2025-08-26 00:58:39,901 INFO Database tables created
+2025-08-26 00:58:40,012 INFO Database initialization complete
+2025-08-26 01:07:41,644 INFO Initializing database...
+2025-08-26 01:07:41,721 INFO Database tables created
+2025-08-26 01:07:41,790 INFO Database initialization complete
+2025-08-26 01:16:42,114 INFO Initializing database...
+2025-08-26 01:16:42,217 INFO Database tables created
+2025-08-26 01:16:42,302 INFO Database initialization complete
+2025-08-26 01:17:25,119 INFO Initializing database...
+2025-08-26 01:17:25,184 INFO Database tables created
+2025-08-26 01:17:25,249 INFO Database initialization complete
+2025-08-26 02:02:26,167 INFO Initializing database...
+2025-08-26 02:02:26,216 INFO Database tables created
+2025-08-26 02:02:26,263 INFO Database initialization complete
+2025-08-26 02:06:37,072 INFO Initializing database...
+2025-08-26 02:06:37,121 INFO Database tables created
+2025-08-26 02:06:37,168 INFO Database initialization complete
+2025-08-26 02:11:48,318 INFO Initializing database...
+2025-08-26 02:11:48,393 INFO Database tables created
+2025-08-26 02:11:48,461 INFO Database initialization complete
+2025-08-26 03:05:01,228 INFO Initializing database...
+2025-08-26 03:05:01,306 INFO Database tables created
+2025-08-26 03:05:01,377 INFO Database initialization complete
+2025-08-26 03:11:58,219 INFO Initializing database...
+2025-08-26 03:11:58,275 INFO Database tables created
+2025-08-26 03:11:58,319 INFO Database initialization complete
+2025-08-26 03:13:17,125 ERROR Error in ocr_preview: cannot access local variable 'template' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 2023, in ocr_preview
+    zone_tva_mapping = {}
+    ^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'template' where it is not associated with a value
+
+2025-08-26 03:13:19,593 ERROR Error in ocr_preview: cannot access local variable 'template' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 2023, in ocr_preview
+    zone_tva_mapping = {}
+    ^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'template' where it is not associated with a value
+
+2025-08-26 03:15:01,324 INFO Initializing database...
+2025-08-26 03:15:01,369 INFO Database tables created
+2025-08-26 03:15:01,412 INFO Database initialization complete
+2025-08-26 03:21:28,697 ERROR Error in ocr_preview: cannot access local variable 'field_map' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 2023, in ocr_preview
+    zone_tva_mapping = {}
+    ^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'field_map' where it is not associated with a value
+
+2025-08-26 03:21:30,972 ERROR Error in ocr_preview: cannot access local variable 'field_map' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 2023, in ocr_preview
+    zone_tva_mapping = {}
+    ^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'field_map' where it is not associated with a value
+
+2025-08-26 03:21:45,637 ERROR Error in ocr_preview: cannot access local variable 'field_map' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 2023, in ocr_preview
+    zone_tva_mapping = {}
+    ^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'field_map' where it is not associated with a value
+
+2025-08-26 03:21:47,971 ERROR Error in ocr_preview: cannot access local variable 'field_map' where it is not associated with a value
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 2023, in ocr_preview
+    zone_tva_mapping = {}
+    ^^^^^^^^^^^^^^^^
+UnboundLocalError: cannot access local variable 'field_map' where it is not associated with a value
+
+2025-08-26 03:22:15,916 INFO Initializing database...
+2025-08-26 03:22:15,971 INFO Database tables created
+2025-08-26 03:22:16,016 INFO Database initialization complete
+2025-08-26 03:31:09,961 INFO Initializing database...
+2025-08-26 03:31:10,004 INFO Database tables created
+2025-08-26 03:31:10,046 INFO Database initialization complete
+2025-08-26 03:34:00,254 INFO Initializing database...
+2025-08-26 03:34:00,308 INFO Database tables created
+2025-08-26 03:34:00,366 INFO Database initialization complete
+2025-08-26 03:34:44,506 INFO Initializing database...
+2025-08-26 03:34:44,564 INFO Database tables created
+2025-08-26 03:34:44,629 INFO Database initialization complete
+2025-08-26 03:35:58,354 INFO Initializing database...
+2025-08-26 03:35:58,426 INFO Database tables created
+2025-08-26 03:35:58,485 INFO Database initialization complete
+2025-08-26 03:41:52,225 INFO Initializing database...
+2025-08-26 03:41:52,278 INFO Database tables created
+2025-08-26 03:41:52,328 INFO Database initialization complete
+2025-08-26 03:42:12,739 ERROR Error loading mapping: 'Depends' object does not support the asynchronous context manager protocol
+2025-08-26 03:42:12,740 WARNING Error processing template zones: 500: Error loading mapping: 'Depends' object does not support the asynchronous context manager protocol
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 388, in load_mapping
+    async with db as session:
+TypeError: 'Depends' object does not support the asynchronous context manager protocol
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 739, in ocr_preview
+    template_response = await load_mapping(template_id)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 395, in load_mapping
+    raise HTTPException(status_code=500, detail=f"Error loading mapping: {str(e)}")
+fastapi.exceptions.HTTPException: 500: Error loading mapping: 'Depends' object does not support the asynchronous context manager protocol
+2025-08-26 03:43:23,419 INFO Initializing database...
+2025-08-26 03:43:23,510 INFO Database tables created
+2025-08-26 03:43:23,585 INFO Database initialization complete
+2025-08-26 03:44:27,559 INFO Initializing database...
+2025-08-26 03:44:27,611 INFO Database tables created
+2025-08-26 03:44:27,663 INFO Database initialization complete
+2025-08-26 03:44:53,777 WARNING Error processing template zones: 'async_generator' object is not an iterator
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 740, in ocr_preview
+    db = next(get_async_db())
+         ^^^^^^^^^^^^^^^^^^^^
+TypeError: 'async_generator' object is not an iterator
+2025-08-26 03:45:48,401 INFO Initializing database...
+2025-08-26 03:45:48,445 INFO Database tables created
+2025-08-26 03:45:48,496 INFO Database initialization complete
+2025-08-26 03:46:46,045 WARNING Error processing template zones: 'async_generator' object does not support the asynchronous context manager protocol
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 740, in ocr_preview
+    async with get_async_db() as db:
+TypeError: 'async_generator' object does not support the asynchronous context manager protocol
+2025-08-26 03:47:27,570 INFO Initializing database...
+2025-08-26 03:47:27,618 INFO Database tables created
+2025-08-26 03:47:27,671 INFO Database initialization complete
+2025-08-26 03:48:09,041 INFO Initializing database...
+2025-08-26 03:48:09,089 INFO Database tables created
+2025-08-26 03:48:09,137 INFO Database initialization complete
+2025-08-26 03:48:30,107 INFO Initializing database...
+2025-08-26 03:48:30,167 INFO Database tables created
+2025-08-26 03:48:30,226 INFO Database initialization complete

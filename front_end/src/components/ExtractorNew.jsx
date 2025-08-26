@@ -64,6 +64,8 @@ const ExtractorNew = ({ currentStep, setCurrentStep }) => {
     { key: "montantHT", label: "Montant HT" },
     { key: "montantTVA", label: "Montant TVA" },
     { key: "montantTTC", label: "Montant TTC" },
+    { key: "zone_ht", label: "Zone HT" },
+    { key: "zone_tva", label: "Zone TVA" },
   ];
 
   // Hooks personnalisés

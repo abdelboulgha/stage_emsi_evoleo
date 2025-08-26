@@ -17,7 +17,6 @@ const ParametrageFields = ({
       key: "fournisseur", 
       label: "Fournisseur", 
       type: "manual"
-     
     },
     { 
       key: "serial", 
@@ -28,7 +27,8 @@ const ParametrageFields = ({
       key: "numeroFacture", 
       label: "Numéro de Facture", 
       type: "ocr"
-    },{ 
+    },
+    { 
       key: "dateFacturation", 
       label: "Date de Facturation", 
       type: "date",
@@ -37,14 +37,22 @@ const ParametrageFields = ({
     { 
       key: "montantht", 
       label: "Montant HT", 
-      type: "ocr",
-  
+      type: "ocr"
     },
     { 
       key: "tva", 
       label: "Montant TVA", 
-      type: "ocr",
-    
+      type: "ocr"
+    },
+    { 
+      key: "zone_ht", 
+      label: "Zone HT", 
+      type: "manual_draw"
+    },
+    { 
+      key: "zone_tva", 
+      label: "Zone TVA", 
+      type: "manual_draw"
     },
   ];
 
@@ -90,15 +98,20 @@ const ParametrageFields = ({
               </label>
               <div className="parametrage-field-actions">
                 {(field.type === "ocr" || field.type === "date") && (
-                  <>
-                    <button
-                      onClick={() => startFieldSelection(field.key)}
-                      className="parametrage-action-button select"
-                    >
-                      Sélectionner
-                    </button>
-                 
-                  </>
+                  <button
+                    onClick={() => startFieldSelection(field.key)}
+                    className="parametrage-action-button select"
+                  >
+                    Sélectionner
+                  </button>
+                )}
+                {field.type === "manual_draw" && (
+                  <button
+                    onClick={() => startManualDraw(field.key)}
+                    className="parametrage-action-button draw"
+                  >
+                    Dessiner
+                  </button>
                 )}
               </div>
             </div>

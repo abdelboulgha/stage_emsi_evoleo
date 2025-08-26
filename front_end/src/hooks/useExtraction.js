@@ -163,10 +163,35 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
           data.numeroFacture = data.numFacture;
         }
         data.fournisseur = extractionState.selectedModelName || extractionState.extractedDataList[i]?.fournisseur || "";
-        results[i] = data;
         
-        results[i] = result.data || {};
+        // Store zone HT and TVA data if available
+        if (result.zone_ht_boxes && result.zone_ht_boxes.length > 0) {
+          data.zone_ht = result.zone_ht_boxes[0].text; // Default to first option
+        }
+        if (result.zone_tva_boxes && result.zone_tva_boxes.length > 0) {
+          data.zone_tva = result.zone_tva_boxes[0].text; // Default to first option
+        }
+        
+        results[i] = data;
         confidenceScores[i] = result.confidence_scores || {};
+        
+        // Store extraction result for zone data
+        if (!extractionState.extractionResult) {
+          setExtractionState(prev => ({
+            ...prev,
+            extractionResult: {}
+          }));
+        }
+        
+        // Update extraction result with zone boxes
+        setExtractionState(prev => ({
+          ...prev,
+          extractionResult: {
+            ...prev.extractionResult,
+            zone_ht_boxes: result.zone_ht_boxes || [],
+            zone_tva_boxes: result.zone_tva_boxes || []
+          }
+        }));
         
         // Store bounding boxes for visualization if available
         if (result.debug_info && result.debug_info.positions && typeof result.debug_info.positions === 'object') {
@@ -236,12 +261,39 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         body: formData,
       });
       const result = await response.json();
+      console.log('OCR Preview API Response:', result);
+      
+      // Log zone results for debugging
+      console.log('Zone results from API:', result.zone_results);
       
       // First, update the data with the extracted information
       let data = result.data || {};
       if (data.numFacture && !data.numeroFacture) {
         data.numeroFacture = data.numFacture;
       }
+      
+      // Get zone results from the response
+      const zoneResults = result.zone_results || {};
+      const zoneHtBoxes = zoneResults.zone_ht_boxes || [];
+      const zoneTvaBoxes = zoneResults.zone_tva_boxes || [];
+      
+      // Store zone HT and TVA data if available
+      if (zoneHtBoxes.length > 0) {
+        data.zone_ht = zoneHtBoxes[0].text; // Default to first option
+      }
+      if (zoneTvaBoxes.length > 0) {
+        data.zone_tva = zoneTvaBoxes[0].text; // Default to first option
+      }
+      
+      // Update extraction result with zone boxes
+      setExtractionState(prev => ({
+        ...prev,
+        extractionResult: {
+          ...prev.extractionResult,
+          zone_ht_boxes: zoneHtBoxes,
+          zone_tva_boxes: zoneTvaBoxes
+        }
+      }));
       
       setExtractionState((prev) => {
         const newExtracted = [...prev.extractedDataList];

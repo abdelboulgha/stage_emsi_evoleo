@@ -155,11 +155,15 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
     setDataPrepState((prev) => ({
       ...prev,
       isSelecting: false,
-      selectedField: null,
+      selectedField: fieldKey,
+      isDrawing: true,
+      drawingField: fieldKey,
+      drawingRect: null,
+      drawingStart: null,
     }));
 
     showNotification(
-      `Mode dessin activé pour "${fieldKey}". Dessinez un rectangle.`,
+      `Dessinez un rectangle pour "${fieldKey}". Cliquez et faites glisser pour dessiner.`,
       "info"
     );
   }, [setDataPrepState, showNotification]);

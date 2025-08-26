@@ -1,0 +1,32 @@
+
+FROM python:3.10-slim-bookworm
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgl1 \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy requirements first for better caching
+COPY backend/Requirements+Readme/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy the rest of the application
+COPY . .
+
+WORKDIR /app/backend
+
+EXPOSE 8000
+
+# Create a startup script
+RUN echo '#!/bin/bash\n\
+# Wait for MySQL to be ready\nuntil mysqladmin ping -h"$MYSQL_HOST" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do\n  echo "Waiting for MySQL..."\n  sleep 1\ndone\n\n# Initialize the database\npython -c "from database.config import init_db; import asyncio; asyncio.run(init_db())"\n\n# Start the application\nuvicorn main:app --host 0.0.0.0 --port 8000 --reload\n' > /app/startup.sh && \
+    chmod +x /app/startup.sh
+
+# Use the startup script as the entrypoint
+CMD ["/app/startup.sh"]

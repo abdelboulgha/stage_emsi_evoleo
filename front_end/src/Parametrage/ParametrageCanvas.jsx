@@ -105,11 +105,16 @@ const ParametrageCanvas = ({
 
   const handlePageSelect = (pageIndex) => {
     if (pendingFile) {
-    
       handleDataPrepFileUpload({ target: { files: [pendingFile] } }, pageIndex);
       setShowPageModal(false);
       setPendingFile(null);
       setPdfPages([]);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (manualDrawState?.isDrawing || dataPrepState?.isDrawing) {
+      handleCanvasMouseUp();
     }
   };
 
@@ -121,6 +126,7 @@ const ParametrageCanvas = ({
           <button
             onClick={triggerFileInput}
             className="parametrage-upload-button"
+            disabled={(manualDrawState?.isDrawing || dataPrepState?.isDrawing)}
           >
             <Upload className="parametrage-upload-icon" />
             Nouveau fichier
@@ -128,18 +134,25 @@ const ParametrageCanvas = ({
         </div>
         
         <div className="parametrage-zoom-controls">
-          <span className="parametrage-zoom-text">Zoom: {Math.round(dataPrepState.currentZoom * 100)}%</span>
+          <span className="parametrage-zoom-text">
+            Zoom: {Math.round(dataPrepState.currentZoom * 100)}%
+            {(manualDrawState?.isDrawing || dataPrepState?.isDrawing) && (
+              <span className="drawing-indicator"> - Mode dessin actif</span>
+            )}
+          </span>
           <button
-            onClick={() => handleZoomChange(0.8)}  // Zoom out by 20%
-            disabled={dataPrepState.currentZoom <= 0.3}
+            onClick={() => handleZoomChange(0.8)}
+            disabled={dataPrepState.currentZoom <= 0.3 || (manualDrawState?.isDrawing || dataPrepState?.isDrawing)}
             className="parametrage-zoom-button"
+            title="Zoom arrière"
           >
             <ZoomOut className="parametrage-zoom-icon" />
           </button>
           <button
-            onClick={() => handleZoomChange(1.25)}  // Zoom in by 25%
-            disabled={dataPrepState.currentZoom >= 2}
+            onClick={() => handleZoomChange(1.25)}
+            disabled={dataPrepState.currentZoom >= 2 || (manualDrawState?.isDrawing || dataPrepState?.isDrawing)}
             className="parametrage-zoom-button"
+            title="Zoom avant"
           >
             <ZoomIn className="parametrage-zoom-icon" />
           </button>
@@ -148,73 +161,71 @@ const ParametrageCanvas = ({
 
       {/* Canvas area */}
       <div className="parametrage-canvas-area">
-        {!dataPrepState.uploadedImage ? (
-          <div className="parametrage-upload-zone">
-            <div className="parametrage-upload-content">
-            
-              <h3 className="parametrage-upload-title">Aucun document sélectionné</h3>
-              <p className="parametrage-upload-description">
-                Cliquez sur "Nouveau fichier" pour commencer la configuration
-              </p>
+        <div className="parametrage-canvas-content">
+          {!dataPrepState.uploadedImage ? (
+            <div className="parametrage-upload-zone">
+              <div className="parametrage-upload-content">
+                <h3 className="parametrage-upload-title">Aucun document sélectionné</h3>
+                <p className="parametrage-upload-description">
+                  Cliquez sur "Nouveau fichier" pour commencer la configuration
+                </p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="parametrage-canvas-wrapper" style={{
-            transform: `scale(${dataPrepState.currentZoom})`,
-            transformOrigin: 'top left',
-            position: 'relative',
-            width: 'fit-content',
-            margin: '0 auto',
-            transition: 'transform 0.1s ease'
-          }}>
-            <div style={{
+          ) : (
+            <div className="parametrage-canvas-wrapper" style={{
+              transform: `scale(${dataPrepState.currentZoom})`,
+              transformOrigin: 'top left',
               position: 'relative',
               width: 'fit-content',
-              height: 'fit-content'
+              margin: '0 auto',
+              transition: 'transform 0.1s ease'
             }}>
-              <canvas
-                ref={canvasRef}
-                className="parametrage-canvas"
-                style={{
-                  display: 'block',
-                  position: 'absolute',
-                  top: 0,
-                  left: 0,
-                  width: '100%',
-                  height: '100%',
-                  transform: `scale(${1 / dataPrepState.zoom})`,
-                  transformOrigin: '0 0',
-                  pointerEvents: 'auto'
-                }}
-                onMouseDown={handleCanvasMouseDown}
-                onMouseMove={handleCanvasMouseMove}
-                onMouseUp={handleCanvasMouseUp}
-              />
-              <img
-                ref={imageRef}
-                src={dataPrepState.uploadedImage}
-                alt="Document"
-                style={{
-                  display: 'block',
-                  visibility: 'hidden',
-                  width: '100%',
-                  height: 'auto'
-                }}
-                onLoad={() => {
-                  if (imageRef.current) {
-                    const img = imageRef.current;
-                    const canvas = canvasRef.current;
-                    if (canvas && img.complete) {
+              <div style={{
+                position: 'relative',
+                width: 'fit-content',
+                height: 'fit-content'
+              }}>
+                <canvas
+                  ref={canvasRef}
+                  onMouseDown={(e) => {
+                    console.log('Canvas mouse down', { manualDrawState, dataPrepState });
+                    handleCanvasMouseDown(e, canvasRef);
+                  }}
+                  onMouseMove={(e) => {
+                    if (manualDrawState?.isDrawing || dataPrepState?.isDrawing) {
+                      handleCanvasMouseMove(e, canvasRef);
+                    }
+                  }}
+                  onMouseUp={() => {
+                    console.log('Canvas mouse up', { manualDrawState, dataPrepState });
+                    handleCanvasMouseUp();
+                  }}
+                  onMouseLeave={handleMouseLeave}
+                  className={`parametrage-canvas ${(manualDrawState?.isDrawing || dataPrepState?.isDrawing) ? 'drawing' : ''}`}
+                  style={{
+                    cursor: (manualDrawState?.isDrawing || dataPrepState?.isDrawing) ? 'crosshair' : 'default'
+                  }}
+                />
+                <img
+                  ref={imageRef}
+                  src={dataPrepState.uploadedImage}
+                  alt="Document"
+                  style={{ display: "none" }}
+                  onLoad={() => {
+                    console.log('Image loaded, redrawing canvas');
+                    if (imageRef.current && canvasRef.current) {
+                      const canvas = canvasRef.current;
+                      const img = imageRef.current;
                       canvas.width = img.naturalWidth;
                       canvas.height = img.naturalHeight;
                       redrawCanvas(canvasRef, imageRef);
                     }
-                  }
-                }}
-              />
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Hidden file input */}
@@ -224,6 +235,7 @@ const ParametrageCanvas = ({
         accept=".pdf,.png,.jpg,.jpeg"
         onChange={handleFileSelection}
         className="parametrage-hidden-input"
+        disabled={(manualDrawState?.isDrawing || dataPrepState?.isDrawing)}
       />
 
       {/* Page selection modal */}
