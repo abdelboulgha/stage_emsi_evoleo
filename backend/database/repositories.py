@@ -3,7 +3,7 @@ Repository pattern for database operations
 """
 from typing import List, Optional, Dict, Any
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, delete, update, and_, or_
+from sqlalchemy import select, delete, update, func, and_, or_, desc
 from sqlalchemy.orm import selectinload
 from sqlalchemy.sql.expression import desc
 from sqlalchemy import String
@@ -139,8 +139,17 @@ class FieldNameRepository(BaseRepository):
 class FactureRepository(BaseRepository):
     """Repository for invoice operations"""
     
-    async def create(self, facture_data: dict) -> Facture:
-        """Create a new invoice"""
+    async def create(self, facture_data: dict, commit: bool = True) -> Facture:
+        """
+        Create a new invoice
+        
+        Args:
+            facture_data: Dictionary containing invoice data
+            commit: Whether to commit the transaction (default: True)
+            
+        Returns:
+            The created Facture instance
+        """
         print(f"=== DEBUG FactureRepository.create ===")
         print(f"Creating facture with data: {facture_data}")
         
@@ -150,26 +159,45 @@ class FactureRepository(BaseRepository):
         self.session.add(facture)
         print("Added facture to session")
         
-        await self.session.commit()
-        print("Committed to database")
-        
-        await self.session.refresh(facture)
-        print(f"Refreshed facture: {facture}")
-        print(f"Facture ID after refresh: {facture.id}")
+        if commit:
+            await self.session.commit()
+            print("Committed to database")
+            
+            await self.session.refresh(facture)
+            print(f"Refreshed facture: {facture}")
+            print(f"Facture ID after refresh: {facture.id}")
+        else:
+            # Flush to get the ID without committing
+            await self.session.flush()
+            print(f"Flushed facture, ID: {facture.id}")
         
         return facture
     
     async def get_by_id(self, facture_id: int) -> Optional[Facture]:
-        """Get invoice by ID"""
+        """
+        Get invoice by ID with sous_valeurs relationship loaded
+        
+        Args:
+            facture_id: ID of the invoice to retrieve
+            
+        Returns:
+            The Facture instance if found, None otherwise
+        """
         result = await self.session.execute(
-            select(Facture).where(Facture.id == facture_id)
+            select(Facture)
+            .options(selectinload(Facture.sous_valeurs))
+            .where(Facture.id == facture_id)
         )
         return result.scalar_one_or_none()
     
     async def get_by_user(self, user_id: int, skip: int = 0, limit: int = 100) -> List[Facture]:
-        """Get invoices by user with pagination"""
+        """
+        Get invoices by user with pagination 
+        
+        """
         result = await self.session.execute(
             select(Facture)
+            .options(selectinload(Facture.sous_valeurs))
             .where(Facture.created_by == user_id)
             .offset(skip)
             .limit(limit)
@@ -180,19 +208,15 @@ class FactureRepository(BaseRepository):
     async def get_by_user_with_count(self, user_id: int, skip: int = 0, limit: int = 100, search: str = None) -> tuple[List[Facture], int]:
         """
         Get invoices by user with total count and optional search
-        
-        Args:
-            user_id: ID of the user
-            skip: Number of records to skip
-            limit: Maximum number of records to return
-            search: Optional search term to filter invoices
-            
-        Returns:
-            Tuple of (list of invoices, total count)
+       
         """
         
         # Base query
-        query = select(Facture).where(Facture.created_by == user_id)
+        query = (
+            select(Facture)
+            .options(selectinload(Facture.sous_valeurs))
+            .where(Facture.created_by == user_id)
+        )
         
         # Add search conditions if search term is provided
         if search and search.strip():

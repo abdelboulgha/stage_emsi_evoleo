@@ -21,15 +21,15 @@ from fastapi import (
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse, Response
 from paddleocr import PaddleOCR
-from PIL import Image, ImageEnhance, ImageOps
-from pydantic import BaseModel, Field, field_validator
+from PIL import Image,  ImageOps
+from pydantic import BaseModel
 from dotenv import load_dotenv
 
 # Database and ORM imports
 from database.config import get_async_db, init_database, AsyncSessionLocal
-from database.models import Base
 from services.template_service import TemplateService
 from services.facture_service import FactureService
+from database.init_db import init_database
 
 # Authentication modules
 from auth.auth_routes import router as auth_router
@@ -55,14 +55,14 @@ app.add_middleware(
 
 # Configure logging
 logging.basicConfig(
-    filename=r'C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\invoice_debug.log',
+    filename='invoice_debug.log',
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(message)s',
     force=True
 )
 
 # Initialize database
-from database.init_db import init_database
+
 init_database()  # Use synchronous initialization for simplicity
 
 # Include authentication routes
@@ -130,19 +130,26 @@ class InvoiceUpdate(BaseModel):
     montantTTC: Optional[float] = None
 
 
+class SousValeurCreate(BaseModel):
+    """Model for creating sous_valeur data"""
+    HT: float
+    TVA: float
+    TTC: float
+
 class InvoiceCreate(BaseModel):
-    """Model for creating invoice data"""
+    """Model for creating facture data"""
     fournisseur: str
     numFacture: str
     dateFacturation: str  # Changed from date to str for flexibility
-    tauxTVA: float  # Changed from tva to tauxTVA
+    tauxTVA: float  
     montantHT: float
-    montantTVA: float  # Added montantTVA
+    montantTVA: float  
     montantTTC: float
+    sous_valeurs: List[SousValeurCreate] = []  # List de sous_valeurs
 
 
 class InvoiceResponse(BaseModel):
-    """Model for invoice response"""
+    """Model for facture response"""
     success: bool
     message: str
     data: Optional[Dict[str, Any]] = None
@@ -158,6 +165,36 @@ def image_to_base64(img: Image.Image) -> str:
     img_str = base64.b64encode(buffer.getvalue()).decode()
     return f"data:image/png;base64,{img_str}"
 
+
+def standardize_image_dimensions(img: Image.Image, target_width: int = 1191, target_height: int = 1684) -> Image.Image:
+    """
+    Resize image to target dimensions while maintaining aspect ratio.
+    Adds padding if necessary to match target dimensions exactly.
+    """
+    # Calculate aspect ratios
+    img_ratio = img.width / img.height
+    target_ratio = target_width / target_height
+    
+    # Resize to fit within target dimensions while maintaining aspect ratio
+    if img_ratio > target_ratio:
+        # Image is wider than target, fit to width
+        new_width = target_width
+        new_height = int(target_width / img_ratio)
+    else:
+        # Image is taller than target, fit to height
+        new_height = target_height
+        new_width = int(target_height * img_ratio)
+    
+    # Resize the image
+    img = img.resize((new_width, new_height), Image.Resampling.LANCZOS)
+    
+    # Create new image with target size and paste the resized image
+    result = Image.new('RGB', (target_width, target_height), (255, 255, 255))  # White background
+    x = (target_width - new_width) // 2
+    y = (target_height - new_height) // 2
+    result.paste(img, (x, y))
+    
+    return result
 
 # Add a single variable for PDF rendering scale
 PDF_RENDER_SCALE = 2  # Change this value to affect all PDF image renderings
@@ -217,6 +254,8 @@ def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
             pix = page.get_pixmap(matrix=fitz.Matrix(PDF_RENDER_SCALE, PDF_RENDER_SCALE))
             img_data = pix.tobytes("png")
             img = Image.open(BytesIO(img_data))
+            # Standardize the image dimensions
+            img = standardize_image_dimensions(img)
             images.append(img)
         doc.close()
         return images
@@ -609,16 +648,15 @@ async def upload_basic(file: UploadFile = File(...)):
             }
         elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             img = Image.open(BytesIO(file_content)).convert('RGB')
-            response = {
+            return {
                 "success": True,
-                "boxes": detected_boxes,
+                "image": image_to_base64(img),
                 "width": img.width,
                 "height": img.height,
-                "image": f"data:image/jpeg;base64,{image_to_base64(img)}",
-                "zone_ht_boxes": [{"text": box['text'], "score": box['score']} for box in zone_ht_boxes],
-                "zone_tva_boxes": [{"text": box['text'], "score": box['score']} for box in zone_tva_boxes]
+                "images": [image_to_base64(img)],
+                "widths": [img.width],
+                "heights": [img.height]
             }
-            return response
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
     except Exception as e:
@@ -632,7 +670,7 @@ async def ocr_preview(
     file: UploadFile = File(...),
     template_id: str = Form(None),
 ):
-    import time  # Ensure time module is available in this function
+   
     MIN_CONFIDENCE = 0.8
    
     # Initialize field_map at the beginning
@@ -640,29 +678,66 @@ async def ocr_preview(
     
     try:
         # --- Read file to PIL image ---
+        print(f"\n=== DEBUG: Starting OCR Preview ===")
+        print(f"File name: {file.filename}")
+        print(f"Content type: {file.content_type}")
+        
         file_content = await file.read()
+        print(f"File size: {len(file_content)} bytes")
+        
         if file.filename and file.filename.lower().endswith('.pdf'):
+            print("Processing as PDF file")
             images = process_pdf_to_images(file_content)
             img = images[0] if images else None
+            print(f"Extracted {len(images)} pages from PDF")
         elif file.filename and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            img = Image.open(BytesIO(file_content)).convert('RGB')
+            print("Processing as image file")
+            try:
+                img = Image.open(BytesIO(file_content)).convert('RGB')
+                print(f"Original image size: {img.size} (w x h), Mode: {img.mode}")
+                
+                # Standardize the image dimensions
+                img = standardize_image_dimensions(img)
+                print(f"Standardized image size: {img.size} (w x h)")
+                
+            except Exception as e:
+                print(f"Error opening image: {str(e)}")
+                raise HTTPException(status_code=400, detail=f"Failed to process image: {str(e)}")
         else:
-            raise HTTPException(status_code=400, detail="Type de fichier non supporté")
+            error_msg = f"Unsupported file type: {file.filename}"
+            print(error_msg)
+            raise HTTPException(status_code=400, detail=error_msg)
 
         if img is None:
-            raise HTTPException(status_code=400, detail="No image available for extraction.")
+            error_msg = "No image available for extraction"
+            print(error_msg)
+            raise HTTPException(status_code=400, detail=error_msg)
+            
+        print(f"Image dimensions: {img.size[0]}x{img.size[1]}")
+        print(f"Image mode: {img.mode}")
 
         img_array = np.array(img)
         result = ocr.predict(img_array)
 
         # --- Build detected_boxes with consistent keys ---
         detected_boxes = []
-        for res in result:
+        print(f"\n=== OCR Results ===")
+        print(f"Number of detection results: {len(result)}")
+        
+        for i, res in enumerate(result):
             rec_polys = res.get('rec_polys', [])
             rec_texts = res.get('rec_texts', [])
             rec_scores = res.get('rec_scores', [])
-            for poly, text, score in zip(rec_polys, rec_texts, rec_scores):
+            
+            print(f"\nResult {i+1}:")
+            print(f"- Detected {len(rec_texts)} text elements")
+            print(f"- Polygons: {len(rec_polys)}")
+            print(f"- Scores: {len(rec_scores)}")
+            
+            for j, (poly, text, score) in enumerate(zip(rec_polys, rec_texts, rec_scores)):
                 if score is None or score < MIN_CONFIDENCE or not text or not text.strip():
+                    if j < 5:  # Only print first few skips to avoid too much output
+                        print(f"  Skipping text '{text}' with score {score}")
                     continue
                 x_coords = [p[0] for p in poly]
                 y_coords = [p[1] for p in poly]
@@ -679,10 +754,9 @@ async def ocr_preview(
                     'bottom': bottom,
                     'width': width,
                     'height': height,
-                    'center_x': (left + right) / 2.0,
-                    'center_y': (top + bottom) / 2.0,
+            
                     'text': text.strip(),
-                    'score': float(score)
+                    
                 })
         
         # Helper function to find boxes within a zone
@@ -733,9 +807,12 @@ async def ocr_preview(
         zone_ht_boxes = []
         zone_tva_boxes = []
         
+        print(f"\n=== Template Processing ===")
+        print(f"Template ID: {template_id}")
+        
         if template_id:
             try:
-                print(f"[DEBUG] Loading template with ID: {template_id}")
+             
                 # Get the database session
                 async with AsyncSessionLocal() as session:
                     try:
@@ -746,60 +823,43 @@ async def ocr_preview(
                         await session.rollback()
                         raise e
                 
-                print(f"[DEBUG] Template response type: {type(template_response)}")
-                print(f"[DEBUG] Template response content: {json.dumps(template_response, default=str, indent=2)}")
+           
                 
                 if template_response and template_response.get('status') == 'success':
                     # Get the mappings from the response
                     mappings = template_response.get('mappings', {})
-                    print(f"[DEBUG] Mappings type: {type(mappings)}")
-                    print(f"[DEBUG] Mappings content: {json.dumps(mappings, default=str, indent=2)}")
+                   
                     
                     # Extract field map correctly
                     if mappings and isinstance(mappings, dict):
                         # Get the first mapping (assuming it's the correct one)
                         field_map = list(mappings.values())[0] if mappings else {}
                         
-                        print(f"[DEBUG] Field map: {json.dumps(field_map, default=str, indent=2)}")
-                        print(f"[DEBUG] Field map keys: {list(field_map.keys())}")
+                      
                         
                         # Process zone_ht
                         if 'zone_ht' in field_map and field_map['zone_ht']:
                             zone_ht_coords = field_map['zone_ht']
-                            print(f"[DEBUG] zone_ht coordinates: {zone_ht_coords}")
-                            print(f"[DEBUG] Type of zone_ht_coords: {type(zone_ht_coords)}")
+                         
                             
                             if isinstance(zone_ht_coords, dict) and all(k in zone_ht_coords for k in ['left', 'top', 'width', 'height']):
                                 zone_ht_boxes = find_boxes_in_zone(detected_boxes, zone_ht_coords)
-                                print(f"[DEBUG] Found {len(zone_ht_boxes)} boxes in zone_ht")
-                            else:
-                                print(f"[ERROR] Invalid zone_ht coordinates: {zone_ht_coords}")
-                        else:
-                            print("[DEBUG] zone_ht not found in template or has no coordinates")
+                               
                     
                     # Process zone_tva
                     if 'zone_tva' in field_map and field_map['zone_tva']:
                         zone_tva_coords = field_map['zone_tva']
-                        print(f"[DEBUG] zone_tva coordinates: {zone_tva_coords}")
-                        print(f"[DEBUG] Type of zone_tva_coords: {type(zone_tva_coords)}")
+                     
                         
                         if isinstance(zone_tva_coords, dict) and all(k in zone_tva_coords for k in ['left', 'top', 'width', 'height']):
                             zone_tva_boxes = find_boxes_in_zone(detected_boxes, zone_tva_coords)
-                            print(f"[DEBUG] Found {len(zone_tva_boxes)} boxes in zone_tva")
-                            for i, box in enumerate(zone_tva_boxes):
-                                print(f"[DEBUG] zone_tva box {i+1}: {box['text']} (conf: {box.get('score', 'N/A')})")
-                        else:
-                            print(f"[ERROR] Invalid zone_tva coordinates: {zone_tva_coords}")
-                    else:
-                        print("[DEBUG] zone_tva not found in template or has no coordinates")
-                        print("[DEBUG] zone_tva not found in template or has no coordinates")
+                         
             except Exception as e:
                 error_msg = f"Error processing template zones: {str(e)}"
                 print(f"[ERROR] {error_msg}")
                 logging.warning(error_msg, exc_info=True)
                 
-        print(f"[DEBUG] Final zone_ht_boxes count: {len(zone_ht_boxes)}")
-        print(f"[DEBUG] Final zone_tva_boxes count: {len(zone_tva_boxes)}")
+    
 
 
         # -------------------------
@@ -1179,6 +1239,13 @@ async def ocr_preview(
         ht_extracted = None
         ht_box = None
         ht_match = {'value_box': {'left': 0, 'top': 0, 'width': 0, 'height': 0}}
+        
+        print("\n=== HT Extraction ===")
+        print(f"Number of detected boxes: {len(detected_boxes)}")
+        print("First 5 detected texts:")
+        for box in detected_boxes[:5]:
+            print(f"- '{box['text']}' at ({box['left']:.1f}, {box['top']:.1f})")
+            
         try:
             # Get database connection and cursor
             connection = get_connection()
@@ -2171,7 +2238,8 @@ async def ajouter_facture(
             "montantHT": invoice.montantHT,
             "montantTVA": invoice.montantTVA,
             "montantTTC": invoice.montantTTC,
-            "created_by": current_user["id"]
+            "created_by": current_user["id"],
+            "sous_valeurs": [sv.dict() for sv in invoice.sous_valeurs]  # Convert Pydantic models to dicts
         }
         
         result = await facture_service.create_facture(facture_data, current_user["id"])

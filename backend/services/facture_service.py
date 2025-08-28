@@ -20,31 +20,34 @@ class FactureService:
     
     async def create_facture(self, facture_data: Dict[str, Any], current_user_id: int) -> Dict[str, Any]:
         """
-        Create a new invoice
+        Create a new invoice with sous_valeurs
         
         Args:
-            facture_data: Invoice data dictionary
-            current_user_id: User ID who is creating the invoice
+            facture_data: Dictionary containing invoice data including sous_valeurs
+            current_user_id: ID of the current user creating the invoice
             
         Returns:
-            Dict containing the created invoice or error information
+            Dictionary with success status and created invoice data
         """
         try:
             print(f"=== DEBUG create_facture ===")
             print(f"Input data: {facture_data}")
             print(f"Current user ID: {current_user_id}")
             
-            # Add created_by to the data
-            facture_data["created_by"] = current_user_id
+            # Extract sous_valeurs if present
+            sous_valeurs = facture_data.pop('sous_valeurs', [])
             
-            # Convert date string to datetime if present
-            if "dateFacturation" in facture_data and facture_data["dateFacturation"]:
+            # Add created_by to the data
+            facture_data['created_by'] = current_user_id
+            
+            # Convert date string to datetime if needed
+            if 'dateFacturation' in facture_data and isinstance(facture_data['dateFacturation'], str):
+                from datetime import datetime
                 try:
-                    if isinstance(facture_data["dateFacturation"], str):
-                        facture_data["dateFacturation"] = datetime.fromisoformat(facture_data["dateFacturation"])
-                        print(f"Converted date: {facture_data['dateFacturation']}")
-                except ValueError as ve:
-                    print(f"Date conversion error: {ve}")
+                    facture_data['dateFacturation'] = datetime.fromisoformat(facture_data['dateFacturation'])
+                    print(f"Converted date: {facture_data['dateFacturation']}")
+                except (ValueError, TypeError) as e:
+                    print(f"Error converting date: {e}")
                     return {
                         "success": False,
                         "message": "Invalid date format for dateFacturation"
@@ -52,15 +55,60 @@ class FactureService:
             
             print(f"Final data to save: {facture_data}")
             
-            # Create the invoice
-            facture = await self.facture_repo.create(facture_data)
-            print(f"Created facture: {facture}")
-            print(f"Facture ID: {facture.id}")
-            
-            return {
-                "success": True,
-                "facture": facture.to_dict()
-            }
+            try:
+                # Create the main facture without committing
+                facture = await self.facture_repo.create(facture_data, commit=False)
+                print(f"Created facture: {facture}")
+                print(f"Facture ID: {facture.id}")
+                
+                # Add sous_valeurs if any
+                if sous_valeurs:
+                    print(f"Processing {len(sous_valeurs)} sous_valeurs")
+                    from database.models import SousValeurs
+                    for i, sv_data in enumerate(sous_valeurs, 1):
+                        print(f"  Sous_valeur {i}: {sv_data}")
+                        try:
+                            # Ensure all required fields are present and have the correct type
+                            sv_data = {
+                                'HT': float(sv_data.get('HT', 0)),
+                                'TVA': float(sv_data.get('TVA', 0)),
+                                'TTC': float(sv_data.get('TTC', 0)),
+                                'facture_id': facture.id
+                            }
+                            print(f"  Processed sous_valeur: {sv_data}")
+                            sv = SousValeurs(**sv_data)
+                            self.session.add(sv)
+                            print(f"  Added sous_valeur to session")
+                        except Exception as e:
+                            print(f"  Error processing sous_valeur: {e}")
+                            continue
+                
+                # Commit the transaction
+                await self.session.commit()
+                
+                # Clear the session to avoid any stale state
+                self.session.expunge_all()
+                
+                # Fetch the facture with its sous_valeurs using a fresh query with eager loading
+                facture_with_relations = await self.facture_repo.get_by_id(facture.id)
+                
+                if not facture_with_relations:
+                    return {
+                        "success": False,
+                        "message": "Failed to retrieve created invoice"
+                    }
+                    
+                # Convert to dict with sous_valeurs
+                result = {
+                    "success": True,
+                    "facture": facture_with_relations.to_dict(include_sous_valeurs=True)
+                }
+                print(f"Returning result: {result}")
+                return result
+                
+            except Exception as e:
+                await self.session.rollback()
+                raise
             
         except Exception as e:
             print(f"Error in create_facture: {e}")
@@ -102,7 +150,7 @@ class FactureService:
             if updated_facture:
                 return {
                     "success": True,
-                    "facture": updated_facture.to_dict()
+                    "facture": updated_facture.to_dict(include_sous_valeurs=True)
                 }
             else:
                 return {
@@ -137,7 +185,7 @@ class FactureService:
             
             return {
                 "success": True,
-                "factures": [invoice.to_dict() for invoice in invoices],
+                "factures": [invoice.to_dict(include_sous_valeurs=True) for invoice in invoices],
                 "total_count": total_count,
                 "skip": skip,
                 "limit": limit
@@ -148,6 +196,16 @@ class FactureService:
                 "success": False,
                 "message": f"Error getting invoices: {str(e)}"
             }
+    
+    async def get_facture_by_id(self, facture_id: int, current_user_id: int) -> Dict[str, Any]:
+        """
+        Get invoice by ID
+        
+        """
+        facture = await self.facture_repo.get_by_id(facture_id)
+        if not facture or facture.created_by != current_user_id:
+            return {"success": False, "message": "Invoice not found or access denied"}
+        return {"success": True, "facture": facture.to_dict(include_sous_valeurs=True)}
     
     async def delete_facture(self, facture_id: int, current_user_id: int) -> Dict[str, Any]:
         """

@@ -25,6 +25,7 @@ paddlepaddle
 paddleocr
 
 # Data processing
+dateparser>=1.1.0
 numpy>=1.24.3
 
 # Authentication and Security

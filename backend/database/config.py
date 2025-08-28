@@ -13,17 +13,17 @@ load_dotenv()
 # Database configuration
 DB_CONFIG = {
     "host": os.getenv("DB_HOST", "localhost"),
-    "user": os.getenv("DB_USER", "root"),
-    "password": os.getenv("DB_PASSWORD", ""),
+    "user": os.getenv("DB_USER", "root"),  
+    "password": os.getenv("DB_PASSWORD", ""),  
     "database": os.getenv("DB_NAME", "evoleo"),
     "port": int(os.getenv("DB_PORT", "3306"))
 }
 
 # Create database URL
-DATABASE_URL = f"mysql+asyncmy://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+DATABASE_URL = f"mysql+asyncmy://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}?charset=utf8mb4"
 
 # Create sync database URL for migrations
-SYNC_DATABASE_URL = f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}"
+SYNC_DATABASE_URL = f"mysql+pymysql://{DB_CONFIG['user']}:{DB_CONFIG['password']}@{DB_CONFIG['host']}:{DB_CONFIG['port']}/{DB_CONFIG['database']}?charset=utf8mb4"
 
 # Create async engine
 async_engine = create_async_engine(

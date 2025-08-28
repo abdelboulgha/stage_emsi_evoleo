@@ -22,25 +22,38 @@ export const useInvoiceSelection = (extractionState, setExtractionState, invoice
           const montantTVA = filterValue(data.montantTVA, "montantTVA");
           const montantTTC = filterValue(data.montantTTC, "montantTTC");
 
-          console.log(`Filtered values for invoice ${index + 1}:`, {
-            fournisseur,
-            numeroFacture,
-            dateFacturation,
-            tauxTVA,
-            montantHT,
-            montantTVA,
-            montantTTC
-          }); // Debug log
+       
 
           // Ensure all required fields are present and properly formatted
+          // Get zone values from the extracted data
+          const zoneHtValues = (data.zoneHtBoxes || []).map(box => parseFloat(box.text.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0);
+          const zoneTvaValues = (data.zoneTvaBoxes || []).map(box => parseFloat(box.text.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0);
+          
+          // Calculate TTC values (HT + TVA for each pair)
+          const sousValeurs = [];
+          const maxLength = Math.min(zoneHtValues.length, zoneTvaValues.length);
+          
+          for (let i = 0; i < maxLength; i++) {
+            const ht = zoneHtValues[i] || 0;
+            const tva = zoneTvaValues[i] || 0;
+            const ttc = ht + tva;
+            
+            sousValeurs.push({
+              HT: ht,
+              TVA: tva,
+              TTC: ttc
+            });
+          }
+          
           const invoice = {
             fournisseur: fournisseur || "Fournisseur inconnu",
-            numFacture: numeroFacture || "N/A", // Map numeroFacture to numFacture for backend
+            numFacture: numeroFacture || "N/A",
             dateFacturation: dateFacturation || new Date().toISOString().split('T')[0],
             tauxTVA: parseFloat(tauxTVA) || 0,
             montantHT: parseFloat(montantHT) || 0,
             montantTVA: parseFloat(montantTVA) || 0,
             montantTTC: parseFloat(montantTTC) || 0,
+            sous_valeurs: sousValeurs
           };
 
           console.log(`Formatted invoice ${index + 1}:`, invoice); // Debug log

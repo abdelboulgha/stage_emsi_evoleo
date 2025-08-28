@@ -72,6 +72,20 @@ const checkForDuplicates = async (invoices, showNotification) => {
 };
 
 export const useExtraction = (extractionState, setExtractionState, showNotification) => {
+  // Helper function to clean zone data
+  const cleanZoneData = (boxes) => {
+    if (!boxes) return [];
+    if (!Array.isArray(boxes)) return [];
+    return boxes.map(box => ({
+      text: box.text || '',
+      left: box.left || 0,
+      top: box.top || 0,
+      width: box.width || 0,
+      height: box.height || 0,
+      right: box.right || 0,
+      bottom: box.bottom || 0
+    })).filter(Boolean);
+  };
   const filterValue = useCallback((val, fieldKey) => {
     // Explicitly check for undefined or null, but allow 0 and '0'
     if (val === undefined || val === null) return "";
@@ -164,32 +178,62 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         }
         data.fournisseur = extractionState.selectedModelName || extractionState.extractedDataList[i]?.fournisseur || "";
         
-        // Store zone HT and TVA data if available
-        if (result.zone_ht_boxes && result.zone_ht_boxes.length > 0) {
-          data.zone_ht = result.zone_ht_boxes[0].text; // Default to first option
+        // Update extraction result with zone boxes and set default values
+        const zoneHtBoxes = result.zone_ht_boxes || [];
+        const zoneTvaBoxes = result.zone_tva_boxes || [];
+        
+        // Set default values if available
+        if (zoneHtBoxes.length > 0) {
+          data.montantHT = zoneHtBoxes[0].text;
+          data.boxHT = {
+            left: zoneHtBoxes[0].left,
+            top: zoneHtBoxes[0].top,
+            width: zoneHtBoxes[0].width,
+            height: zoneHtBoxes[0].height
+          };
         }
-        if (result.zone_tva_boxes && result.zone_tva_boxes.length > 0) {
-          data.zone_tva = result.zone_tva_boxes[0].text; // Default to first option
+        
+        if (zoneTvaBoxes.length > 0) {
+          data.montantTVA = zoneTvaBoxes[0].text;
+          data.boxTVA = {
+            left: zoneTvaBoxes[0].left,
+            top: zoneTvaBoxes[0].top,
+            width: zoneTvaBoxes[0].width,
+            height: zoneTvaBoxes[0].height
+          };
         }
         
         results[i] = data;
         confidenceScores[i] = result.confidence_scores || {};
         
-        // Store extraction result for zone data
-        if (!extractionState.extractionResult) {
-          setExtractionState(prev => ({
-            ...prev,
-            extractionResult: {}
-          }));
-        }
+        // Store extraction result for zone data - check both root level and zone_results
+        const zoneData = result.zone_results || {};
+        const finalHtBoxes = zoneHtBoxes.length > 0 ? zoneHtBoxes : (zoneData.zone_ht_boxes || []);
+        const finalTvaBoxes = zoneTvaBoxes.length > 0 ? zoneTvaBoxes : (zoneData.zone_tva_boxes || []);
         
-        // Update extraction result with zone boxes
+        // Update the current result with zone data
+        const cleanedHtBoxes = cleanZoneData(finalHtBoxes);
+        const cleanedTvaBoxes = cleanZoneData(finalTvaBoxes);
+        
+        // Update the results array with zone data
+        results[i] = {
+          ...data,
+          zoneHtBoxes: cleanedHtBoxes,
+          zoneTvaBoxes: cleanedTvaBoxes,
+          selectedZoneHt: '',
+          selectedZoneTva: ''
+        };
+        
+        // Also update the data object for backward compatibility
+        data.zoneHtBoxes = cleanedHtBoxes;
+        data.zoneTvaBoxes = cleanedTvaBoxes;
+        
         setExtractionState(prev => ({
           ...prev,
           extractionResult: {
             ...prev.extractionResult,
-            zone_ht_boxes: result.zone_ht_boxes || [],
-            zone_tva_boxes: result.zone_tva_boxes || []
+            zone_ht_boxes: finalHtBoxes,
+            zone_tva_boxes: finalTvaBoxes
           }
         }));
         
@@ -271,29 +315,62 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       if (data.numFacture && !data.numeroFacture) {
         data.numeroFacture = data.numFacture;
       }
+      data.fournisseur = extractionState.selectedModelName || extractionState.extractedDataList[idx]?.fournisseur || "";
       
-      // Get zone results from the response
-      const zoneResults = result.zone_results || {};
-      const zoneHtBoxes = zoneResults.zone_ht_boxes || [];
-      const zoneTvaBoxes = zoneResults.zone_tva_boxes || [];
+      // Get zone results from the response - check both root level and zone_results
+      const zoneData = result.zone_results || {};
+      const zoneHtBoxes = result.zone_ht_boxes || zoneData.zone_ht_boxes || [];
+      const zoneTvaBoxes = result.zone_tva_boxes || zoneData.zone_tva_boxes || [];
       
-      // Store zone HT and TVA data if available
-      if (zoneHtBoxes.length > 0) {
-        data.zone_ht = zoneHtBoxes[0].text; // Default to first option
+      console.log('Zone HT boxes:', zoneHtBoxes);
+      console.log('Zone TVA boxes:', zoneTvaBoxes);
+      
+      // Only update the box coordinates if they don't exist yet
+      if (zoneHtBoxes.length > 0 && !data.boxHT) {
+        data.boxHT = {
+          left: zoneHtBoxes[0].left,
+          top: zoneHtBoxes[0].top,
+          width: zoneHtBoxes[0].width,
+          height: zoneHtBoxes[0].height
+        };
       }
-      if (zoneTvaBoxes.length > 0) {
-        data.zone_tva = zoneTvaBoxes[0].text; // Default to first option
+      
+      if (zoneTvaBoxes.length > 0 && !data.boxTVA) {
+        data.boxTVA = {
+          left: zoneTvaBoxes[0].left,
+          top: zoneTvaBoxes[0].top,
+          width: zoneTvaBoxes[0].width,
+          height: zoneTvaBoxes[0].height
+        };
       }
       
-      // Update extraction result with zone boxes
-      setExtractionState(prev => ({
-        ...prev,
-        extractionResult: {
-          ...prev.extractionResult,
-          zone_ht_boxes: zoneHtBoxes,
-          zone_tva_boxes: zoneTvaBoxes
+      // Update the extracted data list with zone boxes
+      // This ensures each image maintains its own zone data
+      setExtractionState(prev => {
+        const newExtractedDataList = [...prev.extractedDataList];
+        const currentIndex = prev.currentPdfIndex;
+        
+        if (newExtractedDataList[currentIndex]) {
+          newExtractedDataList[currentIndex] = {
+            ...newExtractedDataList[currentIndex],
+            zoneHtBoxes: cleanZoneData(zoneHtBoxes),
+            zoneTvaBoxes: cleanZoneData(zoneTvaBoxes),
+            // Keep existing selections if they exist
+            selectedZoneHt: newExtractedDataList[currentIndex]?.selectedZoneHt || '',
+            selectedZoneTva: newExtractedDataList[currentIndex]?.selectedZoneTva || ''
+          };
         }
-      }));
+        
+        return {
+          ...prev,
+          extractedDataList: newExtractedDataList,
+          extractionResult: {
+            ...prev.extractionResult,
+            zone_ht_boxes: zoneHtBoxes,
+            zone_tva_boxes: zoneTvaBoxes
+          }
+        };
+      });
       
       setExtractionState((prev) => {
         const newExtracted = [...prev.extractedDataList];

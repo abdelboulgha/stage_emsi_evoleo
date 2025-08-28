@@ -17,10 +17,27 @@ const ExtractionPreview = ({
     const canvas = extractionBoxesCanvasRef.current;
     const img = previewImageRef.current;
     if (!canvas || !img) return;
-
+    
     // Get the current extraction data for the page
     const data = extractionState.extractedDataList[extractionState.currentPdfIndex];
     if (!data) return;
+    
+    // Debug log for image dimensions
+    console.log('=== Image Debug Info ===');
+    console.log('Natural dimensions:', { 
+      width: img.naturalWidth, 
+      height: img.naturalHeight 
+    });
+    console.log('Display dimensions:', { 
+      width: img.offsetWidth, 
+      height: img.offsetHeight 
+    });
+    console.log('Client dimensions:', { 
+      width: img.clientWidth, 
+      height: img.clientHeight 
+    });
+    console.log('Image source:', img.src.substring(0, 100) + '...');
+    console.log('========================');
 
     // Set canvas size to match the image's display size
     canvas.style.width = `${img.offsetWidth}px`;
@@ -41,10 +58,74 @@ const ExtractionPreview = ({
     const displayWidth = img.offsetWidth;
     const displayHeight = img.offsetHeight;
     
-    // Calculate scale factors based on natural dimensions
-    const scaleX = displayWidth / naturalWidth;
-    const scaleY = displayHeight / naturalHeight;
+    // Standard dimensions used in the backend (1191x1684)
+    const standardWidth = 1191;
+    const standardHeight = 1684;
     
+    console.log('=== Scaling Debug ===');
+    console.log('Standard dimensions (backend):', { standardWidth, standardHeight });
+    console.log('Natural dimensions (image):', { width: naturalWidth, height: naturalHeight });
+    console.log('Display dimensions (container):', { width: displayWidth, height: displayHeight });
+    
+    // Calculate scale factors based on natural dimensions
+    // If the image matches our standard dimensions, use direct scaling
+    // Otherwise, adjust for the standardization that happened in the backend
+    let scaleX, scaleY;
+    
+    if (Math.abs(naturalWidth - standardWidth) < 50 && Math.abs(naturalHeight - standardHeight) < 50) {
+      // Image is already in standard dimensions
+      scaleX = displayWidth / standardWidth;
+      scaleY = displayHeight / standardHeight;
+      console.log('Using standard dimensions scaling (1:1)');
+      console.log('Scale factors (X, Y):', { scaleX, scaleY });
+      console.log('Effective display size:', { 
+        width: standardWidth * scaleX, 
+        height: standardHeight * scaleY 
+      });
+    } else {
+      // Image was standardized in the backend, so we need to account for that
+      // The backend maintains aspect ratio and adds padding to reach 1191x1684
+      const imgAspectRatio = naturalWidth / naturalHeight;
+      const standardAspectRatio = standardWidth / standardHeight;
+      
+      if (imgAspectRatio > standardAspectRatio) {
+        // Image is wider than standard, so it was fit to width and centered vertically
+        const scaledHeight = standardWidth / imgAspectRatio;
+        const yOffset = (standardHeight - scaledHeight) / 2;
+        
+        // The actual content is scaled to fit the width, with vertical padding
+        scaleX = displayWidth / standardWidth;
+        scaleY = displayHeight / (standardHeight * (scaledHeight / standardHeight));
+        
+        console.log('Wider than standard - scaled to fit width');
+        console.log('Scale factors (X, Y):', { scaleX, scaleY });
+        console.log('Scaled content height:', scaledHeight);
+        console.log('Vertical offset:', yOffset);
+        console.log('Effective content area:', {
+          width: standardWidth * scaleX,
+          height: scaledHeight * scaleY,
+          yOffset: yOffset * scaleY
+        });
+      } else {
+        // Image is taller than standard, so it was fit to height and centered horizontally
+        const scaledWidth = standardHeight * imgAspectRatio;
+        const xOffset = (standardWidth - scaledWidth) / 2;
+        
+        // The actual content is scaled to fit the height, with horizontal padding
+        scaleX = displayWidth / (standardWidth * (scaledWidth / standardWidth));
+        scaleY = displayHeight / standardHeight;
+        
+        console.log('Taller than standard - scaled to fit height');
+        console.log('Scale factors (X, Y):', { scaleX, scaleY });
+        console.log('Scaled content width:', scaledWidth);
+        console.log('Horizontal offset:', xOffset);
+        console.log('Effective content area:', {
+          width: scaledWidth * scaleX,
+          height: standardHeight * scaleY,
+          xOffset: xOffset * scaleX
+        });
+      }
+    }
     
     // Helper function to draw a box with consistent scaling
     const drawBox = (box, color, label, labelPosition = 'left') => {
@@ -215,22 +296,44 @@ const ExtractionPreview = ({
     if (data.boxDateFacturation) drawBox(data.boxDateFacturation, '#008000', 'Date', 'left');
     if (data.boxNumFacture) drawBox(data.boxNumFacture, '#6366f1', 'N° Facture', 'top');
     
-    // Draw HT and TVA zone mappings from template
+    // Debug log the data structure
+    console.log('=== Box Data ===');
+    console.log('zone_HT_mapping:', data.zone_HT_mapping);
+    console.log('ht_match:', data.ht_match);
+    console.log('boxHT:', data.boxHT);
+    console.log('zone_tva_mapping:', data.zone_tva_mapping);
+    console.log('tva_match:', data.tva_match);
+    console.log('boxTVA:', data.boxTVA);
+    console.log('================');
+
+    // Draw HT zone mappings (cyan)
     if (data.zone_HT_mapping?.width > 0) {
+      console.log('Drawing HT zone mapping', data.zone_HT_mapping);
       drawBox(data.zone_HT_mapping, '#00ffff', 'HT Zone', 'left');
-    } else if (data.ht_match?.search_area) {
-      drawBox(data.ht_match.search_area, '#b9101066', 'HT Area', 'left');
-    } else if (data.boxHT?.width > 0) {
-      drawBox(data.boxHT, '#b91010ff', 'HT', 'left');
     }
     
-    // Draw TVA zone mapping from template
+    // Draw TVA zone mappings (cyan)
     if (data.zone_tva_mapping?.width > 0) {
+      console.log('Drawing TVA zone mapping', data.zone_tva_mapping);
       drawBox(data.zone_tva_mapping, '#00ffff', 'TVA Zone', 'left');
-    } else if (data.tva_match?.search_area) {
-      drawBox(data.tva_match.search_area, '#0b0ff566', 'TVA Area', 'left');
-    } else if (data.boxTVA?.width > 0) {
+    }
+    
+    // Draw detected HT box (red)
+    if (data.boxHT?.width > 0) {
+      console.log('Drawing detected HT box', data.boxHT);
+      drawBox(data.boxHT, '#b91010ff', 'HT', 'left');
+    } else if (data.ht_match?.search_area) {
+      console.log('Drawing HT search area');
+      drawBox(data.ht_match.search_area, '#b9101066', 'HT Area', 'left');
+    }
+    
+    // Draw detected TVA box (blue)
+    if (data.boxTVA?.width > 0) {
+      console.log('Drawing detected TVA box', data.boxTVA);
       drawBox(data.boxTVA, '#0b0ff5ff', 'TVA', 'left');
+    } else if (data.tva_match?.search_area) {
+      console.log('Drawing TVA search area');
+      drawBox(data.tva_match.search_area, '#0b0ff566', 'TVA Area', 'left');
     }
     
     // If we have values but no boxes, show a small indicator

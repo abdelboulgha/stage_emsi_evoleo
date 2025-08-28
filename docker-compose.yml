@@ -1,11 +1,10 @@
-version: '3.8'
 
 services:
   db:
     image: mysql:8.0
     container_name: emsi_mysql
     environment:
-      MYSQL_DATABASE: emsi_evoleo
+      MYSQL_DATABASE: evoleo
       MYSQL_USER: emsi_user
       MYSQL_PASSWORD: root
       MYSQL_ROOT_PASSWORD: root
@@ -27,12 +26,13 @@ services:
     container_name: emsi_backend
     ports:
       - "8000:8000"
+    restart: unless-stopped
     environment:
       - MYSQL_HOST=db
       - MYSQL_USER=emsi_user
       - MYSQL_PASSWORD=root
-      - MYSQL_DATABASE=emsi_evoleo
-      - DATABASE_URL=mysql+pymysql://emsi_user:root@db:3306/emsi_evoleo
+      - MYSQL_DATABASE=evoleo
+      - DATABASE_URL=mysql+pymysql://emsi_user:root@db:3306/evoleo
       - SECRET_KEY=your-secret-key-here
       - ALGORITHM=HS256
       - ACCESS_TOKEN_EXPIRE_MINUTES=30
@@ -40,8 +40,9 @@ services:
       - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET:-whsec_default}
       - PYTHONPATH=/app
     volumes:
-      - ./backend:/app
-      - ./backend/.env:/app/.env
+      - ./backend:/app/backend
+      - ./backend/.env:/app/backend/.env
+    command: sh -c "uvicorn main:app --host 0.0.0.0 --port 8000 --reload"
     depends_on:
       db:
         condition: service_healthy
@@ -54,12 +55,10 @@ services:
       dockerfile: Dockerfile.frontend
     container_name: emsi_frontend
     ports:
-      - "3000:3000"
+      - "3000:80"
+    restart: unless-stopped
     environment:
-      - REACT_APP_API_URL=http://localhost:8000
-    volumes:
-      - ./front_end:/app
-      - /app/node_modules
+      REACT_APP_API_URL: /api
     depends_on:
       - backend
     networks:
@@ -76,6 +75,7 @@ services:
     depends_on:
       - frontend
       - backend
+    restart: unless-stopped
     networks:
       - emsi-network
 

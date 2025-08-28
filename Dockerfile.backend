@@ -21,12 +21,11 @@ COPY . .
 
 WORKDIR /app/backend
 
-EXPOSE 8000
-
-# Create a startup script
-RUN echo '#!/bin/bash\n\
-# Wait for MySQL to be ready\nuntil mysqladmin ping -h"$MYSQL_HOST" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do\n  echo "Waiting for MySQL..."\n  sleep 1\ndone\n\n# Initialize the database\npython -c "from database.config import init_db; import asyncio; asyncio.run(init_db())"\n\n# Start the application\nuvicorn main:app --host 0.0.0.0 --port 8000 --reload\n' > /app/startup.sh && \
+# Create startup script
+RUN echo '#!/bin/sh\n\n# Wait for MySQL to be ready\nuntil mysqladmin ping -h"$MYSQL_HOST" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do\n  echo "Waiting for MySQL..."\n  sleep 1\ndone\n\n# Initialize the database\npython -c "from database.config import init_db; import asyncio; asyncio.run(init_db())"\n\n# Start the application\nuvicorn main:app --host 0.0.0.0 --port 8000 --reload' > /app/startup.sh && \
     chmod +x /app/startup.sh
 
-# Use the startup script as the entrypoint
+WORKDIR /app/backend
+
+# Command to run the application
 CMD ["/app/startup.sh"]
