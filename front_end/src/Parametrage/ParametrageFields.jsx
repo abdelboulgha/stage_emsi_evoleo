@@ -107,7 +107,17 @@ const ParametrageFields = ({
                 )}
                 {field.type === "manual_draw" && (
                   <button
-                    onClick={() => startManualDraw(field.key)}
+                    onClick={() => {
+                      // Clear previous rectangle for this field before starting new draw
+                      setDataPrepState(prev => ({
+                        ...prev,
+                        fieldMappings: {
+                          ...prev.fieldMappings,
+                          [field.key]: undefined
+                        }
+                      }));
+                      startManualDraw(field.key);
+                    }}
                     className="parametrage-action-button draw"
                   >
                     Dessiner

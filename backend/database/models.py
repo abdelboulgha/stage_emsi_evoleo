@@ -99,6 +99,8 @@ class Facture(Base):
     montantTVA: Mapped[float] = Column(DECIMAL(15,2), nullable=False) 
     montantTTC: Mapped[float] = Column(DECIMAL(15,2), nullable=False) 
     dateFacturation: Mapped[datetime] = Column(Date, nullable=False)
+    created_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
     created_by: Mapped[int] = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
     
     # Relationships
@@ -113,7 +115,6 @@ class Facture(Base):
     def to_dict(self, include_sous_valeurs: bool = False) -> dict:
         """
         Convert model to dictionary
-        
         """
         result = {
             "id": self.id,
@@ -125,6 +126,8 @@ class Facture(Base):
             "montantTTC": float(self.montantTTC) if self.montantTTC is not None else 0.0,
             "dateFacturation": self.dateFacturation.isoformat() if self.dateFacturation else None,
             "created_by": self.created_by,
+            "created_at": self.created_at.isoformat() if self.created_at else None,
+            "updated_at": self.updated_at.isoformat() if self.updated_at else None,
         }
         
         # Only include sous_valeurs if explicitly requested and they are loaded
@@ -156,7 +159,7 @@ class SousValeurs(Base):
     HT: Mapped[float] = Column(DECIMAL(15, 2), nullable=False)
     TVA: Mapped[float] = Column(DECIMAL(15, 2), nullable=False)
     TTC: Mapped[float] = Column(DECIMAL(15, 2), nullable=False)
-    facture_id: Mapped[int] = Column(Integer, ForeignKey("facture.id"), nullable=False)
+    facture_id: Mapped[int] = Column(Integer, ForeignKey("facture.id", ondelete="CASCADE"), nullable=False)
  
     
     # Relationships

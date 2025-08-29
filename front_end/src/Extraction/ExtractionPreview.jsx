@@ -17,387 +17,162 @@ const ExtractionPreview = ({
     const canvas = extractionBoxesCanvasRef.current;
     const img = previewImageRef.current;
     if (!canvas || !img) return;
-    
-    // Get the current extraction data for the page
+
     const data = extractionState.extractedDataList[extractionState.currentPdfIndex];
     if (!data) return;
-    
-    // Debug log for image dimensions
-    console.log('=== Image Debug Info ===');
-    console.log('Natural dimensions:', { 
-      width: img.naturalWidth, 
-      height: img.naturalHeight 
-    });
-    console.log('Display dimensions:', { 
-      width: img.offsetWidth, 
-      height: img.offsetHeight 
-    });
-    console.log('Client dimensions:', { 
-      width: img.clientWidth, 
-      height: img.clientHeight 
-    });
-    console.log('Image source:', img.src.substring(0, 100) + '...');
-    console.log('========================');
 
     // Set canvas size to match the image's display size
     canvas.style.width = `${img.offsetWidth}px`;
     canvas.style.height = `${img.offsetHeight}px`;
-    
-    // Set the canvas resolution to match the display
+
     const scale = window.devicePixelRatio || 1;
     canvas.width = img.offsetWidth * scale;
     canvas.height = img.offsetHeight * scale;
-    
-    const ctx = canvas.getContext('2d');
+
+    const ctx = canvas.getContext("2d");
     ctx.scale(scale, scale);
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Get the current image dimensions for scaling
     const naturalWidth = img.naturalWidth;
     const naturalHeight = img.naturalHeight;
     const displayWidth = img.offsetWidth;
     const displayHeight = img.offsetHeight;
-    
-    // Standard dimensions used in the backend (1191x1684)
+
     const standardWidth = 1191;
     const standardHeight = 1684;
-    
-    console.log('=== Scaling Debug ===');
-    console.log('Standard dimensions (backend):', { standardWidth, standardHeight });
-    console.log('Natural dimensions (image):', { width: naturalWidth, height: naturalHeight });
-    console.log('Display dimensions (container):', { width: displayWidth, height: displayHeight });
-    
-    // Calculate scale factors based on natural dimensions
-    // If the image matches our standard dimensions, use direct scaling
-    // Otherwise, adjust for the standardization that happened in the backend
+
     let scaleX, scaleY;
-    
-    if (Math.abs(naturalWidth - standardWidth) < 50 && Math.abs(naturalHeight - standardHeight) < 50) {
-      // Image is already in standard dimensions
+
+    if (
+      Math.abs(naturalWidth - standardWidth) < 50 &&
+      Math.abs(naturalHeight - standardHeight) < 50
+    ) {
       scaleX = displayWidth / standardWidth;
       scaleY = displayHeight / standardHeight;
-      console.log('Using standard dimensions scaling (1:1)');
-      console.log('Scale factors (X, Y):', { scaleX, scaleY });
-      console.log('Effective display size:', { 
-        width: standardWidth * scaleX, 
-        height: standardHeight * scaleY 
-      });
+  // console.log("Using standard dimensions scaling (1:1)");
     } else {
-      // Image was standardized in the backend, so we need to account for that
-      // The backend maintains aspect ratio and adds padding to reach 1191x1684
       const imgAspectRatio = naturalWidth / naturalHeight;
       const standardAspectRatio = standardWidth / standardHeight;
-      
+
       if (imgAspectRatio > standardAspectRatio) {
-        // Image is wider than standard, so it was fit to width and centered vertically
         const scaledHeight = standardWidth / imgAspectRatio;
         const yOffset = (standardHeight - scaledHeight) / 2;
-        
-        // The actual content is scaled to fit the width, with vertical padding
         scaleX = displayWidth / standardWidth;
-        scaleY = displayHeight / (standardHeight * (scaledHeight / standardHeight));
-        
-        console.log('Wider than standard - scaled to fit width');
-        console.log('Scale factors (X, Y):', { scaleX, scaleY });
-        console.log('Scaled content height:', scaledHeight);
-        console.log('Vertical offset:', yOffset);
-        console.log('Effective content area:', {
-          width: standardWidth * scaleX,
-          height: scaledHeight * scaleY,
-          yOffset: yOffset * scaleY
-        });
+        scaleY = displayHeight / scaledHeight;
+  // console.log("Wider than standard - scaled to fit width", { yOffset });
       } else {
-        // Image is taller than standard, so it was fit to height and centered horizontally
         const scaledWidth = standardHeight * imgAspectRatio;
         const xOffset = (standardWidth - scaledWidth) / 2;
-        
-        // The actual content is scaled to fit the height, with horizontal padding
-        scaleX = displayWidth / (standardWidth * (scaledWidth / standardWidth));
+        scaleX = displayWidth / scaledWidth;
         scaleY = displayHeight / standardHeight;
-        
-        console.log('Taller than standard - scaled to fit height');
-        console.log('Scale factors (X, Y):', { scaleX, scaleY });
-        console.log('Scaled content width:', scaledWidth);
-        console.log('Horizontal offset:', xOffset);
-        console.log('Effective content area:', {
-          width: scaledWidth * scaleX,
-          height: standardHeight * scaleY,
-          xOffset: xOffset * scaleX
-        });
+  // console.log("Taller than standard - scaled to fit height", { xOffset });
       }
     }
-    
-    // Helper function to draw a box with consistent scaling
-    const drawBox = (box, color, label, labelPosition = 'left') => {
+
+    // ✅ define drawBox BEFORE using it
+    const drawBox = (box, color, label, labelPosition = "left") => {
       if (!box) return;
-      
       const x = box.left * scaleX;
       const y = box.top * scaleY;
       const w = box.width * scaleX;
       const h = box.height * scaleY;
-      
-      // Draw box
+
       ctx.save();
       ctx.strokeStyle = color;
       ctx.lineWidth = 2;
       ctx.setLineDash([]);
       ctx.strokeRect(x, y, w, h);
-      
-      // Draw label
+
       ctx.fillStyle = color;
-      ctx.font = 'bold 12px Arial';
-      
-      if (labelPosition === 'top') {
-        ctx.textAlign = 'center';
-        ctx.fillText(label, x + w/2, y - 5);
-      } else { // left position
-        ctx.textAlign = 'right';
-        ctx.fillText(label, x - 5, y + h/2 + 4);
+      ctx.font = "bold 12px Arial";
+
+      if (labelPosition === "top") {
+        ctx.textAlign = "center";
+        ctx.fillText(label, x + w / 2, y - 5);
+      } else {
+        ctx.textAlign = "right";
+        ctx.fillText(label, x - 5, y + h / 2 + 4);
       }
-      
+
       ctx.restore();
     };
-    
-    // if (data.htSearchArea) {
-    //   const { left, top, width, height } = data.htSearchArea;
-    //   const x = left * scaleX;
-    //   const y = top * scaleY;
-    //   const w = width * scaleX;
-    //   const h = height * scaleY;
-      
-    //   ctx.save();
-    //   ctx.strokeStyle = '#b9101066';
-    //   ctx.setLineDash([5, 5]);
-    //   ctx.lineWidth = 1;
-    //   ctx.fillStyle = '#b9101122';
-    //   ctx.fillRect(x, y, w, h);
-    //   ctx.strokeRect(x, y, w, h);
-      
-    //   // Add label
-    //   ctx.fillStyle = '#b91010';
-    //   ctx.font = 'bold 11px Arial';
-    //   ctx.textAlign = 'left';
-    //   ctx.fillText('HT Search Area', x + 5, y + 15);
-    //   ctx.restore();
-    // }
-    
-    // if (data.tvaSearchArea) {
-    //   const { left, top, width, height } = data.tvaSearchArea;
-    //   const x = left * scaleX;
-    //   const y = top * scaleY;
-    //   const w = width * scaleX;
-    //   const h = height * scaleY;
-      
-    //   ctx.save();
-    //   ctx.strokeStyle = '#0b0ff566';
-    //   ctx.setLineDash([5, 5]);
-    //   ctx.lineWidth = 1;
-    //   ctx.fillStyle = '#0b0ff522';
-    //   ctx.fillRect(x, y, w, h);
-    //   ctx.strokeRect(x, y, w, h);
-      
-    //   // Add label
-    //   ctx.fillStyle = '#0b0ff5';
-    //   ctx.font = 'bold 11px Arial';
-    //   ctx.textAlign = 'left';
-    //   ctx.fillText('TVA Search Area', x + 5, y + 15);
-    //   ctx.restore();
-    // }
-    
-    // if (data.ht_match?.search_area) {
-    //   const { left, top, width, height } = data.ht_match.search_area;
-      
-    //   // Log in the same format as other logs
-    //   console.log('HT Search Area (original):', { 
-    //     left, 
-    //     top, 
-    //     width, 
-    //     height,
-    //     type: 'search_area_ht'
-    //   });
-      
-    //   // Log scaled coordinates in the same format
-    //   console.log('HT Search Area (scaled):', {
-    //     x: left * scaleX,
-    //     y: top * scaleY,
-    //     w: width * scaleX,
-    //     h: height * scaleY
-    //   });
-    //   const x = left * scaleX;
-    //   const y = top * scaleY;
-    //   const w = width * scaleX;
-    //   const h = height * scaleY;
-      
-    //   ctx.save();
-    //   ctx.strokeStyle = '#b9101066';
-    //   ctx.setLineDash([5, 5]);
-    //   ctx.lineWidth = 1;
-    //   ctx.fillStyle = '#b9101122';
-    //   ctx.fillRect(x, y, w, h);
-    //   ctx.strokeRect(x, y, w, h);
-    //   ctx.strokeRect(x, y, w, h);
-      
-    //   // Add label
-    //   ctx.fillStyle = '#b91010';
-    //   ctx.font = 'bold 11px Arial';
-    //   ctx.textAlign = 'left';
-    //   ctx.fillText('HT Search Area', x + 5, y + 15);
-    //   ctx.restore();
-    // }
-    
-    // if (data.tva_match?.search_area) {
-    //   const { left, top, width, height } = data.tva_match.search_area;
-      
-    //   // Log in the same format as other logs
-    //   console.log('TVA Search Area (original):', { 
-    //     left, 
-    //     top, 
-    //     width, 
-    //     height,
-    //     type: 'search_area_tva'
-    //   });
-      
-    //   // Log scaled coordinates in the same format
-    //   console.log('TVA Search Area (scaled):', {
-    //     x: left * scaleX,
-    //     y: top * scaleY,
-    //     w: width * scaleX,
-    //     h: height * scaleY
-    //   });
-    //   const x = left * scaleX;
-    //   const y = top * scaleY;
-    //   const w = width * scaleX;
-    //   const h = height * scaleY;
-      
-    //   ctx.save();
-    //   ctx.strokeStyle = '#0b0ff566';
-    //   ctx.setLineDash([5, 5]);
-    //   ctx.lineWidth = 1;
-    //   ctx.fillStyle = '#0b0ff522';
-    //   ctx.fillRect(x, y, w, h);
-    //   ctx.strokeRect(x, y, w, h);
-      
-    //   // Add label
-    //   ctx.fillStyle = '#0b0ff5';
-    //   ctx.font = 'bold 11px Arial';
-    //   ctx.textAlign = 'left';
-    //   ctx.fillText('TVA Search Area', x + 5, y + 15);
-    //   ctx.restore();
-    // }
 
-    // Helper function to validate box data
-    const testDraw = (box) => {
-      if (!box) return false;
-      const required = ['left', 'top', 'width', 'height'];
-      return !required.some(prop => box[prop] === undefined);
-    };
-    
-    // Draw all boxes with consistent scaling (on top of search areas)
-    if (data.boxDateFacturation) drawBox(data.boxDateFacturation, '#008000', 'Date', 'left');
-    if (data.boxNumFacture) drawBox(data.boxNumFacture, '#6366f1', 'N° Facture', 'top');
-    
-    // Debug log the data structure
-    console.log('=== Box Data ===');
-    console.log('zone_HT_mapping:', data.zone_HT_mapping);
-    console.log('ht_match:', data.ht_match);
-    console.log('boxHT:', data.boxHT);
-    console.log('zone_tva_mapping:', data.zone_tva_mapping);
-    console.log('tva_match:', data.tva_match);
-    console.log('boxTVA:', data.boxTVA);
-    console.log('================');
+    // ✅ now safe to call drawBox
+  // if (data.boxNumFactureSearchArea?.width > 0) {
+  //   drawBox(data.boxNumFactureSearchArea, "#ff9800", "NumFacture Search Area", "left");
+  // }
+  // if (data.boxDateFacturationSearchArea?.width > 0) {
+  //   drawBox(data.boxDateFacturationSearchArea, "#ff9800", "Date Search Area", "left");
+  // }
 
-    // Draw HT zone mappings (cyan)
-    if (data.zone_HT_mapping?.width > 0) {
-      console.log('Drawing HT zone mapping', data.zone_HT_mapping);
-      drawBox(data.zone_HT_mapping, '#00ffff', 'HT Zone', 'left');
-    }
-    
-    // Draw TVA zone mappings (cyan)
-    if (data.zone_tva_mapping?.width > 0) {
-      console.log('Drawing TVA zone mapping', data.zone_tva_mapping);
-      drawBox(data.zone_tva_mapping, '#00ffff', 'TVA Zone', 'left');
-    }
-    
-    // Draw detected HT box (red)
+    if (data.boxDateFacturation) drawBox(data.boxDateFacturation, "#008000", "Date", "left");
+    if (data.boxNumFacture) drawBox(data.boxNumFacture, "#6366f1", "N° Facture", "top");
+
+  if (data.zone_HT_mapping?.width > 0) drawBox(data.zone_HT_mapping, "#00ffff", "HT Zone", "left");
+  // if (data.boxHTSearchArea?.width > 0) drawBox(data.boxHTSearchArea, "#ff9800", "HT Search Area", "left");
+  if (data.zone_tva_mapping?.width > 0) drawBox(data.zone_tva_mapping, "#00ffff", "TVA Zone", "left");
+  // if (data.boxTVASearchArea?.width > 0) drawBox(data.boxTVASearchArea, "#ff9800", "TVA Search Area", "left");
+
     if (data.boxHT?.width > 0) {
-      console.log('Drawing detected HT box', data.boxHT);
-      drawBox(data.boxHT, '#b91010ff', 'HT', 'left');
+      drawBox(data.boxHT, "#b91010ff", "HT", "left");
     } else if (data.ht_match?.search_area) {
-      console.log('Drawing HT search area');
-      drawBox(data.ht_match.search_area, '#b9101066', 'HT Area', 'left');
+      drawBox(data.ht_match.search_area, "#b9101066", "HT Area", "left");
     }
-    
-    // Draw detected TVA box (blue)
+
     if (data.boxTVA?.width > 0) {
-      console.log('Drawing detected TVA box', data.boxTVA);
-      drawBox(data.boxTVA, '#0b0ff5ff', 'TVA', 'left');
+      drawBox(data.boxTVA, "#0b0ff5ff", "TVA", "left");
     } else if (data.tva_match?.search_area) {
-      console.log('Drawing TVA search area');
-      drawBox(data.tva_match.search_area, '#0b0ff566', 'TVA Area', 'left');
+      drawBox(data.tva_match.search_area, "#0b0ff566", "TVA Area", "left");
     }
-    
-    // If we have values but no boxes, show a small indicator
+
     if (data.montantHT && !data.ht_match?.search_area && !(data.boxHT?.width > 0)) {
-      drawBox({
-        left: 10,
-        top: 10,
-        width: 20,
-        height: 20
-      }, '#b91010ff', 'HT', 'left');
+      drawBox({ left: 10, top: 10, width: 20, height: 20 }, "#b91010ff", "HT", "left");
     }
-    
     if (data.montantTVA && !data.tva_match?.search_area && !(data.boxTVA?.width > 0)) {
-      drawBox({
-        left: 10,
-        top: 40,
-        width: 20,
-        height: 20
-      }, '#0b0ff5ff', 'TVA', 'left');
+      drawBox({ left: 10, top: 40, width: 20, height: 20 }, "#0b0ff5ff", "TVA", "left");
     }
   }, [extractionState.extractedDataList, extractionState.currentPdfIndex, extractionState.filePreviews]);
-  
-  // Get the current file preview URL
+
+  // Ensure boxes are drawn instantly when data or image changes
+  React.useEffect(() => {
+    const img = previewImageRef.current;
+    if (img && img.complete) {
+      drawExtractionBoxes();
+    }
+  }, [extractionState.extractedDataList, extractionState.currentPdfIndex, extractionState.filePreviews]);
+
   const getCurrentFilePreview = useCallback(() => {
     if (!extractionState.filePreviews || extractionState.filePreviews.length === 0) {
       return null;
     }
     const preview = extractionState.filePreviews[extractionState.currentPdfIndex];
-    return typeof preview === 'string' ? preview : preview?.preview;
+    return typeof preview === "string" ? preview : preview?.preview;
   }, [extractionState.filePreviews, extractionState.currentPdfIndex]);
 
   const currentFilePreview = getCurrentFilePreview();
 
-  // Check if the current PDF has any missing required fields
   const hasMissingFields = (index) => {
     const data = extractionState.extractedDataList[index];
     if (!data) return false;
-    
-    const requiredFields = ['fournisseur', 'numeroFacture', 'dateFacturation', 'montantHT'];
-    return requiredFields.some(field => {
-      const value = data[field];
-      return value === undefined || value === null || value === '';
-    });
+    const requiredFields = ["fournisseur", "numeroFacture", "dateFacturation", "montantHT"];
+    return requiredFields.some((field) => !data[field]);
   };
 
-  // Handle navigation between PDFs with auto-scroll
   const handleThumbnailScroll = useCallback((index) => {
-    // Update the current PDF index
     scrollToIndex(index);
-
-    // Scroll the thumbnail into view
     setTimeout(() => {
       const container = thumbnailsContainerRef.current;
       if (container) {
-        const activeThumbnail = container.querySelector('.thumbnail.active');
+        const activeThumbnail = container.querySelector(".thumbnail.active");
         if (activeThumbnail) {
           activeThumbnail.scrollIntoView({
-            behavior: 'smooth',
-            block: 'nearest',
-            inline: 'center'
+            behavior: "smooth",
+            block: "nearest",
+            inline: "center",
           });
         }
       }
-    }, 100); // Slightly longer delay to ensure DOM is updated
+    }, 100);
   }, [scrollToIndex]);
 
   return (
@@ -411,7 +186,6 @@ const ExtractionPreview = ({
         )}
       </div>
 
-      {/* Document preview area */}
       <div className="extraction-preview-area">
         {currentFilePreview ? (
           <div className="extraction-preview-content">
@@ -422,20 +196,12 @@ const ExtractionPreview = ({
                 alt={`Document ${extractionState.currentPdfIndex + 1}`}
                 className="extraction-preview-image"
                 onLoad={drawExtractionBoxes}
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  height: 'auto'
-                }}
+                style={{ display: "block", width: "100%", height: "auto" }}
               />
               <canvas
                 ref={extractionBoxesCanvasRef}
                 className="extraction-boxes-canvas"
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  left: 0
-                }}
+                style={{ position: "absolute", top: 0, left: 0 }}
               />
             </div>
           </div>
@@ -452,26 +218,23 @@ const ExtractionPreview = ({
         )}
       </div>
 
-      {/* Preview overlay */}
       {hoveredThumbnail !== null && (
-        <div 
+        <div
           className="thumbnail-preview"
-          style={{
-            left: `${previewPosition.x}px`,
-            top: `${previewPosition.y}px`,
-          }}
+          style={{ left: `${previewPosition.x}px`, top: `${previewPosition.y}px` }}
         >
-          <img 
-            src={typeof extractionState.filePreviews[hoveredThumbnail] === 'string' 
-              ? extractionState.filePreviews[hoveredThumbnail] 
-              : extractionState.filePreviews[hoveredThumbnail]?.preview} 
-            alt={`Preview ${hoveredThumbnail + 1}`} 
+          <img
+            src={
+              typeof extractionState.filePreviews[hoveredThumbnail] === "string"
+                ? extractionState.filePreviews[hoveredThumbnail]
+                : extractionState.filePreviews[hoveredThumbnail]?.preview
+            }
+            alt={`Preview ${hoveredThumbnail + 1}`}
             className="preview-image"
           />
         </div>
       )}
 
-      {/* Navigation controls */}
       {extractionState.filePreviews && extractionState.filePreviews.length > 1 && (
         <div className="extraction-navigation">
           <button
@@ -486,51 +249,46 @@ const ExtractionPreview = ({
           >
             <ChevronLeft className="extraction-nav-icon" />
           </button>
-          <div 
-            className="extraction-thumbnails-container"
-            ref={thumbnailsContainerRef}
-          >
+
+          <div className="extraction-thumbnails-container" ref={thumbnailsContainerRef}>
             {extractionState.filePreviews.map((preview, index) => {
-              const previewSrc = typeof preview === 'string' ? preview : preview.preview;
+              const previewSrc = typeof preview === "string" ? preview : preview.preview;
               return (
                 <div
                   key={index}
-                  className={`thumbnail ${index === extractionState.currentPdfIndex ? 'active' : ''} ${hoveredIndex === index ? 'hovered' : ''}`}
+                  className={`thumbnail ${
+                    index === extractionState.currentPdfIndex ? "active" : ""
+                  } ${hoveredIndex === index ? "hovered" : ""}`}
                   onClick={() => handleThumbnailScroll(index)}
                   onMouseEnter={() => setHoveredIndex(index)}
                   onMouseLeave={() => setHoveredIndex(null)}
-                  style={{ position: 'relative' }}
+                  style={{ position: "relative" }}
                 >
-                  <div 
+                  <div
                     className="thumbnail-container"
                     onMouseEnter={() => setHoveredThumbnail(index)}
                     onMouseMove={(e) => {
-                      setPreviewPosition({
-                        x: e.clientX - 150,
-                        y: e.clientY - 600
-                      });
+                      setPreviewPosition({ x: e.clientX - 150, y: e.clientY - 600 });
                     }}
                     onMouseLeave={() => setHoveredThumbnail(null)}
                   >
-                    <img 
-                      src={previewSrc} 
-                      alt={`Thumbnail ${index + 1}`} 
-                      className="thumbnail-image"
-                    />
+                    <img src={previewSrc} alt={`Thumbnail ${index + 1}`} className="thumbnail-image" />
                     {hasMissingFields(index) && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '2px',
-                        right: '2px',
-                        backgroundColor: 'rgba(220, 38, 38, 0.9)',
-                        borderRadius: '50%',
-                        width: '16px',
-                        height: '16px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        zIndex: 10
-                      }}>
+                      <div
+                        style={{
+                          position: "absolute",
+                          top: "2px",
+                          right: "2px",
+                          backgroundColor: "rgba(220, 38, 38, 0.9)",
+                          borderRadius: "50%",
+                          width: "16px",
+                          height: "16px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          zIndex: 10,
+                        }}
+                      >
                         <AlertTriangle className="w-3 h-3 text-white" />
                       </div>
                     )}
@@ -539,6 +297,7 @@ const ExtractionPreview = ({
               );
             })}
           </div>
+
           <button
             onClick={() => {
               if (extractionState.currentPdfIndex < extractionState.filePreviews.length - 1) {
@@ -557,4 +316,4 @@ const ExtractionPreview = ({
   );
 };
 
-export default ExtractionPreview; 
+export default ExtractionPreview;

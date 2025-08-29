@@ -103,7 +103,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
             fileType: file.type,
             selectedPageIndex: pageIndex,
           }));
-          console.log("OCR Boxes reçues :", result.boxes); // DEBUG
+         
         
           showNotification(
             `Page ${pageIndex + 1} chargée avec succès (${widthToUse} × ${heightToUse} px) - ${

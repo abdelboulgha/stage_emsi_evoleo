@@ -11,7 +11,7 @@ export const useInvoiceSelection = (extractionState, setExtractionState, invoice
       const invoicesToSave = extractionState.extractedDataList
         .filter((_, index) => invoiceSelection.selectedInvoices.includes(index))
         .map((data, index) => {
-          console.log(`Processing invoice ${index + 1}:`, data); // Debug log
+          
           
           // Apply filtering to each field using the filterValue function
           const fournisseur = filterValue(data.fournisseur, "fournisseur");
@@ -56,7 +56,7 @@ export const useInvoiceSelection = (extractionState, setExtractionState, invoice
             sous_valeurs: sousValeurs
           };
 
-          console.log(`Formatted invoice ${index + 1}:`, invoice); // Debug log
+          
 
           // Validate required fields
           if (!invoice.fournisseur || invoice.fournisseur.trim() === "" || invoice.fournisseur === "Fournisseur inconnu") {
@@ -86,14 +86,14 @@ export const useInvoiceSelection = (extractionState, setExtractionState, invoice
           return invoice;
         });
 
-      console.log("All invoices to save:", invoicesToSave); // Debug log
+     
 
       // Save each invoice one by one
       const results = [];
       for (let i = 0; i < invoicesToSave.length; i++) {
         const invoice = invoicesToSave[i];
         try {
-          console.log("Sending invoice data:", invoice); // Debug log
+          
 
           const response = await fetch(`${API_BASE_URL}/ajouter-facture`, {
             method: "POST",
@@ -104,7 +104,7 @@ export const useInvoiceSelection = (extractionState, setExtractionState, invoice
             body: JSON.stringify(invoice),
           });
           
-          console.log("Response status:", response.status); // Debug log
+         
           
           if (!response.ok) {
             const errorData = await response.json();
@@ -113,7 +113,7 @@ export const useInvoiceSelection = (extractionState, setExtractionState, invoice
           }
           
           const result = await response.json();
-          console.log("Success response:", result); // Debug log
+         
           results.push({ success: result.success, message: result.message });
           
           if (result.success) {

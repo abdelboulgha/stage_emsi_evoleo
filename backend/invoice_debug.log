@@ -154,3 +154,349 @@
 2025-08-28 19:30:26,298 INFO Initializing database...
 2025-08-28 19:30:26,343 INFO Database tables created
 2025-08-28 19:30:26,396 INFO Database initialization complete
+2025-08-28 19:31:00,399 WARNING Data truncated for column 'TTC' at row 1
+2025-08-28 22:31:03,482 INFO Initializing database...
+2025-08-28 22:31:07,564 ERROR Error initializing database: (pymysql.err.OperationalError) (2003, "Can't connect to MySQL server on 'localhost' ([WinError 10061] No connection could be made because the target machine actively refused it)")
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-08-28 22:34:43,299 INFO Initializing database...
+2025-08-28 22:34:43,388 INFO Database tables created
+2025-08-28 22:34:43,701 INFO Database initialization complete
+2025-08-29 01:15:05,054 INFO Initializing database...
+2025-08-29 01:15:05,118 INFO Database tables created
+2025-08-29 01:15:05,169 INFO Database initialization complete
+2025-08-29 01:18:46,068 ERROR Erreur lors de l'upload basic: name 'process_pdf_to_images' is not defined
+2025-08-29 01:19:02,986 ERROR Erreur lors de l'upload basic: name 'process_pdf_to_images' is not defined
+2025-08-29 01:21:15,110 INFO Initializing database...
+2025-08-29 01:21:15,163 INFO Database tables created
+2025-08-29 01:21:15,213 INFO Database initialization complete
+2025-08-29 01:56:51,868 INFO Initializing database...
+2025-08-29 01:56:51,936 INFO Database tables created
+2025-08-29 01:56:51,991 INFO Database initialization complete
+2025-08-29 01:58:09,599 INFO Initializing database...
+2025-08-29 01:58:09,687 INFO Database tables created
+2025-08-29 01:58:09,747 INFO Database initialization complete
+2025-08-29 02:01:28,671 INFO Initializing database...
+2025-08-29 02:01:28,743 INFO Database tables created
+2025-08-29 02:01:28,794 INFO Database initialization complete
+2025-08-29 02:09:44,750 INFO Initializing database...
+2025-08-29 02:09:44,813 INFO Database tables created
+2025-08-29 02:09:44,863 INFO Database initialization complete
+2025-08-29 02:13:08,839 INFO Initializing database...
+2025-08-29 02:13:08,890 INFO Database tables created
+2025-08-29 02:13:08,934 INFO Database initialization complete
+2025-08-29 02:13:30,861 INFO Initializing database...
+2025-08-29 02:13:30,911 INFO Database tables created
+2025-08-29 02:13:30,958 INFO Database initialization complete
+2025-08-29 02:14:51,900 INFO Initializing database...
+2025-08-29 02:14:51,970 INFO Database tables created
+2025-08-29 02:14:52,017 INFO Database initialization complete
+2025-08-29 02:19:49,429 INFO Initializing database...
+2025-08-29 02:19:49,477 INFO Database tables created
+2025-08-29 02:19:49,524 INFO Database initialization complete
+2025-08-29 02:20:45,311 INFO Initializing database...
+2025-08-29 02:20:45,380 INFO Database tables created
+2025-08-29 02:20:45,433 INFO Database initialization complete
+2025-08-29 02:21:04,958 INFO Initializing database...
+2025-08-29 02:21:05,020 INFO Database tables created
+2025-08-29 02:21:05,068 INFO Database initialization complete
+2025-08-29 02:26:14,906 INFO Initializing database...
+2025-08-29 02:26:14,969 INFO Database tables created
+2025-08-29 02:26:15,015 INFO Database initialization complete
+2025-08-29 02:36:39,172 INFO Initializing database...
+2025-08-29 02:36:39,234 INFO Database tables created
+2025-08-29 02:36:39,284 INFO Database initialization complete
+2025-08-29 02:38:14,517 INFO Initializing database...
+2025-08-29 02:38:14,568 INFO Database tables created
+2025-08-29 02:38:14,619 INFO Database initialization complete
+2025-08-29 02:38:47,987 ERROR Error in ocr_preview: name 'parse_date_try' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1026, in ocr_preview
+    extract_value_fn=parse_date_try,
+                     ^^^^^^^^^^^^^^
+NameError: name 'parse_date_try' is not defined
+
+2025-08-29 02:39:02,022 ERROR Error in ocr_preview: name 'parse_date_try' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1026, in ocr_preview
+    extract_value_fn=parse_date_try,
+                     ^^^^^^^^^^^^^^
+NameError: name 'parse_date_try' is not defined
+
+2025-08-29 02:40:33,684 INFO Initializing database...
+2025-08-29 02:40:33,734 INFO Database tables created
+2025-08-29 02:40:33,780 INFO Database initialization complete
+2025-08-29 02:40:52,025 ERROR Error in ocr_preview: name 'numfacture_search_area' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1148, in ocr_preview
+    "boxNumFactureSearchArea": numfacture_search_area or {},
+                               ^^^^^^^^^^^^^^^^^^^^^^
+NameError: name 'numfacture_search_area' is not defined
+
+2025-08-29 02:52:59,021 INFO Initializing database...
+2025-08-29 02:52:59,070 INFO Database tables created
+2025-08-29 02:52:59,115 INFO Database initialization complete
+2025-08-29 03:01:39,072 INFO Initializing database...
+2025-08-29 03:01:39,141 INFO Database tables created
+2025-08-29 03:01:39,189 INFO Database initialization complete
+2025-08-29 03:21:44,044 INFO Initializing database...
+2025-08-29 03:21:44,131 INFO Database tables created
+2025-08-29 03:21:44,202 INFO Database initialization complete
+2025-08-29 03:22:10,615 INFO Initializing database...
+2025-08-29 03:22:10,661 INFO Database tables created
+2025-08-29 03:22:10,706 INFO Database initialization complete
+2025-08-29 03:41:21,469 INFO Initializing database...
+2025-08-29 03:41:21,515 INFO Database tables created
+2025-08-29 03:41:21,559 INFO Database initialization complete
+2025-08-29 03:43:25,837 INFO Initializing database...
+2025-08-29 03:43:25,898 INFO Database tables created
+2025-08-29 03:43:25,953 INFO Database initialization complete
+2025-08-29 03:45:10,443 INFO Initializing database...
+2025-08-29 03:45:10,490 INFO Database tables created
+2025-08-29 03:45:10,533 INFO Database initialization complete
+2025-08-29 03:46:09,281 INFO Initializing database...
+2025-08-29 03:46:09,354 INFO Database tables created
+2025-08-29 03:46:09,412 INFO Database initialization complete
+2025-08-29 03:46:42,690 INFO Initializing database...
+2025-08-29 03:46:42,743 INFO Database tables created
+2025-08-29 03:46:42,791 INFO Database initialization complete
+2025-08-29 03:48:41,392 INFO Initializing database...
+2025-08-29 03:48:41,468 INFO Database tables created
+2025-08-29 03:48:41,537 INFO Database initialization complete
+2025-08-29 03:50:47,362 INFO Initializing database...
+2025-08-29 03:50:47,422 INFO Database tables created
+2025-08-29 03:50:47,674 INFO Database initialization complete
+2025-08-29 03:51:13,644 INFO Initializing database...
+2025-08-29 03:51:13,689 INFO Database tables created
+2025-08-29 03:51:13,733 INFO Database initialization complete
+2025-08-29 03:53:06,730 INFO Initializing database...
+2025-08-29 03:53:06,776 INFO Database tables created
+2025-08-29 03:53:06,868 INFO Database initialization complete
+2025-08-29 04:03:37,537 INFO Initializing database...
+2025-08-29 04:03:37,599 INFO Database tables created
+2025-08-29 04:03:37,642 INFO Database initialization complete
+2025-08-29 04:06:49,244 INFO Initializing database...
+2025-08-29 04:06:49,296 INFO Database tables created
+2025-08-29 04:06:49,344 INFO Database initialization complete
+2025-08-29 04:11:27,868 INFO Initializing database...
+2025-08-29 04:11:27,920 INFO Database tables created
+2025-08-29 04:11:27,969 INFO Database initialization complete
+2025-08-29 04:13:40,227 INFO Initializing database...
+2025-08-29 04:13:40,272 INFO Database tables created
+2025-08-29 04:13:40,319 INFO Database initialization complete
+2025-08-29 04:28:03,068 INFO Initializing database...
+2025-08-29 04:28:03,134 INFO Database tables created
+2025-08-29 04:28:03,179 INFO Database initialization complete
+2025-08-29 04:31:07,468 INFO Initializing database...
+2025-08-29 04:31:07,524 INFO Database tables created
+2025-08-29 04:31:07,587 INFO Database initialization complete
+2025-08-29 04:31:19,206 ERROR Error in ocr_preview: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted, tva_box, tva_match = extract_field_by_mapping(
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+
+2025-08-29 04:31:21,214 ERROR Error in ocr_preview: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted, tva_box, tva_match = extract_field_by_mapping(
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+
+2025-08-29 04:32:16,928 INFO Initializing database...
+2025-08-29 04:32:16,990 INFO Database tables created
+2025-08-29 04:32:17,037 INFO Database initialization complete
+2025-08-29 04:32:28,934 ERROR Error in ocr_preview: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted, tva_box, tva_match = extract_field_by_mapping(
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+
+2025-08-29 04:32:30,864 ERROR Error in ocr_preview: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted, tva_box, tva_match = extract_field_by_mapping(
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+
+2025-08-29 04:33:09,113 ERROR Error in ocr_preview: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted, tva_box, tva_match = extract_field_by_mapping(
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+
+2025-08-29 04:33:11,154 ERROR Error in ocr_preview: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted, tva_box, tva_match = extract_field_by_mapping(
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: ocr_preview.<locals>.extract_field_by_mapping() got an unexpected keyword argument 'expand_p'
+
+2025-08-29 04:34:04,217 INFO Initializing database...
+2025-08-29 04:34:04,291 INFO Database tables created
+2025-08-29 04:34:04,340 INFO Database initialization complete
+2025-08-29 04:34:14,889 ERROR Error in ocr_preview: too many values to unpack (expected 2)
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted,  tva_match = extract_field_by_mapping(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+2025-08-29 04:34:16,877 ERROR Error in ocr_preview: too many values to unpack (expected 2)
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1087, in ocr_preview
+    tva_extracted,  tva_match = extract_field_by_mapping(
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: too many values to unpack (expected 2)
+
+2025-08-29 04:34:45,521 INFO Initializing database...
+2025-08-29 04:34:45,568 INFO Database tables created
+2025-08-29 04:34:45,613 INFO Database initialization complete
+2025-08-29 04:39:22,791 INFO Initializing database...
+2025-08-29 04:39:22,837 INFO Database tables created
+2025-08-29 04:39:22,882 INFO Database initialization complete
+2025-08-29 04:40:09,982 INFO Initializing database...
+2025-08-29 04:40:10,038 INFO Database tables created
+2025-08-29 04:40:10,088 INFO Database initialization complete
+2025-08-29 04:41:04,779 ERROR Erreur lors de l'authentification: (pymysql.err.ProgrammingError) (1146, "Table 'evoleo.utilisateurs' doesn't exist")
+[SQL: SELECT utilisateurs.id AS utilisateurs_id, utilisateurs.email AS utilisateurs_email, utilisateurs.nom AS utilisateurs_nom, utilisateurs.prenom AS utilisateurs_prenom, utilisateurs.mot_de_passe_hash AS utilisateurs_mot_de_passe_hash, utilisateurs.role AS utilisateurs_role, utilisateurs.date_creation AS utilisateurs_date_creation, utilisateurs.actif AS utilisateurs_actif 
+FROM utilisateurs 
+WHERE utilisateurs.email = %(email_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'email_1': 'admin@evoleo.com', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-08-29 04:41:37,044 INFO Initializing database...
+2025-08-29 04:41:37,292 INFO Database tables created
+2025-08-29 04:41:37,333 INFO Admin user created
+2025-08-29 04:41:37,464 INFO Default field names inserted
+2025-08-29 04:41:37,473 INFO Database initialization complete
+2025-08-29 04:50:40,162 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 05:02:49,642 INFO Initializing database...
+2025-08-29 05:02:49,689 INFO Database tables created
+2025-08-29 05:02:49,733 INFO Database initialization complete
+2025-08-29 05:14:50,072 INFO Initializing database...
+2025-08-29 05:14:50,119 INFO Database tables created
+2025-08-29 05:14:50,165 INFO Database initialization complete
+2025-08-29 05:21:19,177 INFO Initializing database...
+2025-08-29 05:21:19,228 INFO Database tables created
+2025-08-29 05:21:19,275 INFO Database initialization complete
+2025-08-29 05:23:47,828 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 05:24:25,129 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 05:24:31,436 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 05:24:31,438 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 05:25:57,682 INFO Initializing database...
+2025-08-29 05:25:57,735 INFO Database tables created
+2025-08-29 05:25:57,781 INFO Database initialization complete
+2025-08-29 05:26:43,223 INFO Initializing database...
+2025-08-29 05:26:43,274 INFO Database tables created
+2025-08-29 05:26:43,324 INFO Database initialization complete
+2025-08-29 05:29:21,884 INFO Initializing database...
+2025-08-29 05:29:21,946 INFO Database tables created
+2025-08-29 05:29:22,015 INFO Database initialization complete
+2025-08-29 05:29:44,886 INFO Initializing database...
+2025-08-29 05:29:44,936 INFO Database tables created
+2025-08-29 05:29:44,982 INFO Database initialization complete
+2025-08-29 05:33:14,343 INFO Initializing database...
+2025-08-29 05:33:14,478 INFO Database tables created
+2025-08-29 05:33:14,574 INFO Database initialization complete
+2025-08-29 05:33:39,325 INFO Initializing database...
+2025-08-29 05:33:39,392 INFO Database tables created
+2025-08-29 05:33:39,434 INFO Database initialization complete
+2025-08-29 05:39:33,658 INFO Initializing database...
+2025-08-29 05:39:33,710 INFO Database tables created
+2025-08-29 05:39:33,775 INFO Database initialization complete
+2025-08-29 05:40:07,145 INFO Initializing database...
+2025-08-29 05:40:07,205 INFO Database tables created
+2025-08-29 05:40:07,263 INFO Database initialization complete
+2025-08-29 05:58:48,807 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 05:59:35,000 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 11:41:28,952 INFO Initializing database...
+2025-08-29 11:41:29,194 INFO Database tables created
+2025-08-29 11:41:29,357 INFO Database initialization complete
+2025-08-29 11:42:07,734 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 12:18:53,860 INFO Initializing database...
+2025-08-29 12:18:53,930 INFO Database tables created
+2025-08-29 12:18:53,986 INFO Database initialization complete
+2025-08-29 12:41:50,451 INFO Initializing database...
+2025-08-29 12:41:50,497 INFO Database tables created
+2025-08-29 12:41:50,542 INFO Database initialization complete
+2025-08-29 12:45:09,375 INFO Initializing database...
+2025-08-29 12:45:09,445 INFO Database tables created
+2025-08-29 12:45:09,488 INFO Database initialization complete
+2025-08-29 12:50:29,576 INFO Initializing database...
+2025-08-29 12:50:29,635 INFO Database tables created
+2025-08-29 12:50:29,698 INFO Database initialization complete
+2025-08-29 12:52:08,270 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 12:52:55,256 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 12:55:03,303 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 12:55:12,632 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 12:56:02,732 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 12:56:47,243 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:02:51,281 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:03:03,992 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:13:07,973 INFO Initializing database...
+2025-08-29 13:13:08,031 INFO Database tables created
+2025-08-29 13:13:08,075 INFO Database initialization complete
+2025-08-29 13:15:31,061 INFO Initializing database...
+2025-08-29 13:15:31,119 INFO Database tables created
+2025-08-29 13:15:31,196 INFO Database initialization complete
+2025-08-29 13:40:24,634 INFO Initializing database...
+2025-08-29 13:40:24,704 INFO Database tables created
+2025-08-29 13:40:24,764 INFO Database initialization complete
+2025-08-29 13:47:10,418 INFO Initializing database...
+2025-08-29 13:47:10,475 INFO Database tables created
+2025-08-29 13:47:10,519 INFO Database initialization complete
+2025-08-29 13:47:44,556 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:49:35,935 INFO Initializing database...
+2025-08-29 13:49:36,106 INFO Database tables created
+2025-08-29 13:49:36,190 INFO Database initialization complete
+2025-08-29 13:50:08,990 INFO Initializing database...
+2025-08-29 13:50:09,098 INFO Database tables created
+2025-08-29 13:50:09,187 INFO Database initialization complete
+2025-08-29 13:50:36,347 INFO Initializing database...
+2025-08-29 13:50:36,405 INFO Database tables created
+2025-08-29 13:50:36,473 INFO Database initialization complete
+2025-08-29 13:51:24,515 INFO Initializing database...
+2025-08-29 13:51:24,582 INFO Database tables created
+2025-08-29 13:51:24,640 INFO Database initialization complete
+2025-08-29 13:52:04,272 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:52:06,074 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 13:53:43,361 ERROR Erreur lors de la récupération de l'utilisateur: (pymysql.err.ProgrammingError) (1146, "Table 'evoleo.utilisateurs' doesn't exist")
+[SQL: SELECT utilisateurs.id AS utilisateurs_id, utilisateurs.email AS utilisateurs_email, utilisateurs.nom AS utilisateurs_nom, utilisateurs.prenom AS utilisateurs_prenom, utilisateurs.mot_de_passe_hash AS utilisateurs_mot_de_passe_hash, utilisateurs.role AS utilisateurs_role, utilisateurs.date_creation AS utilisateurs_date_creation, utilisateurs.actif AS utilisateurs_actif 
+FROM utilisateurs 
+WHERE utilisateurs.email = %(email_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'email_1': 'admin@evoleo.com', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-08-29 13:53:44,187 ERROR Erreur lors de l'authentification: (pymysql.err.ProgrammingError) (1146, "Table 'evoleo.utilisateurs' doesn't exist")
+[SQL: SELECT utilisateurs.id AS utilisateurs_id, utilisateurs.email AS utilisateurs_email, utilisateurs.nom AS utilisateurs_nom, utilisateurs.prenom AS utilisateurs_prenom, utilisateurs.mot_de_passe_hash AS utilisateurs_mot_de_passe_hash, utilisateurs.role AS utilisateurs_role, utilisateurs.date_creation AS utilisateurs_date_creation, utilisateurs.actif AS utilisateurs_actif 
+FROM utilisateurs 
+WHERE utilisateurs.email = %(email_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'email_1': 'admin@evoleo.com', 'param_1': 1}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+2025-08-29 13:54:06,607 INFO Initializing database...
+2025-08-29 13:54:06,894 INFO Database tables created
+2025-08-29 13:54:06,934 INFO Admin user created
+2025-08-29 13:54:06,943 INFO Default field names inserted
+2025-08-29 13:54:06,950 INFO Database initialization complete
+2025-08-29 13:55:53,801 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:55:59,683 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 13:56:39,477 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:56:41,937 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 13:56:46,330 ERROR Error checking for duplicate invoices: 'FactureService' object has no attribute 'check_duplicate_invoices'
+2025-08-29 13:58:13,954 INFO Initializing database...
+2025-08-29 13:58:14,005 INFO Database tables created
+2025-08-29 13:58:14,057 INFO Database initialization complete
+2025-08-29 14:00:27,151 INFO Initializing database...
+2025-08-29 14:00:27,216 INFO Database tables created
+2025-08-29 14:00:27,267 INFO Database initialization complete
+2025-08-29 14:00:58,687 INFO Initializing database...
+2025-08-29 14:00:58,740 INFO Database tables created
+2025-08-29 14:00:58,788 INFO Database initialization complete
+2025-08-29 14:08:01,138 WARNING Data truncated for column 'TTC' at row 1
+2025-08-29 14:14:13,229 INFO Initializing database...
+2025-08-29 14:14:13,282 INFO Database tables created
+2025-08-29 14:14:13,330 INFO Database initialization complete

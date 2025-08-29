@@ -150,26 +150,24 @@ class FactureRepository(BaseRepository):
         Returns:
             The created Facture instance
         """
-        print(f"=== DEBUG FactureRepository.create ===")
-        print(f"Creating facture with data: {facture_data}")
+       
         
         facture = Facture(**facture_data)
-        print(f"Created Facture object: {facture}")
+      
         
         self.session.add(facture)
-        print("Added facture to session")
+       
         
         if commit:
             await self.session.commit()
-            print("Committed to database")
+           
             
             await self.session.refresh(facture)
-            print(f"Refreshed facture: {facture}")
-            print(f"Facture ID after refresh: {facture.id}")
+          
         else:
             # Flush to get the ID without committing
             await self.session.flush()
-            print(f"Flushed facture, ID: {facture.id}")
+           
         
         return facture
     
@@ -253,7 +251,7 @@ class FactureRepository(BaseRepository):
                 conditions.append(Facture.dateFacturation == date_facturation_filter)
                 
             if date_ajout_filter is not None:
-                conditions.append(func.date(Facture.date_creation) == date_ajout_filter)
+                conditions.append(func.date(Facture.created_at) == date_ajout_filter)
             
             # Add text search conditions if search term is not empty after removing date filters
             if search_terms:
@@ -310,7 +308,7 @@ class FactureRepository(BaseRepository):
                 count_conditions.append(Facture.dateFacturation == date_facturation_filter)
                 
             if date_ajout_filter is not None:
-                count_conditions.append(func.date(Facture.date_creation) == date_ajout_filter)
+                count_conditions.append(func.date(Facture.created_at) == date_ajout_filter)
             
             # Add text search conditions if search term is not empty after removing date filters
             if search_terms:

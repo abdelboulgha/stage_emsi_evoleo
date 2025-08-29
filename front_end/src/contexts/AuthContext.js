@@ -28,10 +28,10 @@ export const AuthProvider = ({ children }) => {
         if (response.ok) {
           const userData = await response.json();
           setUser(userData);
-          console.log("Utilisateur connecté:", userData.email);
+        
         } else {
           // Pas d'authentification valide
-          console.log("Aucune authentification valide trouvée");
+        
           setUser(null);
         }
       } catch (error) {

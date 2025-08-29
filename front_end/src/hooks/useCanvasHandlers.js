@@ -27,7 +27,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
   const handleCanvasMouseDown = useCallback(
     (event, canvasRef) => {
-      console.log('Mouse down event', { event, manualDrawState, dataPrepState });
+ 
       
       if (!canvasRef.current) {
         console.log('No canvas ref');
@@ -60,7 +60,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
       // Mode dessin manuel
       if (manualDrawState.isDrawing || dataPrepState.isDrawing) {
-        console.log('Starting manual draw at:', { x, y, manualDrawState, dataPrepState });
+        
         setManualDrawState({
           isDrawing: true,
           fieldKey: dataPrepState.selectedField || dataPrepState.drawingField,
@@ -72,9 +72,9 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
       // Mode sélection OCR
       if (dataPrepState.isSelecting && dataPrepState.selectedField) {
-        console.log("Coordonnées du clic (image OCR) :", x, y); // DEBUG
+      
         if (dataPrepState.ocrBoxes && dataPrepState.ocrBoxes.length > 0) {
-          console.log("Première boîte OCR :", dataPrepState.ocrBoxes[0]); // DEBUG
+          
         }
         const clickedBox = findClickedBox(x, y);
         if (clickedBox) {
@@ -136,18 +136,33 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
   const handleCanvasMouseMove = useCallback(
     (event, canvasRef) => {
       if ((manualDrawState.isDrawing || dataPrepState.isDrawing) && (manualDrawState.start || dataPrepState.drawingStart)) {
-        console.log('Mouse move in drawing mode');
         const rect = canvasRef.current.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / dataPrepState.currentZoom;
-        const y = (event.clientY - rect.top) / dataPrepState.currentZoom;
+        const xAffiche = (event.clientX - rect.left);
+        const yAffiche = (event.clientY - rect.top);
+
+        // Logical canvas size
+        const canvasWidth = canvasRef.current.width;
+        const canvasHeight = canvasRef.current.height;
+        // Display size
+        const displayWidth = rect.width;
+        const displayHeight = rect.height;
+        // Image size
+        const imageWidth = dataPrepState.imageDimensions?.width || canvasWidth;
+        const imageHeight = dataPrepState.imageDimensions?.height || canvasHeight;
+
+        // Convert to logical canvas space
+        const xCanvas = xAffiche * (canvasWidth / displayWidth);
+        const yCanvas = yAffiche * (canvasHeight / displayHeight);
+        // Convert to image space
+        const x = xCanvas * (imageWidth / canvasWidth);
+        const y = yCanvas * (imageHeight / canvasHeight);
+
         const start = manualDrawState.start || dataPrepState.drawingStart;
         const left = Math.min(start.x, x);
         const top = Math.min(start.y, y);
         const width = Math.abs(x - start.x);
         const height = Math.abs(y - start.y);
-        
-        console.log('Updating drawing rect:', { left, top, width, height });
-        
+
         setManualDrawState(prev => ({
           ...prev,
           isDrawing: true,
@@ -162,7 +177,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
   const handleCanvasMouseUp = useCallback(
     (event) => {
-      console.log('Mouse up event', { manualDrawState, dataPrepState });
+     
       const MIN_WIDTH = 30;
       const MIN_HEIGHT = 15;
       
@@ -171,7 +186,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
         (manualDrawState.start || dataPrepState.drawingStart) &&
         (manualDrawState.rect || dataPrepState.drawingRect)
       ) {
-        console.log('Finalizing drawing', { manualDrawState, dataPrepState });
+       
         const fieldKey = manualDrawState.fieldKey;
         const rect = manualDrawState.rect;
         // Vérifie la taille minimale
@@ -196,12 +211,21 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
             [fieldKey]: { coords: { ...rect }, manual: true },
           },
         }));
+        
         setManualDrawState({
           isDrawing: false,
           fieldKey: null,
           start: null,
           rect: null,
         });
+        
+        setDataPrepState((prev) => ({
+          ...prev,
+          drawingField: null,
+          isDrawing: false,
+          drawingStart: null,
+          drawingRect: null,
+        }));
         showNotification(`Zone enregistrée pour ${fieldKey}`, "success");
       }
     },
@@ -210,10 +234,11 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
 
   const drawOcrBox = useCallback(
     (ctx, box, isSelected, isSelecting) => {
-      const x = box.coords.left * dataPrepState.currentZoom;
-      const y = box.coords.top * dataPrepState.currentZoom;
-      const width = box.coords.width * dataPrepState.currentZoom;
-      const height = box.coords.height * dataPrepState.currentZoom;
+  const zoom = dataPrepState.currentZoom || 1;
+  const x = box.coords.left * zoom;
+  const y = box.coords.top * zoom;
+  const width = box.coords.width * zoom;
+  const height = box.coords.height * zoom;
 
       let color, fillColor;
       if (isSelected) {
@@ -239,7 +264,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
   );
 
   const redrawCanvas = useCallback((canvasRef, imageRef) => {
-    console.log('Redrawing canvas', { manualDrawState, dataPrepState });
+   
     const canvas = canvasRef.current;
     if (!canvas || !dataPrepState.uploadedImage) {
       console.log('Canvas or image not ready');
@@ -248,12 +273,12 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     if (imageRef.current && imageRef.current.complete) {
-      const scaledWidth = dataPrepState.imageDimensions.width * dataPrepState.currentZoom;
-      const scaledHeight = dataPrepState.imageDimensions.height * dataPrepState.currentZoom;
-      
-      canvas.width = scaledWidth;
-      canvas.height = scaledHeight;
-      ctx.drawImage(imageRef.current, 0, 0, scaledWidth, scaledHeight);
+  const zoom = dataPrepState.currentZoom || 1;
+  const scaledWidth = dataPrepState.imageDimensions.width * zoom;
+  const scaledHeight = dataPrepState.imageDimensions.height * zoom;
+  canvas.width = scaledWidth;
+  canvas.height = scaledHeight;
+  ctx.drawImage(imageRef.current, 0, 0, scaledWidth, scaledHeight);
       
       // Draw saved manual rectangles first (behind everything)
       Object.entries(dataPrepState.fieldMappings).forEach(
@@ -263,20 +288,20 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
             // Fill with semi-transparent color
             ctx.fillStyle = 'rgba(251, 191, 36, 0.2)';
             ctx.fillRect(
-              coords.left * dataPrepState.currentZoom,
-              coords.top * dataPrepState.currentZoom,
-              coords.width * dataPrepState.currentZoom,
-              coords.height * dataPrepState.currentZoom
+              coords.left * zoom,
+              coords.top * zoom,
+              coords.width * zoom,
+              coords.height * zoom
             );
             // Draw border
             ctx.strokeStyle = "#fbbf24";
             ctx.lineWidth = 2;
             ctx.setLineDash([2, 2]);
             ctx.strokeRect(
-              coords.left * dataPrepState.currentZoom,
-              coords.top * dataPrepState.currentZoom,
-              coords.width * dataPrepState.currentZoom,
-              coords.height * dataPrepState.currentZoom
+              coords.left * zoom,
+              coords.top * zoom,
+              coords.width * zoom,
+              coords.height * zoom
             );
             
             // Add field name label

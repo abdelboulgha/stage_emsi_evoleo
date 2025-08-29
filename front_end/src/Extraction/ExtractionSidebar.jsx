@@ -90,27 +90,27 @@ const ExtractionSidebar = ({
 
   // Update zone data when extraction result changes
   useEffect(() => {
-    console.log('Extraction result changed:', extractionState.extractionResult);
+  // console.log('Extraction result changed:', extractionState.extractionResult);
     if (extractionState.extractionResult) {
       const zoneData = extractionState.extractionResult.zone_results || {};
       const zone_ht_boxes = extractionState.extractionResult.zone_ht_boxes || zoneData.zone_ht_boxes || [];
       const zone_tva_boxes = extractionState.extractionResult.zone_tva_boxes || zoneData.zone_tva_boxes || [];
 
-      console.log('Processing zone data - HT:', zone_ht_boxes, 'TVA:', zone_tva_boxes);
+  // console.log('Processing zone data - HT:', zone_ht_boxes, 'TVA:', zone_tva_boxes);
 
       setExtractionState(prev => {
         const newExtractedDataList = [...prev.extractedDataList];
         const currentIndex = prev.currentPdfIndex;
         
         if (!newExtractedDataList[currentIndex]) {
-          console.log('No data for current index:', currentIndex);
+          // console.log('No data for current index:', currentIndex);
           return prev;
         }
         
         const cleanedHtBoxes = cleanZoneData(zone_ht_boxes);
         const cleanedTvaBoxes = cleanZoneData(zone_tva_boxes);
         
-        console.log('Cleaned zone data - HT:', cleanedHtBoxes, 'TVA:', cleanedTvaBoxes);
+  // console.log('Cleaned zone data - HT:', cleanedHtBoxes, 'TVA:', cleanedTvaBoxes);
         
         newExtractedDataList[currentIndex] = {
           ...newExtractedDataList[currentIndex],
@@ -122,7 +122,7 @@ const ExtractionSidebar = ({
           selectedZoneTtc: newExtractedDataList[currentIndex]?.selectedZoneTtc || ''
         };
 
-        console.log('Updated data for index', currentIndex, ':', newExtractedDataList[currentIndex]);
+  // console.log('Updated data for index', currentIndex, ':', newExtractedDataList[currentIndex]);
 
         return {
           ...prev,
@@ -134,20 +134,20 @@ const ExtractionSidebar = ({
   
   // Log current state for debugging
   useEffect(() => {
-    console.log('Current zone state:', {
-      currentPdfIndex: extractionState.currentPdfIndex,
-      extractedDataList: extractionState.extractedDataList.map((item, idx) => ({
-        index: idx,
-        hasHtBoxes: item.zoneHtBoxes?.length > 0,
-        hasTvaBoxes: item.zoneTvaBoxes?.length > 0,
-        hasTtcBoxes: zoneTtcOptions?.length > 0,
-        selectedHt: item.selectedZoneHt,
-        selectedTva: item.selectedZoneTva,
-        selectedTtc: item.selectedZoneTtc
-      })),
-      extractionResult: extractionState.extractionResult ? 'Has extraction result' : 'No extraction result',
-      ttcOptions: zoneTtcOptions
-    });
+  // console.log('Current zone state:', {
+  //   currentPdfIndex: extractionState.currentPdfIndex,
+  //   extractedDataList: extractionState.extractedDataList.map((item, idx) => ({
+  //     index: idx,
+  //     hasHtBoxes: item.zoneHtBoxes?.length > 0,
+  //     hasTvaBoxes: item.zoneTvaBoxes?.length > 0,
+  //     hasTtcBoxes: zoneTtcOptions?.length > 0,
+  //     selectedHt: item.selectedZoneHt,
+  //     selectedTva: item.selectedZoneTva,
+  //     selectedTtc: item.selectedZoneTtc
+  //   })),
+  //   extractionResult: extractionState.extractionResult ? 'Has extraction result' : 'No extraction result',
+  //   ttcOptions: zoneTtcOptions
+  // });
   }, [extractionState.currentPdfIndex, extractionState.extractedDataList, extractionState.extractionResult, zoneTtcOptions]);
 
   return (
@@ -222,7 +222,7 @@ const ExtractionSidebar = ({
           })}
           
           {/* Zone HT Dropdown - For viewing detected values only */}
-          {console.log('Rendering HT dropdown with options:', zoneHtOptions)}
+          {/* console.log('Rendering HT dropdown with options:', zoneHtOptions) */}
           {zoneHtOptions && zoneHtOptions.length > 0 && (
             <div className="extraction-field-item">
               <label className="extraction-field-label">Zone HT (Valeurs détectées)</label>
@@ -266,7 +266,7 @@ const ExtractionSidebar = ({
           )}
           
           {/* Zone TVA Dropdown - For viewing detected values only */}
-          {console.log('Rendering TVA dropdown with options:', zoneTvaOptions)}
+          {/* console.log('Rendering TVA dropdown with options:', zoneTvaOptions) */}
           {zoneTvaOptions && zoneTvaOptions.length > 0 && (
             <div className="extraction-field-item">
               <label className="extraction-field-label">Zone TVA (Valeurs détectées)</label>

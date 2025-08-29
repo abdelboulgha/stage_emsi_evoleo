@@ -188,7 +188,7 @@ const ParametrageCanvas = ({
                 <canvas
                   ref={canvasRef}
                   onMouseDown={(e) => {
-                    console.log('Canvas mouse down', { manualDrawState, dataPrepState });
+                   
                     handleCanvasMouseDown(e, canvasRef);
                   }}
                   onMouseMove={(e) => {
@@ -197,7 +197,7 @@ const ParametrageCanvas = ({
                     }
                   }}
                   onMouseUp={() => {
-                    console.log('Canvas mouse up', { manualDrawState, dataPrepState });
+                   
                     handleCanvasMouseUp();
                   }}
                   onMouseLeave={handleMouseLeave}
@@ -212,7 +212,7 @@ const ParametrageCanvas = ({
                   alt="Document"
                   style={{ display: "none" }}
                   onLoad={() => {
-                    console.log('Image loaded, redrawing canvas');
+                    
                     if (imageRef.current && canvasRef.current) {
                       const canvas = canvasRef.current;
                       const img = imageRef.current;

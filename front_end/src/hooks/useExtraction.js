@@ -45,7 +45,7 @@ const checkForDuplicates = async (invoices, showNotification) => {
       return { numFacture, fournisseur };
     });
 
-    console.log("[DEBUG] Checking for duplicates with filtered data:", filteredInvoices);
+ 
 
     const response = await fetch(`${API_BASE_URL}/check-duplicate-invoices`, {
       method: "POST",
@@ -62,7 +62,7 @@ const checkForDuplicates = async (invoices, showNotification) => {
     }
     
     const { duplicates } = await response.json();
-    console.log("[DEBUG] Duplicate indices:", duplicates);
+    
     return new Set(duplicates);
   } catch (error) {
     console.error("Error checking for duplicates:", error);
@@ -305,10 +305,10 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
         body: formData,
       });
       const result = await response.json();
-      console.log('OCR Preview API Response:', result);
+      
       
       // Log zone results for debugging
-      console.log('Zone results from API:', result.zone_results);
+    
       
       // First, update the data with the extracted information
       let data = result.data || {};
@@ -322,8 +322,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       const zoneHtBoxes = result.zone_ht_boxes || zoneData.zone_ht_boxes || [];
       const zoneTvaBoxes = result.zone_tva_boxes || zoneData.zone_tva_boxes || [];
       
-      console.log('Zone HT boxes:', zoneHtBoxes);
-      console.log('Zone TVA boxes:', zoneTvaBoxes);
+     
       
       // Only update the box coordinates if they don't exist yet
       if (zoneHtBoxes.length > 0 && !data.boxHT) {

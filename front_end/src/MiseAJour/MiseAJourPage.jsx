@@ -1,8 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
-import { registerLocale } from "react-datepicker";
+import { registerLocale,DatePicker } from "react-datepicker";
 import fr from 'date-fns/locale/fr';
-import { Edit2, Trash2, Search, X, ChevronUp, ChevronDown, Calendar } from "lucide-react";
-import DatePicker from "react-datepicker";
+import { Edit2, Trash2, Search, X, ChevronUp, ChevronDown, Calendar,ChevronRight } from "lucide-react";
 import "react-datepicker/dist/react-datepicker.css";
 import "./MiseAJourPage.css";
 
@@ -37,10 +36,15 @@ const FIELDS = [
   { key: "montantHT", label: "Montant HT" },
   { key: "montantTVA", label: "Montant TVA" },
   { key: "montantTTC", label: "Montant TTC" },
-  { key: "date_creation", label: "Date D'ajout" },
+  { key: "created_at", label: "Date D'ajout" },
 ];
 
 const MiseAJourPage = () => {
+  // Sous valeurs state (array of objects)
+  const [sousValeurs, setSousValeurs] = useState([]);
+  const [showSousHT, setShowSousHT] = useState(false);
+  const [showSousTVA, setShowSousTVA] = useState(false);
+  const [showSousTTC, setShowSousTTC] = useState(false);
   const [factures, setFactures] = useState([]);
   const [search, setSearch] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -49,6 +53,8 @@ const MiseAJourPage = () => {
   const [page, setPage] = useState(1);
   const [editing, setEditing] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [searchTimeout, setSearchTimeout] = useState(null);
@@ -162,7 +168,7 @@ const MiseAJourPage = () => {
       let bValue = b[sortConfig.key];
 
       // Handle date fields
-      if (sortConfig.key === 'dateFacturation' || sortConfig.key === 'date_creation') {
+      if (sortConfig.key === 'dateFacturation' || sortConfig.key === 'created_at') {
         aValue = new Date(aValue);
         bValue = new Date(bValue);
       }
@@ -199,22 +205,43 @@ const MiseAJourPage = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Êtes-vous sûr de vouloir supprimer cette facture ?")) {
-      try {
-        await fetch(`http://localhost:8000/factures/${id}`, { 
-          method: "DELETE",
-          credentials: 'include', // Ajout des cookies
-        });
-        fetchFactures();
-      } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
-      }
+    try {
+      await fetch(`http://localhost:8000/factures/${id}`, { 
+        method: "DELETE",
+        credentials: 'include', // Ajout des cookies
+      });
+      fetchFactures();
+    } catch (error) {
+      // Optionally show error in modal
     }
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
   };
 
+  const openDeleteModal = (facture) => {
+    setDeleteTarget(facture);
+    setDeleteModalOpen(true);
+  };
+
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false);
+    setDeleteTarget(null);
+  };
   const openEditModal = (facture) => {
     setEditing({ ...facture });
     setIsModalOpen(true);
+    // Fetch sous_valeurs for this facture
+    fetch(`http://localhost:8000/sous_valeurs?facture_id=${facture.id}`, { credentials: 'include' })
+      .then(res => res.ok ? res.json() : Promise.resolve({ sous_valeurs: [] }))
+      .then(data => {
+        setSousValeurs((data.sous_valeurs || []).map(val => ({
+          id: val.id,
+          HT: val.HT,
+          TVA: val.TVA,
+          TTC: val.TTC
+        })));
+        setShowSousHT(false);
+      });
   };
 
   const closeModal = () => {
@@ -242,12 +269,20 @@ const MiseAJourPage = () => {
     if (!editing) return;
 
     try {
+      // Build sous_valeurs array for backend
+      const sousValeursArray = sousValeurs.map(val => ({
+        id: val.id,
+        HT: parseFloat(val.HT) || 0,
+        TVA: parseFloat(val.TVA) || 0,
+        TTC: parseFloat(val.TTC) || 0
+      }));
       const body = convertNumericFields({
         ...editing,
         // Format dateFacturation back to YYYY-MM-DD for the backend
-        dateFacturation: editing.dateFacturation ? new Date(editing.dateFacturation).toISOString().split('T')[0] : ''
+        dateFacturation: editing.dateFacturation ? new Date(editing.dateFacturation).toISOString().split('T')[0] : '',
+        sous_valeurs: sousValeursArray
       });
-
+  // console.log('[DEBUG] PUT /factures payload:', body);
       const response = await fetch(`http://localhost:8000/factures/${editing.id}`, {
         method: "PUT",
         headers: { 
@@ -256,12 +291,11 @@ const MiseAJourPage = () => {
         credentials: 'include', // Ajout des cookies
         body: JSON.stringify(body),
       });
-
+      const respJson = await response.json();
+  // console.log('[DEBUG] PUT /factures response:', respJson);
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to update facture");
+        throw new Error(respJson.detail || "Failed to update facture");
       }
-
       closeModal();
     } catch (error) {
       console.error("Error updating facture:", error);
@@ -295,12 +329,10 @@ const MiseAJourPage = () => {
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);
-                  setPage(1);
                 }}
                 className="miseajour-search-input"
               />
             </div>
-            
             <div className="miseajour-datepicker-container">
               <Calendar className="miseajour-datepicker-icon" size={18} />
               <DatePicker
@@ -392,7 +424,7 @@ const MiseAJourPage = () => {
                       {FIELDS.map((f) => (
                         <td key={f.key} className="miseajour-table-cell">
                           <div className="miseajour-cell-content">
-                            {f.key === 'date_creation' 
+                            {f.key === 'created_at' 
                               ? formatDateTime(facture[f.key])
                               : f.key === 'dateFacturation'
                                 ? formatDateOnly(facture[f.key])
@@ -419,7 +451,7 @@ const MiseAJourPage = () => {
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(facture.id);
+                              openDeleteModal(facture);
                             }} 
                             className="miseajour-action-button delete"
                             title="Supprimer"
@@ -468,7 +500,7 @@ const MiseAJourPage = () => {
                 <X className="miseajour-modal-close-icon" />
               </button>
             </div>
-            
+          
             <form onSubmit={handleSubmit} className="miseajour-modal-form">
               <div className="miseajour-modal-fields">
                 {FIELDS.map((f) => (
@@ -476,8 +508,7 @@ const MiseAJourPage = () => {
                     <label className="miseajour-modal-label">
                       {f.label}
                     </label>
-                    
-                    {f.key === 'date_creation' ? (
+                    {f.key === 'created_at' ? (
                       <div className="miseajour-modal-readonly">
                         {formatDateTime(editing[f.key])}
                       </div>
@@ -502,8 +533,96 @@ const MiseAJourPage = () => {
                     )}
                   </div>
                 ))}
+                {/* Sous HT toggleable list */}
+                <div className="miseajour-modal-field">
+                  <div className="miseajour-modal-label-row">
+                    <label className="miseajour-modal-label">Sous HT</label>
+                    <button type="button" className="miseajour-modal-toggle" onClick={() => setShowSousHT(v => !v)}>
+                      {showSousHT ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                  </div>
+                  {showSousHT && (
+                    <ul className="miseajour-modal-list">
+                      {sousValeurs.length === 0 ? (
+                        <li className="miseajour-modal-list-empty">Aucune valeur</li>
+                      ) : sousValeurs.map((valObj, idx) => (
+                        <li key={valObj.id ?? idx} className="miseajour-modal-list-item">
+                          <input
+                            type="number"
+                            value={valObj.HT}
+                            onChange={e => {
+                              const newVal = e.target.value;
+                              setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, HT: newVal } : v));
+                            }}
+                            className="miseajour-modal-input sousvaleurs-input"
+                            placeholder="HT"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Sous TVA toggleable list */}
+                <div className="miseajour-modal-field">
+                  <div className="miseajour-modal-label-row">
+                    <label className="miseajour-modal-label">Sous TVA</label>
+                    <button type="button" className="miseajour-modal-toggle" onClick={() => setShowSousTVA(v => !v)}>
+                      {showSousTVA ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                  </div>
+                  {showSousTVA && (
+                    <ul className="miseajour-modal-list">
+                      {sousValeurs.length === 0 ? (
+                        <li className="miseajour-modal-list-empty">Aucune valeur</li>
+                      ) : sousValeurs.map((valObj, idx) => (
+                        <li key={valObj.id ?? idx} className="miseajour-modal-list-item">
+                          <input
+                            type="number"
+                            value={valObj.TVA}
+                            onChange={e => {
+                              const newVal = e.target.value;
+                              setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, TVA: newVal } : v));
+                            }}
+                            className="miseajour-modal-input sousvaleurs-input"
+                            placeholder="TVA"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {/* Sous TTC toggleable list */}
+                <div className="miseajour-modal-field">
+                  <div className="miseajour-modal-label-row">
+                    <label className="miseajour-modal-label">Sous TTC</label>
+                    <button type="button" className="miseajour-modal-toggle" onClick={() => setShowSousTTC(v => !v)}>
+                      {showSousTTC ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                    </button>
+                  </div>
+                  {showSousTTC && (
+                    <ul className="miseajour-modal-list">
+                      {sousValeurs.length === 0 ? (
+                        <li className="miseajour-modal-list-empty">Aucune valeur</li>
+                      ) : sousValeurs.map((valObj, idx) => (
+                        <li key={valObj.id ?? idx} className="miseajour-modal-list-item">
+                          <input
+                            type="number"
+                            value={valObj.TTC}
+                            onChange={e => {
+                              const newVal = e.target.value;
+                              setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, TTC: newVal } : v));
+                            }}
+                            className="miseajour-modal-input sousvaleurs-input"
+                            placeholder="TTC"
+                          />
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
-              
               <div className="miseajour-modal-actions">
                 <button
                   type="button"
@@ -523,8 +642,52 @@ const MiseAJourPage = () => {
           </div>
         </div>
       )}
+
+      {/* Delete Modal */}
+      {deleteModalOpen && deleteTarget && (
+        <div className="miseajour-modal-overlay">
+          <div className="miseajour-modal">
+            <div className="miseajour-modal-header">
+              <h3 className="miseajour-modal-title">Confirmer la suppression</h3>
+              <button 
+                onClick={closeDeleteModal}
+                className="miseajour-modal-close"
+              >
+                <X className="miseajour-modal-close-icon" />
+              </button>
+            </div>
+            <div className="miseajour-modal-fields">
+              <div className="miseajour-modal-field">
+                <label className="miseajour-modal-label">Fournisseur</label>
+                <div className="miseajour-modal-readonly">{deleteTarget.fournisseur}</div>
+              </div>
+              <div className="miseajour-modal-field">
+                <label className="miseajour-modal-label">Numéro de facture</label>
+                <div className="miseajour-modal-readonly">{deleteTarget.numFacture}</div>
+              </div>
+              
+            </div>
+            <div className="miseajour-modal-actions">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                className="miseajour-modal-button cancel"
+              >
+                Annuler
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDelete(deleteTarget.id)}
+                className="miseajour-modal-button submit"
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
-};
+  }
 
-export default MiseAJourPage;
+  export default MiseAJourPage;

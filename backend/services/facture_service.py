@@ -30,10 +30,7 @@ class FactureService:
             Dictionary with success status and created invoice data
         """
         try:
-            print(f"=== DEBUG create_facture ===")
-            print(f"Input data: {facture_data}")
-            print(f"Current user ID: {current_user_id}")
-            
+          
             # Extract sous_valeurs if present
             sous_valeurs = facture_data.pop('sous_valeurs', [])
             
@@ -45,7 +42,7 @@ class FactureService:
                 from datetime import datetime
                 try:
                     facture_data['dateFacturation'] = datetime.fromisoformat(facture_data['dateFacturation'])
-                    print(f"Converted date: {facture_data['dateFacturation']}")
+                  
                 except (ValueError, TypeError) as e:
                     print(f"Error converting date: {e}")
                     return {
@@ -53,20 +50,19 @@ class FactureService:
                         "message": "Invalid date format for dateFacturation"
                     }
             
-            print(f"Final data to save: {facture_data}")
+           
             
             try:
                 # Create the main facture without committing
                 facture = await self.facture_repo.create(facture_data, commit=False)
-                print(f"Created facture: {facture}")
-                print(f"Facture ID: {facture.id}")
+              
                 
                 # Add sous_valeurs if any
                 if sous_valeurs:
-                    print(f"Processing {len(sous_valeurs)} sous_valeurs")
+                  
                     from database.models import SousValeurs
                     for i, sv_data in enumerate(sous_valeurs, 1):
-                        print(f"  Sous_valeur {i}: {sv_data}")
+                      
                         try:
                             # Ensure all required fields are present and have the correct type
                             sv_data = {
@@ -75,10 +71,10 @@ class FactureService:
                                 'TTC': float(sv_data.get('TTC', 0)),
                                 'facture_id': facture.id
                             }
-                            print(f"  Processed sous_valeur: {sv_data}")
+                          
                             sv = SousValeurs(**sv_data)
                             self.session.add(sv)
-                            print(f"  Added sous_valeur to session")
+                          
                         except Exception as e:
                             print(f"  Error processing sous_valeur: {e}")
                             continue
@@ -103,7 +99,7 @@ class FactureService:
                     "success": True,
                     "facture": facture_with_relations.to_dict(include_sous_valeurs=True)
                 }
-                print(f"Returning result: {result}")
+               
                 return result
                 
             except Exception as e:
@@ -210,91 +206,53 @@ class FactureService:
     async def delete_facture(self, facture_id: int, current_user_id: int) -> Dict[str, Any]:
         """
         Delete an invoice
-        
-        Args:
-            facture_id: ID of the invoice to delete
-            current_user_id: User ID who is deleting the invoice
-            
-        Returns:
-            Dict containing the result of the deletion
         """
         try:
             success = await self.facture_repo.delete(facture_id, current_user_id)
-            
-            if success:
-                return {
-                    "success": True,
-                    "message": "Invoice deleted successfully"
-                }
-            else:
-                return {
-                    "success": False,
-                    "message": "Invoice not found or you don't have permission to delete it"
-                }
-                
+            return {"success": success}
         except Exception as e:
-            return {
-                "success": False,
-                "message": f"Error deleting invoice: {str(e)}"
-            }
-    
-    async def check_duplicate_invoices(self, invoices_data: List[Dict[str, Any]], user_id: int) -> List[int]:
+            await self.session.rollback()
+            return {"success": False, "message": f"Error deleting invoice: {str(e)}"}
+
+    async def check_duplicate_invoices(self, invoices_data: List[dict], user_id: int) -> List[int]:
         """
-        Check if invoices already exist in the database.
-        This expects the invoice numbers to be already cleaned/filtered from the frontend.
-        
+        Check for duplicate invoices for a user.
         Args:
-            invoices_data: List of invoice data dictionaries with cleaned values
-            user_id: ID of the current user
-            
+            invoices_data: List of dicts with invoice info (numFacture/numeroFacture, fournisseur)
+            user_id: User ID to check against
         Returns:
-            List of indices of duplicate invoices
+            List of indices in invoices_data that are duplicates
         """
         try:
-            if not invoices_data:
-                return []
-                
             # Extract invoice numbers and suppliers (already cleaned by frontend)
             invoice_identifiers = []
             for i, inv in enumerate(invoices_data):
-                # Use the cleaned values directly
                 num_facture = str(inv.get('numeroFacture') or inv.get('numFacture') or '').strip()
                 fournisseur = str(inv.get('fournisseur') or '').strip()
-                
                 if num_facture and fournisseur:
                     invoice_identifiers.append((i, num_facture, fournisseur))
-            
             if not invoice_identifiers:
                 return []
-            
             # Get all existing invoices for this user to check against
             stmt = (
                 select(Facture.numFacture, Facture.fournisseur)
                 .where(Facture.created_by == user_id)
             )
-            
             result = await self.session.execute(stmt)
             existing_invoices = result.all()
-            
             # Create a set of (numFacture, fournisseur) tuples for quick lookup
             existing_set = {
-                (str(row.numFacture).strip().lower(), 
-                 str(row.fournisseur).strip().lower())
+                (str(row.numFacture).strip().lower(), str(row.fournisseur).strip().lower())
                 for row in existing_invoices
             }
-            
             # Find which of our input invoices already exist
             duplicate_indices = []
             for idx, num, four in invoice_identifiers:
-                # Compare case-insensitive and stripped
                 norm_num = str(num).strip().lower()
                 norm_four = str(four).strip().lower()
-                
                 if (norm_num, norm_four) in existing_set:
                     duplicate_indices.append(idx)
-            
             return duplicate_indices
-            
         except Exception as e:
             import traceback
             print(f"[ERROR] Error checking for duplicate invoices: {e}")

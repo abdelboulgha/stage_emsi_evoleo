@@ -1,35 +1,36 @@
+from database.models import SousValeurs
+from sqlalchemy.future import select
+# Endpoint to fetch sous_valeurs for a given facture_id
+from fastapi import Query
 # Standard library imports
+import base64
 import json
 import logging
 import os
 import re
-from datetime import date, datetime
-from io import BytesIO
-from typing import Any, Dict, List, Optional, Union
-import math
-import dateparser
 import time
+from datetime import datetime
+from io import BytesIO
+from typing import Any, Dict, List, Optional
+import math
 
 # Third-party imports
-import base64
 import dbf
 import numpy as np
 import pymupdf as fitz
-from fastapi import (
-    Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
-)
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse, Response
-from paddleocr import PaddleOCR
-from PIL import Image,  ImageOps
-from pydantic import BaseModel
 from dotenv import load_dotenv
+from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from paddleocr import PaddleOCR
+from PIL import Image, ImageOps
+from pydantic import BaseModel
 
 # Database and ORM imports
-from database.config import get_async_db, init_database, AsyncSessionLocal
+from database.config import get_async_db, AsyncSessionLocal
+from database.init_db import init_database
 from services.template_service import TemplateService
 from services.facture_service import FactureService
-from database.init_db import init_database
 
 # Authentication modules
 from auth.auth_routes import router as auth_router
@@ -119,6 +120,14 @@ class SaveMappingRequest(BaseModel):
     field_map: Dict[str, Any]  # Can be FieldCoordinates or ManualInputField
 
 
+
+class SousValeurCreate(BaseModel):
+    """Model for creating sous_valeur data"""
+    id: int | None = None  # Optional for update
+    HT: float
+    TVA: float
+    TTC: float
+
 class InvoiceUpdate(BaseModel):
     """Model for updating invoice data"""
     fournisseur: Optional[str] = None
@@ -128,13 +137,7 @@ class InvoiceUpdate(BaseModel):
     montantHT: Optional[float] = None
     montantTVA: Optional[float] = None
     montantTTC: Optional[float] = None
-
-
-class SousValeurCreate(BaseModel):
-    """Model for creating sous_valeur data"""
-    HT: float
-    TVA: float
-    TTC: float
+    sous_valeurs: Optional[List[SousValeurCreate]] = None  
 
 class InvoiceCreate(BaseModel):
     """Model for creating facture data"""
@@ -475,7 +478,8 @@ async def save_field_mapping(
                         'manual': value.get('manual', False)
                     }
         
-        print(f"Saving mapping for template: {template_id}")
+       
+       
         logging.debug(f"Processed field map: {processed_map}")
         
         success = await template_service.save_mapping(
@@ -588,6 +592,7 @@ async def get_factures(
         raise HTTPException(status_code=500, detail=f"Error getting invoices: {str(e)}")
 
 
+
 @app.put("/factures/{facture_id}")
 async def update_facture(
     facture_id: int,
@@ -595,14 +600,56 @@ async def update_facture(
     current_user = Depends(require_comptable_or_admin),
     db = Depends(get_async_db)
 ):
-    """Update an invoice using ORM"""
+    """Update an invoice and its sous_valeurs using ORM"""
     try:
+
+        logging.debug(f"[DEBUG] update_facture called for facture_id={facture_id}")
         facture_service = FactureService(db)
         update_data = invoice_update.dict(exclude_unset=True)
+    
+        logging.debug(f"[DEBUG] update_data before sous_valeurs pop: {update_data}")
+
+        # Check for sous_valeurs in the update payload
+        sous_valeurs_update = update_data.pop("sous_valeurs", None)
+    
+        logging.debug(f"[DEBUG] sous_valeurs_update: {sous_valeurs_update}")
         result = await facture_service.update_facture(facture_id, update_data, current_user["id"])
+    
+        logging.debug(f"[DEBUG] result from facture_service.update_facture: {result}")
+
+        # If sous_valeurs are provided, update only those with matching id
+        if sous_valeurs_update is not None:
+            
+            logging.debug(f"[DEBUG] Updating sous_valeurs for facture_id={facture_id}")
+            from sqlalchemy import update as sqlalchemy_update
+            # Fetch existing sous_valeurs for this facture
+            existing_result = await db.execute(select(SousValeurs).where(SousValeurs.facture_id == facture_id))
+            existing_svs = {sv.id: sv for sv in existing_result.scalars().all()}
+
+            # Only update sous_valeurs with matching id
+            for sv in sous_valeurs_update:
+                sv_id = sv.get("id")
+                if not sv_id:
+                   
+                    logging.warning(f"[WARNING] sous_valeur update payload missing 'id': {sv}")
+                    continue
+                if sv_id in existing_svs:
+                    
+                    logging.debug(f"[DEBUG] Updating sous_valeur id={sv_id} with {sv}")
+                    await db.execute(
+                        sqlalchemy_update(SousValeurs)
+                        .where(SousValeurs.id == sv_id)
+                        .values(HT=sv["HT"], TVA=sv["TVA"], TTC=sv["TTC"])
+                    )
+            await db.commit()
+            
+            logging.debug(f"[DEBUG] sous_valeurs updated in DB")
+            result["sous_valeurs_updated"] = True
+    
+        logging.debug(f"[DEBUG] Returning result: {result}")
         return result
-        
     except Exception as e:
+        print(f"[ERROR] Error updating invoice: {e}")
         logging.error(f"Error updating invoice: {e}")
         raise HTTPException(status_code=500, detail=f"Error updating invoice: {str(e)}")
 
@@ -626,6 +673,60 @@ async def delete_facture(
 
 # =======================
 # OCR Extraction Functions (keeping existing logic)
+# -------------------------
+# Date parsing function for extraction
+# -------------------------
+def parse_date_try(text: str):
+    """
+    Try to parse a date from a string using multiple formats and heuristics.
+    Returns the date as a string in YYYY-MM-DD format if successful, else None.
+    """
+    import re
+    from datetime import datetime
+    if not text:
+        return None
+    # Remove unwanted characters
+    cleaned = re.sub(r'[^\dA-Za-zÀ-ÿ/\-.]', '', text)
+    # Common date formats
+    date_formats = [
+        "%d/%m/%Y", "%d-%m-%Y", "%Y-%m-%d", "%Y/%m/%d",
+        "%d.%m.%Y", "%d %m %Y", "%d %b %Y", "%d %B %Y",
+        "%d/%m/%y", "%d-%m-%y", "%Y%m%d", "%d%m%Y"
+    ]
+    # Try direct parsing
+    for fmt in date_formats:
+        try:
+            dt = datetime.strptime(cleaned, fmt)
+            return dt.strftime("%Y-%m-%d")
+        except Exception:
+            continue
+    # Try to extract date-like substrings
+    date_regexes = [
+        r'(\d{2}[/-]\d{2}[/-]\d{4})',
+        r'(\d{4}[/-]\d{2}[/-]\d{2})',
+        r'(\d{2}[/-]\d{2}[/-]\d{2})',
+        r'(\d{8})',
+        r'(\d{2}\.\d{2}\.\d{4})',
+        r'(\d{1,2}[/-]\d{4})',  # mm/yyyy or m/yyyy
+    ]
+    for regex in date_regexes:
+        match = re.search(regex, cleaned)
+        if match:
+            date_str = match.group(1)
+            # Special handling for mm/yyyy or m/yyyy
+            if re.fullmatch(r'\d{1,2}[/-]\d{4}', date_str):
+                # Convert to 01/mm/yyyy
+                parts = re.split(r'[/-]', date_str)
+                month = parts[0].zfill(2)
+                year = parts[1]
+                return f"{year}-{month}-01"
+            for fmt in date_formats:
+                try:
+                    dt = datetime.strptime(date_str, fmt)
+                    return dt.strftime("%Y-%m-%d")
+                except Exception:
+                    continue
+    return None
 # =======================
 
 @app.post("/upload-basic")
@@ -677,68 +778,57 @@ async def ocr_preview(
     field_map = {}
     
     try:
-        # --- Read file to PIL image ---
-        print(f"\n=== DEBUG: Starting OCR Preview ===")
-        print(f"File name: {file.filename}")
-        print(f"Content type: {file.content_type}")
-        
+      
         file_content = await file.read()
-        print(f"File size: {len(file_content)} bytes")
+      
         
         if file.filename and file.filename.lower().endswith('.pdf'):
-            print("Processing as PDF file")
+          
             images = process_pdf_to_images(file_content)
             img = images[0] if images else None
-            print(f"Extracted {len(images)} pages from PDF")
+           
         elif file.filename and file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            print("Processing as image file")
+       
             try:
                 img = Image.open(BytesIO(file_content)).convert('RGB')
-                print(f"Original image size: {img.size} (w x h), Mode: {img.mode}")
+             
                 
                 # Standardize the image dimensions
                 img = standardize_image_dimensions(img)
-                print(f"Standardized image size: {img.size} (w x h)")
+              
                 
             except Exception as e:
-                print(f"Error opening image: {str(e)}")
+              
                 raise HTTPException(status_code=400, detail=f"Failed to process image: {str(e)}")
         else:
             error_msg = f"Unsupported file type: {file.filename}"
-            print(error_msg)
+           
             raise HTTPException(status_code=400, detail=error_msg)
 
         if img is None:
             error_msg = "No image available for extraction"
-            print(error_msg)
+           
             raise HTTPException(status_code=400, detail=error_msg)
             
-        print(f"Image dimensions: {img.size[0]}x{img.size[1]}")
-        print(f"Image mode: {img.mode}")
-
+   
         img_array = np.array(img)
         result = ocr.predict(img_array)
 
         # --- Build detected_boxes with consistent keys ---
         detected_boxes = []
-        print(f"\n=== OCR Results ===")
-        print(f"Number of detection results: {len(result)}")
+  
         
         for i, res in enumerate(result):
             rec_polys = res.get('rec_polys', [])
             rec_texts = res.get('rec_texts', [])
             rec_scores = res.get('rec_scores', [])
-            
-            print(f"\nResult {i+1}:")
-            print(f"- Detected {len(rec_texts)} text elements")
-            print(f"- Polygons: {len(rec_polys)}")
-            print(f"- Scores: {len(rec_scores)}")
+        
             
             for j, (poly, text, score) in enumerate(zip(rec_polys, rec_texts, rec_scores)):
                 if score is None or score < MIN_CONFIDENCE or not text or not text.strip():
-                    if j < 5:  # Only print first few skips to avoid too much output
-                        print(f"  Skipping text '{text}' with score {score}")
-                    continue
+                    if j < 5:  
+                        continue
+                    
                 x_coords = [p[0] for p in poly]
                 y_coords = [p[1] for p in poly]
                 left = float(min(x_coords))
@@ -807,8 +897,7 @@ async def ocr_preview(
         zone_ht_boxes = []
         zone_tva_boxes = []
         
-        print(f"\n=== Template Processing ===")
-        print(f"Template ID: {template_id}")
+   
         
         if template_id:
             try:
@@ -900,39 +989,7 @@ async def ocr_preview(
             except Exception:
                 return None
 
-        def is_valid_ht_keyword(text: str):
-            if not text:
-                return False
-            s = text.upper().strip()
-            patterns = [
-                r'^SOUS[-\s]*TOTAL\b',
-                r'\bTOTAL\s+HT\b',
-                r'\bHT\b',
-                r'\bHORS\s+TAXES\b',
-                r'\bMONTANT\s+(TOTAL\s+)?HT\b',
-                r'\bMONTANT\s+(TOTAL\s+)?HORS\s+TAXES\b',
-                r'\bTOTAL\s+HORS\s*TAXES\b',
-            ]
-            return any(re.search(p, s) for p in patterns)
-
-        def is_valid_tva_keyword(text: str):
-            if not text:
-                return False
-            s = text.upper().strip()
-            patterns = [
-                r'\bTVA\b',
-                r'\bT\.?V\.?A\b',
-                r'\bMONTANT\s+TVA\b',
-                r'\bTAXE\s+SUR\s+LA\s+VALEUR\s+AJOUT',
-                r'\bMONTANT\s+TAXE\s+AJOUT',
-            ]
-            return any(re.search(p, s) for p in patterns)
-
-        def is_total_keyword(text: str):
-            if not text:
-                return False
-            return 'TOTAL' in text.upper()
-
+       
         # -------------------------
         # Candidate search function
         # -------------------------
@@ -942,1174 +999,195 @@ async def ocr_preview(
             y_overlap = max(0, min(box1['bottom'], box2['bottom']) - max(box1['top'], box2['top']))
             return x_overlap * y_overlap
 
-        def find_value_for_field(keyword_test_fn, is_tva=False, field_name=""):
-            """
-            Returns dict with keys: value (float), value_text, value_box, keyword_box, distance, search_type, is_total_keyword
-            
-            Search Logic:
-            1. Expand the keyword box horizontally to the right (300px) to create a search area
-            2. Find all boxes that overlap with this expanded area
-            3. Filter out non-numeric boxes and apply TVA filters
-            4. Select the box with maximum overlap with the search area
-            5. If no matches, fall back to vertical search
-            """
-            # print(f"\n{'='*40}")
-            # print(f"Searching for field: {field_name}")
-            # print(f"Using keyword test function: {keyword_test_fn.__name__}")
-            # print("-"*40)
-            
-            keywords = [b for b in detected_boxes if keyword_test_fn(b['text'])]
-            
-            # print(f"Found {len(keywords)} potential keywords:")
-            # for i, kw in enumerate(keywords, 1):
-            #     print(f"  {i}. '{kw['text']}' (score: {kw['score']:.2f}) at ({kw['center_x']:.1f}, {kw['center_y']:.1f})")
-            
-            if not keywords:
-                # print("No matching keywords found!")
-                return None
-
-            total_kw = [k for k in keywords if is_total_keyword(k['text'])]
-            other_kw = [k for k in keywords if k not in total_kw]
-
-            # Process a set of keywords (list), return best match or None
-            def process_keyword_set(klist, search_type='horizontal'):
-                candidates = []
-                
-                for kw in klist:
-                    if search_type == 'horizontal':
-                        # Calculate expanded search area 
-                        vertical_padding = -5  # Add some vertical padding
-                        search_area = {
-                            'left': kw['left'],
-                            'top': kw['top'] - vertical_padding,  # Expand vertically
-                            'right': kw['right'] + 450,  # Expand  to the right
-                            'bottom': kw['bottom'] + vertical_padding,  # Expand vertically
-                            'width': kw['width'] + 450,
-                            'height': kw['height'] + (2 * vertical_padding)
-                        }
-                        
-                        # Print search area header (commented out)
-                        # print(f"\n{'='*60}")
-                        # print(f"🔍 SEARCHING FOR {'HT' if not is_tva else 'TVA'}")
-                        # print("="*60)
-                        # print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
-                        
-                        # Find all boxes that overlap with the search area
-                        potential_boxes = []
-                        for ob in detected_boxes:
-                            if ob is kw:  # Skip the keyword itself
-                                continue
-                                
-                            # Calculate distance from keyword to box
-                            box_center_x = (ob['left'] + ob['right']) / 2
-                            box_center_y = (ob['top'] + ob['bottom']) / 2
-                            
-                            # Calculate distance from keyword right edge to box center
-                            kw_right = kw['right']
-                            kw_center_y = (kw['top'] + kw['bottom']) / 2
-                            
-                            # Distance from keyword right to box center
-                            dx = box_center_x - kw_right
-                            dy = box_center_y - kw_center_y
-                            distance = (dx**2 + dy**2) ** 0.5
-                            
-                            # Check if box is to the right of the keyword and within vertical range
-                            is_to_right = ob['left'] > kw['right']
-                            is_in_vertical_range = (
-                                ob['bottom'] > search_area['top'] and 
-                                ob['top'] < search_area['bottom']
-                            )
-                            
-                            if is_to_right and is_in_vertical_range:
-                                overlap_area = calculate_overlap_area(search_area, ob)
-                                potential_boxes.append((ob, overlap_area, distance))
-                        
-                        # Process potential matches
-                        for ob, overlap_area, distance in potential_boxes:
-                            # Skip non-numeric boxes
-                            val = extract_number(ob['text'])
-                            if val is None:
-                                continue
-                                
-                            # Skip TVA boxes with %
-                            if is_tva and '%' in ob['text']:
-                                continue
-                            
-                            # Calculate overlap percentage
-                            value_box_area = (ob['right'] - ob['left']) * (ob['bottom'] - ob['top'])
-                            overlap_pct = (overlap_area / value_box_area) * 100 if value_box_area > 0 else 0
-                            
-                            # Calculate score with max horizontal distance of 400px
-                            max_horizontal_distance = 600
-                            distance_score = 1 - min(distance / max_horizontal_distance, 1) 
-                            
-                            # Combine scores (60% overlap, 40% distance)
-                            score = (overlap_pct/100 * 0.6) + (distance_score * 0.4)
-                            
-                            # Print detailed match info (commented out)
-                            # print(f"\nText: '{ob['text']}'")
-                            # print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
-                            # print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_right:.0f}, {kw_center_y:.0f})")
-                            # print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
-                            
-                            candidates.append({
-                                'keyword_box': kw,
-                                'value_box': ob,
-                                'value': val,
-                                'value_text': ob['text'],
-                                'keyword_text': kw['text'],
-                                'distance': distance,
-                                'search_type': search_type,
-                                'is_total_keyword': is_total_keyword(kw['text']),
-                                'search_area': search_area,
-                                'score': score,
-                                'overlap_pct': overlap_pct
-                            })
-                        
-                        if not candidates:
-                            print("\n❌ NO VALID MATCHES FOUND")
-                        else:
-                            # Sort by score (descending)
-                            candidates.sort(key=lambda c: -c['score'])
-                            
-                            # print("\n" + "="*60)
-                            # print("🏆 CANDIDATE SELECTION SUMMARY")
-                            # print("="*60)
-                            # print(f"Found {len(candidates)} valid candidates")
-                            # print("\nTop 3 candidates:")
-                            # for i, c in enumerate(candidates[:3], 1):
-                            #     print(f"{i}. '{c['value_text']}' | {c['overlap_pct']:.1f}% overlap | Score: {c['score']:.6f}")
-                            
-                            best_match = candidates[0]
-                            # print("\n" + "-"*60)
-                            # print(f"🏆 SELECTED: '{best_match['value_text']}'")
-                            # print(f"   - Overlap: {best_match['overlap_pct']:.1f}%")
-                            # print(f"   - Score: {best_match['score']:.6f}")
-                            # print(f"   - Position: ({best_match['value_box']['center_x']:.0f}, {best_match['value_box']['center_y']:.0f})")
-                    
-                    else:  # vertical search
-                        # Calculate expanded search area 
-                        horizontal_padding = 20  # Add some horizontal padding
-                        search_area = {
-                            'left': kw['left'] - horizontal_padding,  # Expand horizontally
-                            'top': kw['bottom'],  # Start from bottom of keyword
-                            'right': kw['right'] + horizontal_padding,  # Expand horizontally
-                            'bottom': kw['bottom'] + 50,  # Expand downward
-                            'width': kw['width'] + (2 * horizontal_padding),
-                            'height': 50
-                        }
-                        
-                        # Print search area header (commented out)
-                        # print(f"\n{'='*60}")
-                        # print(f"🔍 VERTICAL SEARCH FOR {'HT' if not is_tva else 'TVA'}")
-                        # print("="*60)
-                        # print(f"Mapped box (expanded): left={search_area['left']:.1f}, top={search_area['top']:.1f}, right={search_area['right']:.1f}, bottom={search_area['bottom']:.1f}")
-                        
-                        # Find all boxes that overlap with the search area
-                        potential_boxes = []
-                        for ob in detected_boxes:
-                            if ob is kw:  # Skip the keyword itself
-                                continue
-                                
-                            # Check if box is below the keyword and within horizontal range
-                            is_below = ob['top'] > kw['bottom']
-                            is_in_horizontal_range = (
-                                ob['right'] > search_area['left'] and 
-                                ob['left'] < search_area['right']
-                            )
-                            
-                            if is_below and is_in_horizontal_range:
-                                overlap_area = calculate_overlap_area(search_area, ob)
-                                if overlap_area > 0:
-                                    # Calculate distance from keyword to box
-                                    box_center_x = (ob['left'] + ob['right']) / 2
-                                    box_center_y = (ob['top'] + ob['bottom']) / 2
-                                    
-                                    # Calculate horizontal distance from keyword center
-                                    kw_center_x = (kw['left'] + kw['right']) / 2
-                                    kw_bottom = kw['bottom']
-                                    
-                                    # Distance from keyword bottom to box center
-                                    dx = box_center_x - kw_center_x
-                                    dy = box_center_y - kw_bottom
-                                    distance = (dx**2 + dy**2) ** 0.5
-                                    
-                                    potential_boxes.append((ob, overlap_area, distance))
-                        
-                        # Process potential matches
-                        for ob, overlap_area, distance in potential_boxes:
-                            # Skip non-numeric boxes
-                            val = extract_number(ob['text'])
-                            if val is None:
-                                continue
-                                
-                            # Skip TVA boxes with %
-                            if is_tva and '%' in ob['text']:
-                                continue
-                            
-                            # Calculate overlap percentage
-                            value_box_area = (ob['right'] - ob['left']) * (ob['bottom'] - ob['top'])
-                            overlap_pct = (overlap_area / value_box_area) * 100 if value_box_area > 0 else 0
-                            
-                            # Calculate score with max vertical distance of 400px
-                            max_vertical_distance = 400
-                            distance_score = 1 - min(distance / max_vertical_distance, 1)  
-                            
-                            # Combine scores (60% overlap, 40% distance)
-                            score = (overlap_pct/100 * 0.6) + (distance_score * 0.4)
-                            
-                            # Print detailed match info (commented out)
-                            # print(f"\nText: '{ob['text']}'")
-                            # print(f"  Box: ({ob['left']:.0f},{ob['top']:.0f}) to ({ob['right']:.0f},{ob['bottom']:.0f})")
-                            # print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Keyword right: ({kw_center_x:.0f}, {kw_bottom:.0f})")
-                            # print(f"  Overlap: {overlap_pct:.1f}% | Distance from keyword: {distance:.1f}px | Score: {score:.6f}")
-                            
-                            candidates.append({
-                                'keyword_box': kw,
-                                'value_box': ob,
-                                'value': val,
-                                'value_text': ob['text'],
-                                'keyword_text': kw['text'],
-                                'distance': distance,
-                                'search_type': 'vertical',
-                                'is_total_keyword': is_total_keyword(kw['text']),
-                                'search_area': search_area,
-                                'score': score,
-                                'overlap_pct': overlap_pct
-                            })
-                
-                if not candidates:
-                    return None
-                    
-                # Sort candidates by score (highest first), then by whether they're from a TOTAL keyword
-                candidates.sort(key=lambda c: (-c['score'], 0 if c['is_total_keyword'] else 1))
-                
-                # If we have any candidates from TOTAL keywords, return the highest scoring one
-                total_candidates = [c for c in candidates if c['is_total_keyword']]
-                if total_candidates:
-                    #print(f"\n🏆 SELECTED FROM TOTAL KEYWORDS: '{total_candidates[0]['value_text']}' (Score: {total_candidates[0]['score']:.6f})")
-                    return total_candidates[0]
-                    
-                # Otherwise return the highest scoring candidate overall
-                if candidates:
-                    return candidates[0]
-                    
-                return None
-            # First, try horizontal search for TOTAL keywords
-            if total_kw:
-                #print("\nTrying horizontal search for TOTAL keywords...")
-                result = process_keyword_set(total_kw, 'horizontal')
-                if result:
-                   # print(f"Found match from TOTAL keyword: {result['value_text']}")
-                    return result
-            
-            # Then try horizontal search for other keywords
-            if other_kw:
-              #  print("\nTrying horizontal search for other keywords...")
-                result = process_keyword_set(other_kw, 'horizontal')
-                if result:
-                  #  print(f"Found match from other keyword: {result['value_text']}")
-                    return result
-            
-            # If no horizontal matches found, try vertical search as fallback
-           # print("\nNo horizontal matches found, trying vertical search...")
-            
-            # First try vertical search with TOTAL keywords
-            if total_kw:
-                print("Trying vertical search for TOTAL keywords...")
-                result = process_keyword_set(total_kw, 'vertical')
-                if result:
-                   # print(f"Found vertical match from TOTAL keyword: {result['value_text']}")
-                    return result
-            
-            # Finally, try vertical search with other keywords
-            if other_kw:
-               # print("Trying vertical search for other keywords...")
-                result = process_keyword_set(other_kw, 'vertical')
-                if result:
-                   # print(f"Found vertical match from other keyword: {result['value_text']}")
-                    return result
-            
-           # print("No matching values found in any search direction")
-            return None
-
-        # -------------------------
-        # Extract HT using position-based mapping
-        # -------------------------
-        ht_extracted = None
-        ht_box = None
-        ht_match = {'value_box': {'left': 0, 'top': 0, 'width': 0, 'height': 0}}
         
-        print("\n=== HT Extraction ===")
-        print(f"Number of detected boxes: {len(detected_boxes)}")
-        print("First 5 detected texts:")
-        for box in detected_boxes[:5]:
-            print(f"- '{box['text']}' at ({box['left']:.1f}, {box['top']:.1f})")
-            
-        try:
-            # Get database connection and cursor
-            connection = get_connection()
-            cursor = connection.cursor(dictionary=True)
-            
-            # Get field ID for montantht
-            cursor.execute("SELECT id FROM field_name WHERE name = 'montantht'")
-            row = cursor.fetchone()
-            if row:
-                ht_field_id = row['id']
-                cursor.execute("""
-                    SELECT `left`, `top`, `width`, `height`
-                    FROM Mappings
-                    WHERE template_id = %s AND field_id = %s
-                    LIMIT 1
-                """, (template_id, ht_field_id))
-                mapping = cursor.fetchone()
-                if mapping:
-                    # Define expansion amounts (in pixels)
-                    expand_x = 100  # Increased from 10 to 100px for better detection
-                    expand_y = 20    # Increased from 5 to 20px for better detection
-                    
-                    # Calculate expanded mapped box coordinates
-                    mapped_left = float(mapping['left']) - expand_x
-                    mapped_right = float(mapping['left']) + float(mapping['width']) + expand_x
-                    mapped_top = float(mapping['top']) - expand_y
-                    mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
-                    
-                    mapped_box = {
-                        'left': mapped_left,
-                        'top': mapped_top,
-                        'right': mapped_right,
-                        'bottom': mapped_bottom
-                    }
-                    
-                    # Find the best matching box in the mapped area
-                    best_match = None
-                    best_score = -1
-                    
-                    for box in detected_boxes:
-                        current_box = {
-                            'left': box['left'],
-                            'top': box['top'],
-                            'right': box['left'] + box['width'],
-                            'bottom': box['top'] + box['height']
-                        }
-                        
-                        # Calculate overlap
-                        x_overlap = max(0, min(mapped_box['right'], current_box['right']) - max(mapped_box['left'], current_box['left']))
-                        y_overlap = max(0, min(mapped_box['bottom'], current_box['bottom']) - max(mapped_box['top'], current_box['top']))
-                        overlap_area = x_overlap * y_overlap
-                        
-                        # Calculate area of current box
-                        box_area = (current_box['right'] - current_box['left']) * (current_box['bottom'] - current_box['top'])
-                        
-                        # Calculate overlap ratio (how much of the box is within the mapped area)
-                        if box_area > 0:
-                            overlap_ratio = overlap_area / box_area
-                            
-                            # Try to extract a number from the box text
-                            val = extract_number(box['text'])
-                            if val is not None and overlap_ratio > 0.3:  # At least 30% overlap
-                                # Calculate center distance for scoring
-                                mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
-                                mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
-                                box_center_x = (current_box['left'] + current_box['right']) / 2
-                                box_center_y = (current_box['top'] + current_box['bottom']) / 2
-                                
-                                # Calculate distance between centers
-                                dx = box_center_x - mapped_center_x
-                                dy = box_center_y - mapped_center_y
-                                distance = (dx**2 + dy**2) ** 0.5
-                                
-                                # Calculate score (higher is better)
-                                score = (overlap_ratio * 0.7) + (1 / (1 + distance) * 0.3)
-                                
-                                if score > best_score:
-                                    best_score = score
-                                    best_match = box
-                                    ht_extracted = val
-                                    ht_box = {
-                                        "left": box['left'],
-                                        "top": box['top'],
-                                        "width": box['width'],
-                                        "height": box['height'],
-                                        "manual": False
-                                    }
-                                    # Update ht_match with the found coordinates
-                                    ht_match['value_box'].update({
-                                        'left': float(box['left']),
-                                        'top': float(box['top']),
-                                        'width': float(box['width']),
-                                        'height': float(box['height'])
-                                    })
-                    
-                    if not best_match:
-                        print("\n=== DEBUG: No valid HT value found in mapped area ===")
-                        print(f"Best score achieved: {best_score}")
-                        print(f"Number of boxes checked: {len(detected_boxes)}")
-                        print(f"Mapped box area: {mapped_box}")
-                        print("Potential issues:")
-                        print("1. No boxes with numeric values found in the mapped area")
-                        print("2. Boxes found but overlap ratio too low (needs >30%)")
-                        print("3. OCR might not have detected text in this area")
-        except Exception as e:
-            print(f"Error extracting HT: {e}")
-            import traceback
-            print(traceback.format_exc())
-        finally:
-            # Ensure cursor and connection are properly closed
-            if 'cursor' in locals():
-                cursor.close()
-            if 'connection' in locals() and connection.is_connected():
-                connection.close()
-        
-        if ht_extracted is None:
-            return {"success": False, "data": {}, "message": "Aucune valeur HT trouvée dans la zone mappée"}
+
+
 
         # -------------------------
-        # Extract TVA using position-based mapping
+        # Generic field extraction function
         # -------------------------
-        tva_extracted = None
-        tva_box = None
-        tva_match = {'value_box': {'left': 0, 'top': 0, 'width': 0, 'height': 0}}
-        tva_connection = None
-        tva_cursor = None
-        
-        try:
-            # Create new connection and cursor for TVA extraction
-            tva_connection = get_connection()
-            tva_cursor = tva_connection.cursor(dictionary=True, buffered=True)  # Use buffered cursor
-            
-            # Get field ID for tva
-            tva_cursor.execute("SELECT id FROM field_name WHERE name = 'tva'")
+        def extract_field_by_mapping(field_db_name, template_id, detected_boxes, extract_value_fn, expand_x=10, expand_y=5, box_filter_fn=None):
+            extracted_value = None
+            box_info = None
+            match_info = {'value_box': {'left': 0, 'top': 0, 'width': 0, 'height': 0}}
             try:
-                row = tva_cursor.fetchone()
-                    
-                if row and 'id' in row:
-                    tva_field_id = row['id']
-                    # Make sure to consume any remaining results
-                    while tva_cursor.nextset():
-                        pass
-                    
-                    # Execute mapping query
-                    tva_cursor.execute("""
+              
+                connection = get_connection()
+                cursor = connection.cursor(dictionary=True)
+                cursor.execute(f"SELECT id FROM field_name WHERE name = %s", (field_db_name,))
+                row = cursor.fetchone()
+             
+                if row:
+                    field_id = row['id']
+                    cursor.execute("""
                         SELECT `left`, `top`, `width`, `height`
                         FROM Mappings
                         WHERE template_id = %s AND field_id = %s
                         LIMIT 1
-                    """, (template_id, tva_field_id))
+                    """, (template_id, field_id))
+                    mapping = cursor.fetchone()
+             
+                    if mapping:
+                        mapped_left = float(mapping['left']) - expand_x
+                        mapped_right = float(mapping['left']) + float(mapping['width']) + expand_x
+                        mapped_top = float(mapping['top']) - expand_y
+                        mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
+                        mapped_box = {
+                            'left': mapped_left,
+                            'top': mapped_top,
+                            'right': mapped_right,
+                            'bottom': mapped_bottom
+                        }
                     
-                    # Fetch the mapping result
-                    mapping = tva_cursor.fetchone()
-                        
-                    # Consume any remaining results
-                    while tva_cursor.nextset():
-                        pass
-                if mapping:
-                    # Define expansion amounts (in pixels)
-                    expand_x = 10  # 10px horizontal expansion
-                    expand_y = 5    # 5px vertical expansion
-                    
-                    # Calculate expanded mapped box coordinates
-                    mapped_left = float(mapping['left']) - expand_x
-                    mapped_right = float(mapping['left']) + float(mapping['width']) + expand_x
-                    mapped_top = float(mapping['top']) - expand_y
-                    mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
-                    
-                    mapped_box = {
+                        best_match = None
+                        best_score = -1
+                       
+                        # Consider boxes as candidates if they overlap at all with the search area
+                        candidate_boxes = []
+                        for box in detected_boxes:
+                            current_box = {
+                                'left': box['left'],
+                                'top': box['top'],
+                                'right': box['left'] + box['width'],
+                                'bottom': box['top'] + box['height']
+                            }
+                            # Check if box overlaps with the expanded search area
+                            x_overlap = max(0, min(mapped_box['right'], current_box['right']) - max(mapped_box['left'], current_box['left']))
+                            y_overlap = max(0, min(mapped_box['bottom'], current_box['bottom']) - max(mapped_box['top'], current_box['top']))
+                            overlap_area = x_overlap * y_overlap
+                            if overlap_area > 0:
+                                candidate_boxes.append(box)
+                     
+                        for box in candidate_boxes:
+                          
+                            if box_filter_fn and not box_filter_fn(box):
+                          
+                                continue
+                            current_box = {
+                                'left': box['left'],
+                                'top': box['top'],
+                                'right': box['left'] + box['width'],
+                                'bottom': box['top'] + box['height']
+                            }
+                            x_overlap = max(0, min(mapped_box['right'], current_box['right']) - max(mapped_box['left'], current_box['left']))
+                            y_overlap = max(0, min(mapped_box['bottom'], current_box['bottom']) - max(mapped_box['top'], current_box['top']))
+                            overlap_area = x_overlap * y_overlap
+                            box_area = (current_box['right'] - current_box['left']) * (current_box['bottom'] - current_box['top'])
+                            if box_area > 0:
+                                overlap_ratio = overlap_area / box_area
+                                val = extract_value_fn(box['text'])
+                              
+                                if val is not None and overlap_ratio > 0.3:
+                                    mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
+                                    mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
+                                    box_center_x = (current_box['left'] + current_box['right']) / 2
+                                    box_center_y = (current_box['top'] + current_box['bottom']) / 2
+                                    # Calculate Euclidean distance
+                                    distance = ((box_center_x - mapped_center_x) ** 2 + (box_center_y - mapped_center_y) ** 2) ** 0.5
+                                    score = (overlap_ratio * 0.7) + (1 / (1 + distance) * 0.3)
+                                  
+                                    if score > best_score:
+                                        best_score = score
+                                        best_match = box
+                                        extracted_value = val
+                                        box_info = {
+                                            "left": box['left'],
+                                            "top": box['top'],
+                                            "width": box['width'],
+                                            "height": box['height'],
+                                            "manual": False
+                                        }
+                                        match_info['value_box'].update({
+                                            'left': float(box['left']),
+                                            'top': float(box['top']),
+                                            'width': float(box['width']),
+                                            'height': float(box['height'])
+                                        })
+                       
+            except Exception as e:
+                print(f"Error extracting {field_db_name}: {e}")
+                print(traceback.format_exc())
+            finally:
+                if 'cursor' in locals():
+                    cursor.close()
+                # Add search area info (correct indentation)
+                if 'mapping' in locals() and mapping:
+                    match_info['search_area'] = {
                         'left': mapped_left,
                         'top': mapped_top,
-                        'right': mapped_right,
-                        'bottom': mapped_bottom
+                        'width': mapped_right - mapped_left,
+                        'height': mapped_bottom - mapped_top
                     }
-                    
-                    # Find the best matching box in the mapped area
-                    best_match = None
-                    best_score = -1
-                    
-                    for box in detected_boxes:
-                        current_box = {
-                            'left': box['left'],
-                            'top': box['top'],
-                            'right': box['left'] + box['width'],
-                            'bottom': box['top'] + box['height']
-                        }
-                        
-                        # Skip if this is a percentage (TVA rate, not amount)
-                        if '%' in box['text']:
-                            continue
-                            
-                        # Calculate overlap
-                        x_overlap = max(0, min(mapped_box['right'], current_box['right']) - max(mapped_box['left'], current_box['left']))
-                        y_overlap = max(0, min(mapped_box['bottom'], current_box['bottom']) - max(mapped_box['top'], current_box['top']))
-                        overlap_area = x_overlap * y_overlap
-                        
-                        # Calculate area of current box
-                        box_area = (current_box['right'] - current_box['left']) * (current_box['bottom'] - current_box['top'])
-                        
-                        # Calculate overlap ratio (how much of the box is within the mapped area)
-                        if box_area > 0:
-                            overlap_ratio = overlap_area / box_area
-                            
-                            # Try to extract a number from the box text
-                            val = extract_number(box['text'])
-                            if val is not None and overlap_ratio > 0.3:  # At least 30% overlap
-                                # Calculate center distance for scoring
-                                mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
-                                mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
-                                box_center_x = (current_box['left'] + current_box['right']) / 2
-                                box_center_y = (current_box['top'] + current_box['bottom']) / 2
-                                
-                                # Calculate distance between centers
-                                dx = box_center_x - mapped_center_x
-                                dy = box_center_y - mapped_center_y
-                                distance = (dx**2 + dy**2) ** 0.5
-                                
-                                # Calculate score (higher is better)
-                                score = (overlap_ratio * 0.7) + (1 / (1 + distance) * 0.3)
-                                
-                                if score > best_score:
-                                    best_score = score
-                                    best_match = box
-                                    tva_extracted = val
-                                    tva_box = {
-                                        "left": box['left'],
-                                        "top": box['top'],
-                                        "width": box['width'],
-                                        "height": box['height'],
-                                        "manual": False
-                                    }
-                                    # Update tva_match with the found coordinates
-                                    tva_match['value_box'].update({
-                                        'left': float(box['left']),
-                                        'top': float(box['top']),
-                                        'width': float(box['width']),
-                                        'height': float(box['height'])
-                                    })
-                    
-                    if not best_match:
-                        print("No valid TVA value found in mapped area")
-            except Exception as e:
-                print(f"Error in TVA field ID query: {e}")
-                import traceback
-                traceback.print_exc()
-                return {"success": False, "data": {}, "message": f"Erreur lors de l'extraction TVA: {str(e)}"}
-                
-        except Exception as e:
-            print(f"Error extracting TVA: {e}")
-            import traceback
-            traceback.print_exc()
-            return {"success": False, "data": {}, "message": f"Erreur lors de l'extraction TVA: {str(e)}"}
-            
-        finally:
-            # Clean up resources
-            if 'tva_cursor' in locals() and tva_cursor is not None:
-                try:
-                    # Consume any remaining results
-                    while tva_cursor.nextset():
-                        pass
-                except:
-                    pass
-                finally:
-                    try:
-                        tva_cursor.close()
-                    except:
-                        pass
-            
-            if 'tva_connection' in locals() and tva_connection is not None:
-                try:
-                    if tva_connection.is_connected():
-                        tva_connection.close()
-                except:
-                    pass
-        
+                if 'connection' in locals() and connection.is_connected():
+                    connection.close()
+            return extracted_value, box_info, match_info
+
+        # Use the generic function for each field
+        ht_extracted, ht_box, ht_match = extract_field_by_mapping(
+            field_db_name='montantht',
+            template_id=template_id,
+            detected_boxes=detected_boxes,
+            extract_value_fn=extract_number,
+            expand_x= 20,
+            expand_y=10
+        )
+        if ht_extracted is None:
+            return {"success": False, "data": {}, "message": "Aucune valeur HT trouvée dans la zone mappée"}
+
+        tva_extracted, tva_box, tva_match = extract_field_by_mapping(
+            field_db_name='tva',
+            template_id=template_id,
+            detected_boxes=detected_boxes,
+            extract_value_fn=extract_number,
+            expand_x=20,
+            expand_y=10,
+            box_filter_fn=lambda box: '%' not in box['text']
+        )
         if tva_extracted is None:
             return {"success": False, "data": {}, "message": "Aucune valeur TVA trouvée dans la zone mappée"}
+
+        # Only consider boxes with at least one digit for numFacture
+        def numfacture_filter(box):
+            return any(char.isdigit() for char in box['text'])
+        numfacture_value, numfacture_box, numfacture_match = extract_field_by_mapping(
+            field_db_name='numerofacture',
+            template_id=template_id,
+            detected_boxes=detected_boxes,
+            extract_value_fn=lambda text: text.strip() if text.strip() else None,
+            expand_x=20,
+            expand_y=10,
+            box_filter_fn=numfacture_filter
+        )
+
+        datefacturation_value, datefacturation_box, datefacturation_match = extract_field_by_mapping(
+            field_db_name='datefacturation',
+            template_id=template_id,
+            detected_boxes=detected_boxes,
+            extract_value_fn=parse_date_try,
+            expand_x=20,
+            expand_y=10
+        )
 
         # -------------------------
         # TTC and taux TVA
         # -------------------------
-        # print("\n" + "="*60)
-        # print("🧮 CALCULATING TTC AND TVA RATE")
-        # print("="*60)
-        
+
         ttc_extracted = round(ht_extracted + tva_extracted, 2)
-       # print(f"HT: {ht_extracted:.2f} + TVA: {tva_extracted:.2f} = TTC: {ttc_extracted:.2f}")
+    
         
         if ht_extracted != 0:
             raw_taux = (tva_extracted * 100.0) / ht_extracted
             # Round to nearest integer (0.5 rounds up)
             taux_tva = int(round(raw_taux))
-            #print(f"Raw TVA rate: {raw_taux:.2f}% -> Rounded to: {taux_tva}%")
+            
         else:
             taux_tva = 0
 
-        # -------------------------
-        # Extract numFacture using position-based mapping
-        # -------------------------
-        numfacture_value = None
-        numfacture_box = None
-        numfacture_search_area = None
-        numfacture_cursor = None
-        try:
-            # Create new connection and cursor for numFacture extraction
-            numfacture_connection = get_connection()
-            numfacture_cursor = numfacture_connection.cursor(dictionary=True)
-            
-            numfacture_cursor.execute("SELECT id FROM field_name WHERE name = 'numerofacture'")
-            row = numfacture_cursor.fetchone()
-            if row:
-                numfacture_field_id = row['id']
-                numfacture_cursor.execute("""
-                    SELECT `left`, `top`, `width`, `height`
-                    FROM Mappings
-                    WHERE template_id = %s AND field_id = %s
-                    LIMIT 1
-                """, (template_id, numfacture_field_id))
-                mapping = numfacture_cursor.fetchone()
-                if mapping:
-                    mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
-                    mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
-
-                    def is_valid_invoice_number(text):
-                        text = text.strip()
-                        patterns = [
-                            r'(?i)(?:facture|fact|inv|no\.?\s*#?)\s*[\w\-\s/]*\d{2,}',
-                            r'\b\d{4,}[\-\s/]?\d+\b',
-                            r'\b[A-Z]{2,}[-\s]?\d+[-\s]?\d+\b',
-                            r'\b\d{6,}\b'
-                        ]
-                        return any(re.search(p, text) for p in patterns)
-
-                    def calculate_invoice_score(text):
-                        digit_count = len(re.findall(r'\d', text))
-                        max_consecutive = max((len(m) for m in re.findall(r'\d+', text)), default=0)
-                        pattern_bonus = 2 if re.search(r'(n[°º]|no|num|ref|facture)\s*\d', text.lower()) else 0
-                        return digit_count + max_consecutive + pattern_bonus
-
-                   # print("\n" + "="*60)
-                   # print("🔍 SEARCHING FOR INVOICE NUMBER")
-                   # print("="*60)
-                    numFacture_extraction_start = time.time()
-                    # Define expansion amounts (in pixels)
-                    expand_x = 10  # 10px horizontal expansion
-                    expand_y = 5    # 5px vertical expansion
-                    
-                    # Calculate expanded mapped box coordinates
-                    mapped_left = float(mapping['left']) - expand_x
-                    mapped_right = float(mapping['left']) + float(mapping['width']) + expand_x
-                    mapped_top = float(mapping['top']) - expand_y
-                    mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
-                    
-                    # print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, f"right={mapped_right:.1f}, bottom={mapped_bottom:.1f}") "
-                         
-                    
-                    def boxes_intersect(box1, box2):
-                        """Check if two boxes intersect or touch each other."""
-                        return not (box1['right'] < box2['left'] or 
-                                 box1['left'] > box2['right'] or 
-                                 box1['bottom'] < box2['top'] or 
-                                 box1['top'] > box2['bottom'])
-                    
-                    def calculate_box_distance(box1, box2):
-                        """Calculate distance between two boxes with overlap handling.
-                        
-                        Returns:
-                            tuple: (distance, overlap_area_ratio) where:
-                                - distance: Minimum distance between box edges (0 if overlapping)
-                                - overlap_area_ratio: Ratio of overlap area to smaller box area (0-1)
-                        """
-                        # Calculate horizontal distance and overlap
-                        if box1['right'] < box2['left']:
-                            dx = box2['left'] - box1['right']
-                            h_overlap = 0
-                        elif box2['right'] < box1['left']:
-                            dx = box1['left'] - box2['right']
-                            h_overlap = 0
-                        else:
-                            dx = 0
-                            # Calculate horizontal overlap
-                            h_overlap = min(box1['right'], box2['right']) - max(box1['left'], box2['left'])
-                        
-                        # Calculate vertical distance and overlap
-                        if box1['bottom'] < box2['top']:
-                            dy = box2['top'] - box1['bottom']
-                            v_overlap = 0
-                        elif box2['bottom'] < box1['top']:
-                            dy = box1['top'] - box2['bottom']
-                            v_overlap = 0
-                        else:
-                            dy = 0
-                            # Calculate vertical overlap
-                            v_overlap = min(box1['bottom'], box2['bottom']) - max(box1['top'], box2['top'])
-                        
-                        # Calculate overlap area and ratio
-                        overlap_area = h_overlap * v_overlap if h_overlap > 0 and v_overlap > 0 else 0
-                        area1 = (box1['right'] - box1['left']) * (box1['bottom'] - box1['top'])
-                        area2 = (box2['right'] - box2['left']) * (box2['bottom'] - box2['top'])
-                        smaller_area = min(area1, area2)
-                        overlap_ratio = overlap_area / smaller_area if smaller_area > 0 else 0
-                        
-                        # Calculate center-to-center distance for ranking overlapping boxes
-                        center1_x = (box1['left'] + box1['right']) / 2
-                        center1_y = (box1['top'] + box1['bottom']) / 2
-                        center2_x = (box2['left'] + box2['right']) / 2
-                        center2_y = (box2['top'] + box2['bottom']) / 2
-                        center_distance = ((center1_x - center2_x) ** 2 + (center1_y - center2_y) ** 2) ** 0.5
-                        
-                        # If boxes overlap, use a combination of multiple factors
-                        if overlap_ratio > 0:
-                            # 1. Normalize center distance by the diagonal of the mapped box
-                            mapped_diag = ((mapped_box['right'] - mapped_box['left']) ** 2 + 
-                                         (mapped_box['bottom'] - mapped_box['top']) ** 2) ** 0.5
-                            norm_center_dist = center_distance / mapped_diag if mapped_diag > 0 else 0
-                            
-                            # 2. Calculate aspect ratio similarity (prefer boxes with similar aspect ratio to mapped box)
-                            mapped_ar = (mapped_box['right'] - mapped_box['left']) / max(1, (mapped_box['bottom'] - mapped_box['top']))
-                            box_ar = (box2['right'] - box2['left']) / max(1, (box2['bottom'] - box2['top']))
-                           
-                            
-                            # 3. Position within mapped area (prefer boxes closer to the center)
-                            mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
-                            mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
-                            box_center_x = (box2['left'] + box2['right']) / 2
-                            box_center_y = (box2['top'] + box2['bottom']) / 2
-                            
-                            # Normalize position difference (0 to 1, where 0 is at center)
-                            x_pos_ratio = abs(box_center_x - mapped_center_x) / max(1, (mapped_box['right'] - mapped_box['left']) / 2)
-                            y_pos_ratio = abs(box_center_y - mapped_center_y) / max(1, (mapped_box['bottom'] - mapped_box['top']) / 2)
-                            pos_score = 1 - ((x_pos_ratio + y_pos_ratio) / 2)  # 1 at center, decreasing towards edges
-                            
-                            # Combine all factors with weights
-                            overlap_weight = 0.7  
-                            center_dist_weight = 0.2
-                            pos_weight = 0.1  
-                            
-                            # Calculate score (higher is better)
-                            score = (overlap_ratio * overlap_weight) + \
-                                   ((1 - norm_center_dist) * center_dist_weight) + \
-                                   (pos_score * pos_weight)
-                            
-                            # Return score (higher is better) and overlap_ratio for reference
-                            return (score, overlap_ratio)
-                        
-                        # For non-overlapping boxes, use edge-to-edge distance
-                        return ((dx**2 + dy**2) ** 0.5, 0)
-                    
-                    candidates = []
-                    best_match = None
-                    
-                    # Create expanded mapped box for intersection test
-                    mapped_box = {
-                        'left': mapped_left,
-                        'top': mapped_top,
-                        'right': mapped_right,
-                        'bottom': mapped_bottom
-                    }
-                    
-                    for box in detected_boxes:
-                        text = box["text"].strip()
-                        is_valid = is_valid_invoice_number(text)
-                        
-                        # Create a copy of the box with explicit coordinates for clarity
-                        current_box = {
-                            'left': box['left'],
-                            'top': box['top'],
-                            'right': box['left'] + box['width'],
-                            'bottom': box['top'] + box['height']
-                        }
-                        
-                        # Check if boxes intersect
-                        if not boxes_intersect(mapped_box, current_box):
-                            continue
-                            
-                        # Calculate distance and overlap between boxes
-                        distance, overlap_ratio = calculate_box_distance(mapped_box, current_box)
-                        
-                        # Calculate box centers for reference
-                        mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
-                        mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
-                        box_center_x = (current_box['left'] + current_box['right']) / 2
-                        box_center_y = (current_box['top'] + current_box['bottom']) / 2
-                        
-                      #  print(f"\nText: '{text}'")
-                      #  print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
-                      #  print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
-                      #  print(f"  Valid format: {'✅' if is_valid else '❌'}")
-                      #  if overlap_ratio > 0:
-                       #     print(f"  Overlap: {overlap_ratio*100:.1f}% | Score: {distance:.10f}")
-                        #else:
-                         #   print(f"  Edge distance: {distance:.1f} px")
-                        
-                        if is_valid:
-                            candidates.append({
-                                'distance': distance,
-                                'overlap_ratio': overlap_ratio,
-                                'box': box,
-                                'text': text,
-                                'center_x': box_center_x,
-                                'center_y': box_center_y
-                            })
-                    
-                    # Sort candidates by score (descending - higher score is better)
-                    if candidates:
-                        candidates.sort(key=lambda x: -x['distance'])  # Negative for descending sort
-                        best_match = candidates[0]
-                        
-                     #   print("\n" + "="*60)
-                     #   print("🏆 CANDIDATE SELECTION SUMMARY")
-                     #   print("="*60)
-                     #   print(f"Found {len(candidates)} valid candidates")
-                     #   print("\nTop 3 candidates:")
-                        for i, cand in enumerate(candidates[:3], 1):
-                            overlap_info = f"{cand['overlap_ratio']*100:.1f}% overlap" if cand['overlap_ratio'] > 0 else "no overlap"
-                       #     print(f"{i}. '{cand['text']}' | {overlap_info} | Score: {cand['distance']:.10f}")
-                        
-                      #  print("\n" + "-"*60)
-                      #  print(f"🏆 SELECTED: '{best_match['text'].strip()}'")
-                      #  print(f"   - Overlap: {best_match['overlap_ratio']*100:.1f}%" if best_match['overlap_ratio'] > 0 else "   - No overlap")
-                      #  print(f"   - Score: {best_match['distance']:.10f}")
-                      #  print(f"   - Position: ({best_match['center_x']:.0f}, {best_match['center_y']:.0f})")
-                        
-                        # Only process best_match if we found valid candidates
-                        numfacture_value = best_match["text"].strip()
-                        numfacture_box = {
-                            "left": best_match["box"]["left"],
-                            "top": best_match["box"]["top"],
-                            "width": best_match["box"]["width"],
-                            "height": best_match["box"]["height"],
-                            "manual": False
-                        }
-                        
-                        # Use the same expansion values for visualization as used in detection
-                        numfacture_search_area = {
-                            "left": mapped_left,
-                            "top": mapped_top,
-                            "width": mapped_right - mapped_left,
-                            "height": mapped_bottom - mapped_top,
-                            "type": "search_area"  # Add type to identify it in frontend
-                        }
-                        num_facture_time = time.time() - numFacture_extraction_start
-                     
-                    else:
-                        print("\n❌ No valid invoice number candidates found within search radius")
-        except Exception as e:
-            import traceback
-            print(f"Error extracting numFacture: {e}")
-            print(traceback.format_exc())
-        finally:
-            if 'cursor' in locals() and cursor:
-                cursor.close()
-            if 'connection' in locals() and connection and getattr(connection, 'is_connected', lambda: True)():
-                try:
-                    connection.close()
-                except Exception:
-                    pass
-
-        # -------------------------
-        # Date extraction (using box-based matching)
-        # -------------------------
-        #print("\n" + "="*60)
-        #print("📅 EXTRACTING INVOICE DATE")
-        #print("="*60)
-        date_extraction_start = time.time()
-        datefacturation_value = None
-        datefacturation_box = None
-        try:
-            connection = get_connection()
-            cursor = connection.cursor(dictionary=True)
-            cursor.execute("SELECT id FROM field_name WHERE name = 'datefacturation'")
-            row = cursor.fetchone()
-            if row:
-                date_field_id = row['id']
-                cursor.execute("""
-                    SELECT `left`, `top`, `width`, `height`
-                    FROM Mappings
-                    WHERE template_id = %s AND field_id = %s
-                    LIMIT 1
-                """, (template_id, date_field_id))
-                mapping = cursor.fetchone()
-                if mapping:
-                    # Define expansion amounts (in pixels)
-                    expand_x = 20  # 20px horizontal expansion
-                    expand_y = 10   # 10px vertical expansion
-                    
-                    # Calculate expanded mapped box coordinates
-                    mapped_left = float(mapping['left']) - expand_x
-                    mapped_right = float(mapping['left']) + float(mapping['width']) + expand_x
-                    mapped_top = float(mapping['top']) - expand_y
-                    mapped_bottom = float(mapping['top']) + float(mapping['height']) + expand_y
-                    
-                    mapped_cx = float(mapping['left']) + float(mapping['width']) / 2
-                    mapped_cy = float(mapping['top']) + float(mapping['height']) / 2
-                    
-                  #  print(f"Mapped box (expanded): left={mapped_left:.1f}, top={mapped_top:.1f}, right={mapped_right:.1f}, bottom={mapped_bottom:.1f}")
-                    
-                    def parse_date_try(text):
-                        text = text.strip()
-                        # Skip if text is too short or doesn't contain digits
-                        if len(text) < 3 or not any(c.isdigit() for c in text):
-                            return None
-                            
-                        # For very short texts, ensure they look like dates (contain / or - or .)
-                        if len(text) < 5 and not any(sep in text for sep in ['/', '-', '.']):
-                            return None
-                            
-                        # Clean the text (keep only date-like patterns)
-                        clean_text = re.sub(r'[^0-9/\-\.\s]', ' ', text.lower())
-                        clean_text = re.sub(r'\s+', ' ', clean_text).strip()
-                        
-                        # Use dateparser with more flexible settings
-                        settings = {
-                            'DATE_ORDER': 'DMY',
-                            'PREFER_DAY_OF_MONTH': 'first',
-                            'STRICT_PARSING': False,
-                            'REQUIRE_PARTS': ['month', 'year'],
-                            'PARSERS': ['relative-time', 'absolute-time', 'custom-formats', 'timestamp'],
-                            'PREFER_LOCALE_DATE_ORDER': True,
-                            'RELATIVE_BASE': datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
-                        }
-                        
-                        # Add common date formats to help with parsing
-                        custom_formats = [
-                            '%m/%Y',    # 3/2025
-                            '%m/%y',    # 3/25
-                            '%d/%m/%Y', # 01/03/2025
-                            '%d-%m-%Y', # 01-03-2025
-                            '%d.%m.%Y', # 01.03.2025
-                            '%Y/%m/%d', # 2025/03/01
-                            '%Y-%m-%d', # 2025-03-01
-                        ]
-                        
-                        # Try with custom formats first
-                        for fmt in custom_formats:
-                            try:
-                                dt = datetime.strptime(clean_text, fmt)
-                                if 1900 <= dt.year <= 2100 and 1 <= dt.month <= 12:
-                                    return dt.date()
-                            except ValueError:
-                                continue
-                        
-                        dt = dateparser.parse(clean_text, languages=['fr'], settings=settings)
-                        if dt:
-                            # Ensure the date is within reasonable bounds
-                            if 1900 <= dt.year <= 2100 and 1 <= dt.month <= 12:
-                                return dt.date()
-                        
-                        return None  # No valid date found
-                    
-                    def boxes_intersect(box1, box2):
-                        """Check if two boxes intersect or touch each other."""
-                        return not (box1['right'] < box2['left'] or 
-                                 box1['left'] > box2['right'] or 
-                                 box1['bottom'] < box2['top'] or 
-                                 box1['top'] > box2['bottom'])
-                    
-                    def calculate_box_distance(box1, box2):
-                        """Calculate distance between two boxes with overlap handling."""
-                        # Calculate horizontal and vertical overlap
-                        h_overlap = max(0, min(box1['right'], box2['right']) - max(box1['left'], box2['left']))
-                        v_overlap = max(0, min(box1['bottom'], box2['bottom']) - max(box1['top'], box2['top']))
-                        
-                        # Calculate overlap area and ratio
-                        overlap_area = h_overlap * v_overlap
-                        area1 = (box1['right'] - box1['left']) * (box1['bottom'] - box1['top'])
-                        area2 = (box2['right'] - box2['left']) * (box2['bottom'] - box2['top'])
-                        smaller_area = min(area1, area2)
-                        overlap_ratio = overlap_area / smaller_area if smaller_area > 0 else 0
-                        
-                        # Calculate center-to-center distance for ranking
-                        center1_x = (box1['left'] + box1['right']) / 2
-                        center1_y = (box1['top'] + box1['bottom']) / 2
-                        center2_x = (box2['left'] + box2['right']) / 2
-                        center2_y = (box2['top'] + box2['bottom']) / 2
-                        center_distance = math.sqrt((center1_x - center2_x) ** 2 + (center1_y - center2_y) ** 2)
-                        
-                        # If boxes overlap, use a combination of multiple factors
-                        if overlap_ratio > 0:
-                            # 1. Normalize center distance by the diagonal of the mapped box
-                            mapped_diag = math.sqrt((mapped_box['right'] - mapped_box['left']) ** 2 + 
-                                                 (mapped_box['bottom'] - mapped_box['top']) ** 2)
-                            norm_center_dist = center_distance / mapped_diag if mapped_diag > 0 else 0
-                            
-                            # 2. Calculate aspect ratio similarity
-                            mapped_ar = (mapped_box['right'] - mapped_box['left']) / max(1, (mapped_box['bottom'] - mapped_box['top']))
-                            box_ar = (box2['right'] - box2['left']) / max(1, (box2['bottom'] - box2['top']))
-                            ar_similarity = 1 - (abs(mapped_ar - box_ar) / max(mapped_ar, box_ar))
-                            
-                            # 3. Position within mapped area (prefer boxes closer to the center)
-                            mapped_center_x = (mapped_box['left'] + mapped_box['right']) / 2
-                            mapped_center_y = (mapped_box['top'] + mapped_box['bottom']) / 2
-                            box_center_x = (box2['left'] + box2['right']) / 2
-                            box_center_y = (box2['top'] + box2['bottom']) / 2
-                            
-                            # Normalize position difference (0 to 1, where 0 is at center)
-                            x_pos_ratio = abs(box_center_x - mapped_center_x) / max(1, (mapped_box['right'] - mapped_box['left']) / 2)
-                            y_pos_ratio = abs(box_center_y - mapped_center_y) / max(1, (mapped_box['bottom'] - mapped_box['top']) / 2)
-                            pos_score = 1 - ((x_pos_ratio + y_pos_ratio) / 2)  # 1 at center, decreasing towards edges
-                            
-                            # Combine all factors with weights
-                            overlap_weight = 2
-                            center_dist_weight = 0.2
-                            pos_weight = 0.1  
-                            
-                            # Calculate score (higher is better)
-                            score = (overlap_ratio * overlap_weight) + \
-                                   ((1 - norm_center_dist) * center_dist_weight) + \
-                                   (pos_score * pos_weight)
-                            
-                            return (score, overlap_ratio)
-                        
-                        # For non-overlapping boxes, use edge-to-edge distance (lower is better)
-                        dx = max(0, max(box1['left'], box2['left']) - min(box1['right'], box2['right']))
-                        dy = max(0, max(box1['top'], box2['top']) - min(box1['bottom'], box2['bottom']))
-                        distance = math.sqrt(dx**2 + dy**2)
-                        
-                        # Normalize distance by the diagonal of the mapped box
-                        mapped_diag = math.sqrt((mapped_box['right'] - mapped_box['left']) ** 2 + 
-                                             (mapped_box['bottom'] - mapped_box['top']) ** 2)
-                        normalized_distance = distance / mapped_diag if mapped_diag > 0 else 1.0
-                        
-                        # Convert to a score where higher is better
-                        score = 1.0 / (1.0 + normalized_distance)
-                        
-                        return (score, 0.0)
-                    
-                    # Create expanded mapped box for intersection test
-                    mapped_box = {
-                        'left': mapped_left,
-                        'top': mapped_top,
-                        'right': mapped_right,
-                        'bottom': mapped_bottom
-                    }
-                    
-                    candidates = []
-                    
-                    for box in detected_boxes:
-                        text = box["text"].strip()
-                        
-                        # Create a copy of the box with explicit coordinates for clarity
-                        current_box = {
-                            'left': box['left'],
-                            'top': box['top'],
-                            'right': box['left'] + box['width'],
-                            'bottom': box['top'] + box['height']
-                        }
-                        
-                        # Check if boxes intersect
-                        if not boxes_intersect(mapped_box, current_box):
-                            continue
-                            
-                        # Calculate distance and overlap between boxes
-                        score, overlap_ratio = calculate_box_distance(mapped_box, current_box)
-                        
-                        # Try to parse the date
-                        dt = parse_date_try(text)
-                        
-                        # Calculate box centers for reference
-                   
-                        box_center_x = (current_box['left'] + current_box['right']) / 2
-                        box_center_y = (current_box['top'] + current_box['bottom']) / 2
-                        
-                    #    print(f"\nText: '{text}'")
-                     #   print(f"  Box: ({current_box['left']:.0f},{current_box['top']:.0f}) to ({current_box['right']:.0f},{current_box['bottom']:.0f})")
-                      #  print(f"  Center: ({box_center_x:.0f}, {box_center_y:.0f}) | Mapped center: ({mapped_center_x:.0f}, {mapped_center_y:.0f})")
-                        
-                     
-                       # print(f"  ✅ Parsed date: {dt}")
-                        
-                       # if overlap_ratio > 0:
-                       #     print(f"  Overlap: {overlap_ratio*100:.1f}% | Score: {score:.4f}")
-                       # else:
-                       #     print(f"  Edge distance score: {score:.4f}")
-                        
-                        candidates.append({
-                            'score': score,
-                            'overlap_ratio': overlap_ratio,
-                            'box': box,
-                            'text': text,
-                            'date': dt,
-                            'center_x': box_center_x,
-                            'center_y': box_center_y
-                        })
-                    
-                    # Sort candidates by score (descending - higher score is better)
-                    if candidates:
-                        candidates.sort(key=lambda x: -x['score'])
-                        
-                     #   print("\n" + "="*60)
-                     #   print("🏆 DATE CANDIDATE SELECTION SUMMARY")
-                     #   print("="*60)
-                     #   print(f"Found {len(candidates)} valid date candidates")
-                     #   print("\nTop 3 candidates:")
-                        for i, cand in enumerate(candidates[:3], 1):
-                            overlap_info = f"{cand['overlap_ratio']*100:.1f}% overlap" if cand['overlap_ratio'] > 0 else "no overlap"
-                           #print(f"{i}. '{cand['text']}' | {cand['date']} | {overlap_info} | Score: {cand['score']:.4f}")
-                        
-                        best_match = candidates[0]
-                      #  print("\n" + "-"*60)
-                      #  print(f"🏆 SELECTED: '{best_match['text'].strip()}'")
-                      #  print(f"   - Date: {best_match['date']}")
-                      #  if best_match['overlap_ratio'] > 0:
-                      #      print(f"   - Overlap: {best_match['overlap_ratio']*100:.1f}%")
-                      #  print(f"   - Score: {best_match['score']:.4f}")
-                      #  print(f"   - Position: ({best_match['center_x']:.0f}, {best_match['center_y']:.0f})")
-                        
-                        datefacturation_value = best_match['date'].strftime('%Y-%m-%d')  # normalized output
-                        datefacturation_box = {
-                            "left": best_match["box"]["left"],
-                            "top": best_match["box"]["top"],
-                            "width": best_match["box"]["width"],
-                            "height": best_match["box"]["height"],
-                        }
-        except Exception as e:
-            print(f"\n=== ERROR in dateFacturation extraction ===")
-            print(f"Error type: {type(e).__name__}")
-            print(f"Error message: {str(e)}")
-            import traceback
-            traceback.print_exc()
-            
-            # Log the current state of variables
-            print("\n=== DEBUG: dateFacturation extraction state ===")
-            print(f"Template ID: {template_id}")
-            print(f"Connection active: {'connection' in locals() and connection and getattr(connection, 'is_connected', lambda: False)()}")
-            print(f"Cursor exists: {'cursor' in locals() and cursor is not None}")
-            if 'cursor' in locals() and cursor:
-                try:
-                    print(f"Cursor has results: {cursor.with_rows}")
-                except:
-                    print("Could not check cursor status")
-        finally:
-            # Clean up resources
-            if 'cursor' in locals() and cursor:
-                try:
-                    # Consume any remaining results
-                    while cursor.nextset():
-                        pass
-                except Exception as e:
-                    print(f"Error consuming cursor results: {e}")
-                try:
-                    cursor.close()
-                except Exception as e:
-                    print(f"Error closing cursor: {e}")
-                    
-            if 'connection' in locals() and connection:
-                try:
-                    if getattr(connection, 'is_connected', lambda: False)():
-                        connection.close()
-                except Exception as e:
-                    print(f"Error closing connection: {e}")
 
         # -------------------------
         # Prepare response
         # -------------------------
-       # print("\n" + "="*60)
-       # print(" EXTRACTION SUMMARY")
-       # print("📊 EXTRACTION SUMMARY")
-       # print("="*60)
-       # print(f"📄 Invoice Number: {numfacture_value} (took {num_facture_time:.4f}s)")
-       # print(f"📅 Invoice Date: {datefacturation_value} (took {datefacturation_time:.4f}s)")
-       # print(f"💰 HT: {ht_extracted:.2f} (took {ht_time:.4f}s)")
-       # print(f"💸 TVA: {tva_extracted:.2f} (took {tva_time:.4f}s)")
-       # print(f"💵 TTC: {ttc_extracted:.2f} (calculated)")
+
         # Get zone mappings from field_map if available
         zone_HT_mapping = {}
         zone_tva_mapping = {}
@@ -2130,29 +1208,22 @@ async def ocr_preview(
                     'height': field_map['zone_tva'].get('height', 0)
                 }
 
-        # Prepare response with extracted data
+       
         result_data = {
             "montantHT": float(ht_extracted) if ht_extracted is not None else None,
             "montantTVA": float(tva_extracted) if tva_extracted is not None else None,
             "montantTTC": float(ttc_extracted) if ttc_extracted is not None else None,
             "tauxTVA": float(taux_tva) if taux_tva is not None else None,
             "numFacture": numfacture_value,
-            "boxHT": {
-                "left": ht_match['value_box'].get('left', 0),
-                "top": ht_match['value_box'].get('top', 0),
-                "width": ht_match['value_box'].get('width', 0),
-                "height": ht_match['value_box'].get('height', 0)
-            },
-            "boxTVA": {
-                "left": tva_match['value_box'].get('left', 0),
-                "top": tva_match['value_box'].get('top', 0),
-                "width": tva_match['value_box'].get('width', 0),
-                "height": tva_match['value_box'].get('height', 0)
-            },
+            "boxHT": ht_match['value_box'] if ht_match and 'value_box' in ht_match else {},
+            "boxHTSearchArea": ht_match['search_area'] if ht_match and 'search_area' in ht_match else {"left": 0, "top": 0, "width": 0, "height": 0},
+            "boxTVA": tva_match['value_box'] if tva_match and 'value_box' in tva_match else {},
+            "boxTVASearchArea": tva_match['search_area'] if tva_match and 'search_area' in tva_match else {"left": 0, "top": 0, "width": 0, "height": 0},
             "boxNumFacture": numfacture_box or {},
-            "boxNumFactureSearchArea": numfacture_search_area or {},
+            "boxNumFactureSearchArea": numfacture_match['search_area'] if numfacture_match and 'search_area' in numfacture_match else {"left": 0, "top": 0, "width": 0, "height": 0},
             "dateFacturation": datefacturation_value,
             "boxDateFacturation": datefacturation_box or {},
+            "boxDateFacturationSearchArea": datefacturation_match['search_area'] if datefacturation_match and 'search_area' in datefacturation_match else {"left": 0, "top": 0, "width": 0, "height": 0},
             "template_id": template_id,
             "zone_HT_mapping": zone_HT_mapping,
             "zone_tva_mapping": zone_tva_mapping
@@ -2263,6 +1334,26 @@ async def ajouter_facture(
             message=f"Erreur lors de la création de la facture: {str(e)}"
         )
 
+@app.get("/sous_valeurs")
+async def get_sous_valeurs(facture_id: int = Query(...), db=Depends(get_async_db)):
+    """
+    Get sous valeurs (HT, TVA, TTC) for a given facture_id
+    """
+    try:
+        result = await db.execute(select(SousValeurs).where(SousValeurs.facture_id == facture_id))
+        sous_valeurs = result.scalars().all()
+        # Return as list of dicts
+        return {"sous_valeurs": [
+            {
+                "HT": sv.HT,
+                "TVA": sv.TVA,
+                "TTC": sv.TTC,
+                "id": sv.id,
+                "facture_id": sv.facture_id
+            } for sv in sous_valeurs
+        ]}
+    except Exception as e:
+        return {"sous_valeurs": [], "error": str(e)}
 
 @app.get("/download-dbf")
 async def download_dbf():
@@ -2282,7 +1373,7 @@ async def download_dbf():
 async def save_corrected_data(request: Request):
     """Sauvegarder les données corrigées par l'utilisateur pour FoxPro"""
     try:
-        print("=== DEBUG save_corrected_data ===")
+    
         
         # Récupérer le JSON brut pour diagnostiquer
         corrected_data = await request.json()
@@ -2432,10 +1523,7 @@ async def launch_foxpro():
 def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores: Dict[str, float], corrected_data: Dict[str, str] = None):
     """Sauvegarder les données extraites dans un fichier JSON pour FoxPro"""
     try:
-        print(f"=== DEBUG save_extraction_for_foxpro ===")
-        print(f"extracted_data reçu: {extracted_data}")
-        print(f"corrected_data reçu: {corrected_data}")
-        print(f"confidence_scores reçu: {confidence_scores}")
+    
         
         # Utiliser les données corrigées si disponibles, sinon les données extraites
         if corrected_data is not None:
@@ -2447,7 +1535,7 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
         
         # Gérer les différents noms de champs possibles
         numero_facture = data_to_use.get("numeroFacture") or data_to_use.get("numFacture", "")
-        print(f"Numéro facture trouvé: {numero_facture}")
+    
         
         # Nettoyer le taux TVA - extraire juste le nombre
         taux_tva_raw = data_to_use.get("tauxTVA", "0")
@@ -2458,10 +1546,10 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
             if match:
                 taux_tva_clean = match.group(1)
         
-        print(f"Taux TVA nettoyé: {taux_tva_clean}")
+    
         
         # Créer un fichier JSON avec les données (corrigées ou extraites)
-        print("Début construction foxpro_data...")
+    
         
         foxpro_data = {
             "success": True,
@@ -2479,20 +1567,20 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
                 "montantTTC": data_to_use.get("montantTTC", "0")
             }
         }
-        print("foxpro_data construit avec succès")
+    
         
         # Créer automatiquement le fichier JSON dans le dossier foxpro
         foxpro_dir = os.path.join(os.path.dirname(__file__), 'foxpro')
         os.makedirs(foxpro_dir, exist_ok=True)
         
         json_path = os.path.join(foxpro_dir, 'ocr_extraction.json')
-        print(f"Écriture du fichier JSON: {json_path}")
+    
         with open(json_path, 'w', encoding='utf-8') as f:
             json.dump(foxpro_data, f, ensure_ascii=False, indent=2)
         
         # Créer automatiquement le fichier texte simple pour FoxPro
         txt_path = os.path.join(foxpro_dir, 'ocr_extraction.txt')
-        print(f"Écriture du fichier TXT: {txt_path}")
+    
         with open(txt_path, 'w', encoding='utf-8') as f:
             f.write(f"Date export: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
             f.write(f"Fournisseur: {data_to_use.get('fournisseur', '')}\n")
@@ -2502,12 +1590,12 @@ def save_extraction_for_foxpro(extracted_data: Dict[str, str], confidence_scores
             f.write(f"Montant TVA: {data_to_use.get('montantTVA', '0')}\n")
             f.write(f"Montant TTC: {data_to_use.get('montantTTC', '0')}\n")
         
-        print("Fichiers ocr_extraction.json et ocr_extraction.txt créés automatiquement dans le dossier foxpro")
+    
         
         # Créer aussi automatiquement le fichier DBF s'il n'existe pas
         try:
             write_invoice_to_dbf(data_to_use)
-            print("Fichier factures.dbf créé/mis à jour automatiquement")
+            
         except Exception as dbf_error:
             logging.warning(f"Impossible de créer le fichier DBF: {dbf_error}")
         
@@ -2532,11 +1620,11 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
         # Vérifier si le fichier existe et n'est pas vide
         if os.path.exists(dbf_path) and os.path.getsize(dbf_path) == 0:
             os.remove(dbf_path)
-            print("Fichier DBF vide supprimé")
+            
         
         # Créer le fichier DBF s'il n'existe pas
         if not os.path.exists(dbf_path):
-            print("Création automatique du fichier factures.dbf")
+            
             # Créer la table DBF avec une structure compatible FoxPro
             table = dbf.Table(
                 dbf_path,
@@ -2544,7 +1632,7 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
             )
             table.open(mode=dbf.READ_WRITE)
             table.close()
-            print("Fichier factures.dbf créé avec succès")
+            
         
         # Ouvrir la table existante
         table = dbf.Table(dbf_path)
@@ -2570,7 +1658,7 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
         ))
         table.close()
         
-        print(f"Facture ajoutée au fichier DBF: {invoice_data.get('numeroFacture', 'N/A')}")
+    
         
     except Exception as e:
         logging.error(f"Erreur lors de l'écriture dans le fichier DBF: {e}")
@@ -2600,7 +1688,7 @@ def write_invoice_to_dbf(invoice_data, dbf_path=None):
                 float(invoice_data['montantTTC'])
             ))
             table.close()
-            print("Fichier DBF recréé et facture ajoutée avec succès")
+            
         except Exception as retry_error:
             logging.error(f"Erreur fatale lors de la création du fichier DBF: {retry_error}")
             raise retry_error
