@@ -5,11 +5,29 @@ import pytesseract
 from ultralytics import YOLO
 import os
 import json
+import re
 from typing import List, Dict, Any, Tuple
 import logging
 import concurrent.futures
 from concurrent.futures import ThreadPoolExecutor
 import threading
+# Import local pour éviter les erreurs d'import relatif
+try:
+    from .ocr_config import get_field_config, get_preprocessing_params, get_post_processing_rules
+except ImportError:
+    # Fallback si l'import relatif échoue
+    try:
+        from ocr_config import get_field_config, get_preprocessing_params, get_post_processing_rules
+    except ImportError:
+        # Configuration par défaut si aucun import ne fonctionne
+        def get_field_config(class_name: str) -> dict:
+            return {'psm': 6, 'oem': 3, 'dpi': 300, 'whitelist': '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,%/-'}
+        
+        def get_preprocessing_params(class_name: str) -> dict:
+            return {'resize_factor': 2.0, 'denoise_strength': 75, 'contrast_limit': 2.0, 'threshold_type': 'normal'}
+        
+        def get_post_processing_rules(class_name: str) -> dict:
+            return {'replacements': [], 'auto_corrections': [], 'validation_pattern': None, 'error_messages': {}}
 
 logger = logging.getLogger(__name__)
 
@@ -58,9 +76,138 @@ class YOLOExtractor:
             logger.error(f"Erreur lors du chargement du modèle: {str(e)}")
             return False
 
+    def _enhance_image_for_ocr(self, roi: np.ndarray, class_name: str) -> np.ndarray:
+        """
+        Améliore l'image pour l'OCR avec VOTRE méthode qui marche !
+        Prétraitement minimal et efficace : 2x zoom + niveaux de gris
+        
+        Args:
+            roi: Région d'intérêt (image)
+            class_name: Nom de la classe (type de champ)
+            
+        Returns:
+            Image améliorée (comme dans votre code qui fonctionne)
+        """
+        try:
+            # 1. Conversion en niveaux de gris (EXACTEMENT comme dans votre code qui marche)
+            if len(roi.shape) == 3:
+                gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            else:
+                gray = roi.copy()
+            
+            # 2. Redimensionnement 2x pour améliorer la qualité (EXACTEMENT comme dans votre code)
+            height, width = gray.shape
+            resized = cv2.resize(gray, (width * 2, height * 2), interpolation=cv2.INTER_CUBIC)
+            
+            # 3. PAS de seuillage complexe (comme dans votre code)
+            # PAS de normalisation complexe
+            # PAS de filtres complexes
+            
+            # Retourner l'image redimensionnée en niveaux de gris (comme dans votre code)
+            logger.info(f"✅ Prétraitement appliqué pour {class_name}: 2x zoom + niveaux de gris")
+            return resized
+            
+        except Exception as e:
+            logger.error(f"❌ Erreur prétraitement de votre méthode pour {class_name}: {e}")
+            return roi
+
+    def _get_tesseract_config(self, class_name: str) -> str:
+        """
+        Retourne la configuration Tesseract de VOTRE méthode qui marche !
+        Configuration simple et efficace : --psm 6 (bloc uniforme de texte)
+        
+        Args:
+            class_name: Nom de la classe (type de champ)
+            
+        Returns:
+            Configuration Tesseract (votre méthode éprouvée)
+        """
+        # Utiliser VOTRE configuration qui marche : --psm 6
+        # Cette configuration fonctionne pour TOUTES les factures !
+        return '--psm 6'
+
+    def _post_process_text(self, text: str, class_name: str) -> str:
+        """
+        Post-traitement minimal de VOTRE méthode qui marche !
+        Pas de corrections spécifiques à une facture particulière
+        
+        Args:
+            text: Texte extrait par Tesseract
+            class_name: Nom de la classe (type de champ)
+            
+        Returns:
+            Texte post-traité minimalement (comme dans votre code)
+        """
+        if not text:
+            return text
+        
+        # 1. Nettoyage de base (comme dans votre code)
+        text = text.strip()
+        
+        # 2. Suppression des caractères non désirés (comme dans votre code)
+        text = text.replace('\n', ' ').replace('\r', ' ')
+        text = ' '.join(text.split())  # Normaliser les espaces
+        
+        # 3. PAS de corrections spécifiques à une facture particulière
+        # PAS de remplacements de caractères spécifiques
+        # PAS de logique métier complexe
+        
+        logger.info(f"✅ Post-traitement minimal appliqué pour {class_name}")
+        return text
+
+    def _validate_extracted_data(self, text: str, class_name: str) -> Tuple[str, bool]:
+        """
+        Validation simple de VOTRE méthode qui marche !
+        Pas de règles métier complexes
+        
+        Args:
+            text: Texte extrait
+            class_name: Nom de la classe
+            
+        Returns:
+            Tuple (texte_post_traité, est_valide)
+        """
+        if not text:
+            return text, False
+        
+        # Post-traiter le texte avec votre méthode
+        text = self._post_process_text(text, class_name)
+        
+        # Validation simple et générique (pas de règles métier complexes)
+        if len(text) < 2:
+            logger.warning(f"⚠️ Texte trop court pour {class_name}: '{text}'")
+            return text, False
+        
+        # Validation basique par type de champ (générique)
+        if class_name in ['HT', 'TVA', 'TTC']:
+            # Pour les montants, vérifier qu'il y a des chiffres
+            is_valid = any(c.isdigit() for c in text)
+        elif class_name == 'taux':
+            # Pour le taux, vérifier qu'il y a des chiffres
+            is_valid = any(c.isdigit() for c in text)
+        elif class_name == 'date':
+            # Pour la date, vérifier qu'il y a des chiffres
+            is_valid = any(c.isdigit() for c in text)
+        elif class_name == 'fournisseur':
+            # Pour le fournisseur, vérifier qu'il y a des lettres
+            is_valid = any(c.isalpha() for c in text)
+        elif class_name == 'numFacture':
+            # Pour le numéro de facture, vérifier qu'il y a des caractères alphanumériques
+            is_valid = any(c.isalnum() for c in text)
+        else:
+            # Par défaut, accepter si le texte n'est pas vide
+            is_valid = True
+        
+        if is_valid:
+            logger.info(f"✅ Validation réussie pour {class_name}: '{text}'")
+        else:
+            logger.warning(f"⚠️ Validation échouée pour {class_name}: '{text}'")
+        
+        return text, is_valid
+
     def _extract_text_from_roi_parallel(self, roi_data: Tuple[np.ndarray, str, float, Tuple[int, int, int, int]]) -> Dict[str, Any]:
         """
-        Extrait le texte d'une région d'intérêt en parallèle
+        Extrait le texte d'une région d'intérêt en parallèle avec améliorations
         
         Args:
             roi_data: Tuple contenant (roi_image, class_name, confidence, bbox)
@@ -81,35 +228,30 @@ class YOLOExtractor:
                     'error': 'ROI vide'
                 }
             
-            # Convertir en niveaux de gris pour un meilleur OCR
-            gray_roi = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
+            # Améliorer l'image pour l'OCR
+            enhanced_roi = self._enhance_image_for_ocr(roi, class_name)
             
-            # Appliquer un prétraitement pour améliorer l'OCR
-            # Redimensionner pour une meilleure résolution
-            gray_roi = cv2.resize(gray_roi, None, fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+            # Obtenir la configuration Tesseract optimisée
+            tesseract_config = self._get_tesseract_config(class_name)
             
-            # Appliquer des filtres pour améliorer la qualité
-            # Filtre gaussien pour réduire le bruit
-            gray_roi = cv2.GaussianBlur(gray_roi, (1, 1), 0)
-            
-            # Seuillage adaptatif pour améliorer la lisibilité
-            gray_roi = cv2.adaptiveThreshold(
-                gray_roi, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 11, 2
-            )
-            
-            # Extraire le texte avec Tesseract avec configuration optimisée
+            # Extraire le texte avec Tesseract
             extracted_text = pytesseract.image_to_string(
-                gray_roi, 
-                config='--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz.,€$%()/- '
+                enhanced_roi, 
+                config=tesseract_config
             ).strip()
+            
+            # Post-traiter et valider le texte
+            processed_text, is_valid = self._validate_extracted_data(extracted_text, class_name)
             
             return {
                 'class': class_name,
                 'confidence': confidence,
                 'bbox': bbox,
-                'text': extracted_text,
+                'text': processed_text,
                 'success': True,
-                'error': None
+                'error': None,
+                'original_text': extracted_text,
+                'is_valid': is_valid
             }
             
         except Exception as e:
