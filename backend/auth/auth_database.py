@@ -52,12 +52,30 @@ def init_database():
             prenom VARCHAR(50) NOT NULL,
             mot_de_passe_hash VARCHAR(255) NOT NULL,
             role ENUM('admin', 'comptable') DEFAULT 'comptable',
-            date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             actif BOOLEAN DEFAULT TRUE,
             INDEX idx_email (email),
             INDEX idx_role (role)
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         """
+        
+        # Vérifier et ajouter la colonne date_creation si elle n'existe pas
+        cursor.execute("""
+        SELECT COUNT(*) 
+        FROM information_schema.COLUMNS 
+        WHERE TABLE_SCHEMA = DATABASE() 
+        AND TABLE_NAME = 'utilisateurs' 
+        AND COLUMN_NAME = 'date_creation'
+        """)
+        
+        if cursor.fetchone()[0] == 0:
+            cursor.execute("""
+            ALTER TABLE utilisateurs 
+            ADD COLUMN date_creation TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            """)
+            conn.commit()
+        
+        # Exécution de la requête de création de la table utilisateurs
+        cursor.execute(create_utilisateurs_query)
         
         # Création de la table field_name
         create_field_name_query = """
@@ -170,7 +188,11 @@ def get_user_by_email(email: str):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         
-        query = "SELECT * FROM utilisateurs WHERE email = %s"
+        query = """
+        SELECT id, email, nom, prenom, role, date_creation, actif
+        FROM utilisateurs 
+        WHERE email = %s
+        """
         cursor.execute(query, (email,))
         user = cursor.fetchone()
         
@@ -188,7 +210,11 @@ def get_user_by_id(user_id: int):
         conn = get_connection()
         cursor = conn.cursor(dictionary=True)
         
-        query = "SELECT * FROM utilisateurs WHERE id = %s"
+        query = """
+        SELECT id, email, nom, prenom, role, date_creation, actif
+        FROM utilisateurs 
+        WHERE id = %s
+        """
         cursor.execute(query, (user_id,))
         user = cursor.fetchone()
         
@@ -223,10 +249,10 @@ def create_user(email: str, nom: str = None, prenom: str = None, password: str =
         # Hasher le mot de passe
         hashed_password = get_password_hash(password)
         
-        # Insérer l'utilisateur
+        # Insérer l'utilisateur avec date_creation
         insert_query = """
-        INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role)
-        VALUES (%s, %s, %s, %s, %s)
+        INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role, date_creation)
+        VALUES (%s, %s, %s, %s, %s, NOW())
         """
         
         cursor.execute(insert_query, (email, nom, prenom, hashed_password, role))

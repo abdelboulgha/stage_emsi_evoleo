@@ -25,6 +25,8 @@ class User(Base):
     prenom: Mapped[str] = Column(String(100), nullable=False)
     mot_de_passe_hash: Mapped[str] = Column(String(255), nullable=False)
     role: Mapped[str] = Column(String(50), default="comptable", nullable=False)
+    date_creation: Mapped[datetime] = Column(DateTime, default=datetime.utcnow, nullable=False)
+    actif: Mapped[bool] = Column(Boolean, default=True, nullable=False)
     
     # Relationships
     templates: Mapped[List["Template"]] = relationship("Template", back_populates="created_by_user")

@@ -55,7 +55,7 @@ app.add_middleware(
 
 # Configure logging
 logging.basicConfig(
-    filename=r'C:\Users\pc\Desktop\stage_emsi_2025\backend\invoice_debug.log',
+    filename=r'invoice_debug.log',
     level=logging.DEBUG,
     format='%(asctime)s %(levelname)s %(message)s',
     force=True
