@@ -1,8 +1,60 @@
 import React, { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
-import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js';
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from '@stripe/react-stripe-js';
 import { X, CreditCard, CheckCircle, AlertCircle } from 'lucide-react';
 import './SubscriptionModal.css';
+
+// Icônes pour les différents types de cartes
+const CardTypeIcon = ({ brand }) => {
+  if (!brand) return <CreditCard size={20} className="card-icon-default" />;
+  
+  const brandLower = brand.toLowerCase();
+  
+  if (brandLower === 'visa') {
+    return (
+      <div className="card-icon visa">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+          <path d="M22.4 4.6c-.4-.3-.9-.4-1.4-.4H3c-.5 0-1 .1-1.4.4C1.2 5.1 1 5.6 1 6.2v11.6c0 .6.2 1.1.6 1.6.4.3.9.4 1.4.4h18c.5 0 1-.1 1.4-.4.4-.5.6-1 .6-1.6V6.2c0-.6-.2-1.1-.6-1.6zM9.5 15.5l-2.5-6.3h2.1l1.4 3.7 1.4-3.7h2.1L12.5 15.5h-3z"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (brandLower === 'mastercard') {
+    return (
+      <div className="card-icon mastercard">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+          <circle cx="9" cy="12" r="7" fill="#ff5f00"/>
+          <circle cx="15" cy="12" r="7" fill="#eb001b"/>
+          <path d="M12 5c-2.8 0-5.2 1.5-6.5 3.8C7.2 11.1 9.4 12 12 12s4.8-.9 6.5-3.2C17.2 5.5 14.8 4 12 4z" fill="#f79e1b"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (brandLower === 'amex') {
+    return (
+      <div className="card-icon amex">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+          <path d="M22.4 4.6c-.4-.3-.9-.4-1.4-.4H3c-.5 0-1 .1-1.4.4C1.2 5.1 1 5.6 1 6.2v11.6c0 .6.2 1.1.6 1.6.4.3.9.4 1.4.4h18c.5 0 1-.1 1.4-.4.4-.5.6-1 .6-1.6V6.2c0-.6-.2-1.1-.6-1.6zM7.5 15.5l-1.5-3.5-1.5 3.5H3l2.5-6.3h2l2.5 6.3h-2zM15.5 15.5l-1.5-3.5-1.5 3.5h-2l2.5-6.3h2l2.5 6.3h-2z"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  if (brandLower === 'discover') {
+    return (
+      <div className="card-icon discover">
+        <svg viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+        </svg>
+      </div>
+    );
+  }
+  
+  // Icône par défaut pour les autres types de cartes
+  return <CreditCard size={20} className="card-icon-default" />;
+};
 
 // Initialize Stripe (you'll need to add your publishable key to .env)
 const stripePromise = loadStripe(process.env.REACT_APP_STRIPE_PUBLISHABLE_KEY || 'pk_test_your_key_here');
@@ -130,12 +182,32 @@ const PaymentForm = ({ selectedPlan, onSuccess, onClose }) => {
   const elements = useElements();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [cardholderName, setCardholderName] = useState('');
+  const [cardBrand, setCardBrand] = useState('');
 
   const handleSubmit = async (event) => {
     event.preventDefault();
     
+    console.log('🔄 Début de handleSubmit');
+    console.log('Stripe disponible:', !!stripe);
+    console.log('Elements disponible:', !!elements);
+    
     if (!stripe || !elements) {
-      console.log('Stripe ou Elements non disponibles');
+      console.log('❌ Stripe ou Elements non disponibles');
+      setError('Erreur: Stripe n\'est pas initialisé');
+      return;
+    }
+
+    if (!cardholderName.trim()) {
+      setError('Veuillez saisir le nom figurant sur la carte');
+      return;
+    }
+
+    // Vérifier que tous les éléments Stripe sont disponibles
+    if (!elements.getElement(CardNumberElement) || 
+        !elements.getElement(CardExpiryElement) || 
+        !elements.getElement(CardCvcElement)) {
+      setError('Veuillez remplir tous les champs de carte');
       return;
     }
 
@@ -144,11 +216,26 @@ const PaymentForm = ({ selectedPlan, onSuccess, onClose }) => {
     setError('');
 
     try {
-      // Create payment method
+      // Create payment method with separate card elements
       console.log('Création de la méthode de paiement...');
+      
+      // Get the card elements
+      const cardNumberElement = elements.getElement(CardNumberElement);
+      const cardExpiryElement = elements.getElement(CardExpiryElement);
+      const cardCvcElement = elements.getElement(CardCvcElement);
+      
+      if (!cardNumberElement || !cardExpiryElement || !cardCvcElement) {
+        setError('Erreur: Impossible de récupérer les éléments de carte');
+        setIsLoading(false);
+        return;
+      }
+      
       const { error: paymentMethodError, paymentMethod } = await stripe.createPaymentMethod({
         type: 'card',
-        card: elements.getElement(CardElement),
+        card: cardNumberElement,
+        billing_details: {
+          name: cardholderName,
+        },
       });
 
       if (paymentMethodError) {
@@ -212,34 +299,104 @@ const PaymentForm = ({ selectedPlan, onSuccess, onClose }) => {
     } else {
       setError('');
     }
+    
+    // Détecter le type de carte
+    if (event.brand) {
+      setCardBrand(event.brand);
+      console.log('💳 Type de carte détecté:', event.brand);
+    }
+  };
+
+  const commonCardElementStyle = {
+    style: {
+      base: {
+        fontSize: '16px',
+        color: '#424770',
+        '::placeholder': {
+          color: '#aab7c4',
+        },
+        padding: '12px',
+        backgroundColor: 'transparent',
+      },
+      invalid: {
+        color: '#9e2146',
+      },
+    },
   };
 
   return (
     <form onSubmit={handleSubmit} className="payment-form">
-      <div className="card-element-container">
-        <CardElement
-          options={{
-            style: {
-              base: {
-                fontSize: '16px',
-                color: '#424770',
-                '::placeholder': {
-                  color: '#aab7c4',
-                },
-              },
-              invalid: {
-                color: '#9e2146',
-              },
-            },
-          }}
-          onChange={handleCardChange}
-        />
+      <div className="payment-fields-container">
+        {/* Nom sur la carte */}
+        <div className="payment-field-group">
+          <label htmlFor="cardholder-name" className="payment-field-label">
+            Nom figurant sur la carte
+          </label>
+          <div className="payment-input-container">
+            <input
+              id="cardholder-name"
+              type="text"
+              value={cardholderName}
+              onChange={(e) => setCardholderName(e.target.value)}
+              placeholder="Nom complet"
+              className="payment-input"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Numéro de carte */}
+        <div className="payment-field-group">
+          <label className="payment-field-label">
+            Numéro de carte
+          </label>
+          <div className="payment-input-container card-number-container">
+            <CardNumberElement
+              options={commonCardElementStyle}
+              onChange={handleCardChange}
+              className="stripe-element"
+            />
+            <div className="card-brand-icon">
+              <CardTypeIcon brand={cardBrand} />
+            </div>
+          </div>
+        </div>
+
+        {/* Date d'expiration et CVC */}
+        <div className="payment-row">
+          <div className="payment-field-group payment-field-half">
+            <label className="payment-field-label">
+              Date d'expiration
+            </label>
+            <div className="payment-input-container">
+              <CardExpiryElement
+                options={commonCardElementStyle}
+                onChange={handleCardChange}
+                className="stripe-element"
+              />
+            </div>
+          </div>
+
+          <div className="payment-field-group payment-field-half">
+            <label className="payment-field-label">
+              Cryptogramme (CVC)
+            </label>
+            <div className="payment-input-container">
+              <CardCvcElement
+                options={commonCardElementStyle}
+                onChange={handleCardChange}
+                className="stripe-element"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <button
         type="submit"
         disabled={!stripe || isLoading}
         className="subscribe-button"
+        onClick={() => console.log('🖱️ Bouton cliqué, stripe:', !!stripe, 'loading:', isLoading)}
       >
         {isLoading ? (
           <div className="loading-spinner"></div>

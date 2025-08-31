@@ -164,6 +164,110 @@
     gap: var(--spacing-xl);
 }
 
+.payment-fields-container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+}
+
+.payment-field-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.payment-field-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gray-700);
+    margin-bottom: var(--spacing-xs);
+}
+
+.payment-input-container {
+    border: 1px solid var(--gray-300);
+    border-radius: var(--border-radius-sm);
+    padding: var(--spacing-md);
+    background-color: var(--gray-50);
+    transition: all 0.2s;
+}
+
+.payment-input-container:focus-within {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+}
+
+.payment-input {
+    width: 100%;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    color: var(--gray-900);
+    padding: 0;
+}
+
+.payment-input::placeholder {
+    color: var(--gray-400);
+}
+
+.payment-row {
+    display: flex;
+    gap: var(--spacing-md);
+}
+
+.payment-field-half {
+    flex: 1;
+}
+
+.stripe-element {
+    width: 100%;
+}
+
+/* Styles pour l'icône de type de carte */
+.card-number-container {
+    position: relative;
+}
+
+.card-brand-icon {
+    position: absolute;
+    right: var(--spacing-md);
+    top: 50%;
+    transform: translateY(-50%);
+    pointer-events: none;
+    z-index: 10;
+}
+
+.card-icon {
+    width: 32px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    background: var(--white);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon.visa {
+    color: #1a1f71;
+}
+
+.card-icon.mastercard {
+    color: #eb001b;
+}
+
+.card-icon.amex {
+    color: #006fcf;
+}
+
+.card-icon.discover {
+    color: #ff6000;
+}
+
+.card-icon-default {
+    color: var(--gray-500);
+}
+
 .card-element-container {
     border: 1px solid var(--gray-300);
     border-radius: var(--border-radius-sm);
@@ -266,6 +370,15 @@
         padding: var(--spacing-xl) var(--spacing-xl);
     }
 
+    .payment-row {
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .payment-field-half {
+        flex: none;
+    }
+
     .error-message,
     .success-message {
         margin: var(--spacing-md) var(--spacing-xl);
@@ -291,5 +404,9 @@
 
     .payment-section {
         padding: var(--spacing-md) var(--spacing-xl);
+    }
+
+    .payment-fields-container {
+        gap: var(--spacing-md);
     }
 }

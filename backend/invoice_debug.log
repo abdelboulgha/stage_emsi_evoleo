@@ -1,3 +1,32 @@
 2025-08-30 20:45:41,361 INFO Database tables created successfully
 2025-08-30 20:45:41,364 INFO Default data inserted successfully
 2025-08-30 20:45:41,364 INFO Database initialization completed successfully
+2025-08-31 12:45:11,003 INFO Database tables created successfully
+2025-08-31 12:45:11,007 INFO Default data inserted successfully
+2025-08-31 12:45:11,007 INFO Database initialization completed successfully
+2025-08-31 12:46:05,516 ERROR Erreur lors de l'inscription: 
+2025-08-31 12:46:13,404 ERROR Erreur lors de l'inscription: 1 validation error for UserResponse
+date_creation
+  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.11/v/datetime_type
+2025-08-31 12:46:16,518 ERROR Erreur lors de l'inscription: 
+2025-08-31 12:46:58,922 ERROR Erreur lors de la connexion: 1 validation error for UserResponse
+date_creation
+  Input should be a valid datetime [type=datetime_type, input_value=None, input_type=NoneType]
+    For further information visit https://errors.pydantic.dev/2.11/v/datetime_type
+2025-08-31 12:55:56,163 INFO Database tables created successfully
+2025-08-31 12:55:56,176 INFO Default data inserted successfully
+2025-08-31 12:55:56,176 INFO Database initialization completed successfully
+2025-08-31 15:10:57,076 ERROR Erreur lors de la sauvegarde pour FoxPro: could not convert string to float: '275,00'
+2025-08-31 15:20:47,123 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-31 15:20:47,127 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-31 15:20:47,127 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-31 15:22:10,996 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-31 15:22:10,998 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-31 15:22:10,998 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-31 15:23:31,569 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-31 15:23:31,570 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-31 15:23:31,571 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-31 15:25:06,960 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-08-31 15:25:06,961 ERROR Erreur fatale lors de la création du fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'
+2025-08-31 15:25:06,961 WARNING Impossible de créer le fichier DBF: [WinError 32] The process cannot access the file because it is being used by another process: 'C:\\Users\\pc\\Desktop\\stage_emsi_2025\\backend\\foxpro\\factures.dbf'

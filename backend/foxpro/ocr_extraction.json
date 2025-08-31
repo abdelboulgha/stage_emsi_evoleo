@@ -1,11 +1,11 @@
 {
   "fields": {
-    "fournisseur": "evoleo",
-    "numeroFacture": "IN2507-0011",
-    "dateFacturation": "2025-07-28",
+    "fournisseur": "capi",
+    "numeroFacture": "Facture IN2411-0001",
+    "dateFacturation": "2024-11-21",
     "tauxTVA": 20.0,
-    "montantHT": 301.29,
-    "montantTVA": 60.26,
-    "montantTTC": 361.55
+    "montantHT": 275.0,
+    "montantTVA": 55.0,
+    "montantTTC": 330.0
   }
 }
