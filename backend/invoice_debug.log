@@ -2089,3 +2089,103 @@ NameError: name 'ht_match' is not defined
 2025-08-24 23:12:52,211 INFO Database tables created successfully
 2025-08-24 23:12:52,257 INFO Default data inserted successfully
 2025-08-24 23:12:52,258 INFO Database initialization complete
+2025-09-02 01:55:19,617 INFO Initializing database...
+2025-09-02 01:55:19,958 INFO Database tables created successfully
+2025-09-02 01:55:20,023 INFO Admin user created
+2025-09-02 01:55:20,038 INFO Default field names inserted
+2025-09-02 01:55:20,049 INFO Default data inserted successfully
+2025-09-02 01:55:20,049 INFO Database initialization complete
+2025-09-02 02:00:33,601 ERROR Error in ocr_preview: cannot identify image file <_io.BytesIO object at 0x00000267BC767AB0>
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 710, in ocr_preview
+    img = Image.open(BytesIO(file_content)).convert('RGB')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\PIL\Image.py", line 3572, in open
+    raise UnidentifiedImageError(msg)
+PIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x00000267BC767AB0>
+
+2025-09-02 02:00:33,616 ERROR Error in ocr_preview: cannot identify image file <_io.BytesIO object at 0x00000267BC767E20>
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 710, in ocr_preview
+    img = Image.open(BytesIO(file_content)).convert('RGB')
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\wadii\anaconda3\envs\gpu\Lib\site-packages\PIL\Image.py", line 3572, in open
+    raise UnidentifiedImageError(msg)
+PIL.UnidentifiedImageError: cannot identify image file <_io.BytesIO object at 0x00000267BC767E20>
+
+2025-09-02 02:00:53,630 INFO Initializing database...
+2025-09-02 02:00:53,698 INFO Database tables created successfully
+2025-09-02 02:00:53,760 INFO Default data inserted successfully
+2025-09-02 02:00:53,761 INFO Database initialization complete
+2025-09-02 02:01:22,971 INFO Initializing database...
+2025-09-02 02:01:23,059 INFO Database tables created successfully
+2025-09-02 02:01:23,152 INFO Default data inserted successfully
+2025-09-02 02:01:23,152 INFO Database initialization complete
+2025-09-02 02:01:47,041 INFO Initializing database...
+2025-09-02 02:01:47,095 INFO Database tables created successfully
+2025-09-02 02:01:47,178 INFO Default data inserted successfully
+2025-09-02 02:01:47,178 INFO Database initialization complete
+2025-09-02 02:13:17,953 INFO Initializing database...
+2025-09-02 02:13:18,019 INFO Database tables created successfully
+2025-09-02 02:13:18,078 INFO Default data inserted successfully
+2025-09-02 02:13:18,079 INFO Database initialization complete
+2025-09-02 02:18:00,399 INFO Initializing database...
+2025-09-02 02:18:00,467 INFO Database tables created successfully
+2025-09-02 02:18:00,522 INFO Default data inserted successfully
+2025-09-02 02:18:00,523 INFO Database initialization complete
+2025-09-02 02:45:05,021 INFO Initializing database...
+2025-09-02 02:45:05,066 INFO Database tables created successfully
+2025-09-02 02:45:05,113 INFO Default data inserted successfully
+2025-09-02 02:45:05,113 INFO Database initialization complete
+2025-09-02 02:48:07,993 INFO Initializing database...
+2025-09-02 02:48:08,084 INFO Database tables created successfully
+2025-09-02 02:48:08,193 INFO Default data inserted successfully
+2025-09-02 02:48:08,194 INFO Database initialization complete
+2025-09-02 02:51:19,677 INFO Initializing database...
+2025-09-02 02:51:19,768 INFO Database tables created successfully
+2025-09-02 02:51:19,886 INFO Default data inserted successfully
+2025-09-02 02:51:19,887 INFO Database initialization complete
+2025-09-02 02:51:46,303 INFO Initializing database...
+2025-09-02 02:51:46,352 INFO Database tables created successfully
+2025-09-02 02:51:46,399 INFO Default data inserted successfully
+2025-09-02 02:51:46,399 INFO Database initialization complete
+2025-09-02 02:54:37,618 INFO Initializing database...
+2025-09-02 02:54:37,668 INFO Database tables created successfully
+2025-09-02 02:54:37,720 INFO Default data inserted successfully
+2025-09-02 02:54:37,721 INFO Database initialization complete
+2025-09-02 02:55:18,553 INFO Initializing database...
+2025-09-02 02:55:18,618 INFO Database tables created successfully
+2025-09-02 02:55:18,692 INFO Default data inserted successfully
+2025-09-02 02:55:18,692 INFO Database initialization complete
+2025-09-02 02:57:17,189 INFO Initializing database...
+2025-09-02 02:57:17,254 INFO Database tables created successfully
+2025-09-02 02:57:17,327 INFO Default data inserted successfully
+2025-09-02 02:57:17,327 INFO Database initialization complete
+2025-09-02 02:59:22,689 ERROR Error in ocr_preview: name 'fournisseur_value' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1633, in ocr_preview
+    "fournisseur": fournisseur_value,
+                   ^^^^^^^^^^^^^^^^^
+NameError: name 'fournisseur_value' is not defined
+
+2025-09-02 02:59:24,878 ERROR Error in ocr_preview: name 'fournisseur_value' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1633, in ocr_preview
+    "fournisseur": fournisseur_value,
+                   ^^^^^^^^^^^^^^^^^
+NameError: name 'fournisseur_value' is not defined
+
+2025-09-02 02:59:27,066 ERROR Error in ocr_preview: name 'fournisseur_value' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1633, in ocr_preview
+    "fournisseur": fournisseur_value,
+                   ^^^^^^^^^^^^^^^^^
+NameError: name 'fournisseur_value' is not defined
+
+2025-09-02 02:59:29,253 ERROR Error in ocr_preview: name 'fournisseur_value' is not defined
+Traceback (most recent call last):
+  File "C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\main.py", line 1633, in ocr_preview
+    "fournisseur": fournisseur_value,
+                   ^^^^^^^^^^^^^^^^^
+NameError: name 'fournisseur_value' is not defined
+
