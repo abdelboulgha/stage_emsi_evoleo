@@ -139,6 +139,7 @@ class Facture(Base):
                         "HT": float(sv.HT) if sv.HT is not None else 0.0,
                         "TVA": float(sv.TVA) if sv.TVA is not None else 0.0,
                         "TTC": float(sv.TTC) if sv.TTC is not None else 0.0,
+                        "taux": int(sv.taux) if sv.taux is not None else 0.0,
                         "facture_id": sv.facture_id,
                       
                     }
@@ -159,6 +160,7 @@ class SousValeurs(Base):
     HT: Mapped[float] = Column(DECIMAL(15, 2), nullable=False)
     TVA: Mapped[float] = Column(DECIMAL(15, 2), nullable=False)
     TTC: Mapped[float] = Column(DECIMAL(15, 2), nullable=False)
+    taux: Mapped[float] = Column(DECIMAL(5, 2), nullable=False)  # TAUX column added
     facture_id: Mapped[int] = Column(Integer, ForeignKey("facture.id", ondelete="CASCADE"), nullable=False)
  
     

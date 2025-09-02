@@ -500,3 +500,141 @@ WHERE utilisateurs.email = %(email_1)s
 2025-08-29 14:14:13,229 INFO Initializing database...
 2025-08-29 14:14:13,282 INFO Database tables created
 2025-08-29 14:14:13,330 INFO Database initialization complete
+2025-09-01 20:08:47,630 INFO Initializing database...
+2025-09-01 20:08:47,813 INFO Database tables created
+2025-09-01 20:08:47,955 INFO Database initialization complete
+2025-09-01 20:13:53,090 INFO Initializing database...
+2025-09-01 20:13:53,140 INFO Database tables created
+2025-09-01 20:13:53,190 INFO Database initialization complete
+2025-09-01 20:17:00,978 INFO Initializing database...
+2025-09-01 20:17:01,034 INFO Database tables created
+2025-09-01 20:17:01,104 INFO Database initialization complete
+2025-09-01 20:23:30,476 INFO Initializing database...
+2025-09-01 20:23:30,524 INFO Database tables created
+2025-09-01 20:23:30,569 INFO Database initialization complete
+2025-09-01 20:26:19,317 INFO Initializing database...
+2025-09-01 20:26:19,472 INFO Database tables created
+2025-09-01 20:26:19,548 INFO Database initialization complete
+2025-09-01 20:29:07,444 INFO Initializing database...
+2025-09-01 20:29:07,495 INFO Database tables created
+2025-09-01 20:29:07,555 INFO Database initialization complete
+2025-09-01 20:30:03,726 INFO Initializing database...
+2025-09-01 20:30:03,772 INFO Database tables created
+2025-09-01 20:30:03,818 INFO Database initialization complete
+2025-09-01 20:30:23,380 ERROR Erreur lors de l'upload: standardize_image_dimensions() missing 2 required positional arguments: 'target_width' and 'target_height'
+2025-09-01 20:30:58,963 INFO Initializing database...
+2025-09-01 20:30:59,018 INFO Database tables created
+2025-09-01 20:30:59,064 INFO Database initialization complete
+2025-09-01 20:31:57,727 INFO Initializing database...
+2025-09-01 20:31:57,790 INFO Database tables created
+2025-09-01 20:31:57,852 INFO Database initialization complete
+2025-09-01 20:34:22,291 ERROR Erreur lors de l'upload: 'float' object cannot be interpreted as an integer
+2025-09-01 20:35:26,034 INFO Initializing database...
+2025-09-01 20:35:26,080 INFO Database tables created
+2025-09-01 20:35:26,123 INFO Database initialization complete
+2025-09-01 20:39:09,983 INFO Initializing database...
+2025-09-01 20:39:10,251 INFO Database tables created
+2025-09-01 20:39:10,292 INFO Admin user created
+2025-09-01 20:39:10,301 INFO Default field names inserted
+2025-09-01 20:39:10,309 INFO Database initialization complete
+2025-09-01 20:58:36,599 ERROR Erreur lors de l'écriture dans le fichier DBF: 'ascii' codec can't encode character '\xb0' in position 20: ordinal not in range(128)
+2025-09-01 20:58:36,618 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-09-01 20:58:36,618 WARNING Impossible de créer le fichier DBF: C:\Users\wadii\Desktop\stage_emsi_evoleo\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-09-01 21:03:11,264 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 21:03:11,298 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 21:03:11,300 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:18:33,965 INFO Initializing database...
+2025-09-01 22:18:34,020 INFO Database tables created
+2025-09-01 22:18:34,060 INFO Database initialization complete
+2025-09-01 22:22:08,080 INFO Initializing database...
+2025-09-01 22:22:08,141 INFO Database tables created
+2025-09-01 22:22:08,194 INFO Database initialization complete
+2025-09-01 22:24:09,843 INFO Initializing database...
+2025-09-01 22:24:10,213 INFO Database tables created
+2025-09-01 22:24:10,282 INFO Admin user created
+2025-09-01 22:24:10,296 INFO Default field names inserted
+2025-09-01 22:24:10,310 INFO Database initialization complete
+2025-09-01 22:26:10,434 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:26:10,468 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:26:10,470 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:26:10,496 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:37:29,375 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:38:16,385 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:38:48,484 INFO Initializing database...
+2025-09-01 22:38:48,534 INFO Database tables created
+2025-09-01 22:38:48,579 INFO Database initialization complete
+2025-09-01 22:39:57,180 INFO Initializing database...
+2025-09-01 22:39:57,264 INFO Database tables created
+2025-09-01 22:39:57,321 INFO Database initialization complete
+2025-09-01 22:40:37,420 INFO Initializing database...
+2025-09-01 22:40:37,489 INFO Database tables created
+2025-09-01 22:40:37,535 INFO Database initialization complete
+2025-09-01 22:41:19,236 INFO Initializing database...
+2025-09-01 22:41:19,286 INFO Database tables created
+2025-09-01 22:41:19,333 INFO Database initialization complete
+2025-09-01 22:43:08,772 INFO Initializing database...
+2025-09-01 22:43:08,855 INFO Database tables created
+2025-09-01 22:43:09,082 INFO Database initialization complete
+2025-09-01 22:43:47,037 INFO Initializing database...
+2025-09-01 22:43:47,086 INFO Database tables created
+2025-09-01 22:43:47,139 INFO Database initialization complete
+2025-09-01 22:48:30,108 INFO Initializing database...
+2025-09-01 22:48:30,163 INFO Database tables created
+2025-09-01 22:48:30,216 INFO Database initialization complete
+2025-09-01 22:49:45,314 WARNING Data truncated for column 'TTC' at row 1
+2025-09-01 22:50:32,509 INFO Initializing database...
+2025-09-01 22:50:32,567 INFO Database tables created
+2025-09-01 22:50:32,619 INFO Database initialization complete
+2025-09-02 00:00:51,785 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:03:58,248 INFO Initializing database...
+2025-09-02 00:03:58,315 INFO Database tables created
+2025-09-02 00:03:58,373 INFO Database initialization complete
+2025-09-02 00:15:07,660 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:21:27,427 INFO Initializing database...
+2025-09-02 00:21:27,482 INFO Database tables created
+2025-09-02 00:21:27,531 INFO Database initialization complete
+2025-09-02 00:22:45,626 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:34:38,814 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:36:14,932 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:36:54,177 INFO Initializing database...
+2025-09-02 00:36:54,228 INFO Database tables created
+2025-09-02 00:36:54,273 INFO Database initialization complete
+2025-09-02 00:38:04,873 INFO Initializing database...
+2025-09-02 00:38:04,917 INFO Database tables created
+2025-09-02 00:38:04,962 INFO Database initialization complete
+2025-09-02 00:38:30,371 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:40:17,299 INFO Initializing database...
+2025-09-02 00:40:17,389 INFO Database tables created
+2025-09-02 00:40:17,460 INFO Database initialization complete
+2025-09-02 00:41:16,091 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:41:42,103 INFO Initializing database...
+2025-09-02 00:41:42,192 INFO Database tables created
+2025-09-02 00:41:42,255 INFO Database initialization complete
+2025-09-02 00:45:59,558 INFO Initializing database...
+2025-09-02 00:45:59,642 INFO Database tables created
+2025-09-02 00:45:59,693 INFO Database initialization complete
+2025-09-02 00:47:14,701 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:49:11,928 INFO Initializing database...
+2025-09-02 00:49:11,973 INFO Database tables created
+2025-09-02 00:49:12,017 INFO Database initialization complete
+2025-09-02 00:51:51,655 INFO Initializing database...
+2025-09-02 00:51:51,702 INFO Database tables created
+2025-09-02 00:51:51,762 INFO Database initialization complete
+2025-09-02 00:52:29,969 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:52:29,988 ERROR Error creating invoice: Object of type SousValeurs is not JSON serializable
+2025-09-02 00:53:48,967 INFO Initializing database...
+2025-09-02 00:53:49,023 INFO Database tables created
+2025-09-02 00:53:49,066 INFO Database initialization complete
+2025-09-02 00:54:11,710 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 00:54:11,734 ERROR Error creating invoice: 'list' object has no attribute 'taux'
+2025-09-02 00:56:36,388 INFO Initializing database...
+2025-09-02 00:56:36,434 INFO Database tables created
+2025-09-02 00:56:36,477 INFO Database initialization complete
+2025-09-02 00:57:01,613 INFO Initializing database...
+2025-09-02 00:57:01,660 INFO Database tables created
+2025-09-02 00:57:01,706 INFO Database initialization complete
+2025-09-02 00:57:37,722 INFO Initializing database...
+2025-09-02 00:57:37,779 INFO Database tables created
+2025-09-02 00:57:37,832 INFO Database initialization complete
+2025-09-02 00:58:04,201 WARNING Data truncated for column 'TTC' at row 1
+2025-09-02 01:24:56,860 WARNING Data truncated for column 'TTC' at row 1

@@ -69,6 +69,7 @@ class FactureService:
                                 'HT': float(sv_data.get('HT', 0)),
                                 'TVA': float(sv_data.get('TVA', 0)),
                                 'TTC': float(sv_data.get('TTC', 0)),
+                                'taux': float(sv_data.get('taux', 0)),
                                 'facture_id': facture.id
                             }
                           

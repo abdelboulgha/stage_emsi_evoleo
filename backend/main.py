@@ -1,6 +1,5 @@
 from database.models import SousValeurs
 from sqlalchemy.future import select
-# Endpoint to fetch sous_valeurs for a given facture_id
 from fastapi import Query
 # Standard library imports
 import base64
@@ -85,6 +84,9 @@ ocr = PaddleOCR(
 
 )
 
+# Add a single variable for PDF rendering scale
+PDF_RENDER_SCALE =2   # Change this value to affect all PDF image renderings
+
 # =======================
 # Pydantic Models
 # =======================
@@ -127,6 +129,7 @@ class SousValeurCreate(BaseModel):
     HT: float
     TVA: float
     TTC: float
+    taux: int
 
 class InvoiceUpdate(BaseModel):
     """Model for updating invoice data"""
@@ -169,7 +172,7 @@ def image_to_base64(img: Image.Image) -> str:
     return f"data:image/png;base64,{img_str}"
 
 
-def standardize_image_dimensions(img: Image.Image, target_width: int = 1191, target_height: int = 1684) -> Image.Image:
+def standardize_image_dimensions(img: Image.Image, target_width: int= 595*PDF_RENDER_SCALE, target_height: int=842*PDF_RENDER_SCALE) -> Image.Image:
     """
     Resize image to target dimensions while maintaining aspect ratio.
     Adds padding if necessary to match target dimensions exactly.
@@ -199,8 +202,7 @@ def standardize_image_dimensions(img: Image.Image, target_width: int = 1191, tar
     
     return result
 
-# Add a single variable for PDF rendering scale
-PDF_RENDER_SCALE = 2  # Change this value to affect all PDF image renderings
+
 
 # Database connection function (for backward compatibility)
 def get_connection():
@@ -274,7 +276,7 @@ def process_pdf_to_images(file_content: bytes) -> List[Image.Image]:
 async def upload_for_dataprep(
     file: UploadFile = File(...),
     page_index: int = Form(0),  
-    current_user = Depends(require_comptable_or_admin)
+   
 ):
     """Upload d'un fichier pour DataPrep, retour de l'image en base64, des boîtes OCR détectées, et l'image unwarped si disponible pour la page spécifiée"""
     try:
@@ -297,11 +299,15 @@ async def upload_for_dataprep(
             pix = page.get_pixmap(matrix=fitz.Matrix(PDF_RENDER_SCALE, PDF_RENDER_SCALE))  # Increase resolution
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             pdf_document.close()
+            # Standardize the image dimensions
+            img = standardize_image_dimensions(img)
             images = [img]
         elif file.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
             if page_index != 0:
                 raise HTTPException(status_code=400, detail="L'index de page n'est valide que pour les fichiers PDF")
             img = Image.open(BytesIO(file_content)).convert('RGB')
+            # Standardize the image dimensions
+            img = standardize_image_dimensions(img)
             images = [img]
         else:
             raise HTTPException(status_code=400, detail="Type de fichier non supporté")
@@ -1314,8 +1320,22 @@ async def ajouter_facture(
         }
         
         result = await facture_service.create_facture(facture_data, current_user["id"])
-        
         if result["success"]:
+            # Fetch sous_valeurs for the created facture and include taux
+            facture_id = result["facture"]["id"]
+            sous_valeurs_result = await db.execute(select(SousValeurs).where(SousValeurs.facture_id == facture_id))
+            sous_valeurs = sous_valeurs_result.scalars().all()
+         
+            result["facture"]["sous_valeurs"] = [
+                {
+                    "HT": sv.HT,
+                    "TVA": sv.TVA,
+                    "TTC": sv.TTC,
+                    "taux": sv.taux,
+                    "id": sv.id,
+                    "facture_id": sv.facture_id
+                } for sv in sous_valeurs
+            ]
             return InvoiceResponse(
                 success=True,
                 message="Facture enregistrée avec succès",
@@ -1337,7 +1357,7 @@ async def ajouter_facture(
 @app.get("/sous_valeurs")
 async def get_sous_valeurs(facture_id: int = Query(...), db=Depends(get_async_db)):
     """
-    Get sous valeurs (HT, TVA, TTC) for a given facture_id
+    Get sous valeurs (HT, TVA, TTC, TAUX) for a given facture_id
     """
     try:
         result = await db.execute(select(SousValeurs).where(SousValeurs.facture_id == facture_id))
@@ -1348,6 +1368,7 @@ async def get_sous_valeurs(facture_id: int = Query(...), db=Depends(get_async_db
                 "HT": sv.HT,
                 "TVA": sv.TVA,
                 "TTC": sv.TTC,
+                "taux": sv.taux,
                 "id": sv.id,
                 "facture_id": sv.facture_id
             } for sv in sous_valeurs

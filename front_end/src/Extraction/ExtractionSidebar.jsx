@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Search, Loader2, Save, Database, ChevronDown } from "lucide-react";
+import { Search, Loader2, Save, Database } from "lucide-react";
 import { useExtraction } from "../hooks/useExtraction";
 
 const ExtractionSidebar = ({
@@ -18,10 +18,8 @@ const ExtractionSidebar = ({
   const { saveAllCorrectedDataAndLaunchFoxPro } = useExtraction(extractionState, setExtractionState, showNotification);
   const [zoneHtOptions, setZoneHtOptions] = useState([]);
   const [zoneTvaOptions, setZoneTvaOptions] = useState([]);
-  const [zoneTtcOptions, setZoneTtcOptions] = useState([]);
-  const [selectedZoneHt, setSelectedZoneHt] = useState("");
-  const [selectedZoneTva, setSelectedZoneTva] = useState("");
-  const [selectedZoneTtc, setSelectedZoneTtc] = useState("");
+  const [zoneTableRows, setZoneTableRows] = useState([]);
+  const [showZoneTable, setShowZoneTable] = useState(false);
 
   // Clean zone data by removing unnecessary fields
   const cleanZoneData = (boxes) => {
@@ -38,34 +36,32 @@ const ExtractionSidebar = ({
     })).filter(Boolean);
   };
 
-  // Get current image's zone data
-  const currentImageData = extractionState.extractedDataList[extractionState.currentPdfIndex] || {};
-  const currentZoneHtOptions = currentImageData.zoneHtBoxes || [];
-  const currentZoneTvaOptions = currentImageData.zoneTvaBoxes || [];
-  const currentSelectedZoneHt = currentImageData.selectedZoneHt || '';
-  const currentSelectedZoneTva = currentImageData.selectedZoneTva || '';
+  // Current image data is accessed directly in the effects
 
-  // Calculate TTC values when HT or TVA options change
+  // Calculate Taux and TTC values when HT or TVA options change
   useEffect(() => {
+    // Build table rows for zone values
     if (zoneHtOptions.length > 0 && zoneTvaOptions.length > 0) {
-      const ttcOptions = [];
+      const rows = [];
       const maxLength = Math.min(zoneHtOptions.length, zoneTvaOptions.length);
-      
       for (let i = 0; i < maxLength; i++) {
         const htValue = parseFloat(zoneHtOptions[i].text.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
         const tvaValue = parseFloat(zoneTvaOptions[i].text.replace(/[^0-9,.]/g, '').replace(',', '.')) || 0;
+        let tauxValue = 0;
+        if (htValue > 0) {
+          tauxValue = Math.round((tvaValue * 100) / htValue);
+        }
         const ttcValue = htValue + tvaValue;
-        
-        ttcOptions.push({
-          ...zoneHtOptions[i],
-          text: ttcValue.toFixed(2).toString().replace('.', ',')
+        rows.push({
+          ht: zoneHtOptions[i].text,
+          taux: `${tauxValue} %`,
+          tva: zoneTvaOptions[i].text,
+          ttc: ttcValue.toFixed(2).toString().replace('.', ',')
         });
       }
-      
-      setZoneTtcOptions(ttcOptions);
+      setZoneTableRows(rows);
     } else {
-      setZoneTtcOptions([]);
-      setSelectedZoneTtc('');
+      setZoneTableRows([]);
     }
   }, [zoneHtOptions, zoneTvaOptions]);
   
@@ -75,16 +71,9 @@ const ExtractionSidebar = ({
       const currentData = extractionState.extractedDataList[extractionState.currentPdfIndex];
       setZoneHtOptions(currentData.zoneHtBoxes || []);
       setZoneTvaOptions(currentData.zoneTvaBoxes || []);
-      setSelectedZoneHt(currentData.selectedZoneHt || '');
-      setSelectedZoneTva(currentData.selectedZoneTva || '');
-      setSelectedZoneTtc(currentData.selectedZoneTtc || '');
     } else {
       setZoneHtOptions([]);
       setZoneTvaOptions([]);
-      setZoneTtcOptions([]);
-      setSelectedZoneHt('');
-      setSelectedZoneTva('');
-      setSelectedZoneTtc('');
     }
   }, [extractionState.currentPdfIndex, extractionState.extractedDataList]);
 
@@ -119,6 +108,7 @@ const ExtractionSidebar = ({
           // Keep existing selections if they exist
           selectedZoneHt: newExtractedDataList[currentIndex]?.selectedZoneHt || '',
           selectedZoneTva: newExtractedDataList[currentIndex]?.selectedZoneTva || '',
+          selectedZoneTaux: newExtractedDataList[currentIndex]?.selectedZoneTaux || '',
           selectedZoneTtc: newExtractedDataList[currentIndex]?.selectedZoneTtc || ''
         };
 
@@ -134,21 +124,12 @@ const ExtractionSidebar = ({
   
   // Log current state for debugging
   useEffect(() => {
-  // console.log('Current zone state:', {
-  //   currentPdfIndex: extractionState.currentPdfIndex,
-  //   extractedDataList: extractionState.extractedDataList.map((item, idx) => ({
-  //     index: idx,
-  //     hasHtBoxes: item.zoneHtBoxes?.length > 0,
-  //     hasTvaBoxes: item.zoneTvaBoxes?.length > 0,
-  //     hasTtcBoxes: zoneTtcOptions?.length > 0,
-  //     selectedHt: item.selectedZoneHt,
-  //     selectedTva: item.selectedZoneTva,
-  //     selectedTtc: item.selectedZoneTtc
-  //   })),
-  //   extractionResult: extractionState.extractionResult ? 'Has extraction result' : 'No extraction result',
-  //   ttcOptions: zoneTtcOptions
-  // });
-  }, [extractionState.currentPdfIndex, extractionState.extractedDataList, extractionState.extractionResult, zoneTtcOptions]);
+    // console.log('Current zone state:', {
+    //   currentPdfIndex: extractionState.currentPdfIndex,
+    //   extractedDataList: extractionState.extractedDataList,
+    //   extractionResult: extractionState.extractionResult ? 'Has extraction result' : 'No extraction result',
+    // });
+  }, [extractionState.currentPdfIndex, extractionState.extractedDataList, extractionState.extractionResult, setExtractionState]);
 
   return (
     <div className="extraction-sidebar">
@@ -221,132 +202,52 @@ const ExtractionSidebar = ({
             );
           })}
           
-          {/* Zone HT Dropdown - For viewing detected values only */}
-          {/* console.log('Rendering HT dropdown with options:', zoneHtOptions) */}
-          {zoneHtOptions && zoneHtOptions.length > 0 && (
+          {/* Toggleable Zone Table for HT, Taux, TVA, TTC */}
+          {zoneTableRows.length > 0 && (
             <div className="extraction-field-item">
-              <label className="extraction-field-label">Zone HT (Valeurs détectées)</label>
-              <div className="relative">
-                <select
-                  value={selectedZoneHt}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    setSelectedZoneHt(newValue);
-                    
-                    // Update the selection in the extracted data list
-                    setExtractionState(prev => {
-                      const newExtractedDataList = [...prev.extractedDataList];
-                      const currentIndex = prev.currentPdfIndex;
-                      
-                      if (newExtractedDataList[currentIndex]) {
-                        newExtractedDataList[currentIndex] = {
-                          ...newExtractedDataList[currentIndex],
-                          selectedZoneHt: newValue
-                        };
-                      }
-                      
-                      return {
-                        ...prev,
-                        extractedDataList: newExtractedDataList
-                      };
-                    });
-                  }}
-                  className="extraction-select-field w-full p-2 border rounded-md bg-gray-100 text-gray-600"
-                >
-                  <option value="">Cliquez pour voir les valeur HT</option>
-                  {zoneHtOptions.map((option, idx) => (
-                    <option key={`ht-${idx}`} value={option.text}>
-                      {option.text} 
-                    </option>
-                  ))}
-                </select>
-               
-              </div>
-            </div>
-          )}
-          
-          {/* Zone TVA Dropdown - For viewing detected values only */}
-          {/* console.log('Rendering TVA dropdown with options:', zoneTvaOptions) */}
-          {zoneTvaOptions && zoneTvaOptions.length > 0 && (
-            <div className="extraction-field-item">
-              <label className="extraction-field-label">Zone TVA (Valeurs détectées)</label>
-              <div className="relative">
-                <select
-                  value={selectedZoneTva}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    setSelectedZoneTva(newValue);
-                    
-                    // Update the selection in the extracted data list
-                    setExtractionState(prev => {
-                      const newExtractedDataList = [...prev.extractedDataList];
-                      const currentIndex = prev.currentPdfIndex;
-                      
-                      if (newExtractedDataList[currentIndex]) {
-                        newExtractedDataList[currentIndex] = {
-                          ...newExtractedDataList[currentIndex],
-                          selectedZoneTva: newValue
-                        };
-                      }
-                      
-                      return {
-                        ...prev,
-                        extractedDataList: newExtractedDataList
-                      };
-                    });
-                  }}
-                  className="extraction-select-field w-full p-2 border rounded-md bg-gray-100 text-gray-600"
-                >
-                  <option value="">Cliquez pour voir les valeurs TVA</option>
-                  {zoneTvaOptions.map((option, idx) => (
-                    <option key={`tva-${idx}`} value={option.text}>
-                      {option.text} 
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          )}
-          
-          {/* Zone TTC Dropdown - Calculated values (HT + TVA) */}
-          {zoneTtcOptions && zoneTtcOptions.length > 0 && (
-            <div className="extraction-field-item">
-              <label className="extraction-field-label">Zone TTC (Valeurs calculées)</label>
-              <div className="relative">
-                <select
-                  value={selectedZoneTtc}
-                  onChange={(e) => {
-                    const newValue = e.target.value;
-                    setSelectedZoneTtc(newValue);
-                    
-                    // Update the selection in the extracted data list
-                    setExtractionState(prev => {
-                      const newExtractedDataList = [...prev.extractedDataList];
-                      const currentIndex = prev.currentPdfIndex;
-                      
-                      if (newExtractedDataList[currentIndex]) {
-                        newExtractedDataList[currentIndex] = {
-                          ...newExtractedDataList[currentIndex],
-                          selectedZoneTtc: newValue
-                        };
-                      }
-                      
-                      return {
-                        ...prev,
-                        extractedDataList: newExtractedDataList
-                      };
-                    });
-                  }}
-                  className="extraction-select-field w-full p-2 border rounded-md bg-gray-100 text-gray-600"
-                >
-                  <option value="">Valeurs TTC (HT + TVA)</option>
-                  {zoneTtcOptions.map((option, idx) => (
-                    <option key={`ttc-${idx}`} value={option.text}>
-                      {option.text} 
-                    </option>
-                  ))}
-                </select>
-              </div>
+              <button
+                className="extraction-zone-table-toggle"
+                onClick={() => setShowZoneTable((prev) => !prev)}
+              >
+                {showZoneTable ? "Masquer les valeurs détectées" : "Afficher les valeurs détectées (HT, Taux, TVA, TTC)"}
+              </button>
+              {showZoneTable && (
+                <div className="extraction-zone-table-wrapper" style={{ marginTop: '12px', overflowX: 'auto' }}>
+                  <table
+                    className="extraction-zone-table"
+                    style={{
+                      width: '100%',
+                      borderCollapse: 'collapse',
+                      background: '#fff',
+                      boxShadow: '0 2px 8px rgba(0,0,0,0.05)',
+                      borderRadius: '8px',
+                      fontSize: '1rem',
+                    }}
+                  >
+                    <thead>
+                      <tr style={{ background: '#f3f4f6' }}>
+                        <th style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 600 }}>HT</th>
+                        <th style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 600 }}>Taux</th>
+                        <th style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 600 }}>TVA</th>
+                        <th style={{ border: '1px solid #e5e7eb', padding: '8px', fontWeight: 600 }}>TTC</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {zoneTableRows.map((row, idx) => (
+                        <tr
+                          key={idx}
+                          style={{ background: idx % 2 === 0 ? '#fafafa' : '#fff', transition: 'background 0.2s' }}
+                        >
+                          <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center' }}>{row.ht}</td>
+                          <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center' }}>{row.taux}</td>
+                          <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center' }}>{row.tva}</td>
+                          <td style={{ border: '1px solid #e5e7eb', padding: '8px', textAlign: 'center' }}>{row.ttc}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
             </div>
           )}
           

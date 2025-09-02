@@ -42,7 +42,7 @@ const FIELDS = [
 const MiseAJourPage = () => {
   // Sous valeurs state (array of objects)
   const [sousValeurs, setSousValeurs] = useState([]);
-  const [showSousHT, setShowSousHT] = useState(false);
+  const [showSousHT, setShowSousHT] = useState(true); // default to toggled
   const [showSousTVA, setShowSousTVA] = useState(false);
   const [showSousTTC, setShowSousTTC] = useState(false);
   const [factures, setFactures] = useState([]);
@@ -238,9 +238,10 @@ const MiseAJourPage = () => {
           id: val.id,
           HT: val.HT,
           TVA: val.TVA,
-          TTC: val.TTC
+          TTC: val.TTC,
+          taux: val.taux
         })));
-        setShowSousHT(false);
+        setShowSousHT(true);
       });
   };
 
@@ -274,7 +275,8 @@ const MiseAJourPage = () => {
         id: val.id,
         HT: parseFloat(val.HT) || 0,
         TVA: parseFloat(val.TVA) || 0,
-        TTC: parseFloat(val.TTC) || 0
+        TTC: parseFloat(val.TTC) || 0,
+        taux: parseInt(val.taux) || 0
       }));
       const body = convertNumericFields({
         ...editing,
@@ -490,7 +492,7 @@ const MiseAJourPage = () => {
       {/* Edit Modal */}
       {isModalOpen && editing && (
         <div className="miseajour-modal-overlay">
-          <div className="miseajour-modal">
+          <div className="miseajour-modal" style={{ maxHeight: '80vh', overflowY: 'auto' }}>
             <div className="miseajour-modal-header">
               <h3 className="miseajour-modal-title">Modifier la facture</h3>
               <button 
@@ -533,93 +535,87 @@ const MiseAJourPage = () => {
                     )}
                   </div>
                 ))}
-                {/* Sous HT toggleable list */}
+                {/* Sous valeurs editable table (togglable, default visible) */}
                 <div className="miseajour-modal-field">
                   <div className="miseajour-modal-label-row">
-                    <label className="miseajour-modal-label">Sous HT</label>
+                    <label className="miseajour-modal-label">Sous valeurs</label>
                     <button type="button" className="miseajour-modal-toggle" onClick={() => setShowSousHT(v => !v)}>
                       {showSousHT ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </button>
                   </div>
                   {showSousHT && (
-                    <ul className="miseajour-modal-list">
-                      {sousValeurs.length === 0 ? (
-                        <li className="miseajour-modal-list-empty">Aucune valeur</li>
-                      ) : sousValeurs.map((valObj, idx) => (
-                        <li key={valObj.id ?? idx} className="miseajour-modal-list-item">
-                          <input
-                            type="number"
-                            value={valObj.HT}
-                            onChange={e => {
-                              const newVal = e.target.value;
-                              setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, HT: newVal } : v));
-                            }}
-                            className="miseajour-modal-input sousvaleurs-input"
-                            placeholder="HT"
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                {/* Sous TVA toggleable list */}
-                <div className="miseajour-modal-field">
-                  <div className="miseajour-modal-label-row">
-                    <label className="miseajour-modal-label">Sous TVA</label>
-                    <button type="button" className="miseajour-modal-toggle" onClick={() => setShowSousTVA(v => !v)}>
-                      {showSousTVA ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    </button>
-                  </div>
-                  {showSousTVA && (
-                    <ul className="miseajour-modal-list">
-                      {sousValeurs.length === 0 ? (
-                        <li className="miseajour-modal-list-empty">Aucune valeur</li>
-                      ) : sousValeurs.map((valObj, idx) => (
-                        <li key={valObj.id ?? idx} className="miseajour-modal-list-item">
-                          <input
-                            type="number"
-                            value={valObj.TVA}
-                            onChange={e => {
-                              const newVal = e.target.value;
-                              setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, TVA: newVal } : v));
-                            }}
-                            className="miseajour-modal-input sousvaleurs-input"
-                            placeholder="TVA"
-                          />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </div>
-
-                {/* Sous TTC toggleable list */}
-                <div className="miseajour-modal-field">
-                  <div className="miseajour-modal-label-row">
-                    <label className="miseajour-modal-label">Sous TTC</label>
-                    <button type="button" className="miseajour-modal-toggle" onClick={() => setShowSousTTC(v => !v)}>
-                      {showSousTTC ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    </button>
-                  </div>
-                  {showSousTTC && (
-                    <ul className="miseajour-modal-list">
-                      {sousValeurs.length === 0 ? (
-                        <li className="miseajour-modal-list-empty">Aucune valeur</li>
-                      ) : sousValeurs.map((valObj, idx) => (
-                        <li key={valObj.id ?? idx} className="miseajour-modal-list-item">
-                          <input
-                            type="number"
-                            value={valObj.TTC}
-                            onChange={e => {
-                              const newVal = e.target.value;
-                              setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, TTC: newVal } : v));
-                            }}
-                            className="miseajour-modal-input sousvaleurs-input"
-                            placeholder="TTC"
-                          />
-                        </li>
-                      ))}
-                    </ul>
+                    <div style={{ marginTop: '8px' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', borderRadius: '6px', fontSize: '1.05rem', boxShadow: '0 1px 4px rgba(0,0,0,0.04)' }}>
+                        <thead>
+                          <tr style={{ background: '#f3f4f6' }}>
+                            <th style={{ border: '1px solid #e5e7eb', padding: '10px', fontWeight: 600, minWidth: '110px' }}>HT</th>
+                            <th style={{ border: '1px solid #e5e7eb', padding: '10px', fontWeight: 600, minWidth: '110px' }}>Taux</th>
+                            <th style={{ border: '1px solid #e5e7eb', padding: '10px', fontWeight: 600, minWidth: '110px' }}>TVA</th>
+                            <th style={{ border: '1px solid #e5e7eb', padding: '10px', fontWeight: 600, minWidth: '110px' }}>TTC</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {sousValeurs.length === 0 ? (
+                            <tr><td colSpan={3} style={{ textAlign: 'center', padding: '14px', color: '#888' }}>Aucune valeur</td></tr>
+                          ) : sousValeurs.map((valObj, idx) => (
+                            <tr key={valObj.id ?? idx} style={{ background: idx % 2 === 0 ? '#fafafa' : '#fff' }}>
+                              <td style={{ border: '1px solid #e5e7eb', padding: '10px' }}>
+                                <input
+                                  type="number"
+                                  value={valObj.HT}
+                                  onChange={e => {
+                                    const newVal = e.target.value;
+                                    setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, HT: newVal } : v));
+                                  }}
+                                  className="miseajour-modal-input sousvaleurs-input"
+                                  placeholder="HT"
+                                  style={{ width: '100px' }}
+                                />
+                              </td>
+                                   <td style={{ border: '1px solid #e5e7eb', padding: '10px' }}>
+                                <input
+                                  type="number"
+                                  value={valObj.taux}
+                                  onChange={e => {
+                                    const newVal = e.target.value;
+                                    setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, taux: newVal } : v));
+                                  }}
+                                  className="miseajour-modal-input sousvaleurs-input"
+                                  placeholder="Taux"
+                                  style={{ width: '100px' }}
+                                />
+                              </td>
+                              <td style={{ border: '1px solid #e5e7eb', padding: '10px' }}>
+                                <input
+                                  type="number"
+                                  value={valObj.TVA}
+                                  onChange={e => {
+                                    const newVal = e.target.value;
+                                    setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, TVA: newVal } : v));
+                                  }}
+                                  className="miseajour-modal-input sousvaleurs-input"
+                                  placeholder="TVA"
+                                  style={{ width: '100px' }}
+                                />
+                              </td>
+                              <td style={{ border: '1px solid #e5e7eb', padding: '10px' }}>
+                                <input
+                                  type="number"
+                                  value={valObj.TTC}
+                                  onChange={e => {
+                                    const newVal = e.target.value;
+                                    setSousValeurs(prev => prev.map((v, i) => i === idx ? { ...v, TTC: newVal } : v));
+                                  }}
+                                  className="miseajour-modal-input sousvaleurs-input"
+                                  placeholder="TTC"
+                                  style={{ width: '100px' }}
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
                   )}
                 </div>
               </div>

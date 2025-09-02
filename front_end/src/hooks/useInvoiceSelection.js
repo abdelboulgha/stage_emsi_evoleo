@@ -37,11 +37,15 @@ export const useInvoiceSelection = (extractionState, setExtractionState, invoice
             const ht = zoneHtValues[i] || 0;
             const tva = zoneTvaValues[i] || 0;
             const ttc = ht + tva;
-            
+            let taux = 0;
+            if (ht > 0) {
+              taux = Math.round((tva * 100) / ht);
+            }
             sousValeurs.push({
               HT: ht,
               TVA: tva,
-              TTC: ttc
+              TTC: ttc,
+              taux: taux
             });
           }
           

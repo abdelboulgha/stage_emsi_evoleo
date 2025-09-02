@@ -1,7 +1,7 @@
-Date export: 2025-08-19 02:10:34
-Fournisseur: capi
-Numéro Facture: Facture IN8411-0501
-Taux TVA: 4
-Montant HT: 7275
-Montant TVA: 255
-Montant TTC: 7530
+Date export: 2025-09-01 20:58:36
+Fournisseur: radeema
+Numéro Facture: FACTUREELECTRICITE N°2025206481682
+Taux TVA: 18
+Montant HT: 238.18
+Montant TVA: 42.75
+Montant TTC: 280.93
