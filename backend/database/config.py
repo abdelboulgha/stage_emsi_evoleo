@@ -70,7 +70,7 @@ def get_sync_db():
         db.close()
 
 
-# --- Init database ---
+
 def init_database():
     """Initialize database tables and default data (sync)"""
     from .init_db import init_database as init_db_func
