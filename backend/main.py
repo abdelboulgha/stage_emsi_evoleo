@@ -37,7 +37,7 @@ from auth.auth_jwt import require_comptable_or_admin
 from auth.auth_config import CORS_ORIGINS, CORS_ALLOW_CREDENTIALS
 
 # Load environment variables
-if os.getenv("ENV") != "production":
+if os.getenv("RAILWAY_ENVIRONMENT") is None:  
     load_dotenv()
 
 # =======================

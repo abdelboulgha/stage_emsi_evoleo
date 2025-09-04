@@ -5,8 +5,11 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
-if os.getenv("ENV") != "production":
-    load_dotenv()
+db_url = os.getenv("DATABASE_URL")
+print(f"DEBUG: DATABASE_URL at startup = {db_url}")
+
+if not db_url:
+    raise ValueError("❌ DATABASE_URL is not set in environment variables")
 
 
 RAW_DATABASE_URL = os.getenv("DATABASE_URL")
