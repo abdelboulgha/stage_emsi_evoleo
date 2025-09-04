@@ -53,7 +53,7 @@ metadata = MetaData()
 async def get_async_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         try:
-            yield sessionqq
+            yield session
         finally:
             await session.close()
 
