@@ -64,7 +64,7 @@ def get_sync_db():
         yield db
     finally:
         db.close()
-fr
+
 
 def init_database():
     """Initialize database tables and default data (sync)"""
