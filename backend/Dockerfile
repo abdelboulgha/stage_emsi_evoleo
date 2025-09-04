@@ -15,15 +15,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libtiff6 \
     && rm -rf /var/lib/apt/lists/*
 
+# Set working dir inside container
 WORKDIR /app
-COPY ./backend /app
 
 # Install Python deps first (better layer caching)
 COPY ./backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the rest of the app
-COPY . .
+# Copy the backend source code
+COPY ./backend /app
 
 # For Railway/Render/etc. they set $PORT; fall back to 8000 locally
 EXPOSE 8000
