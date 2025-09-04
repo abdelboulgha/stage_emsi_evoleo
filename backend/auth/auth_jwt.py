@@ -8,7 +8,6 @@ from .auth_config import (
 )
 from .auth_models import TokenData
 from .auth_database import get_user_by_email
-import logging
 
 # --- Token utils ---
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
@@ -26,23 +25,24 @@ def verify_token(token: str) -> Optional[TokenData]:
             return None
         return TokenData(email=email, role=role)
     except JWTError as e:
-        logging.error(f"Erreur de décodage JWT: {e}")
+        print("🔴 Erreur de décodage JWT:", e)
         return None
 
 # --- Cookie handling ---
-COOKIE_NAME = "access_token"
+COOKIE_NAME = "auth_token"   # 👈 unified name
 
 def set_auth_cookie(response: Response, token: str, expire_minutes: int):
+    print("🟢 Setting cookie with token:", token[:30], "...")
     response.set_cookie(
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        secure=COOKIE_SECURE,   # True in production with HTTPS
-        samesite=COOKIE_SAMESITE,
+        secure=True,          # Railway = HTTPS
+        samesite="none",      # Required for cross-origin
         max_age=expire_minutes * 60,
         expires=expire_minutes * 60,
-        path=COOKIE_PATH,
-        domain=COOKIE_DOMAIN
+        path="/",
+        domain=COOKIE_DOMAIN if COOKIE_DOMAIN else None
     )
 
 def clear_auth_cookie(response: Response):
@@ -54,11 +54,9 @@ def clear_auth_cookie(response: Response):
 
 # --- User resolution ---
 def get_current_user(request: Request):
-    # Check cookies received
     print("🟡 Cookies reçus:", request.cookies)
 
-    # Extract token
-    token = request.cookies.get("access_token")
+    token = request.cookies.get(COOKIE_NAME)
     print("🟡 Token trouvé dans cookie:", token)
 
     if not token:
@@ -68,7 +66,6 @@ def get_current_user(request: Request):
             detail="Token d'authentification manquant"
         )
 
-    # Decode token
     token_data = verify_token(token)
     print("🟡 Token décodé:", token_data)
 
@@ -79,7 +76,6 @@ def get_current_user(request: Request):
             detail="Token invalide ou expiré"
         )
 
-    # Fetch user
     user = get_user_by_email(email=token_data.email)
     print("🟡 Utilisateur trouvé dans DB:", user)
 
