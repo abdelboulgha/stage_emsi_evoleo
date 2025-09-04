@@ -12,13 +12,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libjpeg62-turbo \
     libpng16-16 \
-    libtiff5 \
+    libtiff6 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Install Python deps first (better layer caching)
-COPY requirements.txt ./
+COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy the rest of the app
