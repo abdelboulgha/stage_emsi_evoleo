@@ -54,33 +54,50 @@ def clear_auth_cookie(response: Response):
 
 # --- User resolution ---
 def get_current_user(request: Request):
-    token = request.cookies.get(COOKIE_NAME)
+    # Check cookies received
+    print("🟡 Cookies reçus:", request.cookies)
+
+    # Extract token
+    token = request.cookies.get("access_token")
+    print("🟡 Token trouvé dans cookie:", token)
+
     if not token:
+        print("🔴 Aucun token trouvé dans les cookies")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token d'authentification manquant"
         )
 
+    # Decode token
     token_data = verify_token(token)
+    print("🟡 Token décodé:", token_data)
+
     if token_data is None:
+        print("🔴 Token invalide ou expiré")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token invalide ou expiré"
         )
 
+    # Fetch user
     user = get_user_by_email(email=token_data.email)
+    print("🟡 Utilisateur trouvé dans DB:", user)
+
     if user is None:
+        print("🔴 Aucun utilisateur trouvé avec cet email")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Utilisateur non trouvé"
         )
 
     if not user["actif"]:
+        print("🔴 Utilisateur désactivé")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Compte désactivé"
         )
 
+    print("✅ Utilisateur validé:", user["email"])
     return user
 
 def get_current_active_user(current_user=Depends(get_current_user)):
