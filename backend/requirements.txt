@@ -11,7 +11,7 @@ email-validator>=2.1.0
 sqlalchemy>=2.0.0
 alembic>=1.13.0
 asyncmy>=0.2.8
-
+pymysql
 # Legacy database support (for FoxPro)
 dbf>=0.99.3
 
