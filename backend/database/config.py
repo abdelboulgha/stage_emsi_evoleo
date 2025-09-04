@@ -5,7 +5,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sess
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
-load_dotenv()
+if os.getenv("ENV") != "production":
+    load_dotenv()
 
 
 RAW_DATABASE_URL = os.getenv("DATABASE_URL")
