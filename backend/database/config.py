@@ -3,7 +3,7 @@ from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Read DATABASE_URL from Railway environment variables
+# Get DATABASE_URL from environment
 RAW_DATABASE_URL = os.getenv("DATABASE_URL")
 
 print("DEBUG: DATABASE_URL =", RAW_DATABASE_URL)
@@ -11,7 +11,7 @@ print("DEBUG: DATABASE_URL =", RAW_DATABASE_URL)
 if not RAW_DATABASE_URL:
     raise ValueError("❌ DATABASE_URL is not set in environment variables")
 
-# Ensure MySQL driver is used
+# Convert to async/sync DSNs for SQLAlchemy
 ASYNC_DATABASE_URL = RAW_DATABASE_URL.replace("mysql://", "mysql+asyncmy://", 1)
 SYNC_DATABASE_URL  = RAW_DATABASE_URL.replace("mysql://", "mysql+pymysql://", 1)
 
@@ -53,7 +53,7 @@ metadata = MetaData()
 async def get_async_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         try:
-            yield session
+            yield sessionqq
         finally:
             await session.close()
 
@@ -64,7 +64,7 @@ def get_sync_db():
         yield db
     finally:
         db.close()
-
+fr
 
 def init_database():
     """Initialize database tables and default data (sync)"""

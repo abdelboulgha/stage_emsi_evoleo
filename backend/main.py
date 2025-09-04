@@ -36,8 +36,8 @@ from auth.auth_routes import router as auth_router
 from auth.auth_jwt import require_comptable_or_admin
 from auth.auth_config import CORS_ORIGINS, CORS_ALLOW_CREDENTIALS
 
-# Load environment variables
-if os.getenv("RAILWAY_ENVIRONMENT") is None:  
+if not os.getenv("DATABASE_URL"):
+    print("⚠️ No DATABASE_URL found, loading from .env")
     load_dotenv()
 
 # =======================
