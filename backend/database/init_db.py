@@ -48,6 +48,7 @@ def init_sync_database():
     """Initialize database tables synchronously"""
     try:
         # Create all tables
+     
         Base.metadata.create_all(bind=sync_engine)
         logger.info("Database tables created successfully")
         

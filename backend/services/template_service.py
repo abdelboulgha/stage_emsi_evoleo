@@ -23,7 +23,7 @@ class TemplateService:
         
         Args:
             template_name: The name of the template to save mappings for
-            field_map: Dictionary of field names to their data (coordinates or manual values)
+            field_map: Dictionary of field names to their data 
             current_user_id: User ID who is creating/updating the template
             
         Returns:
@@ -87,7 +87,7 @@ class TemplateService:
                             "top": coords.get('top', 0.0),
                             "width": coords.get('width', 0.0),
                             "height": coords.get('height', 0.0),
-                            "manual": coords.get('manual', False),
+                     
                             "created_by": current_user_id
                         })
             
@@ -103,7 +103,7 @@ class TemplateService:
     
     async def load_mapping(self, template_id: str) -> Dict[str, Any]:
         """
-        Load field mappings from the database using field names, including the 'manual' flag
+        Load field mappings from the database using field names
         
         Args:
             template_id: The template ID to load mappings for
@@ -133,7 +133,7 @@ class TemplateService:
                         'top': float(mapping.top) if mapping.top is not None else 0.0,
                         'width': float(mapping.width) if mapping.width is not None else 0.0,
                         'height': float(mapping.height) if mapping.height is not None else 0.0,
-                        'manual': bool(mapping.manual)
+                  
                     }
                 except (ValueError, TypeError) as e:
                     # Log error but continue processing other fields
@@ -241,7 +241,7 @@ class TemplateService:
                             'top': float(mapping.top) if mapping.top is not None else 0.0,
                             'width': float(mapping.width) if mapping.width is not None else 0.0,
                             'height': float(mapping.height) if mapping.height is not None else 0.0,
-                            'manual': False  # Default to False like the old code
+                         
                         }
                     except (ValueError, TypeError) as e:
                         # Log error but continue processing other fields

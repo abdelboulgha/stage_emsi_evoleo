@@ -74,7 +74,7 @@ class Mapping(Base):
     top: Mapped[float] = Column(Float, nullable=False)
     width: Mapped[float] = Column(Float, nullable=False)
     height: Mapped[float] = Column(Float, nullable=False)
-    manual: Mapped[bool] = Column(Boolean, default=False, nullable=False)
+   
     created_by: Mapped[int] = Column(Integer, ForeignKey("utilisateurs.id"), nullable=False)
     
     # Relationships

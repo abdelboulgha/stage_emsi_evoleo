@@ -141,21 +141,19 @@ class FactureRepository(BaseRepository):
     
     async def create(self, facture_data: dict) -> Facture:
         """Create a new invoice"""
-        print(f"=== DEBUG FactureRepository.create ===")
-        print(f"Creating facture with data: {facture_data}")
+
         
         facture = Facture(**facture_data)
-        print(f"Created Facture object: {facture}")
+  
         
         self.session.add(facture)
-        print("Added facture to session")
+
         
         await self.session.commit()
-        print("Committed to database")
+
         
         await self.session.refresh(facture)
-        print(f"Refreshed facture: {facture}")
-        print(f"Facture ID after refresh: {facture.id}")
+   
         
         return facture
     

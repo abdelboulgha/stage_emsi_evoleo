@@ -97,7 +97,7 @@ class Mapping(Base, TimestampMixin):
     top: Mapped[float] = Column(Float)
     width: Mapped[float] = Column(Float)
     height: Mapped[float] = Column(Float)
-    manual: Mapped[bool] = Column(Boolean, default=False)
+ 
 ```
 
 ### 4. Facture
@@ -172,7 +172,7 @@ async def save_mapping(self, template_name: str, field_map: Dict[str, Any], curr
                         "top": coords.get('top', 0.0),
                         "width": coords.get('width', 0.0),
                         "height": coords.get('height', 0.0),
-                        "manual": coords.get('manual', False),
+                     
                         "created_by": current_user_id
                     })
         

@@ -17,7 +17,7 @@ COOKIE_PATH = "/"  # Chemin du cookie
 
 # Configuration CORS
 CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_CREDENTIALS = os.getenv("CORS_ALLOW_CREDENTIALS", "true").lower() == "true"
 
 # Configuration de la base de données MySQL
 DB_CONFIG = {

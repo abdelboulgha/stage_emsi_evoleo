@@ -93,18 +93,15 @@ class FieldCoordinates(BaseModel):
     top: float
     width: float
     height: float
-    manual: Optional[bool] = False
+   
 
 
-class ManualInputField(BaseModel):
-    """Represents a manually input field value."""
-    manualValue: str
-    isValid: Optional[bool] = True
+
 
 
 class FieldMapping(BaseModel):
     """Mapping of field names to their coordinates."""
-    field_map: Dict[str, Any]  # Can be FieldCoordinates or ManualInputField
+    field_map: Dict[str, Any]  
 
 
 class ExtractionResult(BaseModel):
@@ -116,7 +113,7 @@ class ExtractionResult(BaseModel):
 
 class SaveMappingRequest(BaseModel):
     template_id: str = "default"
-    field_map: Dict[str, Any]  # Can be FieldCoordinates or ManualInputField
+    field_map: Dict[str, Any]  
 
 
 class InvoiceUpdate(BaseModel):
@@ -480,12 +477,12 @@ async def save_field_mapping(
         template_id = request.get('template_id', 'default')
         field_map = request.get('field_map', {})
         
-        # Process the field map to handle both coordinate and manual input fields
+    
         processed_map = {}
         for field_name, value in field_map.items():
             if value is not None:
-                # Handle manual input fields (like fournisseur and serial)
-                if isinstance(value, dict) and 'manualValue' in value:
+          
+                if isinstance(value, dict) in value:
                     processed_map[field_name] = value
                 # Handle coordinate fields
                 elif hasattr(value, 'get') and all(k in value for k in ['left', 'top', 'width', 'height']):
@@ -494,10 +491,10 @@ async def save_field_mapping(
                         'top': value.get('top', 0),
                         'width': value.get('width', 0),
                         'height': value.get('height', 0),
-                        'manual': value.get('manual', False)
+                        
                     }
         
-        print(f"Saving mapping for template: {template_id}")
+      
         logging.debug(f"Processed field map: {processed_map}")
         
         success = await template_service.save_mapping(
@@ -874,7 +871,7 @@ async def ocr_preview(
                                         "top": box['top'],
                                         "width": box['width'],
                                         "height": box['height'],
-                                        "manual": False
+                                      
                                     }
                                     # Update ht_match with the found coordinates
                                     ht_match['value_box'].update({
@@ -1011,7 +1008,7 @@ async def ocr_preview(
                                         "top": box['top'],
                                         "width": box['width'],
                                         "height": box['height'],
-                                        "manual": False
+                                       
                                     }
                                     # Update tva_match with the found coordinates
                                     tva_match['value_box'].update({
@@ -1289,7 +1286,7 @@ async def ocr_preview(
                             "top": best_match["box"]["top"],
                             "width": best_match["box"]["width"],
                             "height": best_match["box"]["height"],
-                            "manual": False
+                       
                         }
                         
                         # Use the same expansion values for visualization as used in detection
@@ -1554,11 +1551,7 @@ async def ocr_preview(
             import traceback
             traceback.print_exc()
             
-            # Log the current state of variables
-            print("\n=== DEBUG: dateFacturation extraction state ===")
-            print(f"Template ID: {template_id}")
-            print(f"Connection active: {'connection' in locals() and connection and getattr(connection, 'is_connected', lambda: False)()}")
-            print(f"Cursor exists: {'cursor' in locals() and cursor is not None}")
+
             if 'cursor' in locals() and cursor:
                 try:
                     print(f"Cursor has results: {cursor.with_rows}")

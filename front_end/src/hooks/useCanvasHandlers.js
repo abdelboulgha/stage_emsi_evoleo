@@ -78,7 +78,7 @@ export const useCanvasHandlers = (dataPrepState, setDataPrepState, manualDrawSta
               top: parseFloat(clickedBox.coords.top),
               width: parseFloat(clickedBox.coords.width),
               height: parseFloat(clickedBox.coords.height),
-              manual: false,
+        
             },
           };
           

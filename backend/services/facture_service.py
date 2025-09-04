@@ -30,9 +30,7 @@ class FactureService:
             Dict containing the created invoice or error information
         """
         try:
-            print(f"=== DEBUG create_facture ===")
-            print(f"Input data: {facture_data}")
-            print(f"Current user ID: {current_user_id}")
+      
             
             # Add created_by to the data
             facture_data["created_by"] = current_user_id
@@ -42,20 +40,18 @@ class FactureService:
                 try:
                     if isinstance(facture_data["dateFacturation"], str):
                         facture_data["dateFacturation"] = datetime.fromisoformat(facture_data["dateFacturation"])
-                        print(f"Converted date: {facture_data['dateFacturation']}")
+                      
                 except ValueError as ve:
-                    print(f"Date conversion error: {ve}")
+              
                     return {
                         "success": False,
                         "message": "Invalid date format for dateFacturation"
                     }
             
-            print(f"Final data to save: {facture_data}")
-            
+               
             # Create the invoice
             facture = await self.facture_repo.create(facture_data)
-            print(f"Created facture: {facture}")
-            print(f"Facture ID: {facture.id}")
+        
             
             return {
                 "success": True,
