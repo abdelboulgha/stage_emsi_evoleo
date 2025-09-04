@@ -62,8 +62,7 @@ async def register(user_data: UserCreate, response: Response):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Erreur interne du serveur"
         )
-
-@router.post("/login", response_model=AuthResponse)
+@router.post("/login", response_model=Token)
 async def login(user_credentials: UserLogin, response: Response):
     """Connexion d'un utilisateur"""
     try:
@@ -84,7 +83,7 @@ async def login(user_credentials: UserLogin, response: Response):
             expires_delta=access_token_expires
         )
         
-        # Définir le cookie HttpOnly
+        # Définir le cookie HttpOnly (optionnel)
         set_auth_cookie(response, access_token, ACCESS_TOKEN_EXPIRE_MINUTES)
         
         # Préparer la réponse utilisateur
@@ -98,10 +97,12 @@ async def login(user_credentials: UserLogin, response: Response):
             actif=user["actif"]
         )
         
-        return AuthResponse(
-            message="Connexion réussie",
-            user=user_response
-        )
+        # Retourner aussi le JWT
+        return {
+            "access_token": access_token,
+            "token_type": "bearer",
+            "user": user_response
+        }
         
     except HTTPException:
         raise
