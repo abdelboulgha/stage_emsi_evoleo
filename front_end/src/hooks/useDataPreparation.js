@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://pacific-balance-production-7806.up.railway.app/";
 
 export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoading, showNotification) => {
   const navigate = useNavigate();
@@ -22,7 +22,7 @@ export const useDataPreparation = (setDataPrepState, setCurrentStep, setIsLoadin
         formData.append("file", file);
 
         
-        const response = await fetch(`${API_BASE_URL}/pdf-page-previews`, {
+        const response = await fetch(`${API_BASE_URL}pdf-page-previews`, {
           method: "POST",
           credentials: 'include', // Ajout des cookies
           body: formData,

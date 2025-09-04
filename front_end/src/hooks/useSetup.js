@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://pacific-balance-production-7806.up.railway.app";
 
 export const useSetup = (setupState, setSetupState, setExtractionState, setCurrentStep, setIsLoading, showNotification) => {
   const navigate = useNavigate();

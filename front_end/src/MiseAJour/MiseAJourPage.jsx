@@ -61,7 +61,7 @@ const MiseAJourPage = () => {
         search: searchTerm,
       });
       
-      const res = await fetch(`http://localhost:8000/factures?${params}`, {
+      const res = await fetch(`https://pacific-balance-production-7806.up.railway.app/factures?${params}`, {
         credentials: 'include',
       });
       
@@ -201,7 +201,7 @@ const MiseAJourPage = () => {
   const handleDelete = async (id) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette facture ?")) {
       try {
-        await fetch(`http://localhost:8000/factures/${id}`, { 
+        await fetch(`https://pacific-balance-production-7806.up.railway.app/factures/${id}`, { 
           method: "DELETE",
           credentials: 'include', // Ajout des cookies
         });
@@ -248,7 +248,7 @@ const MiseAJourPage = () => {
         dateFacturation: editing.dateFacturation ? new Date(editing.dateFacturation).toISOString().split('T')[0] : ''
       });
 
-      const response = await fetch(`http://localhost:8000/factures/${editing.id}`, {
+      const response = await fetch(`https://pacific-balance-production-7806.up.railway.app/factures/${editing.id}`, {
         method: "PUT",
         headers: { 
           'Content-Type': 'application/json',

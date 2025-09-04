@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 
-const API_BASE_URL = "http://localhost:8000";
+const API_BASE_URL = "https://pacific-balance-production-7806.up.railway.app";
 
 export const useInvoiceSelection = (extractionState, setExtractionState, invoiceSelection, setInvoiceSelection, showNotification, filterValue) => {
   const handleSaveInvoices = useCallback(async () => {

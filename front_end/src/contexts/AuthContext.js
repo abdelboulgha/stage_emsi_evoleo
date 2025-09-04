@@ -19,8 +19,8 @@ export const AuthProvider = ({ children }) => {
     const initAuth = async () => {
       try {
         // Vérifier si l'utilisateur est authentifié via les cookies
-        const response = await fetch('http://localhost:8000/auth/me', {
-          credentials: 'include', // Inclure les cookies dans la requête
+        const response = await fetch('https://pacific-balance-production-7806.up.railway.app/auth/me', {
+          credentials: 'include', 
         });
         
         console.log("Réponse /auth/me:", response.status, response.statusText);
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://localhost:8000/auth/login', {
+      const response = await fetch('https://pacific-balance-production-7806.up.railway.app/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -71,7 +71,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     try {
-      const response = await fetch('http://localhost:8000/auth/register', {
+      const response = await fetch('https://pacific-balance-production-7806.up.railway.app/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       // Appeler l'endpoint de déconnexion pour supprimer le cookie
-      await fetch('http://localhost:8000/auth/logout', {
+      await fetch('https://pacific-balance-production-7806.up.railway.app/auth/logout', {
         method: 'POST',
         credentials: 'include', // Inclure les cookies dans la requête
       });
@@ -111,7 +111,7 @@ export const AuthProvider = ({ children }) => {
 
   const changePassword = async (currentPassword, newPassword) => {
     try {
-      const response = await fetch('http://localhost:8000/auth/change-password', {
+      const response = await fetch('https://pacific-balance-production-7806.up.railway.app/auth/change-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

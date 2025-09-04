@@ -1,6 +1,6 @@
 // Configuration de l'API
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
+  BASE_URL: process.env.REACT_APP_API_URL || 'https://pacific-balance-production-7806.up.railway.app',
   CREDENTIALS: 'include', // Inclure les cookies dans toutes les requêtes
 };
 

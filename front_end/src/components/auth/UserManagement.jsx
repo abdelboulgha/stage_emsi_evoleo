@@ -18,8 +18,8 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://localhost:8000/auth/users', {
-        credentials: 'include', // Ajout des cookies
+      const response = await fetch('https://pacific-balance-production-7806.up.railway.app/auth/users', {
+        credentials: 'include', 
       });
 
       if (!response.ok) {
@@ -47,7 +47,7 @@ const UserManagement = () => {
 
   const handleUpdateUser = async () => {
     try {
-      const response = await fetch(`http://localhost:8000/auth/users/${editingUser.id}`, {
+      const response = await fetch(`https://pacific-balance-production-7806.up.railway.app/auth/users/${editingUser.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -76,7 +76,7 @@ const UserManagement = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:8000/auth/users/${userId}`, {
+      const response = await fetch(`https://pacific-balance-production-7806.up.railway.app/auth/users/${userId}`, {
         method: 'DELETE',
         credentials: 'include', // Ajout des cookies
       });

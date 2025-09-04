@@ -89,8 +89,8 @@ const response = await fetch('/api/endpoint', {
 ### Variables d'environnement
 
 ```bash
-# URL de l'API (optionnel, par défaut: http://localhost:8000)
-REACT_APP_API_URL=http://localhost:8000
+# URL de l'API (optionnel, par défaut: https://pacific-balance-production-7806.up.railway.app)
+REACT_APP_API_URL=https://pacific-balance-production-7806.up.railway.app
 ```
 
 ### Utilisation des fonctions utilitaires
