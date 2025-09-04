@@ -91,17 +91,16 @@ class TemplateRepository(BaseRepository):
 
 
 class MappingRepository(BaseRepository):
-    """Repository for mapping operations"""
-    
-    async def get_by_template_id(self, template_id: int) -> List[Mapping]:
-        """Get all mappings for a template"""
+    async def get_by_template_id(self, template_id: int) -> list[tuple[Mapping, str]]:
+        """Get all mappings for a template with field names"""
         result = await self.session.execute(
-            select(Mapping, FieldName.name.label('field_name'))
+            select(Mapping, FieldName.name)
             .join(FieldName, Mapping.field_id == FieldName.id)
             .where(Mapping.template_id == template_id)
         )
-        return result.all()
-    
+        rows = result.all()
+        return [(row.Mapping, row.name) for row in rows]
+
     async def delete_by_template_id(self, template_id: int) -> int:
         """Delete all mappings for a template"""
         result = await self.session.execute(
