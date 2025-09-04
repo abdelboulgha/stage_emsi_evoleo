@@ -1,27 +1,21 @@
-
 import os
 from sqlalchemy import create_engine, MetaData
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import sessionmaker, declarative_base
 from dotenv import load_dotenv
 
-db_url = os.getenv("DATABASE_URL")
-print(f"DEBUG: DATABASE_URL at startup = {db_url}")
-
-if not db_url:
-    raise ValueError("❌ DATABASE_URL is not set in environment variables")
-
+# Load local .env if it exists (Railway already injects env vars, so it's harmless)
+load_dotenv()
 
 RAW_DATABASE_URL = os.getenv("DATABASE_URL")
 
 if not RAW_DATABASE_URL:
-    raise ValueError("❌ DATABASE_URL is not set in environment variables")
+    print("⚠️  DATABASE_URL not found in environment, falling back to SQLite...")
+    RAW_DATABASE_URL = "sqlite+aiosqlite:///./fallback.db"
 
-
+# Replace prefixes for async/sync engines
 ASYNC_DATABASE_URL = RAW_DATABASE_URL.replace("mysql://", "mysql+asyncmy://", 1)
 SYNC_DATABASE_URL  = RAW_DATABASE_URL.replace("mysql://", "mysql+pymysql://", 1)
-
-
 
 # Async engine (used at runtime by FastAPI)
 async_engine = create_async_engine(
@@ -43,7 +37,6 @@ sync_engine = create_engine(
     future=True,
 )
 
-
 AsyncSessionLocal = async_sessionmaker(
     bind=async_engine,
     class_=AsyncSession,
@@ -59,6 +52,7 @@ Base = declarative_base()
 metadata = MetaData()
 
 
+# --- Dependencies ---
 async def get_async_db() -> AsyncSession:
     """Dependency for async DB session"""
     async with AsyncSessionLocal() as session:
@@ -76,6 +70,7 @@ def get_sync_db():
         db.close()
 
 
+# --- Init database ---
 def init_database():
     """Initialize database tables and default data (sync)"""
     from .init_db import init_database as init_db_func
