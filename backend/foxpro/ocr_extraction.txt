@@ -1,7 +1,7 @@
-Date export: 2025-08-31 15:25:06
+Date export: 2025-09-05 17:32:14
 Fournisseur: capi
-Numéro Facture: Facture IN2411-0001
+Numéro Facture: IN2411-0001
 Taux TVA: 20
-Montant HT: 275
-Montant TVA: 55
-Montant TTC: 330
+Montant HT: 275.00
+Montant TVA: 55.00
+Montant TTC: 330.00

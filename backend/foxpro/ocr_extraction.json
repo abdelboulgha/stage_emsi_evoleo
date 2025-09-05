@@ -1,7 +1,7 @@
 {
   "fields": {
     "fournisseur": "capi",
-    "numeroFacture": "Facture IN2411-0001",
+    "numeroFacture": "IN2411-0001",
     "dateFacturation": "2024-11-21",
     "tauxTVA": 20.0,
     "montantHT": 275.0,

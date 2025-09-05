@@ -249,10 +249,10 @@ def create_user(email: str, nom: str = None, prenom: str = None, password: str =
         # Hasher le mot de passe
         hashed_password = get_password_hash(password)
         
-        # Insérer l'utilisateur avec date_creation
+        # Insérer l'utilisateur avec date_creation et actif explicitement défini à 1
         insert_query = """
-        INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role, date_creation)
-        VALUES (%s, %s, %s, %s, %s, NOW())
+        INSERT INTO utilisateurs (email, nom, prenom, mot_de_passe_hash, role, date_creation, actif)
+        VALUES (%s, %s, %s, %s, %s, NOW(), 1)
         """
         
         cursor.execute(insert_query, (email, nom, prenom, hashed_password, role))
@@ -326,9 +326,31 @@ def get_all_users():
         logging.error(f"Erreur lors de la récupération des utilisateurs: {e}")
         return []
 
+def get_user_for_auth(email: str):
+    """Récupère un utilisateur avec le hash du mot de passe pour l'authentification"""
+    try:
+        conn = get_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        query = """
+        SELECT id, email, nom, prenom, mot_de_passe_hash, role, date_creation, actif
+        FROM utilisateurs 
+        WHERE email = %s
+        """
+        cursor.execute(query, (email,))
+        user = cursor.fetchone()
+        
+        cursor.close()
+        conn.close()
+        
+        return user
+    except Exception as e:
+        logging.error(f"Erreur lors de la récupération de l'utilisateur pour auth: {e}")
+        return None
+
 def authenticate_user(email: str, password: str):
     """Authentifie un utilisateur"""
-    user = get_user_by_email(email)
+    user = get_user_for_auth(email)  # Utiliser la nouvelle fonction
     if not user:
         return None
     
@@ -338,4 +360,13 @@ def authenticate_user(email: str, password: str):
     if not user["actif"]:
         return None
     
-    return user 
+    # Retourner l'utilisateur sans le hash du mot de passe pour la sécurité
+    return {
+        "id": user["id"],
+        "email": user["email"],
+        "nom": user["nom"],
+        "prenom": user["prenom"],
+        "role": user["role"],
+        "date_creation": user["date_creation"],
+        "actif": user["actif"]
+    } 

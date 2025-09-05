@@ -33,3 +33,31 @@
 2025-09-01 00:52:20,849 INFO Default field names inserted
 2025-09-01 00:52:20,850 INFO Default data inserted successfully
 2025-09-01 00:52:20,850 INFO Database initialization completed successfully
+2025-09-05 17:03:45,349 INFO Database tables created successfully
+2025-09-05 17:03:45,354 INFO Default data inserted successfully
+2025-09-05 17:03:45,355 INFO Database initialization completed successfully
+2025-09-05 17:04:15,422 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:04:17,854 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:04:19,531 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:04:20,607 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:04:21,372 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:04:21,610 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:04:22,213 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:05:28,619 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:07:20,875 INFO Database tables created successfully
+2025-09-05 17:07:20,879 INFO Default data inserted successfully
+2025-09-05 17:07:20,879 INFO Database initialization completed successfully
+2025-09-05 17:14:36,314 INFO Database tables created successfully
+2025-09-05 17:14:36,318 INFO Default data inserted successfully
+2025-09-05 17:14:36,318 INFO Database initialization completed successfully
+2025-09-05 17:21:12,841 INFO Database tables created successfully
+2025-09-05 17:21:12,846 INFO Default data inserted successfully
+2025-09-05 17:21:12,846 INFO Database initialization completed successfully
+2025-09-05 17:22:14,093 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:22:32,321 ERROR Erreur lors de la connexion: 'mot_de_passe_hash'
+2025-09-05 17:24:20,786 INFO Database tables created successfully
+2025-09-05 17:24:20,790 INFO Default data inserted successfully
+2025-09-05 17:24:20,790 INFO Database initialization completed successfully
+2025-09-05 17:32:14,910 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
+2025-09-05 17:32:14,950 ERROR Erreur fatale lors de la création du fichier DBF: could not convert string to float: '20%'
+2025-09-05 17:32:14,950 WARNING Impossible de créer le fichier DBF: could not convert string to float: '20%'
