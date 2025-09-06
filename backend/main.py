@@ -1358,6 +1358,17 @@ async def ocr_preview(
         }
 
 
+@app.get("/me")
+async def get_current_user(current_user = Depends(require_comptable_or_admin)):
+    """Get current authenticated user information"""
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "nom": current_user["nom"],
+        "prenom": current_user["prenom"],
+        "role": current_user["role"]
+    }
+
 @app.post("/ajouter-facture", response_model=InvoiceResponse)
 async def ajouter_facture(
     invoice: InvoiceCreate,

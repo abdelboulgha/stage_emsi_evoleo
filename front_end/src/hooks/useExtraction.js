@@ -197,7 +197,7 @@ export const useExtraction = (extractionState, setExtractionState, showNotificat
       // Transformer les données dans le format attendu par le backend
       const transformedData = {
         fournisseur: data.fournisseur || '',
-        numFacture: data.numeroFacture || '', // Le backend attend numFacture, pas numeroFacture
+        numFacture: data.numFacture || '', // ✅ CORRIGÉ: utiliser numFacture directement
         dateFacturation: data.dateFacturation || '',
         tauxTVA: parseFloat(data.tauxTVA) || 0,
         montantHT: parseFloat(data.montantHT) || 0,

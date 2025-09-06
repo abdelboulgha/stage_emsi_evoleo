@@ -406,7 +406,7 @@ const AIExtractionMode = () => {
               // Mapping des clés YOLO vers les clés du frontend
               const fieldMapping = {
                 'fournisseur': 'fournisseur',
-                'numFacture': 'numeroFacture', 
+                'numFacture': 'numFacture',  // ✅ CORRIGÉ: utiliser numFacture directement
                 'date': 'dateFacturation',  // YOLO détecte 'date', pas 'dateFacturation'
                 'taux': 'tauxTVA',
                 'HT': 'montantHT',
@@ -436,6 +436,12 @@ const AIExtractionMode = () => {
                   }
                 }
               });
+              
+              // Synchroniser numFacture avec numeroFacture pour l'affichage
+              if (extractedData.numFacture && !extractedData.numeroFacture) {
+                extractedData.numeroFacture = extractedData.numFacture;
+                console.log(`🔄 Synchronisation: numFacture -> numeroFacture = ${extractedData.numFacture}`);
+              }
               
               console.log(`📊 Données finales pour le fichier ${index}:`, extractedData);
             }

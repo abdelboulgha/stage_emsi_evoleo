@@ -61,3 +61,30 @@
 2025-09-05 17:32:14,910 ERROR Erreur lors de l'écriture dans le fichier DBF: could not convert string to float: '20%'
 2025-09-05 17:32:14,950 ERROR Erreur fatale lors de la création du fichier DBF: could not convert string to float: '20%'
 2025-09-05 17:32:14,950 WARNING Impossible de créer le fichier DBF: could not convert string to float: '20%'
+2025-09-06 15:09:46,052 INFO Database tables created successfully
+2025-09-06 15:09:46,052 INFO Default data inserted successfully
+2025-09-06 15:09:46,052 INFO Database initialization completed successfully
+2025-09-06 15:11:22,518 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:11:22,518 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:18:42,437 INFO Database tables created successfully
+2025-09-06 15:18:42,440 INFO Default data inserted successfully
+2025-09-06 15:18:42,440 INFO Database initialization completed successfully
+2025-09-06 15:19:39,959 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:19:39,960 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:22:42,276 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:22:42,276 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:23:57,930 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:23:57,930 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:28:06,821 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:28:06,821 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:30:00,974 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:30:00,974 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:30:57,490 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:30:57,490 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:31:44,248 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:31:44,248 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:31:57,420 WARNING Field 'created_at' doesn't have a default value
+2025-09-06 15:31:57,420 WARNING Field 'updated_at' doesn't have a default value
+2025-09-06 15:31:57,751 ERROR Erreur lors de l'écriture dans le fichier DBF: field 'NUMFACT': ('tried to store 19 bytes in 15 byte field',)
+2025-09-06 15:31:57,758 ERROR Erreur fatale lors de la création du fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
+2025-09-06 15:31:57,758 WARNING Impossible de créer le fichier DBF: C:\Users\pc\Desktop\stage_emsi_2025\backend\foxpro\factures.dbf not in read/write mode, unable to append records
